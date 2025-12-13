@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aca-builder"
+version = "0.1.0"
+authors = [
+  { name="Your Name", email="you@example.com" },
+]
+description = "A builder for the Axiomatic Component Architecture (ACA)."
+requires-python = ">=3.8"
+dependencies = [
+    "typer[all]",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest"
+]
+
+[project.scripts]
+aca-build = "aca_builder.main:app"
