@@ -150,7 +150,11 @@ def build(
         raise typer.Exit(code=1)
 
 
-def info():
+def info(
+    list_legacy: bool = typer.Option(
+        False, "--list-legacy", help="List the IDs of all legacy atoms found."
+    )
+):
     """Displays statistics about the ACA library, like packages and legacy atoms."""
     try:
         app_config = config.load_config()
@@ -158,29 +162,34 @@ def info():
         if not library_paths:
             raise BuildError("No 'library_paths' configured.")
 
-        # We can use fail_fast=False to get a more complete picture even with some errors
         library = load_library(library_paths, fail_fast=False)
         if not library:
             raise BuildError("No valid atoms found in libraries.")
 
         packages = set()
-        legacy_atom_count = 0
+        legacy_atoms = []
 
         for atom in library.values():
-            # Atoms inside a dir with package.yaml will have a package name
             if pkg_name := atom.get("package"):
                 packages.add(pkg_name)
             else:
-                # Kernel is a special case and doesn't belong to a package
                 if atom["meta"]["type"] != "kernel":
-                    legacy_atom_count += 1
+                    legacy_atoms.append(atom["id"])
 
         typer.echo("ACA Library Stats:")
         typer.secho(f"  - Unique Packages Found: {len(packages)}", fg=typer.colors.CYAN)
+        if packages:
+            for pkg_name in sorted(list(packages)):
+                typer.echo(f"    - {pkg_name}")
+
         typer.secho(
-            f"  - Legacy Atoms (no package): {legacy_atom_count}",
+            f"  - Legacy Atoms (no package): {len(legacy_atoms)}",
             fg=typer.colors.YELLOW,
         )
+        if list_legacy and legacy_atoms:
+            typer.echo("    Legacy Atom IDs:")
+            for atom_id in sorted(legacy_atoms):
+                typer.echo(f"      - {atom_id}")
 
     except BuildError as e:
         typer.secho(f"Error: {e}", fg=typer.colors.RED, err=True)
@@ -239,6 +248,13 @@ def lint():
                         f"  [FAIL] {atom_id}: Invalid priority.", fg=typer.colors.RED
                     )
                     error_count += 1
+
+            # Validate Package Membership
+            if not pkg and meta["type"] != "kernel":
+                typer.secho(
+                    f"  [WARN] {atom_id}: Atom is not part of a package (legacy).",
+                    fg=typer.colors.YELLOW,
+                )
 
             # Validate D2 Dependencies
             if meta["type"] == "d2":
