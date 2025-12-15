@@ -2,13 +2,15 @@
 
 import typer
 
-from .commands import build, lint
+from .commands import build, lint, list_manifests
 
 app = typer.Typer(help="ACA (Axiomatic Component Architecture) Prompt Builder")
 
 # Register commands from the commands module
+app.command(name="list")(list_manifests)
 app.command()(build)
 app.command()(lint)
+
 
 if __name__ == "__main__":
     app()

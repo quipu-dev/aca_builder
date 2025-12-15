@@ -57,52 +57,59 @@ def parse_atom(file_path: Path, library_path: Path) -> Dict[str, Any]:
         raise BuildError(f"Failed to parse atom {file_path}: {e}")
 
 
-def load_library(library_path: Path) -> Dict[str, Dict[str, Any]]:
-    """加载整个组件库到内存中，以 ID 为键。静默忽略无法解析的文件。"""
+def load_library(library_paths: List[Path]) -> Dict[str, Dict[str, Any]]:
+    """加载所有指定库路径的组件到内存中，以 ID 为键。"""
     library = {}
-    for file_path in library_path.glob("**/*.md"):
-        try:
-            atom = parse_atom(file_path, library_path)
-            if atom["id"] in library:
-                raise BuildError(f"Duplicate atom ID '{atom['id']}' found.")
-            library[atom["id"]] = atom
-        except BuildError:
-            # For `build`, we silently ignore files that are not valid atoms.
-            # This allows having non-atom .md files (e.g., READMEs) in the library.
+    for lib_path in library_paths:
+        if not lib_path.exists():
             continue
+        for file_path in lib_path.glob("**/*.md"):
+            try:
+                # Pass the specific lib_path for relative path calculations if needed
+                atom = parse_atom(file_path, lib_path)
+                if atom["id"] in library:
+                    raise BuildError(f"Duplicate atom ID '{atom['id']}' found across libraries.")
+                library[atom["id"]] = atom
+            except BuildError:
+                # For `build`, we silently ignore files that are not valid atoms.
+                continue
     return library
 
 
-def load_interfaces(library_path: Path) -> Dict[str, Any]:
-    """加载 D4 接口定义并校验命名规范。
-    
-    This function scans the entire library for .yaml files and processes only those
-    marked with 'type: d4'. It enforces the 'd{X}l-{name}' naming convention.
-    """
+def load_interfaces(library_paths: List[Path]) -> Dict[str, Any]:
+    """从所有指定的库路径加载 D4 接口定义。"""
     interfaces = {"lookups": {}}
-    for file_path in library_path.glob("**/*.yaml"):
-        try:
-            data = yaml.safe_load(file_path.read_text(encoding="utf-8"))
-            if isinstance(data, dict) and data.get("type") == "d4":
-                if "lookups" in data:
-                    for key, lookup_def in data["lookups"].items():
-                        # Validate Naming Convention
-                        pillar = lookup_def.get("pillar")
-                        if pillar not in ["d1", "d2", "d3"]:
-                            raise BuildError(
-                                f"D4 Error in '{file_path.name}': Lookup '{key}' has invalid pillar '{pillar}'. Must be d1, d2, or d3."
-                            )
-                        
-                        expected_prefix = f"{pillar}l-"
-                        if not key.startswith(expected_prefix):
-                            raise BuildError(
-                                f"D4 Error in '{file_path.name}': Lookup '{key}' for pillar '{pillar}' must start with '{expected_prefix}'."
-                            )
-                            
-                        interfaces["lookups"][key] = lookup_def
-        except yaml.YAMLError:
-            # Silently ignore malformed YAML files, lint command will catch them if needed
+    for lib_path in library_paths:
+        if not lib_path.exists():
             continue
+        for file_path in lib_path.glob("**/*.yaml"):
+            try:
+                data = yaml.safe_load(file_path.read_text(encoding="utf-8"))
+                if isinstance(data, dict) and data.get("type") == "d4":
+                    if "lookups" in data:
+                        for key, lookup_def in data["lookups"].items():
+                            # Validate Naming Convention
+                            pillar = lookup_def.get("pillar")
+                            if pillar not in ["d1", "d2", "d3"]:
+                                raise BuildError(
+                                    f"D4 Error in '{file_path.name}': Lookup '{key}' has invalid pillar '{pillar}'. Must be d1, d2, or d3."
+                                )
+                            
+                            expected_prefix = f"{pillar}l-"
+                            if not key.startswith(expected_prefix):
+                                raise BuildError(
+                                    f"D4 Error in '{file_path.name}': Lookup '{key}' for pillar '{pillar}' must start with '{expected_prefix}'."
+                                )
+                            
+                            if key in interfaces["lookups"]:
+                                raise BuildError(f"Duplicate lookup key '{key}' found across D4 interface files.")
+
+                            interfaces["lookups"][key] = lookup_def
+            except (yaml.YAMLError, BuildError) as e:
+                # Raise build errors, but ignore malformed yaml
+                if isinstance(e, BuildError):
+                    raise e
+                continue
     return interfaces
 
 

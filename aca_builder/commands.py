@@ -3,8 +3,11 @@
 import typer
 from pathlib import Path
 import yaml
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
+import subprocess
+import sys
 
+from . import config
 from .exceptions import BuildError, LintError
 from .core import (
     load_library,
@@ -16,56 +19,109 @@ from .core import (
     parse_atom
 )
 
+def _find_manifest_by_name(manifest_name: str, manifest_paths: List[Path]) -> Optional[Path]:
+    """Finds a manifest file by its name (e.g., 'package/manifest_name')."""
+    if "/" not in manifest_name:
+        raise BuildError(f"Invalid manifest name format: '{manifest_name}'. Must be 'package_name/manifest_file_name'.")
+    
+    package_name, file_stem = manifest_name.split("/", 1)
+
+    for man_path in manifest_paths:
+        if not man_path.exists():
+            continue
+        
+        # Check if manifest_path's parent directory name matches the package name
+        if man_path.name == package_name:
+            target_file = man_path / f"{file_stem}.yaml"
+            if target_file.is_file():
+                return target_file
+    return None
+
+def list_manifests(
+    ctx: typer.Context
+):
+    """Lists all available manifests from configured paths."""
+    app_config = config.load_config()
+    manifest_paths = config.get_manifest_paths(app_config)
+    
+    if not manifest_paths:
+        typer.secho("No 'manifest_paths' configured in ~/.config/aca/config.yaml", fg=typer.colors.YELLOW)
+        return
+
+    found_any = False
+    for man_path in manifest_paths:
+        package_name = man_path.name
+        if not man_path.is_dir():
+            continue
+        
+        for yaml_file in man_path.glob("*.yaml"):
+            manifest_name = f"{package_name}/{yaml_file.stem}"
+            typer.echo(manifest_name)
+            found_any = True
+    
+    if not found_any:
+        typer.secho("No manifest files found in the configured paths.", fg=typer.colors.YELLOW)
+
+
 def build(
-    manifest_path: Path = typer.Argument(
-        ..., exists=True, dir_okay=False, help="Path to the manifest YAML file."
+    manifest_identifier: str = typer.Argument(
+        ..., help="Path to a manifest file or a manifest name (e.g., 'my_package/agent')."
     ),
-    library_path: Path = typer.Option(
-        "./aca_library",
-        exists=True,
-        file_okay=False,
-        help="Path to the ACA components library.",
+    file: bool = typer.Option(
+        False, "--file", "-f", help="Force manifest identifier to be treated as a file path."
     ),
 ):
     """
-    Builds a single system prompt from an ACA manifest and library.
+    Builds a single system prompt from an ACA manifest and configured libraries.
     """
     try:
-        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
-        library = load_library(library_path)
-        interfaces = load_interfaces(library_path)
+        app_config = config.load_config()
+        library_paths = config.get_library_paths(app_config)
+        manifest_paths = config.get_manifest_paths(app_config)
 
-        # Apply Manifest Overrides (Dependency Injection)
+        if not library_paths:
+            raise BuildError("No 'library_paths' configured in ~/.config/aca/config.yaml")
+
+        manifest_path = Path(manifest_identifier)
+        if not file and not manifest_path.exists():
+            # Treat as name
+            manifest_path = _find_manifest_by_name(manifest_identifier, manifest_paths)
+            if not manifest_path:
+                raise BuildError(f"Manifest name '{manifest_identifier}' not found in any configured manifest_paths.")
+        elif not manifest_path.exists():
+             raise BuildError(f"Manifest file not found at path: {manifest_identifier}")
+
+
+        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+        library = load_library(library_paths)
+        interfaces = load_interfaces(library_paths)
+
+        if not library:
+            raise BuildError("No valid atoms found in any configured libraries.")
+
         if "overrides" in manifest:
             apply_overrides(interfaces, manifest["overrides"])
 
-        # mapping: atom_id -> set(triggering_lookup_names)
         initial_map = {}
-        
         imports = manifest.get("imports", [])
         for item in imports:
             if "lookup" in item:
                 lkey = item["lookup"]
                 if lkey not in interfaces["lookups"]:
                     raise BuildError(f"Manifest Error: Lookup '{lkey}' not found.")
-                
                 l_def = interfaces["lookups"][lkey]
                 for sel in l_def["selectors"]:
                     ids = select_atoms(library, sel["query"])
                     for aid in ids:
                         initial_map.setdefault(aid, set()).add(lkey)
-
             elif "query" in item:
-                # Direct queries have no lookup name source
                 ids = select_atoms(library, item["query"])
                 for aid in ids:
                     if aid not in initial_map:
                         initial_map[aid] = set()
 
-        # Resolve recursively
         final_atom_map = resolve_dependencies(initial_map, library, interfaces)
 
-        # Ensure kernel is included (it has no trigger lookup)
         kernel_ids = {k for k, v in library.items() if v["meta"]["type"] == "kernel"}
         if not kernel_ids:
             raise BuildError("No 'type: kernel' atom found in the library.")
@@ -74,84 +130,104 @@ def build(
                 final_atom_map[k_id] = set()
 
         final_prompt = serialize_prompt(final_atom_map, library)
+        
+        # Post-processing hook
+        hook_command = config.get_post_process_hook(app_config)
+        if hook_command:
+            # Note: shell=True can be a security risk if the command is untrusted.
+            # Here we trust the user's own config.
+            process = subprocess.run(
+                hook_command, 
+                shell=True, 
+                input=final_prompt, 
+                text=True, 
+                capture_output=True
+            )
+            if process.returncode != 0:
+                typer.secho(f"Post-process hook failed with exit code {process.returncode}:", fg=typer.colors.RED)
+                typer.secho(process.stderr, fg=typer.colors.RED)
+                raise typer.Exit(code=1)
+            # Print the output of the hook
+            print(process.stdout, end='')
 
-        print(final_prompt)
+        else:
+            print(final_prompt)
+
 
     except (BuildError, FileNotFoundError, yaml.YAMLError) as e:
-        typer.secho(f"Error: {e}", fg=typer.colors.RED)
+        typer.secho(f"Error: {e}", fg=typer.colors.RED, err=True)
         raise typer.Exit(code=1)
 
 
 def _validate_atom(atom_path: Path, library_path: Path, interfaces: Dict[str, Any]):
     """Helper function to validate a single atom's metadata and dependencies."""
-    # For linting, we parse with the base function which will raise errors.
     atom = parse_atom(atom_path, library_path)
     meta = atom["meta"]
 
-    # D3 specific checks
     if meta["type"] == "d3":
         if "priority" not in meta:
-            raise LintError(
-                f"Validation Error: D3 atom '{atom_path.name}' is missing 'priority' metadata."
-            )
+            raise LintError(f"Validation Error: D3 atom '{atom_path.name}' is missing 'priority'.")
         if meta["priority"] not in [0, 1, 2]:
-            raise LintError(
-                f"Validation Error: D3 atom '{atom_path.name}' has invalid priority '{meta['priority']}'. Must be 0, 1, or 2."
-            )
+            raise LintError(f"Validation Error: D3 atom '{atom_path.name}' has invalid priority '{meta['priority']}'.")
 
-    # D2 dependency checks
     if meta["type"] == "d2":
         for lookup_key in meta.get("uses", []):
             if lookup_key not in interfaces["lookups"]:
-                raise LintError(
-                    f"Dependency Error: D2 atom '{atom_path.name}' references non-existent Lookup '{lookup_key}'."
-                )
+                raise LintError(f"Dependency Error: D2 atom '{atom_path.name}' references non-existent Lookup '{lookup_key}'.")
     return atom
 
 
-def lint(
-    library_path: Path = typer.Argument(
-        ..., exists=True, file_okay=False, help="Path to the ACA components library."
-    ),
-):
-    """
-    Validates an ACA library against the specification for metadata and dependencies.
-    """
-    typer.echo(f"Linting ACA library at: {library_path}")
+def lint():
+    """Validates configured ACA libraries against the specification."""
+    
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+    
+    if not library_paths:
+        typer.secho("No 'library_paths' configured to lint.", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
+
+    typer.echo(f"Linting ACA libraries from {len(library_paths)} configured path(s)...")
     error_count = 0
     kernel_count = 0
+    all_atoms = {}
+    all_interfaces = {}
 
     try:
-        interfaces = load_interfaces(library_path)
+        all_interfaces = load_interfaces(library_paths)
+        
+        for lib_path in library_paths:
+            if not lib_path.exists():
+                typer.secho(f"  [WARN] Library path not found, skipping: {lib_path}", fg=typer.colors.YELLOW)
+                continue
+                
+            typer.echo(f"--> Linting {lib_path}")
+            for atom_path in lib_path.glob("**/*.md"):
+                try:
+                    atom = _validate_atom(atom_path, lib_path, all_interfaces)
+                    
+                    if atom["id"] in all_atoms:
+                        typer.secho(f"  [FAIL] {atom_path.relative_to(lib_path)}: Duplicate atom ID '{atom['id']}' found.", fg=typer.colors.RED)
+                        error_count += 1
+                        continue
+                    all_atoms[atom["id"]] = atom
 
-        for atom_path in library_path.glob("**/*.md"):
-            try:
-                # Lint demands every .md file in the library to be a valid atom.
-                atom = _validate_atom(atom_path, library_path, interfaces)
-                if atom["meta"]["type"] == "kernel":
-                    kernel_count += 1
-            except (BuildError, LintError) as e:
-                typer.secho(
-                    f"  [FAIL] {atom_path.relative_to(library_path)}: {e}",
-                    fg=typer.colors.RED,
-                )
-                error_count += 1
+                    if atom["meta"]["type"] == "kernel":
+                        kernel_count += 1
+                except (BuildError, LintError) as e:
+                    typer.secho(f"  [FAIL] {atom_path.relative_to(lib_path)}: {e}", fg=typer.colors.RED)
+                    error_count += 1
 
         if kernel_count != 1:
-            typer.secho(
-                f"Global Error: Exactly one 'type: kernel' atom is required. Found {kernel_count}.",
-                fg=typer.colors.RED,
-            )
+            typer.secho(f"Global Error: Exactly one 'type: kernel' atom is required. Found {kernel_count}.", fg=typer.colors.RED)
             error_count += 1
 
     except (BuildError, FileNotFoundError, yaml.YAMLError) as e:
-        typer.secho(f"A critical error occurred: {e}", fg=typer.colors.RED)
+        typer.secho(f"A critical error occurred during linting: {e}", fg=typer.colors.RED)
         raise typer.Exit(code=1)
 
     if error_count == 0:
-        typer.secho("✅ ACA library is valid.", fg=typer.colors.GREEN)
+        typer.secho("✅ All configured ACA libraries are valid.", fg=typer.colors.GREEN)
     else:
-        typer.secho(
-            f"\nLinting failed with {error_count} error(s).", fg=typer.colors.RED
-        )
+        typer.secho(f"\nLinting failed with {error_count} error(s).", fg=typer.colors.RED)
         raise typer.Exit(code=1)
