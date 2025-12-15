@@ -44,6 +44,18 @@ MESSAGES: Dict[str, str] = {
     "system.stats.pkg_item": "    - {name}",
     "system.stats.legacy_count": "  - Legacy Atoms: {count}",
     "system.stats.legacy_item": "      - {atom_id}",
+    # Info Command
+    "info.pkg.header": "Public interface for package '{name}':",
+    "info.pkg.item": "  - {key}: {desc}",
+    "info.pkg.no_desc": "(No description provided)",
+    "info.pkg.not_found": "Package '{name}' not found or has no public interface.",
+    # Debug Command
+    "debug.start": "Debugging lookup '{key}'...",
+    "debug.lookup_not_found": "Lookup '{key}' could not be resolved.",
+    "debug.result_header": "Resolved {count} atom(s):",
+    "debug.result_item": "  - {atom_id} (type: {type}, pkg: {pkg}, src: {src})",
+    "debug.no_results": "Lookup resolved to 0 atoms.",
+    # System
     "system.unexpected_error": "Unexpected error: {error}",
     "system.critical_lint_error": "Critical Lint Error: {error}",
 }

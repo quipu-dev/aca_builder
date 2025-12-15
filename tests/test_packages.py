@@ -12,7 +12,7 @@ from aca_builder.core import (
     evaluate_lookup,
     _resolve_lookup_by_key,
 )
-from aca_builder.exceptions import BuildError
+from aca_builder.domain.events import BuildError
 
 runner = CliRunner()
 

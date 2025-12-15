@@ -1,8 +1,10 @@
 import typer
 import subprocess
+from typing import Optional
 
 from . import config
 from .domain.events import BuildError
+from .domain.services import resolve_lookup_by_key, evaluate_lookup
 from .infra.filesystem import FSLibraryRepository, FSManifestRepository
 from .infra.bus import ConsoleMessageBus
 from .use_cases.linter import LinterService
@@ -102,10 +104,81 @@ def lint():
         raise typer.Exit(code=1)
 
 
-def info(list_legacy: bool = typer.Option(False, "--list-legacy")):
+def debug_lookup(
+    lookup_key: str = typer.Argument(..., help="The lookup key to debug, e.g., 'pkg::d1l-name'")
+):
+    """Debug a lookup key to see which atoms it resolves to."""
     lib_repo, _, bus = _bootstrap()
     app_config = config.load_config()
     library_paths = config.get_library_paths(app_config)
+
+    try:
+        library = lib_repo.load_library(library_paths, fail_fast=True)
+        interfaces = lib_repo.load_interfaces(library_paths)
+    except BuildError as e:
+        # Catch errors during library loading itself
+        bus.error("system.unexpected_error", error=str(e))
+        raise typer.Exit(code=1)
+
+    bus.info("debug.start", key=lookup_key)
+    lookup_def = resolve_lookup_by_key(lookup_key, None, interfaces)
+    if not lookup_def:
+        bus.error("debug.lookup_not_found", key=lookup_key)
+        raise typer.Exit(code=1)
+
+    try:
+        atom_ids = evaluate_lookup(library, lookup_def, interfaces)
+    except BuildError as e:
+        # Catch errors during lookup evaluation
+        bus.error("system.unexpected_error", error=str(e))
+        raise typer.Exit(code=1)
+
+    if not atom_ids:
+        bus.warn("debug.no_results")
+        return
+
+    bus.success("debug.result_header", count=len(atom_ids))
+    for atom_id in sorted(list(atom_ids)):
+        atom = library.get(atom_id)
+        if atom:
+            bus.info(
+                "debug.result_item",
+                atom_id=atom["id"],
+                type=atom["meta"]["type"],
+                pkg=atom.get("package") or "global",
+                src=atom["source_file"],
+            )
+
+
+def info(
+    list_legacy: bool = typer.Option(False, "--list-legacy", help="List all legacy (non-packaged) atoms."),
+    package: Optional[str] = typer.Option(None, "--package", "-p", help="Display public interface for a specific package.")
+):
+    """Display statistics about the ACA library, packages, or a specific package's interface."""
+    lib_repo, _, bus = _bootstrap()
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+
+    if package:
+        try:
+            interfaces = lib_repo.load_interfaces(library_paths)
+            found_lookups = []
+            for key, l_def in interfaces.get("lookups", {}).items():
+                if l_def.get("package") == package and l_def.get("visibility") == "public":
+                    found_lookups.append((key, l_def))
+
+            if not found_lookups:
+                bus.warn("info.pkg.not_found", name=package)
+                raise typer.Exit()
+
+            bus.success("info.pkg.header", name=package)
+            for key, l_def in sorted(found_lookups):
+                description = l_def.get("description", bus._format("info.pkg.no_desc"))
+                bus.info("info.pkg.item", key=key, desc=description)
+            return
+        except Exception as e:
+            bus.error("system.unexpected_error", error=str(e))
+            raise typer.Exit(code=1)
 
     try:
         library = lib_repo.load_library(library_paths, fail_fast=False)

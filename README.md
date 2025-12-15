@@ -87,6 +87,33 @@ another_package/system_watcher
 
 验证 `config.yaml` 中所有 `library_paths` 内组件库的完整性和规范性。
 
+### 3.4 查看信息 (Info)
+
+显示关于 ACA 库的统计信息，或查看特定包的公共接口。
+
+```bash
+# 显示库的总体统计信息
+aca-build info
+
+# 列出所有非包内的“遗留”原子
+aca-build info --list-legacy
+
+# 显示名为 'my_package' 的包的公共接口
+aca-build info --package my_package
+```
+
+### 3.5 调试接口 (Debug)
+
+解析一个特定的 `lookup key`，并显示它最终会引入哪些具体的原子。这对于调试复杂的依赖关系非常有用。
+
+```bash
+# 调试一个全局 lookup
+aca-build debug d1l-some-lookup
+
+# 调试一个在包 'my_package' 内的 lookup
+aca-build debug my_package::d1l-public-interface
+```
+
 ```bash
 aca-build lint
 ```
