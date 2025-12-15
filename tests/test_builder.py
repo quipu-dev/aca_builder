@@ -153,4 +153,4 @@ def test_build_fails_on_nonexistent_name(setup_test_environment):
 
     assert result.exit_code != 0
     # Build errors are explicitly sent to stderr
-    assert "Manifest name 'ghost_pkg/agent' not found" in result.stderr
+    assert "Manifest 'ghost_pkg/agent' not found" in result.stderr

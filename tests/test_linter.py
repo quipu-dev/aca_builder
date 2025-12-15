@@ -93,7 +93,7 @@ def test_lint_success(setup_lint_environment):
     result = runner.invoke(app, ["lint"])
     
     assert result.exit_code == 0, result.output
-    assert "All configured ACA libraries are valid" in result.output
+    assert "All libraries valid" in result.output
 
 
 def test_lint_broken_dependency(setup_lint_environment):
@@ -112,7 +112,7 @@ Content
 """)
     result = runner.invoke(app, ["lint"])
     assert result.exit_code != 0
-    assert "references non-existent Lookup 'd1l-non-existent'" in result.output
+    assert "Broken dependency 'd1l-non-existent'" in result.output
 
 
 def test_lint_d4_naming_violation_wrong_prefix(setup_lint_environment):
@@ -161,6 +161,6 @@ def test_lint_missing_required_metadata(setup_lint_environment):
 
     (lib_path / "d1/missing_id.md").write_text("---\ntype: d1\n---\nContent")
     result = runner.invoke(app, ["lint"])
-    
+
     assert result.exit_code != 0
     assert "missing required metadata 'id'" in result.output
