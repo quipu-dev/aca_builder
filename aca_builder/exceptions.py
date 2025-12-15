@@ -1,13 +1,6 @@
 # aca_builder/exceptions.py
 
+# Forward compatibility: Alias the new Domain Exception
+from aca_builder.domain.events import BuildError
 
-class BuildError(Exception):
-    """自定义构建错误"""
-
-    pass
-
-
-class LintError(Exception):
-    """Custom exception for linting errors."""
-
-    pass
+# LintError has been superseded by MessageBus error handling
