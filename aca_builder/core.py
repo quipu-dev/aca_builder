@@ -121,19 +121,26 @@ def select_atoms(library: Dict[str, Any], query: Dict[str, Any]) -> Set[str]:
         for key, query_value in query.items():
             atom_value = atom["meta"].get(key)
 
-            # 特殊处理 'domain' 字段
-            if key == "domain":
-                # 查询值和原子值都必须是列表
-                if not isinstance(query_value, list) or not isinstance(
-                    atom_value, list
-                ):
+            # 通用处理列表类型的字段 (如 domain, tags)
+            if isinstance(query_value, list) and isinstance(atom_value, list):
+                # 解析查询: 分离必须包含的项和必须排除的项
+                required = {v for v in query_value if isinstance(v, str) and not v.startswith("-")}
+                excluded = {v[1:] for v in query_value if isinstance(v, str) and v.startswith("-")}
+                
+                atom_set = set(atom_value)
+
+                # 1. 检查必须包含项 (AND 逻辑)
+                if not required.issubset(atom_set):
                     match = False
                     break
-                # 检查查询列表中的所有元素是否都存在于原子的 domain 列表中 (AND 逻辑)
-                if not set(query_value).issubset(set(atom_value)):
+                
+                # 2. 检查必须排除项 (NOT 逻辑)
+                # 如果交集不为空，说明包含被排除的项，匹配失败
+                if not excluded.isdisjoint(atom_set):
                     match = False
                     break
-            # 其他字段使用标准等值比较
+
+            # 其他情况使用标准等值比较
             else:
                 if atom_value != query_value:
                     match = False
