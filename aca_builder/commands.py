@@ -150,6 +150,43 @@ def build(
         raise typer.Exit(code=1)
 
 
+def info():
+    """Displays statistics about the ACA library, like packages and legacy atoms."""
+    try:
+        app_config = config.load_config()
+        library_paths = config.get_library_paths(app_config)
+        if not library_paths:
+            raise BuildError("No 'library_paths' configured.")
+
+        # We can use fail_fast=False to get a more complete picture even with some errors
+        library = load_library(library_paths, fail_fast=False)
+        if not library:
+            raise BuildError("No valid atoms found in libraries.")
+
+        packages = set()
+        legacy_atom_count = 0
+
+        for atom in library.values():
+            # Atoms inside a dir with package.yaml will have a package name
+            if pkg_name := atom.get("package"):
+                packages.add(pkg_name)
+            else:
+                # Kernel is a special case and doesn't belong to a package
+                if atom["meta"]["type"] != "kernel":
+                    legacy_atom_count += 1
+
+        typer.echo("ACA Library Stats:")
+        typer.secho(f"  - Unique Packages Found: {len(packages)}", fg=typer.colors.CYAN)
+        typer.secho(
+            f"  - Legacy Atoms (no package): {legacy_atom_count}",
+            fg=typer.colors.YELLOW,
+        )
+
+    except BuildError as e:
+        typer.secho(f"Error: {e}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1)
+
+
 def lint():
     """
     Validates libraries, checking for package structure and broken references.
