@@ -49,6 +49,7 @@ lookups:
       - query: { id: "d3-valid-p0" }
 """
 
+
 @pytest.fixture
 def setup_lint_environment(tmp_path: Path, monkeypatch):
     """
@@ -63,7 +64,7 @@ def setup_lint_environment(tmp_path: Path, monkeypatch):
     config_dir = tmp_path / "config"
     config_dir.mkdir()
     config_file = config_dir / "config.yaml"
-    
+
     config_data = {
         "library_paths": [str(lib_path)],
         # manifest_paths are not needed for linting libraries
@@ -89,9 +90,9 @@ def test_lint_success(setup_lint_environment):
     (lib_path / "d3/valid.md").write_text(VALID_D3_P0)
     (lib_path / "kernel.md").write_text(VALID_KERNEL)
     (lib_path / "d4/lookups.yaml").write_text(VALID_D4)
-    
+
     result = runner.invoke(app, ["lint"])
-    
+
     assert result.exit_code == 0, result.output
     assert "All libraries valid" in result.output
 
@@ -101,7 +102,7 @@ def test_lint_broken_dependency(setup_lint_environment):
     lib_path = setup_lint_environment
     # A valid library structure is needed for the linter to proceed
     (lib_path / "d2").mkdir()
-    (lib_path / "kernel.md").write_text(VALID_KERNEL) # Kernel is always required
+    (lib_path / "kernel.md").write_text(VALID_KERNEL)  # Kernel is always required
 
     (lib_path / "d2/broken_dep.md").write_text("""---
 id: d2-broken-dep

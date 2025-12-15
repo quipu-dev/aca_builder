@@ -87,11 +87,11 @@ def setup_test_environment(tmp_path: Path, monkeypatch):
     config_dir = tmp_path / "config"
     config_dir.mkdir()
     config_file = config_dir / "config.yaml"
-    
+
     config_data = {
         "library_paths": [str(lib_path)],
         "manifest_paths": [str(manifests_root)],
-        "post_process_hook": "cat" # Simple hook for testing
+        "post_process_hook": "cat",  # Simple hook for testing
     }
     config_file.write_text(yaml.dump(config_data))
 
@@ -108,20 +108,18 @@ def test_build_by_name(setup_test_environment):
 
     assert result.exit_code == 0, result.stdout
     assert "ACA Runtime Protocol" in result.stdout
-    assert "系统档案: Fhrsk" in result.stdout # from d1l-system-profile
-    assert "严禁伪造信息" in result.stdout # from d3l-core-safety
+    assert "系统档案: Fhrsk" in result.stdout  # from d1l-system-profile
+    assert "严禁伪造信息" in result.stdout  # from d3l-core-safety
 
 
 def test_build_by_file_path(setup_test_environment):
     """Test building a prompt using a direct file path, ensuring backward compatibility."""
     _, _, manifest_pkg_path = setup_test_environment
     manifest_file = manifest_pkg_path / "agent.yaml"
-    
+
     # We must run from a different directory to simulate a global call
     with runner.isolated_filesystem():
-        result = runner.invoke(
-            app, ["build", str(manifest_file), "--file"]
-        )
+        result = runner.invoke(app, ["build", str(manifest_file), "--file"])
 
         assert result.exit_code == 0, result.stdout
         assert "ACA Runtime Protocol" in result.stdout
@@ -131,7 +129,7 @@ def test_build_by_file_path(setup_test_environment):
 def test_list_manifests(setup_test_environment):
     """Test the 'list' command to ensure it finds and formats manifest names correctly."""
     result = runner.invoke(app, ["list"])
-    
+
     assert result.exit_code == 0
     assert "test_pkg/agent" in result.stdout.strip()
 
