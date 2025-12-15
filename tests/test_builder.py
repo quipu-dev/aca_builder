@@ -90,7 +90,7 @@ def setup_test_environment(tmp_path: Path, monkeypatch):
     
     config_data = {
         "library_paths": [str(lib_path)],
-        "manifest_paths": [str(manifest_pkg_path)],
+        "manifest_paths": [str(manifests_root)],
         "post_process_hook": "cat" # Simple hook for testing
     }
     config_file.write_text(yaml.dump(config_data))

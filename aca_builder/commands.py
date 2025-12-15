@@ -20,21 +20,16 @@ from .core import (
 )
 
 def _find_manifest_by_name(manifest_name: str, manifest_paths: List[Path]) -> Optional[Path]:
-    """Finds a manifest file by its name (e.g., 'package/manifest_name')."""
-    if "/" not in manifest_name:
-        raise BuildError(f"Invalid manifest name format: '{manifest_name}'. Must be 'package_name/manifest_file_name'.")
-    
-    package_name, file_stem = manifest_name.split("/", 1)
-
-    for man_path in manifest_paths:
-        if not man_path.exists():
+    """Finds a manifest file by its name (e.g., 'pkg/agent' or 'root_agent')."""
+    for base_path in manifest_paths:
+        if not base_path.is_dir():
             continue
         
-        # Check if manifest_path's parent directory name matches the package name
-        if man_path.name == package_name:
-            target_file = man_path / f"{file_stem}.yaml"
-            if target_file.is_file():
-                return target_file
+        # Construct a potential path relative to the base path
+        potential_path = base_path / f"{manifest_name}.yaml"
+        if potential_path.is_file():
+            return potential_path
+            
     return None
 
 def list_manifests(
@@ -45,22 +40,27 @@ def list_manifests(
     manifest_paths = config.get_manifest_paths(app_config)
     
     if not manifest_paths:
-        typer.secho("No 'manifest_paths' configured in ~/.config/aca/config.yaml", fg=typer.colors.YELLOW)
+        typer.secho("No 'manifest_paths' configured in ~/.config/aca/config.yaml", fg=typer.colors.YELLOW, err=True)
         return
 
-    found_any = False
-    for man_path in manifest_paths:
-        package_name = man_path.name
-        if not man_path.is_dir():
+    found_manifests = set()
+    for base_path in manifest_paths:
+        if not base_path.is_dir():
             continue
         
-        for yaml_file in man_path.glob("*.yaml"):
-            manifest_name = f"{package_name}/{yaml_file.stem}"
-            typer.echo(manifest_name)
-            found_any = True
+        # Use rglob to find all yaml files recursively
+        for yaml_file in base_path.rglob("*.yaml"):
+            # Create the manifest name relative to the base_path
+            relative_path = yaml_file.relative_to(base_path)
+            manifest_name = str(relative_path.with_suffix(''))
+            found_manifests.add(manifest_name)
     
-    if not found_any:
-        typer.secho("No manifest files found in the configured paths.", fg=typer.colors.YELLOW)
+    if not found_manifests:
+        typer.secho("No manifest files found in the configured paths.", fg=typer.colors.YELLOW, err=True)
+        return
+        
+    for name in sorted(list(found_manifests)):
+        typer.echo(name)
 
 
 def build(
