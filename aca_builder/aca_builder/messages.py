@@ -12,7 +12,6 @@ MESSAGES: Dict[str, str] = {
     "builder.lookup.not_found": "Manifest Error: Lookup '{key}' not found.",
     "builder.kernel.missing": "No 'type: kernel' atom found.",
     "builder.hook.fail": "Hook failed: {stderr}",
-    
     # Linter
     "linter.start": "Linting {count} path(s)...",
     "linter.atom.invalid_priority": "{atom_id}: Invalid priority.",
@@ -31,7 +30,6 @@ MESSAGES: Dict[str, str] = {
     "linter.kernel.count_error": "Global Error: Found {count} kernel atoms (expected 1).",
     "linter.success": "All libraries valid.",
     "linter.fail_summary": "\nLinting failed with {count} error(s).",
-    
     # Infra/System
     "system.parse_error": "Failed to parse atom {path}: {error}",
     "system.yaml_error": "Invalid YAML in manifest {name}: {error}",

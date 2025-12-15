@@ -1,5 +1,5 @@
 # aca_builder/messages.py
-from typing import Dict, Any
+from typing import Dict
 
 # 消息注册表：将 msg_id 映射到模板字符串
 MESSAGES: Dict[str, str] = {
@@ -12,7 +12,6 @@ MESSAGES: Dict[str, str] = {
     "builder.lookup.not_found": "Manifest Error: Lookup '{key}' not found.",
     "builder.kernel.missing": "No 'type: kernel' atom found.",
     "builder.hook.fail": "Hook failed: {stderr}",
-    
     # Linter
     "linter.start": "Linting {count} path(s)...",
     "linter.atom.parse_error": "Failed to parse atom {path}: {error}",
@@ -33,7 +32,6 @@ MESSAGES: Dict[str, str] = {
     "linter.kernel.count_error": "Global Error: Found {count} kernel atoms (expected 1).",
     "linter.success": "All libraries valid.",
     "linter.fail_summary": "\nLinting failed with {count} error(s).",
-    
     # Infra/System
     "system.parse_error": "Failed to parse atom {path}: {error}",
     "system.yaml_error": "Invalid YAML in manifest {name}: {error}",

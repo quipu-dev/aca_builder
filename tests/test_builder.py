@@ -102,14 +102,19 @@ def setup_test_environment(tmp_path: Path, monkeypatch):
 
     return tmp_path, lib_path, manifest_pkg_path
 
+
 @pytest.fixture
 def mock_deps(monkeypatch):
     mock_bus = MagicMock()
     # Builder 需要真实的文件系统 Repo，但使用 Mock Bus
     real_lib_repo = FSLibraryRepository()
     real_man_repo = FSManifestRepository()
-    monkeypatch.setattr("aca_builder.commands._bootstrap", lambda: (real_lib_repo, real_man_repo, mock_bus))
+    monkeypatch.setattr(
+        "aca_builder.commands._bootstrap",
+        lambda: (real_lib_repo, real_man_repo, mock_bus),
+    )
     return mock_bus
+
 
 def test_build_by_name(setup_test_environment):
     """Test building a prompt by using the 'package/name' identifier."""
@@ -162,4 +167,6 @@ def test_build_fails_on_nonexistent_name(setup_test_environment, mock_deps):
     # 验证意图：系统是否试图报告一个意外错误 (BuildError 被捕获)
     mock_deps.error.assert_called_once_with("system.unexpected_error", error=ANY)
     # 验证错误内容包含关键信息 (虽然是验证数据，但确保了错误链的正确传递)
-    assert "Manifest 'ghost_pkg/agent' not found" in str(mock_deps.error.call_args.kwargs['error'])
+    assert "Manifest 'ghost_pkg/agent' not found" in str(
+        mock_deps.error.call_args.kwargs["error"]
+    )

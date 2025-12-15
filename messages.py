@@ -1,5 +1,5 @@
 # aca_builder/messages.py
-from typing import Dict, Any
+from typing import Dict
 
 # 消息注册表：将 msg_id 映射到模板字符串
 MESSAGES: Dict[str, str] = {
@@ -12,11 +12,10 @@ MESSAGES: Dict[str, str] = {
     "builder.lookup.not_found": "Manifest Error: Lookup '{key}' not found.",
     "builder.kernel.missing": "No 'type: kernel' atom found.",
     "builder.hook.fail": "Hook failed: {stderr}",
-    
     # Linter
     "linter.start": "Linting {count} path(s)...",
-    "linter.atom.parse_error": "Failed to parse atom {path}: {error}", # Added for specific atom parsing errors
-    "linter.atom.duplicate_id": "Duplicate atom ID '{atom_id}' found.", # Added for specific duplicate ID error
+    "linter.atom.parse_error": "Failed to parse atom {path}: {error}",  # Added for specific atom parsing errors
+    "linter.atom.duplicate_id": "Duplicate atom ID '{atom_id}' found.",  # Added for specific duplicate ID error
     "linter.atom.invalid_priority": "{atom_id}: Invalid priority.",
     "linter.atom.legacy": "{atom_id}: Atom is not part of a package (legacy).",
     "linter.atom.broken_dep": "{atom_id} (pkg={pkg}): Broken dependency '{key}'.",
@@ -33,11 +32,10 @@ MESSAGES: Dict[str, str] = {
     "linter.kernel.count_error": "Global Error: Found {count} kernel atoms (expected 1).",
     "linter.success": "All libraries valid.",
     "linter.fail_summary": "\nLinting failed with {count} error(s).",
-    
     # Infra/System
     "system.parse_error": "Failed to parse atom {path}: {error}",
     "system.yaml_error": "Invalid YAML in manifest {name}: {error}",
-    "system.load_error": "Error loading manifest {path}: {error}", # For FSManifestRepository errors
+    "system.load_error": "Error loading manifest {path}: {error}",  # For FSManifestRepository errors
     "system.config.no_lib": "No 'library_paths' configured.",
     "system.config.no_manifest": "No 'manifest_paths' configured.",
     "system.list.no_manifests": "No manifests found.",
