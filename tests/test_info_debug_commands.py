@@ -124,12 +124,12 @@ def test_info_package_success(setup_test_env, mock_bus):
     assert mock_bus.info.call_count == 2
     mock_bus.info.assert_any_call(
         "info.pkg.item",
-        key="d1l-no-desc",
+        key="pkg_a::d1l-no-desc",
         desc="(No description provided)"
     )
     mock_bus.info.assert_any_call(
         "info.pkg.item",
-        key="d1l-public-api",
+        key="pkg_a::d1l-public-api",
         desc="The main public API for package A."
     )
 

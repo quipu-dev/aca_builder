@@ -93,8 +93,9 @@ class LinterService:
                 )  # Using msg_id
                 error_count += 1
 
+            lookup_name = key.split("::", 1)[-1]  # Get local name if namespaced
             expected_prefix = f"{pillar}l-"
-            if not key.startswith(expected_prefix):
+            if not lookup_name.startswith(expected_prefix):
                 self.bus.lint_error(
                     "linter.lookup.invalid_prefix", key=key, prefix=expected_prefix
                 )  # Using msg_id

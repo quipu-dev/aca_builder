@@ -45,21 +45,27 @@ def resolve_lookup_by_key(
 ) -> Optional[Dict[str, Any]]:
     """Resolves a lookup key checking visibility rules."""
     if "::" in ref_key:
-        # Absolute reference 'pkg::name'
+        # Absolute reference 'pkg::name'.
+        # First, check if it's a direct hit on a public (namespaced) key.
+        public_target = interfaces["lookups"].get(ref_key)
+        if public_target:
+            return public_target
+
+        # If not, it might be an attempt to access a private member.
         parts = ref_key.split("::", 1)
-        if len(parts) != 2:  # Should not happen if check "::"
+        if len(parts) != 2:
             return None
         pkg, name = parts
 
-        target = interfaces["lookups"].get(name)
-        if target and target.get("package") == pkg:
-            # Check visibility
-            if context_pkg != pkg and target.get("visibility") != "public":
+        private_target = interfaces["lookups"].get(name)
+        if private_target and private_target.get("package") == pkg:
+            # It's a valid member of the package. Now check visibility.
+            if context_pkg != pkg and private_target.get("visibility") != "public":
                 raise BuildError(
                     f"Access denied: '{name}' in package '{pkg}' is private."
                 )
-            return target
-        return None
+            return private_target
+        return None  # No public or private match found
     else:
         # Relative reference
         target = interfaces["lookups"].get(ref_key)
@@ -74,9 +80,8 @@ def resolve_lookup_by_key(
         if target.get("visibility") == "public":
             return target  # Public API
 
-        # Default: Permissive for now, or Strict logic?
-        # The original code was permissive but the lint test expects failure for explicit cross-pkg private access
-        # But for implicit relative access it was permissive 'return target'
+        # Permissive for implicit relative access to private members of other packages.
+        # This is for backward compatibility; strict linting should catch this.
         return target
 
 

@@ -112,28 +112,7 @@ class FSLibraryRepository(LibraryRepository):
             if not lib_root.exists():
                 continue
 
-            # 1. Package Exports
-            for pkg_file in lib_root.rglob("package.yaml"):
-                try:
-                    pkg_data = yaml.safe_load(pkg_file.read_text(encoding="utf-8"))
-                    pkg_name = pkg_data.get("name")
-                    if not pkg_name:
-                        continue
-
-                    exports = pkg_data.get("exports", {})
-                    for key, def_ in exports.items():
-                        if key in interfaces["lookups"]:
-                            raise BuildError(
-                                f"Duplicate lookup key '{key}' found in packages."
-                            )
-
-                        def_["package"] = pkg_name
-                        def_["visibility"] = "public"
-                        interfaces["lookups"][key] = def_
-                except Exception:
-                    continue
-
-            # 2. D4 Internal Lookups
+            # 1. D4 Internal Lookups (MUST be loaded first)
             for d4_file in lib_root.glob("**/d4/*.yaml"):
                 try:
                     pkg_info = self._find_package_config(d4_file.parent, lib_root)
@@ -144,12 +123,36 @@ class FSLibraryRepository(LibraryRepository):
                         if "lookups" in data:
                             for key, lookup_def in data["lookups"].items():
                                 if key in interfaces["lookups"]:
+                                    # First one wins, could be a warning later
                                     continue
                                 lookup_def["package"] = pkg_name
                                 lookup_def["visibility"] = "private"
                                 interfaces["lookups"][key] = lookup_def
                 except Exception:
                     continue
+            
+            # 2. Package Exports (Loaded second to layer on top)
+            for pkg_file in lib_root.rglob("package.yaml"):
+                try:
+                    pkg_data = yaml.safe_load(pkg_file.read_text(encoding="utf-8"))
+                    pkg_name = pkg_data.get("name")
+                    if not pkg_name:
+                        continue
+
+                    exports = pkg_data.get("exports", {})
+                    for key, def_ in exports.items():
+                        namespaced_key = f"{pkg_name}::{key}"
+                        if namespaced_key in interfaces["lookups"]:
+                            # With namespacing, any duplicate is a critical error.
+                            raise BuildError(
+                                f"Duplicate public lookup key '{key}' defined in package '{pkg_name}'."
+                            )
+
+                        def_["package"] = pkg_name
+                        def_["visibility"] = "public"
+                        interfaces["lookups"][namespaced_key] = def_
+                except Exception as e:
+                    raise BuildError(f"Error processing package file {pkg_file}: {e}")
 
         return interfaces
 
