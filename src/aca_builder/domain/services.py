@@ -1,10 +1,13 @@
-from typing import Dict, Any, Set, Optional
+from __future__ import annotations
+
+from typing import Any
+
 from .events import BuildError
 
 # --- Query and Resolution Logic (Pure Domain) ---
 
 
-def select_atoms_by_query(library: Dict[str, Any], query: Dict[str, Any]) -> Set[str]:
+def select_atoms_by_query(library: dict[str, Any], query: dict[str, Any]) -> set[str]:
     selected_ids = set()
     for atom_id, atom in library.items():
         match = True
@@ -41,8 +44,8 @@ def select_atoms_by_query(library: Dict[str, Any], query: Dict[str, Any]) -> Set
 
 
 def resolve_lookup_by_key(
-    ref_key: str, context_pkg: Optional[str], interfaces: Dict[str, Any]
-) -> Optional[Dict[str, Any]]:
+    ref_key: str, context_pkg: str | None, interfaces: dict[str, Any]
+) -> dict[str, Any] | None:
     """Resolves a lookup key checking visibility rules."""
     if "::" in ref_key:
         # Absolute reference 'pkg::name'.
@@ -86,11 +89,11 @@ def resolve_lookup_by_key(
 
 
 def evaluate_lookup(
-    library: Dict[str, Any],
-    lookup_def: Dict[str, Any],
-    interfaces: Dict[str, Any],
-    visited: Optional[Set[str]] = None,
-) -> Set[str]:
+    library: dict[str, Any],
+    lookup_def: dict[str, Any],
+    interfaces: dict[str, Any],
+    visited: set[str] | None = None,
+) -> set[str]:
     if visited is None:
         visited = set()
 
@@ -123,10 +126,10 @@ def evaluate_lookup(
 
 
 def resolve_dependencies(
-    initial_map: Dict[str, Set[str]],
-    library: Dict[str, Any],
-    interfaces: Dict[str, Any],
-) -> Dict[str, Set[str]]:
+    initial_map: dict[str, set[str]],
+    library: dict[str, Any],
+    interfaces: dict[str, Any],
+) -> dict[str, set[str]]:
     final_deps = initial_map.copy()
     to_process = list(initial_map.keys())
 
@@ -159,7 +162,7 @@ def resolve_dependencies(
 
 
 def serialize_prompt(
-    atom_lookup_map: Dict[str, Set[str]], library: Dict[str, Any]
+    atom_lookup_map: dict[str, set[str]], library: dict[str, Any]
 ) -> str:
     final_ids = atom_lookup_map.keys()
     atoms_to_serialize = [library[atom_id] for atom_id in final_ids]

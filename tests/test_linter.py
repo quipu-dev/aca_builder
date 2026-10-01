@@ -1,13 +1,14 @@
 # tests/test_linter.py
 
-import pytest
-from unittest.mock import MagicMock, ANY
 from pathlib import Path
-from typer.testing import CliRunner
-import yaml
+from unittest.mock import ANY, MagicMock
 
-from aca_builder.main import app
+import pytest
+import yaml
+from typer.testing import CliRunner
+
 from aca_builder.infra.filesystem import FSLibraryRepository, FSManifestRepository
+from aca_builder.main import app
 
 runner = CliRunner()
 
@@ -261,10 +262,13 @@ def test_lint_missing_required_metadata(setup_lint_environment, mock_deps):
     # 查找特定的调用来验证 error 参数内容
     found = False
     for call in mock_deps.lint_error.call_args_list:
-        if call.args[0] == "linter.atom.parse_error":
-            if "missing required metadata 'id'" in str(call.kwargs.get("error", "")):
-                found = True
-                break
+        if call.args[
+            0
+        ] == "linter.atom.parse_error" and "missing required metadata 'id'" in str(
+            call.kwargs.get("error", "")
+        ):
+            found = True
+            break
     assert found, (
         "Did not find expected 'missing required metadata' error in mock calls"
     )

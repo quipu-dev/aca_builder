@@ -1,13 +1,14 @@
 # tests/test_info_debug_commands.py
 
+from pathlib import Path
+from unittest.mock import ANY, MagicMock
+
 import pytest
 import yaml
-from pathlib import Path
-from unittest.mock import MagicMock, ANY
 from typer.testing import CliRunner
 
-from aca_builder.main import app
 from aca_builder.infra.filesystem import FSLibraryRepository, FSManifestRepository
+from aca_builder.main import app
 
 runner = CliRunner()
 
@@ -100,7 +101,10 @@ def mock_bus(monkeypatch):
     bus = MagicMock()
     # To format the "no description" message, the mock needs access to the real method
     from aca_builder.messages import MESSAGES
-    bus._format.side_effect = lambda msg_id, **kwargs: MESSAGES.get(msg_id, "").format(**kwargs)
+
+    bus._format.side_effect = lambda msg_id, **kwargs: MESSAGES.get(msg_id, "").format(
+        **kwargs
+    )
 
     real_lib_repo = FSLibraryRepository()
     real_man_repo = FSManifestRepository()
@@ -113,6 +117,7 @@ def mock_bus(monkeypatch):
 
 # --- Tests for `info` command ---
 
+
 def test_info_package_success(setup_test_env, mock_bus):
     """Test `info --package` shows public lookups correctly."""
     result = runner.invoke(app, ["info", "--package", "pkg_a"])
@@ -123,14 +128,12 @@ def test_info_package_success(setup_test_env, mock_bus):
     # Check that both public lookups were printed
     assert mock_bus.info.call_count == 2
     mock_bus.info.assert_any_call(
-        "info.pkg.item",
-        key="pkg_a::d1l-no-desc",
-        desc="(No description provided)"
+        "info.pkg.item", key="pkg_a::d1l-no-desc", desc="(No description provided)"
     )
     mock_bus.info.assert_any_call(
         "info.pkg.item",
         key="pkg_a::d1l-public-api",
-        desc="The main public API for package A."
+        desc="The main public API for package A.",
     )
 
 
@@ -152,13 +155,16 @@ def test_info_package_no_exports(setup_test_env, mock_bus):
 
 # --- Tests for `debug` command ---
 
+
 def test_debug_lookup_success_simple(setup_test_env, mock_bus):
     """Test `debug` on a lookup with a direct query."""
     result = runner.invoke(app, ["debug", "pkg_a::d1l-no-desc"])
 
     assert result.exit_code == 0
     mock_bus.success.assert_called_once_with("debug.result_header", count=1)
-    mock_bus.info.assert_any_call("debug.result_item", atom_id="atom-a-extra", type="d1", pkg="pkg_a", src=ANY)
+    mock_bus.info.assert_any_call(
+        "debug.result_item", atom_id="atom-a-extra", type="d1", pkg="pkg_a", src=ANY
+    )
 
 
 def test_debug_lookup_success_with_ref(setup_test_env, mock_bus):
@@ -167,7 +173,9 @@ def test_debug_lookup_success_with_ref(setup_test_env, mock_bus):
 
     assert result.exit_code == 0
     mock_bus.success.assert_called_once_with("debug.result_header", count=1)
-    mock_bus.info.assert_any_call("debug.result_item", atom_id="atom-a-core", type="d1", pkg="pkg_a", src=ANY)
+    mock_bus.info.assert_any_call(
+        "debug.result_item", atom_id="atom-a-core", type="d1", pkg="pkg_a", src=ANY
+    )
 
 
 def test_debug_lookup_not_found(setup_test_env, mock_bus):

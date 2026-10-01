@@ -1,9 +1,10 @@
-from typing import List
+from __future__ import annotations
+
 from pathlib import Path
 
-from aca_builder.domain.ports import MessageBus, LibraryRepository, ManifestRepository
-from aca_builder.domain.services import resolve_lookup_by_key, evaluate_lookup
 from aca_builder.domain.events import BuildError
+from aca_builder.domain.ports import LibraryRepository, ManifestRepository, MessageBus
+from aca_builder.domain.services import evaluate_lookup, resolve_lookup_by_key
 
 
 class LinterService:
@@ -17,7 +18,7 @@ class LinterService:
         self.lib_repo = library_repo
         self.man_repo = manifest_repo
 
-    def lint(self, library_paths: List[Path], manifest_paths: List[Path]):
+    def lint(self, library_paths: list[Path], manifest_paths: list[Path]):
         self.bus.info("linter.start", count=len(library_paths))  # Using msg_id
         error_count = 0
 
@@ -47,12 +48,13 @@ class LinterService:
             if meta["type"] == "kernel":
                 kernel_count += 1
 
-            if meta["type"] == "d3":
-                if "priority" not in meta or meta["priority"] not in [0, 1, 2]:
-                    self.bus.lint_error(
-                        "linter.atom.invalid_priority", atom_id=atom_id
-                    )  # Using msg_id
-                    error_count += 1
+            if meta["type"] == "d3" and (
+                "priority" not in meta or meta["priority"] not in [0, 1, 2]
+            ):
+                self.bus.lint_error(
+                    "linter.atom.invalid_priority", atom_id=atom_id
+                )  # Using msg_id
+                error_count += 1
 
             # Legacy atom check is a warning
             if not pkg and meta["type"] != "kernel":
@@ -73,14 +75,13 @@ class LinterService:
                         if (
                             pkg != target.get("package")
                             and target.get("visibility") != "public"
-                        ):
-                            if target.get("package") is not None:
-                                self.bus.warn(
-                                    "linter.lookup.private_access",
-                                    atom_id=atom_id,
-                                    key=lookup_key,
-                                    target_pkg=target.get("package"),
-                                )  # Using msg_id
+                        ) and target.get("package") is not None:
+                            self.bus.warn(
+                                "linter.lookup.private_access",
+                                atom_id=atom_id,
+                                key=lookup_key,
+                                target_pkg=target.get("package"),
+                            )  # Using msg_id
 
         # 2. Validate Lookups (D4)
         for key, l_def in interfaces["lookups"].items():
@@ -180,7 +181,7 @@ class LinterService:
                     error=str(e),
                 )  # Using msg_id
                 error_count += 1
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.bus.lint_error(
                     "linter.manifest.unexpected_error",
                     manifest=m_path.stem,

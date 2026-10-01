@@ -2,14 +2,22 @@
 # This file ensures backward compatibility for tests importing 'aca_builder.core'
 # while logic has moved to domain/infra services.
 
-from .infra.filesystem import FSLibraryRepository as _Repo
 from .domain.services import (
-    select_atoms_by_query as _select,
     evaluate_lookup as _eval,
+)
+from .domain.services import (
     resolve_dependencies as _resolve,
-    serialize_prompt as _serialize,
+)
+from .domain.services import (
     resolve_lookup_by_key as _resolve_key,
 )
+from .domain.services import (
+    select_atoms_by_query as _select,
+)
+from .domain.services import (
+    serialize_prompt as _serialize,
+)
+from .infra.filesystem import FSLibraryRepository as _Repo
 
 _repo = _Repo()
 

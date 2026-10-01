@@ -2,7 +2,7 @@
 
 import typer
 
-from .commands import build, info, lint, list_manifests, debug_lookup
+from .commands import build, debug_lookup, info, lint, list_manifests
 
 app = typer.Typer(help="ACA (Axiomatic Component Architecture) Prompt Builder")
 

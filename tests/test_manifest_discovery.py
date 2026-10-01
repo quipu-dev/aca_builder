@@ -1,9 +1,10 @@
 # tests/test_manifest_discovery.py
 
-import pytest
 from pathlib import Path
-from typer.testing import CliRunner
+
+import pytest
 import yaml
+from typer.testing import CliRunner
 
 from aca_builder.main import app
 

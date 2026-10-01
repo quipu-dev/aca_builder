@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -11,14 +12,14 @@ class Event:
 class LogEvent(Event):
     message: str
     level: str = "INFO"  # INFO, WARN, ERROR, SUCCESS
-    context: Optional[str] = None
+    context: str | None = None
 
 
 @dataclass
 class LintError(LogEvent):
     level: str = "ERROR"
-    file_path: Optional[str] = None
-    line: Optional[int] = None
+    file_path: str | None = None
+    line: int | None = None
 
 
 @dataclass
@@ -36,5 +37,3 @@ class BuildError(Exception):
 
 class SystemError(Exception):
     """Infrastructure/System level failures."""
-
-    pass

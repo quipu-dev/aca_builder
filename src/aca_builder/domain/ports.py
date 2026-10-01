@@ -1,4 +1,7 @@
-from typing import Protocol, List, Dict, Any, Optional
+from __future__ import annotations
+
+from typing import Any, Protocol
+
 from .events import Event
 
 
@@ -27,16 +30,16 @@ class MessageBus(Protocol):
 
 
 class LibraryRepository(Protocol):
-    def load_library(self, paths: List[Any]) -> Dict[str, Any]:
+    def load_library(self, paths: list[Any]) -> dict[str, Any]:
         """Loads atoms from storage."""
         ...
 
-    def load_interfaces(self, paths: List[Any]) -> Dict[str, Any]:
+    def load_interfaces(self, paths: list[Any]) -> dict[str, Any]:
         """Loads D4 interfaces/lookups from storage."""
         ...
 
 
 class ManifestRepository(Protocol):
-    def find_manifest(self, name: str, search_paths: List[Any]) -> Optional[Any]: ...
+    def find_manifest(self, name: str, search_paths: list[Any]) -> Any | None: ...
 
-    def load_manifest(self, path: Any) -> Dict[str, Any]: ...
+    def load_manifest(self, path: Any) -> dict[str, Any]: ...

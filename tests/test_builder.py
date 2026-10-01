@@ -1,13 +1,14 @@
 # tests/test_builder.py
 
-import pytest
-from unittest.mock import MagicMock, ANY
 from pathlib import Path
-from typer.testing import CliRunner
-import yaml
+from unittest.mock import ANY, MagicMock
 
-from aca_builder.main import app
+import pytest
+import yaml
+from typer.testing import CliRunner
+
 from aca_builder.infra.filesystem import FSLibraryRepository, FSManifestRepository
+from aca_builder.main import app
 
 runner = CliRunner()
 
@@ -127,18 +128,21 @@ def test_build_by_name(setup_test_environment):
     assert "严禁伪造信息" in result.stdout  # from d3l-core-safety
 
 
-def test_build_by_file_path(setup_test_environment):
+def test_build_by_file_path(setup_test_environment, monkeypatch):
     """Test building a prompt using a direct file path, ensuring backward compatibility."""
-    _, _, manifest_pkg_path = setup_test_environment
+    tmp_path, _, manifest_pkg_path = setup_test_environment
     manifest_file = manifest_pkg_path / "agent.yaml"
 
     # We must run from a different directory to simulate a global call
-    with runner.isolated_filesystem():
-        result = runner.invoke(app, ["build", str(manifest_file), "--file"])
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir()
+    monkeypatch.chdir(outside_dir)
 
-        assert result.exit_code == 0, result.stdout
-        assert "ACA Runtime Protocol" in result.stdout
-        assert "系统档案: Fhrsk" in result.stdout
+    result = runner.invoke(app, ["build", str(manifest_file), "--file"])
+
+    assert result.exit_code == 0, result.stdout
+    assert "ACA Runtime Protocol" in result.stdout
+    assert "系统档案: Fhrsk" in result.stdout
 
 
 def test_list_manifests(setup_test_environment):

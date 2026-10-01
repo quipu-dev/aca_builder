@@ -11,7 +11,7 @@ authors = [
 description = "A builder for the Axiomatic Component Architecture (ACA)."
 requires-python = ">=3.8"
 dependencies = [
-    "typer[all]",
+    "typer",
     "pyyaml",
 ]
 
@@ -22,3 +22,10 @@ dev = [
 
 [project.scripts]
 aca-build = "aca_builder.main:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

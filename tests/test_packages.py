@@ -1,18 +1,19 @@
 # tests/test_packages.py
 
-import pytest
 from pathlib import Path
-from typer.testing import CliRunner
-import yaml
 
-from aca_builder.main import app
+import pytest
+import yaml
+from typer.testing import CliRunner
+
 from aca_builder.core import (
-    load_library,
-    load_interfaces,
-    evaluate_lookup,
     _resolve_lookup_by_key,
+    evaluate_lookup,
+    load_interfaces,
+    load_library,
 )
 from aca_builder.domain.events import BuildError
+from aca_builder.main import app
 
 runner = CliRunner()
 

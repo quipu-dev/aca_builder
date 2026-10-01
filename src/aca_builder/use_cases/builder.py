@@ -1,14 +1,16 @@
-from typing import List
+from __future__ import annotations
+
 from pathlib import Path
+
+from aca_builder.domain.events import BuildError
 from aca_builder.domain.ports import LibraryRepository, ManifestRepository
 from aca_builder.domain.services import (
-    select_atoms_by_query,
     evaluate_lookup,
     resolve_dependencies,
-    serialize_prompt,
     resolve_lookup_by_key,
+    select_atoms_by_query,
+    serialize_prompt,
 )
-from aca_builder.domain.events import BuildError
 from aca_builder.messages import MESSAGES  # 新增导入
 
 
@@ -20,8 +22,8 @@ class BuilderService:
     def build_prompt(
         self,
         manifest_identifier: str,
-        library_paths: List[Path],
-        manifest_paths: List[Path],
+        library_paths: list[Path],
+        manifest_paths: list[Path],
         is_file_path: bool = False,
     ) -> str:
         # 1. Resolve Manifest Path
