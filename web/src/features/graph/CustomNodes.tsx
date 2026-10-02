@@ -98,7 +98,7 @@ export function AtomNode({ data }: { data: AtomNodeData }) {
       <div className="flex items-center justify-between gap-1 mb-1">
         <UiBadge variant={variant} className="text-[10px] uppercase font-mono px-1.5 py-0">
           {data.type}
-          {data.priority !== undefined && `-P${data.priority}`}
+          {typeof data.priority === 'number' && `-P${data.priority}`}
         </UiBadge>
         <div className="flex items-center gap-1">
           <span className="text-[10px] text-slate-500 font-mono truncate max-w-[70px]">

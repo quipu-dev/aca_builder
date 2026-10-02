@@ -1,6 +1,5 @@
 import { CommandPalette } from '@/components/CommandPalette';
 import { Button } from '@/components/ui/button';
-import { SplitPane } from '@/components/ui/split-pane';
 import { AtomEditorTab } from '@/features/authoring/AtomEditorTab';
 import { LookupEditorTab } from '@/features/authoring/LookupEditorTab';
 import { ManifestEditorTab } from '@/features/composer/ManifestEditorTab';
@@ -11,7 +10,8 @@ import {
   AlertCircle,
   AlertOctagon,
   AlertTriangle,
-  Columns,
+  ArrowLeft,
+  ArrowRight,
   Cpu,
   ExternalLink,
   FilePlus2,
@@ -167,23 +167,50 @@ export function App() {
       fetchLintReport();
     });
 
-    // 全局快捷键监听: Ctrl+P 唤起命令面板，Ctrl+T 新建标签页
+    // 全局快捷键监听: Ctrl+P 唤起命令面板，Ctrl+T 新建标签页，Cmd+[ 后退，Cmd+] 前进
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+      const isMod = e.metaKey || e.ctrlKey;
+      if (isMod && e.key.toLowerCase() === 'p') {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 't') {
+      } else if (isMod && e.key.toLowerCase() === 't') {
         e.preventDefault();
         handleCreateEmptyTab();
+      } else if (isMod && e.key === '[') {
+        e.preventDefault();
+        ideStore.goBack();
+      } else if (isMod && e.key === ']') {
+        e.preventDefault();
+        ideStore.goForward();
+      } else if (e.altKey && e.key === 'ArrowLeft') {
+        e.preventDefault();
+        ideStore.goBack();
+      } else if (e.altKey && e.key === 'ArrowRight') {
+        e.preventDefault();
+        ideStore.goForward();
       }
     };
+
+    // 鼠标侧键原生后退/前进监听
+    const handleMouseUp = (e: MouseEvent) => {
+      if (e.button === 3) {
+        e.preventDefault();
+        ideStore.goBack();
+      } else if (e.button === 4) {
+        e.preventDefault();
+        ideStore.goForward();
+      }
+    };
+
     window.addEventListener('keydown', handleGlobalKeyDown);
+    window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
       eventSource.close();
       window.removeEventListener('keydown', handleGlobalKeyDown);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [fetchAssets, fetchLintReport]);
+  }, [fetchAssets, fetchLintReport, ideStore.goBack, ideStore.goForward]);
 
   const handleOpenManifestTab = (mName: string, e?: React.MouseEvent) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
@@ -322,7 +349,8 @@ export function App() {
   }, [fetchAssets, fetchLintReport]);
 
   const activeTab = ideStore.tabs.find((t) => t.id === ideStore.activeTabId);
-  const splitTab = ideStore.tabs.find((t) => t.id === ideStore.splitTabId);
+  const canGoBack = ideStore.historyIndex > 0;
+  const canGoForward = ideStore.historyIndex < ideStore.navigationHistory.length - 1;
 
   return (
     <div className="flex h-screen flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans select-none">
@@ -334,6 +362,28 @@ export function App() {
           <span className="text-[10px] text-indigo-300 font-mono bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-800/40">
             {status}
           </span>
+
+          {/* 类似浏览器的历史导航按钮组 */}
+          <div className="flex items-center gap-0.5 border-l border-slate-800 pl-3 ml-1">
+            <button
+              type="button"
+              onClick={ideStore.goBack}
+              disabled={!canGoBack}
+              className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors"
+              title="后退 (Cmd + [ 或 Alt + ←)"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={ideStore.goForward}
+              disabled={!canGoForward}
+              className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors"
+              title="前进 (Cmd + ] 或 Alt + →)"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center space-x-2">
@@ -358,21 +408,6 @@ export function App() {
           >
             <Plus className="h-3 w-3" /> 新建原子
           </Button>
-
-          {/* 分屏开关按钮 */}
-          <button
-            type="button"
-            onClick={ideStore.toggleSplit}
-            className={`p-1.5 rounded border text-xs font-mono transition-colors flex items-center gap-1 ${
-              ideStore.isSplitActive
-                ? 'border-indigo-500 bg-indigo-950/80 text-indigo-300 font-semibold'
-                : 'border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
-            }`}
-            title="开启/关闭并排分屏视口 (Split View)"
-          >
-            <Columns className="h-3.5 w-3.5" />
-            <span className="text-[11px]">{ideStore.isSplitActive ? '关闭分屏' : '并排分屏'}</span>
-          </button>
 
           {/* 底部诊断抽屉开关 */}
           <button
@@ -526,7 +561,6 @@ export function App() {
           <div className="flex items-center border-b border-slate-800 bg-slate-900/60 overflow-x-auto shrink-0 scrollbar-none">
             {ideStore.tabs.map((tab) => {
               const isActive = tab.id === ideStore.activeTabId;
-              const isSecondary = tab.id === ideStore.splitTabId;
               return (
                 <div
                   key={tab.id}
@@ -540,9 +574,7 @@ export function App() {
                   className={`group flex items-center gap-2 px-3.5 py-2 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 ${
                     isActive
                       ? 'bg-slate-950 text-indigo-300 border-t-2 border-t-indigo-500 font-semibold'
-                      : isSecondary
-                        ? 'bg-slate-950/70 text-purple-300 border-t-2 border-t-purple-500'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent'
                   }`}
                 >
                   <span className="truncate max-w-[140px]">{tab.title}</span>
@@ -574,77 +606,30 @@ export function App() {
             </button>
           </div>
 
-          {/* 编辑器视口：单视口 VS 左右分屏视口 (SplitPane) */}
+          {/* 编辑器视口 */}
           <div className="flex-1 overflow-hidden relative">
-            {ideStore.isSplitActive ? (
-              <SplitPane
-                direction="horizontal"
-                initialRatio={0.5}
-                primary={
-                  <div className="h-full w-full relative overflow-hidden">
-                    {ideStore.tabs.map((tab) => (
-                      <TabPane
-                        key={tab.id}
-                        tab={tab}
-                        isActive={tab.id === ideStore.activeTabId}
-                        packages={packages}
-                        manifestsCount={manifests.length}
-                        onSaved={handleTabSaved}
-                        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-                        onCreateManifest={handleCreateNewManifest}
-                        onCreateAtom={handleCreateNewAtomDraft}
-                      />
-                    ))}
-                  </div>
-                }
-                secondary={
-                  <div className="h-full overflow-hidden border-l border-slate-800">
-                    {splitTab ? (
-                      <TabPane
-                        key={`split_${splitTab.id}`}
-                        tab={splitTab}
-                        isActive={true}
-                        packages={packages}
-                        manifestsCount={manifests.length}
-                        onSaved={handleTabSaved}
-                        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-                        onCreateManifest={handleCreateNewManifest}
-                        onCreateAtom={handleCreateNewAtomDraft}
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-xs text-slate-600 font-mono">
-                        未选择分屏视口内容
-                      </div>
-                    )}
-                  </div>
-                }
+            {ideStore.tabs.length === 0 ? (
+              <EmptyTab
+                manifestsCount={manifests.length}
+                packagesCount={packages.length}
+                onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+                onCreateManifest={handleCreateNewManifest}
+                onCreateAtom={handleCreateNewAtomDraft}
               />
             ) : (
-              <div className="h-full w-full relative overflow-hidden">
-                {ideStore.tabs.length === 0 ? (
-                  <EmptyTab
-                    manifestsCount={manifests.length}
-                    packagesCount={packages.length}
-                    onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-                    onCreateManifest={handleCreateNewManifest}
-                    onCreateAtom={handleCreateNewAtomDraft}
-                  />
-                ) : (
-                  ideStore.tabs.map((tab) => (
-                    <TabPane
-                      key={tab.id}
-                      tab={tab}
-                      isActive={tab.id === ideStore.activeTabId}
-                      packages={packages}
-                      manifestsCount={manifests.length}
-                      onSaved={handleTabSaved}
-                      onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-                      onCreateManifest={handleCreateNewManifest}
-                      onCreateAtom={handleCreateNewAtomDraft}
-                    />
-                  ))
-                )}
-              </div>
+              ideStore.tabs.map((tab) => (
+                <TabPane
+                  key={tab.id}
+                  tab={tab}
+                  isActive={tab.id === ideStore.activeTabId}
+                  packages={packages}
+                  manifestsCount={manifests.length}
+                  onSaved={handleTabSaved}
+                  onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+                  onCreateManifest={handleCreateNewManifest}
+                  onCreateAtom={handleCreateNewAtomDraft}
+                />
+              ))
             )}
           </div>
 

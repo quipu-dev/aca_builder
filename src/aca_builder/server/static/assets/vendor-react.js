@@ -6904,6 +6904,26 @@ const ArrowDown = createLucideIcon("ArrowDown", [
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
+const ArrowLeft = createLucideIcon("ArrowLeft", [
+  ["path", { d: "m12 19-7-7 7-7", key: "1l729n" }],
+  ["path", { d: "M19 12H5", key: "x3x0zl" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const ArrowRight = createLucideIcon("ArrowRight", [
+  ["path", { d: "M5 12h14", key: "1ays0h" }],
+  ["path", { d: "m12 5 7 7-7 7", key: "xquz4c" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
 const ArrowUp = createLucideIcon("ArrowUp", [
   ["path", { d: "m5 12 7-7 7 7", key: "hav0vg" }],
   ["path", { d: "M12 19V5", key: "x0mq9r" }]
@@ -6996,30 +7016,10 @@ const CircleCheckBig = createLucideIcon("CircleCheckBig", [
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const CircleCheck = createLucideIcon("CircleCheck", [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
-]);
-/**
- * @license lucide-react v0.468.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
 const CodeXml = createLucideIcon("CodeXml", [
   ["path", { d: "m18 16 4-4-4-4", key: "1inbqp" }],
   ["path", { d: "m6 8-4 4 4 4", key: "15zrgr" }],
   ["path", { d: "m14.5 4-5 16", key: "e7oirm" }]
-]);
-/**
- * @license lucide-react v0.468.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const Columns2 = createLucideIcon("Columns2", [
-  ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", key: "afitv7" }],
-  ["path", { d: "M12 3v18", key: "108xh3" }]
 ]);
 /**
  * @license lucide-react v0.468.0 - ISC
@@ -11579,38 +11579,38 @@ function ResizeControl({ nodeId, position, variant = ResizeControlVariant.Handle
 }
 reactExports.memo(ResizeControl);
 export {
-  FileCode as $,
-  index as A,
+  FilePlus2 as $,
+  Plus as A,
   Box as B,
   CircleAlert as C,
-  Background as D,
+  Link2 as D,
   ExternalLink as E,
   Filter as F,
-  BackgroundVariant as G,
+  Trash2 as G,
   Handle as H,
-  Controls as I,
-  SlidersVertical as J,
-  Eye as K,
+  Eye as I,
+  RotateCcw as J,
+  SlidersVertical as K,
   Layers as L,
   Markdown as M,
   Network as N,
   ArrowUp as O,
-  Plus as P,
+  PenLine as P,
   ArrowDown as Q,
   React as R,
   Search as S,
   Tag as T,
-  RotateCcw as U,
-  ChevronRight as V,
+  ChevronRight as U,
+  Package as V,
   WandSparkles as W,
   X,
-  Package as Y,
-  Globe as Z,
-  Lock as _,
+  Globe as Y,
+  Lock as Z,
+  FileCode as _,
   Sparkles as a,
-  FilePlus2 as a0,
-  MousePointerClick as a1,
-  Columns2 as a2,
+  MousePointerClick as a0,
+  ArrowLeft as a1,
+  ArrowRight as a2,
   ShieldCheck as a3,
   FolderTree as a4,
   RefreshCw as a5,
@@ -11625,20 +11625,20 @@ export {
   hastToReact as h,
   ReactCodeMirror as i,
   jsxRuntimeExports as j,
-  CircleCheck as k,
-  Link2 as l,
-  Trash2 as m,
-  CodeXml as n,
-  ChartColumn as o,
-  ChevronUp as p,
-  ChevronDown as q,
+  CodeXml as k,
+  ChartColumn as l,
+  ChevronUp as m,
+  ChevronDown as n,
+  Copy as o,
+  Pen as p,
+  TriangleAlert as q,
   reactExports as r,
-  Copy as s,
-  PenLine as t,
-  Pen as u,
-  TriangleAlert as v,
-  useNodesState as w,
-  useEdgesState as x,
-  Cpu as y,
-  CircleCheckBig as z
+  useEdgesState as s,
+  Cpu as t,
+  useNodesState as u,
+  CircleCheckBig as v,
+  index as w,
+  Background as x,
+  BackgroundVariant as y,
+  Controls as z
 };

@@ -159,39 +159,37 @@ def get_assets_overview() -> dict[str, Any]:
     }
 
 
-@router.get("/graph")
-def get_dependency_graph(manifest: str) -> dict[str, Any]:
-    """生成指定 Manifest 的完整依赖有向图 (DAG: nodes & edges)"""
+def _build_topology_graph(
+    manifest_label: str,
+    manifest_data: dict[str, Any],
+    library: dict[str, Any],
+    interfaces: dict[str, Any],
+) -> dict[str, Any]:
+    """核心算法：基于 Manifest 数据、原子库和接口映射生成 DAG 依赖图谱"""
+    import copy
     import time
 
     t_start = time.perf_counter()
 
-    lib_repo, man_repo, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
-    manifest_paths = config.get_manifest_paths(app_config)
-
-    manifest_path = man_repo.find_manifest(manifest, manifest_paths)
-    if not manifest_path:
-        print(f"[ACA Graph] [404] 未找到清单: {manifest}")
-        raise HTTPException(status_code=404, detail=f"Manifest '{manifest}' not found")
-
-    manifest_data = man_repo.load_manifest(manifest_path)
-    library = lib_repo.load_library(library_paths, fail_fast=False)
-    interfaces = lib_repo.load_interfaces(library_paths)
+    # 安全应用 overrides 覆写选择器规则
+    if "overrides" in manifest_data and isinstance(manifest_data["overrides"], dict):
+        interfaces = copy.deepcopy(interfaces)
+        for lkey, override in manifest_data["overrides"].items():
+            if lkey in interfaces.get("lookups", {}):
+                interfaces["lookups"][lkey]["selectors"] = override.get("selectors", [])
 
     nodes: list[dict[str, Any]] = []
     edges: list[dict[str, Any]] = []
     visited_nodes: set[str] = set()
     visited_edges: set[tuple[str, str]] = set()
 
-    manifest_node_id = f"manifest::{manifest}"
+    manifest_node_id = f"manifest::{manifest_label}"
     nodes.append(
         {
             "id": manifest_node_id,
             "type": "manifestNode",
             "data": {
-                "label": manifest,
+                "label": manifest_label,
                 "version": manifest_data.get("version", "1.0"),
                 "description": manifest_data.get("description", ""),
             },
@@ -316,11 +314,57 @@ def get_dependency_graph(manifest: str) -> dict[str, Any]:
 
     elapsed_ms = (time.perf_counter() - t_start) * 1000
     print(
-        f"[ACA Graph] 清单 '{manifest}' 拓扑生成成功: {len(nodes)} 个节点, "
+        f"[ACA Graph] 清单 '{manifest_label}' 拓扑生成成功: {len(nodes)} 个节点, "
         f"{len(edges)} 条关系边, 耗时: {elapsed_ms:.2f}ms"
     )
 
     return {"nodes": nodes, "edges": edges}
+
+
+class AdhocGraphRequest(BaseModel):
+    name: str = "draft"
+    imports: list[dict[str, Any]]
+    overrides: dict[str, Any] | None = None
+
+
+@router.post("/graph/adhoc")
+def get_adhoc_dependency_graph(req: AdhocGraphRequest) -> dict[str, Any]:
+    """根据内存中正在编辑的草稿组件及覆写，即席演算生成有向无环图 (Live Topology Debug)"""
+    lib_repo, _, _ = _bootstrap()
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+
+    library = lib_repo.load_library(library_paths, fail_fast=False)
+    interfaces = lib_repo.load_interfaces(library_paths)
+
+    manifest_data = {
+        "name": req.name,
+        "imports": req.imports,
+    }
+    if req.overrides:
+        manifest_data["overrides"] = req.overrides
+
+    return _build_topology_graph(req.name, manifest_data, library, interfaces)
+
+
+@router.get("/graph")
+def get_dependency_graph(manifest: str) -> dict[str, Any]:
+    """生成指定 Manifest 的完整依赖有向图 (DAG: nodes & edges)"""
+    lib_repo, man_repo, _ = _bootstrap()
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+    manifest_paths = config.get_manifest_paths(app_config)
+
+    manifest_path = man_repo.find_manifest(manifest, manifest_paths)
+    if not manifest_path:
+        print(f"[ACA Graph] [404] 未找到清单: {manifest}")
+        raise HTTPException(status_code=404, detail=f"Manifest '{manifest}' not found")
+
+    manifest_data = man_repo.load_manifest(manifest_path)
+    library = lib_repo.load_library(library_paths, fail_fast=False)
+    interfaces = lib_repo.load_interfaces(library_paths)
+
+    return _build_topology_graph(manifest, manifest_data, library, interfaces)
 
 
 class AdhocCompileRequest(BaseModel):
@@ -692,6 +736,219 @@ def evaluate_lookup_adhoc(req: EvaluateLookupRequest) -> dict[str, Any]:
         )
 
     return {"matched_atoms": matched_atoms, "count": len(matched_atoms)}
+
+
+class AdhocLookupCompileRequest(BaseModel):
+    key: str = "adhoc-lookup"
+    selectors: list[dict[str, Any]]
+    package: str | None = None
+    pillar: str = "d1"
+    apply_hook: bool = False
+
+
+@router.post("/lookups/compile-adhoc", response_model=BuildResponse)
+def compile_lookup_adhoc(req: AdhocLookupCompileRequest):
+    """根据 Lookup 选择器及其传递闭包依赖，生成局部切片 Prompt 与结构化 Chunks"""
+    lib_repo, _, _ = _bootstrap()
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+
+    library = lib_repo.load_library(library_paths, fail_fast=False)
+    interfaces = lib_repo.load_interfaces(library_paths)
+
+    if not library:
+        raise HTTPException(status_code=400, detail="Library is empty")
+
+    lookup_def = {
+        "selectors": req.selectors,
+        "package": req.package,
+        "pillar": req.pillar,
+    }
+
+    try:
+        matched_ids = evaluate_lookup(library, lookup_def, interfaces)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail=f"选择器演算异常: {e}")
+
+    initial_map: dict[str, set[str]] = {}
+    for aid in matched_ids:
+        initial_map.setdefault(aid, set()).add(req.key)
+
+    try:
+        final_atom_map = resolve_dependencies(initial_map, library, interfaces)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail=f"依赖解析异常: {e}")
+
+    prompt_text = serialize_prompt(final_atom_map, library)
+    chunks_data = generate_prompt_chunks(final_atom_map, library)
+    profile_data = generate_prompt_profile(final_atom_map, library)
+
+    hooked_output = None
+    if req.apply_hook:
+        hooked_output = _execute_hook(app_config, prompt_text)
+
+    return BuildResponse(
+        prompt=prompt_text,
+        hooked_prompt=hooked_output,
+        chunks=[PromptChunk(**c) for c in chunks_data],
+        profile=profile_data,
+    )
+
+
+class AdhocLookupGraphRequest(BaseModel):
+    key: str = "adhoc-lookup"
+    selectors: list[dict[str, Any]]
+    package: str | None = None
+    pillar: str = "d1"
+
+
+@router.post("/lookups/graph-adhoc")
+def get_adhoc_lookup_graph(req: AdhocLookupGraphRequest) -> dict[str, Any]:
+    """以当前 Lookup 为根节点，生成包含一阶命中及 D2 级联依赖的有向拓扑图"""
+    lib_repo, _, _ = _bootstrap()
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+
+    library = lib_repo.load_library(library_paths, fail_fast=False)
+    interfaces = lib_repo.load_interfaces(library_paths)
+
+    nodes: list[dict[str, Any]] = []
+    edges: list[dict[str, Any]] = []
+    visited_nodes: set[str] = set()
+    visited_edges: set[tuple[str, str]] = set()
+
+    root_lookup_id = f"lookup::{req.key}"
+    nodes.append(
+        {
+            "id": root_lookup_id,
+            "type": "lookupNode",
+            "data": {
+                "key": req.key,
+                "pillar": req.pillar,
+                "description": "即席编辑中接口",
+                "isBroken": False,
+                "isPrivate": False,
+            },
+        }
+    )
+    visited_nodes.add(root_lookup_id)
+
+    def add_edge(source: str, target: str, label: str = ""):
+        if (source, target) not in visited_edges:
+            edges.append(
+                {
+                    "id": f"e_{source}->{target}",
+                    "source": source,
+                    "target": target,
+                    "label": label,
+                    "animated": True,
+                }
+            )
+            visited_edges.add((source, target))
+
+    def process_lookup(lkey: str, parent_id: str, context_pkg: str | None = None):
+        lookup_node_id = f"lookup::{lkey}"
+        if lookup_node_id in visited_nodes:
+            add_edge(parent_id, lookup_node_id)
+            return
+
+        target_def = resolve_lookup_by_key(lkey, context_pkg, interfaces)
+        is_broken = target_def is None
+        is_private_access = False
+        pillar = "unknown"
+        desc = ""
+
+        if target_def:
+            pillar = target_def.get("pillar", "unknown")
+            desc = target_def.get("description", "")
+            target_pkg = target_def.get("package")
+            if (
+                target_pkg
+                and target_pkg != context_pkg
+                and target_def.get("visibility") == "private"
+            ):
+                is_private_access = True
+
+        nodes.append(
+            {
+                "id": lookup_node_id,
+                "type": "lookupNode",
+                "data": {
+                    "key": lkey,
+                    "pillar": pillar,
+                    "description": desc,
+                    "isBroken": is_broken,
+                    "isPrivate": is_private_access,
+                },
+            }
+        )
+        visited_nodes.add(lookup_node_id)
+        add_edge(parent_id, lookup_node_id)
+
+        if not target_def:
+            return
+
+        try:
+            matched_atom_ids = evaluate_lookup(library, target_def, interfaces)
+        except (BuildError, KeyError, ValueError):
+            matched_atom_ids = set()
+
+        for atom_id in matched_atom_ids:
+            process_atom(atom_id, lookup_node_id)
+
+    def process_atom(atom_id: str, parent_id: str):
+        atom_node_id = f"atom::{atom_id}"
+        if atom_node_id in visited_nodes:
+            add_edge(parent_id, atom_node_id)
+            return
+
+        atom = library.get(atom_id)
+        if not atom:
+            return
+
+        meta = atom["meta"]
+        atom_type = meta.get("type", "unknown")
+        priority = meta.get("priority")
+        pkg = atom.get("package")
+        content = atom.get("content", "")
+
+        nodes.append(
+            {
+                "id": atom_node_id,
+                "type": "atomNode",
+                "data": {
+                    "id": atom_id,
+                    "type": atom_type,
+                    "priority": priority,
+                    "package": pkg,
+                    "content": content,
+                    "source_file": atom.get("source_file"),
+                },
+            }
+        )
+        visited_nodes.add(atom_node_id)
+        add_edge(parent_id, atom_node_id)
+
+        if atom_type == "d2":
+            uses = meta.get("uses", [])
+            for use_ref in uses:
+                process_lookup(use_ref, atom_node_id, context_pkg=pkg)
+
+    # 1. 求解根即席选择器
+    lookup_def = {
+        "selectors": req.selectors,
+        "package": req.package,
+        "pillar": req.pillar,
+    }
+    try:
+        direct_atom_ids = evaluate_lookup(library, lookup_def, interfaces)
+    except Exception:  # noqa: BLE001
+        direct_atom_ids = set()
+
+    for aid in direct_atom_ids:
+        process_atom(aid, root_lookup_id)
+
+    return {"nodes": nodes, "edges": edges}
 
 
 class OpenObsidianRequest(BaseModel):

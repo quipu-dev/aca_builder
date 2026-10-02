@@ -142,7 +142,7 @@ function AtomChunkCard({
             className="text-[10px] uppercase font-bold px-1.5 py-0"
           >
             {chunk.type}
-            {chunk.priority !== undefined ? `-P${chunk.priority}` : ''}
+            {typeof chunk.priority === 'number' ? `-P${chunk.priority}` : ''}
           </Badge>
           <span className="font-semibold text-slate-200 truncate">{chunk.id}</span>
           <span className="text-[10px] text-slate-500 truncate">@{chunk.package || '全局'}</span>
@@ -313,73 +313,81 @@ export function PromptViewer({
   return (
     <div className="flex h-full flex-col bg-slate-950 border border-slate-800/80 rounded-lg overflow-hidden">
       {/* 状态统计与视口开关条 */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800/60 bg-slate-900/60 text-xs font-mono text-slate-400">
-        <div className="flex items-center space-x-3">
+      <div className="flex items-center justify-between px-3.5 py-1.5 border-b border-slate-800/60 bg-slate-900/60 text-xs font-mono text-slate-400 shrink-0">
+        <div className="flex items-center gap-2 text-[11px]">
           <span>
-            块数: <strong className="text-slate-200">{chunks.length}</strong>
+            <strong className="text-slate-200">{chunks.length}</strong> 块
           </span>
+          <span className="text-slate-600">·</span>
           <span>
-            行数: <strong className="text-slate-200">{lineCount}</strong>
+            <strong className="text-slate-200">{lineCount}</strong> 行
           </span>
+          <span className="text-slate-600">·</span>
           <span>
-            估算词元: <strong className="text-indigo-400">~{estimatedTokens}</strong>
+            <strong className="text-indigo-400">~{estimatedTokens}</strong> tokens
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* 块状 / 纯文本 切换开关 */}
-          <div className="flex items-center rounded bg-slate-950 border border-slate-800 p-0.5">
+        <div className="flex items-center gap-1.5">
+          {/* 模式切换 */}
+          <div className="flex items-center rounded bg-slate-950 border border-slate-800/80 p-0.5">
             <button
               type="button"
               onClick={() => setDisplayMode('chunks')}
-              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[11px] transition-colors ${
+              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] transition-colors ${
                 displayMode === 'chunks'
                   ? 'bg-indigo-600 text-white font-medium shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
-              title="以原子卡片分块流呈现，支持就地内联编辑"
+              title="分块卡片流呈现"
             >
               <Layers className="h-3 w-3" />
-              <span>分块模式</span>
+              <span>分块</span>
             </button>
             <button
               type="button"
               onClick={() => setDisplayMode('raw')}
-              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[11px] transition-colors ${
+              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] transition-colors ${
                 displayMode === 'raw'
                   ? 'bg-indigo-600 text-white font-medium shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
-              title="以拼接好的完整单体文本代码视口呈现"
+              title="完整纯文本视口"
             >
               <Code2 className="h-3 w-3" />
-              <span>纯文本</span>
+              <span>文本</span>
             </button>
           </div>
 
-          {/* After 钩子开关按钮 */}
+          {/* After 钩子微型开关 */}
           <button
             type="button"
             onClick={() => onToggleHook?.(!isHookActive)}
-            className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] border font-mono transition-colors ${
+            className={`flex items-center gap-1 px-2 py-0.5 rounded text-[11px] border font-mono transition-colors ${
               isHookActive
-                ? 'border-amber-500 bg-amber-950/60 text-amber-200 font-bold'
-                : 'border-slate-800 text-slate-400 hover:text-slate-200 bg-slate-900/60'
+                ? 'border-amber-500/80 bg-amber-950/60 text-amber-200 font-semibold'
+                : 'border-slate-800 text-slate-400 hover:text-slate-200 bg-slate-950/50'
             }`}
-            title="开关 Post-process 管道处理钩子（仅在纯文本视口生效）"
+            title={`Post-process 钩子处理管道: ${isHookActive ? '已开启' : '已关闭'}`}
           >
             <Wand2 className="h-3 w-3" />
-            <span>After 钩子: {isHookActive ? '开启' : '关闭'}</span>
+            <span>Hook</span>
           </button>
 
+          {/* Token 分布抽屉开关 */}
           {profile && profile.atoms.length > 0 && (
             <button
               type="button"
               onClick={() => setShowBreakdown((prev) => !prev)}
-              className="flex items-center gap-1 text-[11px] text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 px-2 py-1 rounded transition-colors"
+              className={`flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border transition-colors ${
+                showBreakdown
+                  ? 'border-indigo-500/80 bg-indigo-950/60 text-indigo-200'
+                  : 'border-slate-800 text-slate-400 hover:text-slate-200 bg-slate-950/50'
+              }`}
+              title="查看各原子 Token 消耗排行"
             >
               <BarChart3 className="h-3 w-3 text-indigo-400" />
-              <span>Token 构成</span>
+              <span>分布</span>
               {showBreakdown ? (
                 <ChevronUp className="h-3 w-3" />
               ) : (
@@ -388,19 +396,16 @@ export function PromptViewer({
             </button>
           )}
 
+          {/* 复制按钮 */}
           <Button
             variant="outline"
             size="sm"
             onClick={handleCopy}
             disabled={!currentDisplayPrompt}
-            className="h-7 text-xs flex items-center gap-1.5"
+            className="h-6 text-[11px] px-2 flex items-center gap-1 border-slate-800 bg-slate-950/50 hover:bg-slate-800"
           >
-            {copied ? (
-              <Check className="h-3.5 w-3.5 text-emerald-400" />
-            ) : (
-              <Copy className="h-3.5 w-3.5" />
-            )}
-            {copied ? '已复制' : '复制输出'}
+            {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+            <span>{copied ? '已复制' : '复制'}</span>
           </Button>
         </div>
       </div>

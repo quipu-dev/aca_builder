@@ -18,10 +18,14 @@ export function AtomEditorTab({
 }) {
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const openTab = useIdeStore((state) => state.openTab);
+  const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
+  const getSnapshot = useIdeStore((state) => state.getSnapshot);
 
+  const tabId = `atom:${atomId}`;
   const isDraft = atomId.startsWith('draft:') || atomId === 'new_atom';
   const draftInitialPkg = isDraft ? atomId.replace('draft:', '') : '';
 
+  const [isReady, setIsReady] = useState(false);
   const [loading, setLoading] = useState(!isDraft);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -48,8 +52,40 @@ export function AtomEditorTab({
   const [isModified, setIsModified] = useState(false);
 
   useEffect(() => {
+    // 优先读取快照恢复现场
+    const snapshot = getSnapshot<{
+      currentId: string;
+      pkgName: string;
+      sourceFile: string;
+      atomType: string;
+      priority: number;
+      domainList: string[];
+      usesList: string[];
+      content: string;
+      isModified: boolean;
+      draftSuffix?: string;
+    }>(tabId);
+
+    if (snapshot) {
+      setCurrentId(snapshot.currentId);
+      setPkgName(snapshot.pkgName);
+      setSourceFile(snapshot.sourceFile);
+      setAtomType(snapshot.atomType);
+      setPriority(snapshot.priority);
+      setDomainList(snapshot.domainList);
+      setUsesList(snapshot.usesList);
+      setContent(snapshot.content);
+      if (snapshot.draftSuffix !== undefined) setDraftSuffix(snapshot.draftSuffix);
+      setIsModified(snapshot.isModified);
+      setTabDirty(tabId, snapshot.isModified);
+      setLoading(false);
+      setIsReady(true);
+      return;
+    }
+
     if (isDraft) {
       setLoading(false);
+      setIsReady(true);
       return;
     }
 
@@ -71,13 +107,45 @@ export function AtomEditorTab({
         setUsesList(Array.isArray(meta.uses) ? meta.uses : []);
         setContent(data.content || '');
         setIsModified(false);
-        setTabDirty(`atom:${atomId}`, false);
+        setTabDirty(tabId, false);
+        setIsReady(true);
       })
       .catch((err) => {
         setErrorMsg(err.message || '加载异常');
       })
       .finally(() => setLoading(false));
-  }, [atomId, isDraft, setTabDirty]);
+  }, [atomId, isDraft, setTabDirty, tabId, getSnapshot]);
+
+  // 持续外置同步最新编辑快照 (必须就绪后才允许持久化)
+  useEffect(() => {
+    if (!isReady) return;
+    saveSnapshot(tabId, {
+      currentId,
+      pkgName,
+      sourceFile,
+      atomType,
+      priority,
+      domainList,
+      usesList,
+      content,
+      draftSuffix,
+      isModified,
+    });
+  }, [
+    isReady,
+    tabId,
+    currentId,
+    pkgName,
+    sourceFile,
+    atomType,
+    priority,
+    domainList,
+    usesList,
+    content,
+    draftSuffix,
+    isModified,
+    saveSnapshot,
+  ]);
 
   const markDirty = () => {
     if (!isModified) {
@@ -269,11 +337,6 @@ export function AtomEditorTab({
           </Badge>
           <span className="font-semibold text-slate-100 truncate">{atomId}</span>
           <span className="text-[11px] text-slate-500 truncate">@{pkgName}</span>
-          {isModified && (
-            <span className="text-[10px] text-amber-400 bg-amber-950/60 border border-amber-800/60 px-1.5 py-0.2 rounded">
-              已修改
-            </span>
-          )}
         </div>
 
         <div className="flex items-center gap-2 shrink-0">

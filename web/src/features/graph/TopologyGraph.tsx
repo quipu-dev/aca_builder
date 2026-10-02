@@ -143,11 +143,24 @@ function autoLayoutSafe(nodes: Node[], edges: Edge[]): LayoutResult {
   };
 }
 
+export interface LookupAdhocParam {
+  key: string;
+  selectors: Array<Record<string, unknown>>;
+  package?: string;
+  pillar?: string;
+}
+
 export const TopologyGraph = React.memo(function TopologyGraph({
   manifest,
+  imports,
+  overrides,
+  lookupAdhoc,
   onSelectAtom,
 }: {
-  manifest: string;
+  manifest?: string;
+  imports?: Array<{ lookup: string }>;
+  overrides?: Record<string, unknown>;
+  lookupAdhoc?: LookupAdhocParam;
   onSelectAtom?: (atomId: string) => void;
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -162,78 +175,94 @@ export const TopologyGraph = React.memo(function TopologyGraph({
   } | null>(null);
 
   useEffect(() => {
-    if (!manifest) return;
-    setLoading(true);
-    setErrorMsg('');
+    let isCancelled = false;
 
-    const tStart = performance.now();
-    console.groupCollapsed(
-      `%c[ACA Topology] 开始加载拓扑: ${manifest}`,
-      'color: #818cf8; font-weight: bold;',
-    );
-    console.log('请求地址:', `/api/graph?manifest=${encodeURIComponent(manifest)}`);
+    // 设立 200ms 防抖，当用户连续拖拽增删或快速输入覆盖选择器时避免密集运算
+    const timer = setTimeout(() => {
+      setLoading(true);
+      setErrorMsg('');
 
-    fetch(`/api/graph?manifest=${encodeURIComponent(manifest)}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP 状态码 ${res.status}: 清单可能不存在`);
-        return res.json();
-      })
-      .then((data: { nodes: Node[]; edges: Edge[] }) => {
-        const tFetch = performance.now();
-        console.log(
-          `[API 响应] 获取原始节点: ${data.nodes?.length ?? 0}, 边数: ${data.edges?.length ?? 0}, 网络耗时: ${(tFetch - tStart).toFixed(1)}ms`,
-        );
+      const fetchPromise =
+        lookupAdhoc !== undefined
+          ? fetch('/api/lookups/graph-adhoc', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(lookupAdhoc),
+            })
+          : imports !== undefined
+            ? fetch('/api/graph/adhoc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  name: manifest || 'draft',
+                  imports: imports,
+                  overrides: overrides && Object.keys(overrides).length > 0 ? overrides : undefined,
+                }),
+              })
+            : manifest
+              ? fetch(`/api/graph?manifest=${encodeURIComponent(manifest)}`)
+              : null;
 
-        // 执行防卡死弹性布局
-        const layoutRes = autoLayoutSafe(data.nodes || [], data.edges || []);
-        const tLayout = performance.now();
-        const layoutDuration = tLayout - tFetch;
-
-        console.log(`[布局引擎] 拓扑坐标计算完成, 耗时: ${layoutDuration.toFixed(1)}ms`);
-        if (layoutRes.hasCycle) {
-          console.warn(
-            '[布局引擎] 警告: 检测到依赖关系中存在循环闭环回路 (Cycle)! 已熔断保护主线程，受影响节点:',
-            layoutRes.cycleNodes,
-          );
-        }
-        console.groupEnd();
-
-        const connectedNodes = layoutRes.nodes.map((n) => {
-          if (n.type === 'atomNode') {
-            return {
-              ...n,
-              data: {
-                ...n.data,
-                onEdit: onSelectAtom,
-              },
-            };
-          }
-          return n;
-        });
-
-        setNodes(connectedNodes);
-        setEdges(data.edges || []);
-        setTelemetry({
-          nodeCount: connectedNodes.length,
-          edgeCount: (data.edges || []).length,
-          layoutMs: Math.round(layoutDuration),
-          hasCycle: layoutRes.hasCycle,
-        });
-      })
-      .catch((err) => {
-        console.error('[ACA Topology Error] 获取拓扑失败:', err);
-        console.groupEnd();
-        setErrorMsg(err.message || '加载拓扑图异常');
-      })
-      .finally(() => {
+      if (!fetchPromise) {
         setLoading(false);
-      });
-  }, [manifest, onSelectAtom, setNodes, setEdges]);
+        return;
+      }
 
-  if (!manifest) {
+      fetchPromise
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP 状态码 ${res.status}: 获取拓扑失败`);
+          return res.json();
+        })
+        .then((data: { nodes: Node[]; edges: Edge[] }) => {
+          if (isCancelled) return;
+          const tFetch = performance.now();
+
+          // 执行防死循环布局
+          const layoutRes = autoLayoutSafe(data.nodes || [], data.edges || []);
+          const tLayout = performance.now();
+          const layoutDuration = tLayout - tFetch;
+
+          const connectedNodes = layoutRes.nodes.map((n) => {
+            if (n.type === 'atomNode') {
+              return {
+                ...n,
+                data: {
+                  ...n.data,
+                  onEdit: onSelectAtom,
+                },
+              };
+            }
+            return n;
+          });
+
+          setNodes(connectedNodes);
+          setEdges(data.edges || []);
+          setTelemetry({
+            nodeCount: connectedNodes.length,
+            edgeCount: (data.edges || []).length,
+            layoutMs: Math.round(layoutDuration),
+            hasCycle: layoutRes.hasCycle,
+          });
+        })
+        .catch((err) => {
+          if (isCancelled) return;
+          setErrorMsg(err.message || '加载拓扑图异常');
+        })
+        .finally(() => {
+          if (!isCancelled) setLoading(false);
+        });
+    }, 200);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(timer);
+    };
+  }, [manifest, imports, overrides, lookupAdhoc, onSelectAtom, setNodes, setEdges]);
+
+  if (!manifest && (!imports || imports.length === 0) && !lookupAdhoc) {
     return (
       <div className="flex h-full items-center justify-center text-xs text-slate-500 font-mono">
-        请选择清单以呈现拓扑关系
+        请选择或添加组件以呈现拓扑关系
       </div>
     );
   }

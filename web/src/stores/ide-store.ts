@@ -13,11 +13,23 @@ export interface IdeTab {
   isDirty?: boolean;
 }
 
+export interface HistoryEntry {
+  tab: IdeTab;
+}
+
 interface IdeState {
   tabs: IdeTab[];
   activeTabId: string;
-  splitTabId: string | null; // 右侧分屏中显示的 Tab ID，若为 null 则单视口
-  isSplitActive: boolean;
+
+  // 视口导航历史栈
+  navigationHistory: HistoryEntry[];
+  historyIndex: number;
+
+  // 视口状态外置快照池 (零 DOM 膨胀的状态持久化)
+  tabSnapshots: Record<string, unknown>;
+  saveSnapshot: (tabId: string, snapshot: unknown) => void;
+  getSnapshot: <T = unknown>(tabId: string) => T | undefined;
+  clearSnapshot: (tabId: string) => void;
 
   sidebarOpen: boolean;
   activeSidebarView: 'explorer' | 'search';
@@ -32,19 +44,13 @@ interface IdeState {
   toggleBottomPanel: () => void;
   setActiveBottomTab: (tab: 'problems' | 'output') => void;
 
-  openTab: (
-    tab: IdeTab,
-    options?:
-      | 'primary'
-      | 'secondary'
-      | { newTab?: boolean; splitSide?: 'primary' | 'secondary' }
-      | boolean,
-  ) => void;
+  openTab: (tab: IdeTab, options?: boolean | { newTab?: boolean; fromHistory?: boolean }) => void;
   closeTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
-  setSplitTab: (tabId: string | null) => void;
-  toggleSplit: () => void;
   setTabDirty: (tabId: string, isDirty: boolean) => void;
+
+  goBack: () => void;
+  goForward: () => void;
 }
 
 const INITIAL_EMPTY_TAB: IdeTab = {
@@ -57,8 +63,25 @@ const INITIAL_EMPTY_TAB: IdeTab = {
 export const useIdeStore = create<IdeState>((set, get) => ({
   tabs: [INITIAL_EMPTY_TAB],
   activeTabId: INITIAL_EMPTY_TAB.id,
-  splitTabId: null,
-  isSplitActive: false,
+
+  navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
+  historyIndex: 0,
+
+  tabSnapshots: {},
+  saveSnapshot: (tabId, snapshot) =>
+    set((state) => ({
+      tabSnapshots: {
+        ...state.tabSnapshots,
+        [tabId]: snapshot,
+      },
+    })),
+  getSnapshot: <T>(tabId: string) => get().tabSnapshots[tabId] as T | undefined,
+  clearSnapshot: (tabId) =>
+    set((state) => {
+      const rest = { ...state.tabSnapshots };
+      delete rest[tabId];
+      return { tabSnapshots: rest };
+    }),
 
   sidebarOpen: true,
   activeSidebarView: 'explorer',
@@ -73,42 +96,33 @@ export const useIdeStore = create<IdeState>((set, get) => ({
   toggleBottomPanel: () => set((state) => ({ bottomPanelOpen: !state.bottomPanelOpen })),
   setActiveBottomTab: (tab) => set({ activeBottomTab: tab, bottomPanelOpen: true }),
 
-  openTab: (tab, options = 'primary') => {
-    const { tabs, activeTabId } = get();
-    let newTab = false;
-    let splitSide: 'primary' | 'secondary' = 'primary';
+  openTab: (tab, options = false) => {
+    const { tabs, activeTabId, navigationHistory, historyIndex } = get();
+    const newTab = typeof options === 'boolean' ? options : !!options?.newTab;
+    const fromHistory = typeof options === 'object' && !!options?.fromHistory;
 
-    if (typeof options === 'boolean') {
-      newTab = options;
-    } else if (typeof options === 'string') {
-      splitSide = options;
-    } else if (options && typeof options === 'object') {
-      newTab = !!options.newTab;
-      splitSide = options.splitSide || 'primary';
+    // 历史栈压入逻辑：非后退/前进触发时更新历史
+    if (!fromHistory) {
+      const currentEntry = navigationHistory[historyIndex];
+      // 避免重复入栈同一个目标
+      if (!currentEntry || currentEntry.tab.id !== tab.id) {
+        const truncated = navigationHistory.slice(0, historyIndex + 1);
+        const updatedHistory = [...truncated, { tab }];
+        set({
+          navigationHistory: updatedHistory,
+          historyIndex: updatedHistory.length - 1,
+        });
+      }
     }
 
     // 1. 若目标 Tab 已经打开，直接激活跳转
     const existingIndex = tabs.findIndex((t) => t.id === tab.id);
     if (existingIndex !== -1) {
-      if (splitSide === 'secondary') {
-        set({ splitTabId: tab.id, isSplitActive: true });
-      } else {
-        set({ activeTabId: tab.id });
-      }
+      set({ activeTabId: tab.id });
       return;
     }
 
-    // 2. 副屏分屏打开模式
-    if (splitSide === 'secondary') {
-      set({
-        tabs: [...tabs, tab],
-        splitTabId: tab.id,
-        isSplitActive: true,
-      });
-      return;
-    }
-
-    // 3. 主视口默认模式：就地替换 vs 新建标签页
+    // 2. 主视口默认模式：就地替换 vs 新建标签页
     const currentActiveTab = tabs.find((t) => t.id === activeTabId);
     // 可就地替换条件：未按 Ctrl 且 当前 Tab 未被编辑修改
     const canReplaceCurrent = !newTab && currentActiveTab && !currentActiveTab.isDirty;
@@ -132,14 +146,31 @@ export const useIdeStore = create<IdeState>((set, get) => ({
     }
   },
 
+  goBack: () => {
+    const { historyIndex, navigationHistory } = get();
+    if (historyIndex <= 0) return;
+    const nextIndex = historyIndex - 1;
+    const targetTab = navigationHistory[nextIndex].tab;
+    set({ historyIndex: nextIndex });
+    get().openTab(targetTab, { fromHistory: true });
+  },
+
+  goForward: () => {
+    const { historyIndex, navigationHistory } = get();
+    if (historyIndex >= navigationHistory.length - 1) return;
+    const nextIndex = historyIndex + 1;
+    const targetTab = navigationHistory[nextIndex].tab;
+    set({ historyIndex: nextIndex });
+    get().openTab(targetTab, { fromHistory: true });
+  },
+
   closeTab: (tabId) => {
-    const { tabs, activeTabId, splitTabId } = get();
+    const { tabs, activeTabId } = get();
     const target = tabs.find((t) => t.id === tabId);
     if (!target || !target.closable) return;
 
     const remaining = tabs.filter((t) => t.id !== tabId);
     let nextActiveId = activeTabId;
-    let nextSplitId = splitTabId;
 
     if (remaining.length === 0) {
       const emptyTab: IdeTab = {
@@ -151,8 +182,6 @@ export const useIdeStore = create<IdeState>((set, get) => ({
       set({
         tabs: [emptyTab],
         activeTabId: emptyTab.id,
-        splitTabId: null,
-        isSplitActive: false,
       });
       return;
     }
@@ -163,39 +192,13 @@ export const useIdeStore = create<IdeState>((set, get) => ({
       nextActiveId = nextTab ? nextTab.id : (remaining[0]?.id ?? '');
     }
 
-    if (splitTabId === tabId) {
-      nextSplitId = null;
-    }
-
     set({
       tabs: remaining,
       activeTabId: nextActiveId,
-      splitTabId: nextSplitId,
-      isSplitActive: nextSplitId !== null,
     });
   },
 
   setActiveTab: (tabId) => set({ activeTabId: tabId }),
-
-  setSplitTab: (tabId) =>
-    set({
-      splitTabId: tabId,
-      isSplitActive: tabId !== null,
-    }),
-
-  toggleSplit: () => {
-    const { isSplitActive, tabs, activeTabId } = get();
-    if (isSplitActive) {
-      set({ isSplitActive: false, splitTabId: null });
-    } else {
-      // 开启分屏：选取一个非当前的 Tab 或当前 Tab 复制
-      const otherTab = tabs.find((t) => t.id !== activeTabId) || tabs[0];
-      set({
-        isSplitActive: true,
-        splitTabId: otherTab ? otherTab.id : activeTabId,
-      });
-    }
-  },
 
   setTabDirty: (tabId, isDirty) =>
     set((state) => ({

@@ -13,6 +13,7 @@ import {
   ArrowDown,
   ArrowUp,
   Box,
+  Code2,
   ExternalLink,
   Eye,
   Network,
@@ -47,15 +48,19 @@ export function ManifestEditorTab({
 }) {
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const openTab = useIdeStore((state) => state.openTab);
+  const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
+  const getSnapshot = useIdeStore((state) => state.getSnapshot);
+  const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
 
-  // 视角切换：'list' (装配蓝图列表) | 'graph' (白板拓扑图)
-  const [activeView, setActiveView] = useState<'list' | 'graph'>('list');
-  const [showLivePreview, setShowLivePreview] = useState(true);
+  // 右侧辅助视口：'graph' (白板拓扑图) | 'prompt' (实时编译文本)
+  const [rightView, setRightView] = useState<'graph' | 'prompt'>('graph');
+  const [showRightPanel, setShowRightPanel] = useState(true);
 
   // 稳定标识：manifestIdentifier 对应文件相对路径或逻辑标识，不可被 YAML 内部 name 覆写
   const [manifestIdentifier, setManifestIdentifier] = useState(manifestName);
 
-  // 清单元数据
+  // 清单元数据与就绪守卫
+  const [isReady, setIsReady] = useState(false);
   const [name, setName] = useState(
     manifestName ? manifestName.split('/').pop() || manifestName : 'new_agent',
   );
@@ -64,6 +69,15 @@ export function ManifestEditorTab({
   const [items, setItems] = useState<ImportItem[]>([]);
   const [overrides, setOverrides] = useState<Record<string, { selectors: unknown[] }>>({});
   const [isModified, setIsModified] = useState(false);
+
+  // 初始/最近保存的快照基准数据（用于一键重置）
+  const [initialSnapshot, setInitialSnapshot] = useState<{
+    name: string;
+    version: string;
+    description: string;
+    items: ImportItem[];
+    overrides: Record<string, { selectors: unknown[] }>;
+  } | null>(null);
 
   // 操作交互
   const [selectedLookup, setSelectedLookup] = useState<string>('');
@@ -105,19 +119,59 @@ export function ManifestEditorTab({
     return list;
   }, [packages]);
 
-  // 加载已有清单数据
+  // 1. 初始化优先水合内存快照，无快照时再发起网络请求
   useEffect(() => {
-    if (!manifestName || isModified) return;
+    const snapshot = getSnapshot<{
+      name: string;
+      version: string;
+      description: string;
+      items: ImportItem[];
+      overrides: Record<string, { selectors: unknown[] }>;
+      rightView: 'graph' | 'prompt';
+      showRightPanel: boolean;
+      isModified: boolean;
+      initialSnapshot: {
+        name: string;
+        version: string;
+        description: string;
+        items: ImportItem[];
+        overrides: Record<string, { selectors: unknown[] }>;
+      } | null;
+    }>(tabId);
+
+    if (snapshot) {
+      setName(snapshot.name);
+      setVersion(snapshot.version);
+      setDescription(snapshot.description);
+      setItems(snapshot.items);
+      setOverrides(snapshot.overrides);
+      setRightView(snapshot.rightView);
+      setShowRightPanel(snapshot.showRightPanel);
+      setIsModified(snapshot.isModified);
+      if (snapshot.initialSnapshot) {
+        setInitialSnapshot(snapshot.initialSnapshot);
+      }
+      setTabDirty(tabId, snapshot.isModified);
+      setIsReady(true);
+      return;
+    }
+
+    if (!manifestName) {
+      // 全新草稿清单，直接就绪
+      setIsReady(true);
+      return;
+    }
+
     fetch(`/api/manifests/${encodeURIComponent(manifestName)}`)
       .then((res) => {
         if (!res.ok) throw new Error('加载清单失败');
         return res.json();
       })
       .then((data) => {
-        setName(data.name || manifestName);
-        setVersion(data.version || '1.0.0');
-        setDescription(data.description || '');
-        setOverrides(data.overrides || {});
+        const loadedName = data.name || manifestName;
+        const loadedVersion = data.version || '1.0.0';
+        const loadedDesc = data.description || '';
+        const loadedOverrides = data.overrides || {};
         const rawImports = (data.imports || []) as ManifestImportRaw[];
         const mappedItems = rawImports
           .filter((imp) => Boolean(imp.lookup))
@@ -125,14 +179,57 @@ export function ManifestEditorTab({
             id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
             lookup: imp.lookup as string,
           }));
+
+        setName(loadedName);
+        setVersion(loadedVersion);
+        setDescription(loadedDesc);
+        setOverrides(loadedOverrides);
         setItems(mappedItems);
         setIsModified(false);
         setTabDirty(tabId, false);
+
+        setInitialSnapshot({
+          name: loadedName,
+          version: loadedVersion,
+          description: loadedDesc,
+          items: mappedItems,
+          overrides: loadedOverrides,
+        });
+        setIsReady(true);
       })
       .catch((err) => {
         console.error(err);
       });
-  }, [manifestName, tabId, setTabDirty, isModified]);
+  }, [manifestName, tabId, setTabDirty, getSnapshot]);
+
+  // 2. 持续外置同步最新交互快照至 Store (必须在 isReady 就绪后才允许写入)
+  useEffect(() => {
+    if (!isReady) return;
+    saveSnapshot(tabId, {
+      name,
+      version,
+      description,
+      items,
+      overrides,
+      rightView,
+      showRightPanel,
+      isModified,
+      initialSnapshot,
+    });
+  }, [
+    isReady,
+    tabId,
+    name,
+    version,
+    description,
+    items,
+    overrides,
+    rightView,
+    showRightPanel,
+    isModified,
+    initialSnapshot,
+    saveSnapshot,
+  ]);
 
   // 实时编译当前清单
   const compileCurrent = useCallback(
@@ -248,6 +345,15 @@ export function ManifestEditorTab({
         if (!manifestIdentifier) {
           setManifestIdentifier(name.trim());
         }
+        // 更新快照基准为最新保存状态
+        setInitialSnapshot({
+          name: name.trim(),
+          version: version.trim(),
+          description: description.trim(),
+          items: [...items],
+          overrides: { ...overrides },
+        });
+        clearSnapshot(tabId);
         onSaved?.();
         setTimeout(() => setSaveStatus(''), 2500);
       } else {
@@ -258,6 +364,30 @@ export function ManifestEditorTab({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleResetManifest = () => {
+    if (!isModified) return;
+    if (!window.confirm('确定要放弃所有未保存的修改并恢复吗？')) return;
+
+    if (initialSnapshot) {
+      setName(initialSnapshot.name);
+      setVersion(initialSnapshot.version);
+      setDescription(initialSnapshot.description);
+      setItems([...initialSnapshot.items]);
+      setOverrides({ ...initialSnapshot.overrides });
+    } else {
+      // 草稿初始状态清空
+      setName(manifestName ? manifestName.split('/').pop() || manifestName : 'new_agent');
+      setVersion('1.0.0');
+      setDescription('');
+      setItems([]);
+      setOverrides({});
+    }
+
+    setIsModified(false);
+    setTabDirty(tabId, false);
+    clearSnapshot(tabId);
   };
 
   const handleOpenAtom = useCallback(
@@ -286,43 +416,272 @@ export function ManifestEditorTab({
     [openTab],
   );
 
+  // 蓝图列表主配置面板（可在双栏或全宽单栏复用）
+  const renderBlueprintContent = (isFullWidth = false) => (
+    <div
+      className={`h-full flex flex-col p-4 space-y-3 overflow-y-auto ${
+        isFullWidth ? 'max-w-4xl mx-auto w-full' : ''
+      }`}
+    >
+      {/* 元数据表单 */}
+      <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-2 text-xs font-mono">
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <label htmlFor="manifest-name-input" className="text-slate-400 block mb-1">
+              名称
+            </label>
+            <input
+              id="manifest-name-input"
+              type="text"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                markDirty();
+              }}
+              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="manifest-version-input" className="text-slate-400 block mb-1">
+              版本
+            </label>
+            <input
+              id="manifest-version-input"
+              type="text"
+              value={version}
+              onChange={(e) => {
+                setVersion(e.target.value);
+                markDirty();
+              }}
+              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="manifest-desc-input" className="text-slate-400 block mb-1">
+              描述说明
+            </label>
+            <input
+              id="manifest-desc-input"
+              type="text"
+              value={description}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                markDirty();
+              }}
+              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 挑选 Lookup 区域 */}
+      <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 flex gap-2">
+        <select
+          value={selectedLookup}
+          onChange={(e) => setSelectedLookup(e.target.value)}
+          className="flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+        >
+          <option value="">-- 选择要注入的公开查找接口 --</option>
+          {availableExports.map((exp) => (
+            <option key={exp.key} value={exp.key}>
+              [{exp.pkg}] {exp.key} ({exp.pillar.toUpperCase()})
+            </option>
+          ))}
+        </select>
+        <Button
+          size="sm"
+          onClick={handleAddLookup}
+          disabled={!selectedLookup}
+          className="h-7 text-xs flex items-center gap-1"
+        >
+          <Plus className="h-3.5 w-3.5" /> 注入
+        </Button>
+      </div>
+
+      {/* 已选组件列表 */}
+      <div className="flex-1 rounded-lg border border-slate-800 bg-slate-900/20 p-3 space-y-2 overflow-y-auto">
+        <div className="flex items-center justify-between text-xs font-mono text-slate-400">
+          <span>已声明组件 ({items.length})</span>
+        </div>
+
+        {items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-xs text-slate-600 font-mono py-12">
+            <Box className="h-8 w-8 text-slate-700 mb-2" />
+            尚未添加任何 Lookup 接口。
+          </div>
+        ) : (
+          items.map((item, idx) => (
+            <div key={item.id} className="space-y-1">
+              <div className="flex items-center justify-between rounded border border-slate-800 bg-slate-950/80 p-2 text-xs font-mono">
+                <div className="flex items-center gap-2 truncate">
+                  <span className="text-slate-600 font-bold shrink-0">{idx + 1}.</span>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenLookup(item.lookup)}
+                    className="text-slate-100 font-semibold hover:text-indigo-300 hover:underline transition-colors text-left truncate flex items-center gap-1.5 group cursor-pointer"
+                    title={`点击编辑接口契约: ${item.lookup}`}
+                  >
+                    <span className="truncate">{item.lookup}</span>
+                    <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 text-indigo-400 shrink-0 transition-opacity" />
+                  </button>
+                  {item.pillar && (
+                    <Badge variant="outline" className="text-[9px] px-1 py-0 shrink-0">
+                      {item.pillar}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1">
+                  {overrides[item.lookup] && (
+                    <Badge variant="d3" className="text-[9px] px-1 py-0">
+                      已覆写
+                    </Badge>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (editingOverrideKey === item.lookup) {
+                        setEditingOverrideKey(null);
+                      } else {
+                        setEditingOverrideKey(item.lookup);
+                        const currentOverride = overrides[item.lookup] as {
+                          selectors?: Array<{ query?: { id?: string } }>;
+                        };
+                        const targetId = currentOverride?.selectors?.[0]?.query?.id;
+                        setOverrideQueryId(typeof targetId === 'string' ? targetId : '');
+                      }
+                    }}
+                    className={`p-1 rounded ${
+                      editingOverrideKey === item.lookup
+                        ? 'text-indigo-400 bg-indigo-950'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="配置 Overrides 覆写"
+                  >
+                    <Sliders className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMoveItem(idx, 'up')}
+                    disabled={idx === 0}
+                    className="p-1 text-slate-400 hover:text-white disabled:opacity-30"
+                  >
+                    <ArrowUp className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMoveItem(idx, 'down')}
+                    disabled={idx === items.length - 1}
+                    className="p-1 text-slate-400 hover:text-white disabled:opacity-30"
+                  >
+                    <ArrowDown className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveLookup(item.id)}
+                    className="p-1 text-slate-500 hover:text-rose-400"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+
+              {editingOverrideKey === item.lookup && (
+                <div className="rounded border border-indigo-800/60 bg-indigo-950/30 p-2 text-xs font-mono space-y-2">
+                  <div className="flex items-center justify-between text-indigo-300 font-semibold text-[11px]">
+                    <span>覆写选择器: {item.lookup}</span>
+                    {overrides[item.lookup] && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextOverrides = { ...overrides };
+                          delete nextOverrides[item.lookup];
+                          setOverrides(nextOverrides);
+                          markDirty();
+                        }}
+                        className="text-[10px] text-amber-400 hover:underline flex items-center gap-1"
+                      >
+                        <RotateCcw className="h-3 w-3" /> 重置
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={overrideQueryId}
+                      onChange={(e) => setOverrideQueryId(e.target.value)}
+                      placeholder="目标特定原子 ID，如 d1-custom"
+                      className="flex-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        if (overrideQueryId.trim()) {
+                          setOverrides({
+                            ...overrides,
+                            [item.lookup]: {
+                              selectors: [{ query: { id: overrideQueryId.trim() } }],
+                            },
+                          });
+                          setEditingOverrideKey(null);
+                          markDirty();
+                        }
+                      }}
+                      disabled={!overrideQueryId.trim()}
+                      className="h-7 text-xs"
+                    >
+                      应用
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none">
-      {/* 顶部工具栏：视角切换、保存、实时编译开关 */}
+      {/* 顶部工具栏：蓝图状态、右侧伴生视口模式、展开/折叠、重置与保存 */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 font-mono text-xs shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className="font-semibold text-slate-200">{name}</span>
-            {isModified && (
-              <span className="text-[10px] text-amber-400 bg-amber-950/60 border border-amber-800/60 px-1.5 py-0.2 rounded">
-                已修改
-              </span>
-            )}
           </div>
 
-          {/* 视角切换器：蓝图装配 VS 白板拓扑 */}
+          {/* 右侧伴生视口切换器：白板拓扑 VS 实时编译 */}
           <div className="flex rounded bg-slate-950 border border-slate-800 p-0.5 text-xs">
             <button
               type="button"
-              onClick={() => setActiveView('list')}
+              onClick={() => {
+                setRightView('graph');
+                if (!showRightPanel) setShowRightPanel(true);
+              }}
               className={`flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors ${
-                activeView === 'list'
+                showRightPanel && rightView === 'graph'
                   ? 'bg-indigo-600 text-white font-medium shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
+              title="在右侧观察依赖拓扑 DAG 变化"
             >
-              <Sliders className="h-3 w-3" /> 蓝图列表
+              <Network className="h-3 w-3" /> 白板拓扑
             </button>
             <button
               type="button"
-              onClick={() => setActiveView('graph')}
+              onClick={() => {
+                setRightView('prompt');
+                if (!showRightPanel) setShowRightPanel(true);
+              }}
               className={`flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors ${
-                activeView === 'graph'
+                showRightPanel && rightView === 'prompt'
                   ? 'bg-indigo-600 text-white font-medium shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
+              title="在右侧查看拼接好的完整 Prompt 文本与词元"
             >
-              <Network className="h-3 w-3" /> 白板拓扑
+              <Code2 className="h-3 w-3" /> 实时编译
             </button>
           </div>
         </div>
@@ -332,17 +691,29 @@ export function ManifestEditorTab({
 
           <button
             type="button"
-            onClick={() => setShowLivePreview(!showLivePreview)}
+            onClick={() => setShowRightPanel(!showRightPanel)}
             className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] border transition-colors ${
-              showLivePreview
+              showRightPanel
                 ? 'border-indigo-500 bg-indigo-950/60 text-indigo-300'
                 : 'border-slate-800 text-slate-400 hover:text-white'
             }`}
-            title="开关伴生实时 Prompt 编译视口"
+            title="开关右侧伴生栏（白板拓扑 / 编译产物）"
           >
             <Eye className="h-3 w-3" />
-            <span>实时视口: {showLivePreview ? '显示' : '隐藏'}</span>
+            <span>{showRightPanel ? '折叠伴生栏' : '展开伴生栏'}</span>
           </button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleResetManifest}
+            disabled={!isModified || isSaving}
+            className="h-7 text-xs flex items-center gap-1 px-2 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30"
+            title="放弃未保存的修改并重置"
+          >
+            <RotateCcw className="h-3 w-3" />
+            <span>重置</span>
+          </Button>
 
           <Button
             size="sm"
@@ -356,277 +727,43 @@ export function ManifestEditorTab({
         </div>
       </div>
 
-      {/* 主视口工作区 (支持 SplitPane 弹性并排实时编译结果) */}
+      {/* 主视口工作区 (左侧蓝图装配，右侧拓扑/Prompt 伴生面板) */}
       <div className="flex-1 overflow-hidden">
-        {showLivePreview ? (
+        {showRightPanel ? (
           <SplitPane
             direction="horizontal"
             initialRatio={0.52}
             minPrimarySize={380}
             minSecondarySize={320}
-            primary={
-              activeView === 'list' ? (
-                <div className="h-full flex flex-col p-4 space-y-3 overflow-y-auto">
-                  {/* 元数据表单 */}
-                  <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-2 text-xs font-mono">
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <label htmlFor="manifest-name-input" className="text-slate-400 block mb-1">
-                          名称
-                        </label>
-                        <input
-                          id="manifest-name-input"
-                          type="text"
-                          value={name}
-                          onChange={(e) => {
-                            setName(e.target.value);
-                            markDirty();
-                          }}
-                          className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor="manifest-version-input"
-                          className="text-slate-400 block mb-1"
-                        >
-                          版本
-                        </label>
-                        <input
-                          id="manifest-version-input"
-                          type="text"
-                          value={version}
-                          onChange={(e) => {
-                            setVersion(e.target.value);
-                            markDirty();
-                          }}
-                          className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="manifest-desc-input" className="text-slate-400 block mb-1">
-                          描述说明
-                        </label>
-                        <input
-                          id="manifest-desc-input"
-                          type="text"
-                          value={description}
-                          onChange={(e) => {
-                            setDescription(e.target.value);
-                            markDirty();
-                          }}
-                          className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 挑选 Lookup 区域 */}
-                  <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 flex gap-2">
-                    <select
-                      value={selectedLookup}
-                      onChange={(e) => setSelectedLookup(e.target.value)}
-                      className="flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
-                    >
-                      <option value="">-- 选择要注入的公开查找接口 --</option>
-                      {availableExports.map((exp) => (
-                        <option key={exp.key} value={exp.key}>
-                          [{exp.pkg}] {exp.key} ({exp.pillar.toUpperCase()})
-                        </option>
-                      ))}
-                    </select>
-                    <Button
-                      size="sm"
-                      onClick={handleAddLookup}
-                      disabled={!selectedLookup}
-                      className="h-7 text-xs flex items-center gap-1"
-                    >
-                      <Plus className="h-3.5 w-3.5" /> 注入
-                    </Button>
-                  </div>
-
-                  {/* 已选组件列表 */}
-                  <div className="flex-1 rounded-lg border border-slate-800 bg-slate-900/20 p-3 space-y-2 overflow-y-auto">
-                    <div className="flex items-center justify-between text-xs font-mono text-slate-400">
-                      <span>已声明组件 ({items.length})</span>
-                    </div>
-
-                    {items.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center text-xs text-slate-600 font-mono py-12">
-                        <Box className="h-8 w-8 text-slate-700 mb-2" />
-                        尚未添加任何 Lookup 接口。
-                      </div>
-                    ) : (
-                      items.map((item, idx) => (
-                        <div key={item.id} className="space-y-1">
-                          <div className="flex items-center justify-between rounded border border-slate-800 bg-slate-950/80 p-2 text-xs font-mono">
-                            <div className="flex items-center gap-2 truncate">
-                              <span className="text-slate-600 font-bold shrink-0">{idx + 1}.</span>
-                              <button
-                                type="button"
-                                onClick={() => handleOpenLookup(item.lookup)}
-                                className="text-slate-100 font-semibold hover:text-indigo-300 hover:underline transition-colors text-left truncate flex items-center gap-1.5 group cursor-pointer"
-                                title={`点击编辑接口契约: ${item.lookup}`}
-                              >
-                                <span className="truncate">{item.lookup}</span>
-                                <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 text-indigo-400 shrink-0 transition-opacity" />
-                              </button>
-                              {item.pillar && (
-                                <Badge variant="outline" className="text-[9px] px-1 py-0 shrink-0">
-                                  {item.pillar}
-                                </Badge>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-1">
-                              {overrides[item.lookup] && (
-                                <Badge variant="d3" className="text-[9px] px-1 py-0">
-                                  已覆写
-                                </Badge>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (editingOverrideKey === item.lookup) {
-                                    setEditingOverrideKey(null);
-                                  } else {
-                                    setEditingOverrideKey(item.lookup);
-                                    const currentOverride = overrides[item.lookup] as {
-                                      selectors?: Array<{ query?: { id?: string } }>;
-                                    };
-                                    const targetId = currentOverride?.selectors?.[0]?.query?.id;
-                                    setOverrideQueryId(
-                                      typeof targetId === 'string' ? targetId : '',
-                                    );
-                                  }
-                                }}
-                                className={`p-1 rounded ${
-                                  editingOverrideKey === item.lookup
-                                    ? 'text-indigo-400 bg-indigo-950'
-                                    : 'text-slate-400 hover:text-white'
-                                }`}
-                                title="配置 Overrides 覆写"
-                              >
-                                <Sliders className="h-3 w-3" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleMoveItem(idx, 'up')}
-                                disabled={idx === 0}
-                                className="p-1 text-slate-400 hover:text-white disabled:opacity-30"
-                              >
-                                <ArrowUp className="h-3 w-3" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleMoveItem(idx, 'down')}
-                                disabled={idx === items.length - 1}
-                                className="p-1 text-slate-400 hover:text-white disabled:opacity-30"
-                              >
-                                <ArrowDown className="h-3 w-3" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveLookup(item.id)}
-                                className="p-1 text-slate-500 hover:text-rose-400"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            </div>
-                          </div>
-
-                          {editingOverrideKey === item.lookup && (
-                            <div className="rounded border border-indigo-800/60 bg-indigo-950/30 p-2 text-xs font-mono space-y-2">
-                              <div className="flex items-center justify-between text-indigo-300 font-semibold text-[11px]">
-                                <span>覆写选择器: {item.lookup}</span>
-                                {overrides[item.lookup] && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const nextOverrides = { ...overrides };
-                                      delete nextOverrides[item.lookup];
-                                      setOverrides(nextOverrides);
-                                      markDirty();
-                                    }}
-                                    className="text-[10px] text-amber-400 hover:underline flex items-center gap-1"
-                                  >
-                                    <RotateCcw className="h-3 w-3" /> 重置
-                                  </button>
-                                )}
-                              </div>
-                              <div className="flex gap-2">
-                                <input
-                                  type="text"
-                                  value={overrideQueryId}
-                                  onChange={(e) => setOverrideQueryId(e.target.value)}
-                                  placeholder="目标特定原子 ID，如 d1-custom"
-                                  className="flex-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-                                />
-                                <Button
-                                  size="sm"
-                                  onClick={() => {
-                                    if (overrideQueryId.trim()) {
-                                      setOverrides({
-                                        ...overrides,
-                                        [item.lookup]: {
-                                          selectors: [{ query: { id: overrideQueryId.trim() } }],
-                                        },
-                                      });
-                                      setEditingOverrideKey(null);
-                                      markDirty();
-                                    }
-                                  }}
-                                  disabled={!overrideQueryId.trim()}
-                                  className="h-7 text-xs"
-                                >
-                                  应用
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="h-full w-full">
+            primary={renderBlueprintContent(false)}
+            secondary={
+              rightView === 'graph' ? (
+                <div className="h-full w-full bg-slate-950 overflow-hidden">
                   <TopologyGraph
                     manifest={manifestIdentifier || name}
+                    imports={items.map((i) => ({ lookup: i.lookup }))}
+                    overrides={overrides}
                     onSelectAtom={handleOpenAtom}
+                  />
+                </div>
+              ) : (
+                <div className="h-full p-3 bg-slate-950 overflow-hidden">
+                  <PromptViewer
+                    value={prompt}
+                    hookedValue={hookedPrompt}
+                    chunks={chunks}
+                    profile={profile}
+                    onSelectAtom={handleOpenAtom}
+                    onReload={() => compileCurrent()}
+                    isHookActive={isHookActive}
+                    onToggleHook={(active) => setIsHookActive(active)}
                   />
                 </div>
               )
             }
-            secondary={
-              <div className="h-full p-3 bg-slate-950 overflow-hidden">
-                <PromptViewer
-                  value={prompt}
-                  hookedValue={hookedPrompt}
-                  chunks={chunks}
-                  profile={profile}
-                  onSelectAtom={handleOpenAtom}
-                  onReload={() => compileCurrent()}
-                  isHookActive={isHookActive}
-                  onToggleHook={(active) => setIsHookActive(active)}
-                />
-              </div>
-            }
           />
-        ) : activeView === 'list' ? (
-          <div className="h-full p-4 overflow-y-auto">
-            {/* 全宽列表模式 */}
-            <div className="max-w-3xl mx-auto space-y-4">
-              {/* 重复列表主内容 */}
-              <div className="text-slate-400 text-xs font-mono">
-                当前正处于全宽蓝图设计模式。可在右上角重新开启“实时视口”。
-              </div>
-            </div>
-          </div>
         ) : (
-          <div className="h-full w-full">
-            <TopologyGraph manifest={manifestIdentifier || name} onSelectAtom={handleOpenAtom} />
-          </div>
+          renderBlueprintContent(true)
         )}
       </div>
     </div>

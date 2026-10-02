@@ -1,16 +1,24 @@
+import {
+  type ProfileSummary,
+  type PromptChunk,
+  PromptViewer,
+} from '@/components/editor/PromptViewer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SplitPane } from '@/components/ui/split-pane';
 import type { PackageItem } from '@/features/explorer/PackageExplorer';
+import { TopologyGraph } from '@/features/graph/TopologyGraph';
 import { useIdeStore } from '@/stores/ide-store';
 import {
   AlertCircle,
   Box,
-  CheckCircle2,
+  Code2,
   ExternalLink,
   Filter,
+  Layers,
   Link2,
   Loader2,
+  Network,
   Plus,
   Save,
   Sparkles,
@@ -49,11 +57,14 @@ export function LookupEditorTab({
 }) {
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const openTab = useIdeStore((state) => state.openTab);
+  const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
+  const getSnapshot = useIdeStore((state) => state.getSnapshot);
 
   const isDraft = lookupKey.startsWith('draft:');
   const initialPkg = isDraft ? lookupKey.replace('draft:', '') : '';
 
-  // 基础元信息
+  // 基础元信息与就绪守卫
+  const [isReady, setIsReady] = useState(false);
   const [pkgName, setPkgName] = useState(initialPkg || packages[0]?.name || '');
   const [isPublic, setIsPublic] = useState(true);
   const [pillar, setPillar] = useState<'d1' | 'd2' | 'd3'>('d1');
@@ -64,10 +75,18 @@ export function LookupEditorTab({
   const [selectors, setSelectors] = useState<SelectorRule[]>([]);
   const [isModified, setIsModified] = useState(false);
 
-  // 实时演算状态
+  // 右侧多维视口切换：'atoms' (命中原子) | 'graph' (白板拓扑) | 'prompt' (切片编译)
+  const [rightView, setRightView] = useState<'atoms' | 'graph' | 'prompt'>('atoms');
+
+  // 实时演算状态 (Atoms 模式)
   const [matchedAtoms, setMatchedAtoms] = useState<MatchedAtom[]>([]);
   const [evaluating, setEvaluating] = useState(false);
   const [evalError, setEvalError] = useState('');
+
+  // 实时切片编译状态 (Prompt 模式)
+  const [slicePrompt, setSlicePrompt] = useState<string>('');
+  const [sliceChunks, setSliceChunks] = useState<PromptChunk[]>([]);
+  const [sliceProfile, setProfile] = useState<ProfileSummary | null>(null);
 
   // 保存状态
   const [saving, setSaving] = useState(false);
@@ -88,9 +107,37 @@ export function LookupEditorTab({
     }
   };
 
-  // 1. 初始化回显已存在的 Lookup 定义
+  // 1. 初始化优先水合已存在的 Lookup 快照
   useEffect(() => {
-    if (isDraft || isModified) return;
+    const snapshot = getSnapshot<{
+      pkgName: string;
+      isPublic: boolean;
+      pillar: 'd1' | 'd2' | 'd3';
+      rawKeyName: string;
+      description: string;
+      selectors: SelectorRule[];
+      rightView: 'atoms' | 'graph' | 'prompt';
+      isModified: boolean;
+    }>(tabId);
+
+    if (snapshot) {
+      setPkgName(snapshot.pkgName);
+      setIsPublic(snapshot.isPublic);
+      setPillar(snapshot.pillar);
+      setRawKeyName(snapshot.rawKeyName);
+      setDescription(snapshot.description);
+      setSelectors(snapshot.selectors);
+      setRightView(snapshot.rightView);
+      setIsModified(snapshot.isModified);
+      setTabDirty(tabId, snapshot.isModified);
+      setIsReady(true);
+      return;
+    }
+
+    if (isDraft) {
+      setIsReady(true);
+      return;
+    }
 
     const rawKey = lookupKey.includes('::') ? lookupKey.split('::')[1] : lookupKey;
     const targetPkg = lookupKey.includes('::') ? lookupKey.split('::')[0] : null;
@@ -110,6 +157,7 @@ export function LookupEditorTab({
         setDescription(exportDef.description || '');
         setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
         setSelectors((exportDef.selectors as SelectorRule[]) || []);
+        setIsReady(true);
         return;
       }
 
@@ -121,15 +169,46 @@ export function LookupEditorTab({
         setDescription(internalDef.description || '');
         setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
         setSelectors((internalDef.selectors as SelectorRule[]) || []);
+        setIsReady(true);
         return;
       }
     }
-  }, [lookupKey, packages, isDraft, isModified]);
+  }, [lookupKey, packages, isDraft, tabId, getSnapshot, setTabDirty]);
 
-  // 2. 实时演算核心：防抖调用 `/api/lookups/evaluate`
+  // 2. 持续向全局快照池同步 (必须就绪后才允许持久化)
+  useEffect(() => {
+    if (!isReady) return;
+    saveSnapshot(tabId, {
+      pkgName,
+      isPublic,
+      pillar,
+      rawKeyName,
+      description,
+      selectors,
+      rightView,
+      isModified,
+    });
+  }, [
+    isReady,
+    tabId,
+    pkgName,
+    isPublic,
+    pillar,
+    rawKeyName,
+    description,
+    selectors,
+    rightView,
+    isModified,
+    saveSnapshot,
+  ]);
+
+  // 2. 实时演算核心：根据当前选中的视口按需防抖计算
   const runLiveDebug = useCallback(() => {
     if (selectors.length === 0) {
       setMatchedAtoms([]);
+      setSlicePrompt('');
+      setSliceChunks([]);
+      setProfile(null);
       setEvalError('');
       return;
     }
@@ -137,31 +216,58 @@ export function LookupEditorTab({
     setEvaluating(true);
     setEvalError('');
 
-    fetch('/api/lookups/evaluate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        selectors,
-        package: pkgName,
-        pillar,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.error) {
-          setEvalError(data.error);
-          setMatchedAtoms([]);
-        } else {
-          setMatchedAtoms(data.matched_atoms || []);
-        }
+    const targetKey = `${pillar}l-${rawKeyName.trim() || 'adhoc'}`;
+
+    if (rightView === 'prompt') {
+      fetch('/api/lookups/compile-adhoc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: targetKey,
+          selectors,
+          package: pkgName,
+          pillar,
+        }),
       })
-      .catch((err) => {
-        setEvalError(err.message || '演算请求失败');
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}: 编译切片失败`);
+          return res.json();
+        })
+        .then((data) => {
+          setSlicePrompt(data.prompt || '');
+          setSliceChunks(data.chunks || []);
+          setProfile(data.profile || null);
+        })
+        .catch((err) => {
+          setEvalError(err.message || '编译切片请求异常');
+        })
+        .finally(() => setEvaluating(false));
+    } else {
+      // atoms 模式与 graph 模式通用原子命中计算
+      fetch('/api/lookups/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selectors,
+          package: pkgName,
+          pillar,
+        }),
       })
-      .finally(() => {
-        setEvaluating(false);
-      });
-  }, [selectors, pkgName, pillar]);
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.error) {
+            setEvalError(data.error);
+            setMatchedAtoms([]);
+          } else {
+            setMatchedAtoms(data.matched_atoms || []);
+          }
+        })
+        .catch((err) => {
+          setEvalError(err.message || '演算请求失败');
+        })
+        .finally(() => setEvaluating(false));
+    }
+  }, [selectors, pkgName, pillar, rawKeyName, rightView]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -252,11 +358,6 @@ export function LookupEditorTab({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className="font-semibold text-slate-200">{fullLookupKey}</span>
-            {isModified && (
-              <span className="text-[10px] text-amber-400 bg-amber-950/60 border border-amber-800/60 px-1.5 py-0.2 rounded">
-                已修改
-              </span>
-            )}
           </div>
           <Badge variant="outline" className="text-[10px] uppercase font-bold px-1.5 py-0">
             {pillar}
@@ -536,15 +637,48 @@ export function LookupEditorTab({
             </div>
           }
           secondary={
-            <div className="h-full flex flex-col p-4 bg-slate-900/30 overflow-hidden">
-              {/* 实时演算标题 */}
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                  <span className="text-xs font-bold text-slate-200">
-                    实时演算命中面板 (Live Debug)
-                  </span>
+            <div className="h-full flex flex-col bg-slate-900/30 overflow-hidden">
+              {/* 实时演算视口控制条 */}
+              <div className="flex items-center justify-between px-3.5 py-2 border-b border-slate-800 bg-slate-950/70 shrink-0">
+                <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 p-0.5 rounded text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => setRightView('atoms')}
+                    className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${
+                      rightView === 'atoms'
+                        ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="查看一阶命中原子"
+                  >
+                    <Layers className="h-3 w-3" /> 命中原子
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRightView('graph')}
+                    className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${
+                      rightView === 'graph'
+                        ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="查看以此 Lookup 为根的级联依赖拓扑图"
+                  >
+                    <Network className="h-3 w-3" /> 白板拓扑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRightView('prompt')}
+                    className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${
+                      rightView === 'prompt'
+                        ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                    title="查看此接口传递依赖排序生成的切片 Prompt 文本"
+                  >
+                    <Code2 className="h-3 w-3" /> 切片编译
+                  </button>
                 </div>
+
                 <div className="flex items-center gap-2">
                   {evaluating ? (
                     <span className="flex items-center gap-1 text-indigo-400 text-[11px]">
@@ -552,8 +686,7 @@ export function LookupEditorTab({
                     </span>
                   ) : (
                     <span className="text-[11px] text-slate-400">
-                      命中: <strong className="text-emerald-400">{matchedAtoms.length}</strong>{' '}
-                      个原子
+                      一阶命中: <strong className="text-emerald-400">{matchedAtoms.length}</strong>
                     </span>
                   )}
                 </div>
@@ -561,84 +694,132 @@ export function LookupEditorTab({
 
               {/* 演算错误提示 */}
               {evalError && (
-                <div className="my-2 rounded bg-rose-950/60 border border-rose-800/80 p-2.5 text-xs text-rose-300 flex items-center gap-1.5 shrink-0 font-sans">
+                <div className="m-3 mb-0 rounded bg-rose-950/60 border border-rose-800/80 p-2.5 text-xs text-rose-300 flex items-center gap-1.5 shrink-0 font-sans">
                   <AlertCircle className="h-4 w-4 shrink-0" />
                   <span>{evalError}</span>
                 </div>
               )}
 
-              {/* 命中原子列表 */}
-              <div className="flex-1 overflow-y-auto pt-3 space-y-2.5">
-                {matchedAtoms.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-xs text-slate-600 font-mono py-12">
-                    <Box className="h-8 w-8 text-slate-700 mb-2" />
-                    当前规则在组件库中未命中任何有效原子
-                  </div>
-                ) : (
-                  matchedAtoms.map((atom) => (
-                    <div
-                      key={atom.id}
-                      className="rounded border border-slate-800 bg-slate-950/80 p-2.5 text-xs hover:border-indigo-500/50 transition-colors shadow-sm"
-                    >
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-2 truncate">
-                          <Badge
-                            variant={
-                              atom.type === 'd1'
-                                ? 'd1'
-                                : atom.type === 'd2'
-                                  ? 'd2'
-                                  : atom.type === 'd3'
-                                    ? 'd3'
-                                    : 'kernel'
-                            }
-                            className="text-[10px] uppercase font-bold px-1.5 py-0"
-                          >
-                            {atom.type}
-                            {atom.priority !== undefined ? `-P${atom.priority}` : ''}
-                          </Badge>
-                          <span className="font-semibold text-slate-200 truncate">{atom.id}</span>
-                          <span className="text-[10px] text-slate-500 truncate">
-                            @{atom.package || '全局'}
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            openTab({
-                              id: `atom:${atom.id}`,
-                              type: 'atom',
-                              title: atom.id,
-                              closable: true,
-                              atomId: atom.id,
-                            });
-                          }}
-                          className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-indigo-300 hover:bg-slate-800 px-2 py-0.5 rounded transition-colors shrink-0"
-                          title="在新 Tab 中打开编辑该原子"
+              {/* 三重视图内容区分支 */}
+              <div className="flex-1 overflow-hidden">
+                {rightView === 'atoms' && (
+                  <div className="h-full overflow-y-auto p-4 space-y-2.5">
+                    {matchedAtoms.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full text-xs text-slate-600 font-mono py-12">
+                        <Box className="h-8 w-8 text-slate-700 mb-2" />
+                        当前规则在组件库中未命中任何有效原子
+                      </div>
+                    ) : (
+                      matchedAtoms.map((atom) => (
+                        <div
+                          key={atom.id}
+                          className="rounded border border-slate-800 bg-slate-950/80 p-2.5 text-xs hover:border-indigo-500/50 transition-colors shadow-sm"
                         >
-                          <ExternalLink className="h-3 w-3" /> 打开编辑
-                        </button>
-                      </div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-2 truncate">
+                              <Badge
+                                variant={
+                                  atom.type === 'd1'
+                                    ? 'd1'
+                                    : atom.type === 'd2'
+                                      ? 'd2'
+                                      : atom.type === 'd3'
+                                        ? 'd3'
+                                        : 'kernel'
+                                }
+                                className="text-[10px] uppercase font-bold px-1.5 py-0"
+                              >
+                                {atom.type}
+                                {typeof atom.priority === 'number' ? `-P${atom.priority}` : ''}
+                              </Badge>
+                              <span className="font-semibold text-slate-200 truncate">
+                                {atom.id}
+                              </span>
+                              <span className="text-[10px] text-slate-500 truncate">
+                                @{atom.package || '全局'}
+                              </span>
+                            </div>
 
-                      {atom.domain && atom.domain.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-1.5">
-                          {atom.domain.map((d) => (
-                            <span
-                              key={d}
-                              className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded"
+                            <button
+                              type="button"
+                              onClick={() => {
+                                openTab({
+                                  id: `atom:${atom.id}`,
+                                  type: 'atom',
+                                  title: atom.id,
+                                  closable: true,
+                                  atomId: atom.id,
+                                });
+                              }}
+                              className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-indigo-300 hover:bg-slate-800 px-2 py-0.5 rounded transition-colors shrink-0"
+                              title="在新 Tab 中打开编辑该原子"
                             >
-                              #{d}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                              <ExternalLink className="h-3 w-3" /> 打开编辑
+                            </button>
+                          </div>
 
-                      <div className="text-[11px] text-slate-400 line-clamp-2 bg-slate-900/60 p-1.5 rounded font-sans leading-relaxed">
-                        {atom.preview || '（原子内容为空）'}
-                      </div>
-                    </div>
-                  ))
+                          {atom.domain && atom.domain.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-1.5">
+                              {atom.domain.map((d) => (
+                                <span
+                                  key={d}
+                                  className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded"
+                                >
+                                  #{d}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="text-[11px] text-slate-400 line-clamp-2 bg-slate-900/60 p-1.5 rounded font-sans leading-relaxed">
+                            {atom.preview || '（原子内容为空）'}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {rightView === 'graph' && (
+                  <div className="h-full w-full bg-slate-950">
+                    <TopologyGraph
+                      lookupAdhoc={{
+                        key: fullLookupKey,
+                        selectors: selectors as Array<Record<string, unknown>>,
+                        package: pkgName,
+                        pillar,
+                      }}
+                      onSelectAtom={(atomId) => {
+                        openTab({
+                          id: `atom:${atomId}`,
+                          type: 'atom',
+                          title: atomId,
+                          closable: true,
+                          atomId,
+                        });
+                      }}
+                    />
+                  </div>
+                )}
+
+                {rightView === 'prompt' && (
+                  <div className="h-full p-3 bg-slate-950">
+                    <PromptViewer
+                      value={slicePrompt}
+                      chunks={sliceChunks}
+                      profile={sliceProfile}
+                      onSelectAtom={(atomId) => {
+                        openTab({
+                          id: `atom:${atomId}`,
+                          type: 'atom',
+                          title: atomId,
+                          closable: true,
+                          atomId,
+                        });
+                      }}
+                      onReload={() => runLiveDebug()}
+                    />
+                  </div>
                 )}
               </div>
             </div>
