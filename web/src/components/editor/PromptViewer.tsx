@@ -1,8 +1,38 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { markdown } from '@codemirror/lang-markdown';
 import CodeMirror from '@uiw/react-codemirror';
-import { BarChart3, Check, ChevronDown, ChevronUp, Copy } from 'lucide-react';
-import React, { useState } from 'react';
+import {
+  BarChart3,
+  Box,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Code2,
+  Copy,
+  Edit3,
+  ExternalLink,
+  Layers,
+  Loader2,
+  Save,
+  Sparkles,
+  Wand2,
+  X,
+} from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
+export interface PromptChunk {
+  id: string;
+  type: string;
+  priority?: number;
+  package?: string;
+  source_file?: string;
+  meta: Record<string, unknown>;
+  content: string;
+  via_lookups: string[];
+}
 
 export interface AtomTokenProfile {
   id: string;
@@ -21,27 +51,252 @@ export interface ProfileSummary {
   atoms: AtomTokenProfile[];
 }
 
+function AtomChunkCard({
+  chunk,
+  onUpdated,
+  onOpenObsidian,
+}: {
+  chunk: PromptChunk;
+  onUpdated?: () => void;
+  onOpenObsidian?: (path: string) => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(chunk.content);
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [editorHeight, setEditorHeight] = useState<number>(200);
+
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+
+  // 同步正文
+  React.useEffect(() => {
+    setEditContent(chunk.content);
+  }, [chunk.content]);
+
+  // 测量只读视图精确高度以实现进入编辑器无感防跳变
+  const handleStartEditing = () => {
+    if (previewContainerRef.current) {
+      const measuredHeight = previewContainerRef.current.getBoundingClientRect().height;
+      // 保持与当前视图一致，同时设立最小舒适编辑高度
+      setEditorHeight(Math.max(160, Math.round(measuredHeight)));
+    }
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setErrorMsg('');
+    try {
+      const res = await fetch(`/api/atoms/${encodeURIComponent(chunk.id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: editContent }),
+      });
+      if (res.ok) {
+        setSaveSuccess(true);
+        setIsEditing(false);
+        onUpdated?.();
+        setTimeout(() => setSaveSuccess(false), 2000);
+      } else {
+        const data = await res.json();
+        setErrorMsg(data.detail || '保存失败');
+      }
+    } catch (_err) {
+      setErrorMsg('网络请求异常');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getPillarBadgeVariant = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'd1':
+        return 'd1';
+      case 'd2':
+        return 'd2';
+      case 'd3':
+        return 'd3';
+      case 'kernel':
+        return 'kernel';
+      default:
+        return 'secondary';
+    }
+  };
+
+  return (
+    <div
+      className={`rounded-lg border transition-all duration-200 overflow-hidden shadow-sm ${
+        isEditing
+          ? 'border-indigo-500/80 bg-slate-900/90 ring-1 ring-indigo-500/40'
+          : saveSuccess
+            ? 'border-emerald-500/80 bg-slate-900/40 ring-1 ring-emerald-500/40'
+            : 'border-slate-800/80 bg-slate-900/40 hover:border-slate-700'
+      }`}
+    >
+      {/* 块顶元数据条 */}
+      <div className="flex items-center justify-between px-3.5 py-2 border-b border-slate-800/70 bg-slate-950/70 text-xs font-mono">
+        <div className="flex items-center gap-2 truncate">
+          <Badge
+            variant={getPillarBadgeVariant(chunk.type)}
+            className="text-[10px] uppercase font-bold px-1.5 py-0"
+          >
+            {chunk.type}
+            {chunk.priority !== undefined ? `-P${chunk.priority}` : ''}
+          </Badge>
+          <span className="font-semibold text-slate-200 truncate">{chunk.id}</span>
+          <span className="text-[10px] text-slate-500 truncate">@{chunk.package || '全局'}</span>
+          {chunk.via_lookups && chunk.via_lookups.length > 0 && (
+            <span
+              className="text-[10px] text-indigo-400/80 bg-indigo-950/60 border border-indigo-900/50 px-1.5 py-0.2 rounded truncate max-w-[200px]"
+              title={chunk.via_lookups.join(', ')}
+            >
+              via: {chunk.via_lookups.join(', ')}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          {errorMsg && <span className="text-[10px] text-rose-400 font-sans">{errorMsg}</span>}
+          {chunk.source_file && (
+            <button
+              type="button"
+              onClick={() => {
+                if (chunk.source_file) onOpenObsidian?.(chunk.source_file);
+              }}
+              className="p-1 text-slate-400 hover:text-purple-300 rounded transition-colors"
+              title="在 Obsidian 中打开并编辑"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </button>
+          )}
+
+          {isEditing ? (
+            <>
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={saving}
+                className="h-6 text-[11px] px-2 flex items-center gap-1 bg-indigo-600 hover:bg-indigo-500"
+              >
+                {saving ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Save className="h-3 w-3" />
+                )}
+                保存
+              </Button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditContent(chunk.content);
+                  setIsEditing(false);
+                }}
+                className="p-1 text-slate-400 hover:text-white rounded"
+                title="取消编辑"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={handleStartEditing}
+              className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-indigo-300 hover:bg-slate-800/80 px-2 py-0.5 rounded transition-colors"
+              title="就地编辑该原子正文"
+            >
+              <Edit3 className="h-3 w-3" />
+              <span>编辑</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 块正文内容 */}
+      <div className="p-3 text-xs">
+        {isEditing ? (
+          <div className="rounded border border-slate-800 overflow-hidden bg-slate-950">
+            <CodeMirror
+              value={editContent}
+              height={`${editorHeight}px`}
+              extensions={[markdown()]}
+              theme="dark"
+              onChange={(val) => setEditContent(val)}
+              basicSetup={{
+                lineNumbers: true,
+                foldGutter: true,
+                highlightActiveLine: true,
+              }}
+              className="text-xs font-mono"
+            />
+          </div>
+        ) : (
+          <div
+            ref={previewContainerRef}
+            onDoubleClick={handleStartEditing}
+            className="cursor-text text-slate-300 select-text selection:bg-indigo-600/40 selection:text-indigo-100"
+            title="双击进入就地编辑模式"
+          >
+            {chunk.content ? (
+              <div className="markdown-render">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{chunk.content}</ReactMarkdown>
+              </div>
+            ) : (
+              <span className="text-slate-600 italic font-mono">（该原子内容为空）</span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function PromptViewer({
   value,
+  hookedValue,
+  chunks = [],
   profile,
   onSelectAtom,
+  onReload,
+  isHookActive = false,
+  onToggleHook,
 }: {
   value: string;
+  hookedValue?: string | null;
+  chunks?: PromptChunk[];
   profile?: ProfileSummary | null;
   onSelectAtom?: (atomId: string) => void;
+  onReload?: () => void;
+  isHookActive?: boolean;
+  onToggleHook?: (active: boolean) => void;
 }) {
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [displayMode, setDisplayMode] = useState<'chunks' | 'raw'>('chunks');
+
+  const currentDisplayPrompt = isHookActive && hookedValue ? hookedValue : value;
 
   const handleCopy = () => {
-    if (!value) return;
-    navigator.clipboard.writeText(value);
+    if (!currentDisplayPrompt) return;
+    navigator.clipboard.writeText(currentDisplayPrompt);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const lineCount = value ? value.split('\n').length : 0;
-  const charCount = value ? value.length : 0;
+  const handleOpenObsidian = async (filePath: string) => {
+    try {
+      await fetch('/api/system/open-obsidian', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_path: filePath }),
+      });
+    } catch (_err) {
+      // 忽略调起异常
+    }
+  };
+
+  const lineCount = currentDisplayPrompt ? currentDisplayPrompt.split('\n').length : 0;
+  const charCount = currentDisplayPrompt ? currentDisplayPrompt.length : 0;
   const estimatedTokens = profile?.total_tokens ?? Math.round(charCount / 3.8);
 
   const d3Tokens = profile?.by_pillar?.d3 || 0;
@@ -57,20 +312,66 @@ export function PromptViewer({
 
   return (
     <div className="flex h-full flex-col bg-slate-950 border border-slate-800/80 rounded-lg overflow-hidden">
-      {/* 状态统计条 */}
+      {/* 状态统计与视口开关条 */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800/60 bg-slate-900/60 text-xs font-mono text-slate-400">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           <span>
-            行数: <strong className="text-slate-200">{lineCount}</strong>
+            块数: <strong className="text-slate-200">{chunks.length}</strong>
           </span>
           <span>
-            字符: <strong className="text-slate-200">{charCount}</strong>
+            行数: <strong className="text-slate-200">{lineCount}</strong>
           </span>
           <span>
             估算词元: <strong className="text-indigo-400">~{estimatedTokens}</strong>
           </span>
         </div>
+
         <div className="flex items-center gap-2">
+          {/* 块状 / 纯文本 切换开关 */}
+          <div className="flex items-center rounded bg-slate-950 border border-slate-800 p-0.5">
+            <button
+              type="button"
+              onClick={() => setDisplayMode('chunks')}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[11px] transition-colors ${
+                displayMode === 'chunks'
+                  ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="以原子卡片分块流呈现，支持就地内联编辑"
+            >
+              <Layers className="h-3 w-3" />
+              <span>分块模式</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDisplayMode('raw')}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[11px] transition-colors ${
+                displayMode === 'raw'
+                  ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="以拼接好的完整单体文本代码视口呈现"
+            >
+              <Code2 className="h-3 w-3" />
+              <span>纯文本</span>
+            </button>
+          </div>
+
+          {/* After 钩子开关按钮 */}
+          <button
+            type="button"
+            onClick={() => onToggleHook?.(!isHookActive)}
+            className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] border font-mono transition-colors ${
+              isHookActive
+                ? 'border-amber-500 bg-amber-950/60 text-amber-200 font-bold'
+                : 'border-slate-800 text-slate-400 hover:text-slate-200 bg-slate-900/60'
+            }`}
+            title="开关 Post-process 管道处理钩子（仅在纯文本视口生效）"
+          >
+            <Wand2 className="h-3 w-3" />
+            <span>After 钩子: {isHookActive ? '开启' : '关闭'}</span>
+          </button>
+
           {profile && profile.atoms.length > 0 && (
             <button
               type="button"
@@ -86,11 +387,12 @@ export function PromptViewer({
               )}
             </button>
           )}
+
           <Button
             variant="outline"
             size="sm"
             onClick={handleCopy}
-            disabled={!value}
+            disabled={!currentDisplayPrompt}
             className="h-7 text-xs flex items-center gap-1.5"
           >
             {copied ? (
@@ -195,21 +497,49 @@ export function PromptViewer({
         </div>
       )}
 
-      {/* 代码视口 */}
-      <div className="flex-1 overflow-auto">
-        <CodeMirror
-          value={value}
-          height="100%"
-          extensions={[markdown()]}
-          editable={false}
-          theme="dark"
-          basicSetup={{
-            lineNumbers: true,
-            foldGutter: true,
-            highlightActiveLine: false,
-          }}
-          className="text-xs font-mono"
-        />
+      {/* 主展示区：分块视图 VS 纯代码视图 */}
+      <div className="flex-1 overflow-auto p-3">
+        {displayMode === 'chunks' && !isHookActive ? (
+          chunks.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center text-xs text-slate-600 font-mono">
+              <Box className="h-8 w-8 text-slate-700 mb-2" />
+              暂无装配好的原子块
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {chunks.map((chunk) => (
+                <AtomChunkCard
+                  key={chunk.id}
+                  chunk={chunk}
+                  onUpdated={onReload}
+                  onOpenObsidian={handleOpenObsidian}
+                />
+              ))}
+            </div>
+          )
+        ) : (
+          <div className="h-full">
+            {isHookActive && (
+              <div className="mb-2 px-3 py-1.5 rounded bg-amber-950/40 border border-amber-800/60 text-amber-300 text-xs font-mono flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                <span>当前正处于 After 钩子处理后的纯文本视口（只读）。</span>
+              </div>
+            )}
+            <CodeMirror
+              value={currentDisplayPrompt}
+              height="100%"
+              extensions={[markdown()]}
+              editable={false}
+              theme="dark"
+              basicSetup={{
+                lineNumbers: true,
+                foldGutter: true,
+                highlightActiveLine: false,
+              }}
+              className="text-xs font-mono h-full"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

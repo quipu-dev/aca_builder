@@ -25,10 +25,12 @@ export function PackageExplorer({
   packages,
   onSelectAtom,
   onCreateLookup,
+  onEditLookup,
 }: {
   packages: PackageItem[];
   onSelectAtom?: (atomId: string) => void;
   onCreateLookup?: (pkgName: string, isPublic: boolean) => void;
+  onEditLookup?: (lookupKey: string) => void;
 }) {
   const [expandedPkg, setExpandedPkg] = useState<Record<string, boolean>>({});
 
@@ -88,15 +90,18 @@ export function PackageExplorer({
                   {exportsCount > 0 && (
                     <div className="space-y-1 pl-2">
                       {Object.entries(pkg.exports).map(([k, def]) => (
-                        <div
+                        <button
+                          type="button"
                           key={k}
-                          className="text-xs font-mono text-slate-300 flex items-center justify-between"
+                          onClick={() => onEditLookup?.(k)}
+                          className="w-full text-left text-xs font-mono text-slate-300 hover:text-emerald-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors"
+                          title="点击编辑此公开接口"
                         >
                           <span className="truncate">{k}</span>
                           <Badge variant="outline" className="text-[9px] px-1 py-0">
                             {def.pillar}
                           </Badge>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -120,13 +125,16 @@ export function PackageExplorer({
                   {internalCount > 0 && (
                     <div className="space-y-1 pl-2">
                       {Object.entries(pkg.internal_lookups).map(([k, def]) => (
-                        <div
+                        <button
+                          type="button"
                           key={k}
-                          className="text-xs font-mono text-slate-400 flex items-center justify-between"
+                          onClick={() => onEditLookup?.(k)}
+                          className="w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors"
+                          title="点击编辑此内部私有查找"
                         >
                           <span className="truncate">{k}</span>
                           <span className="text-[9px] text-slate-600">{def.pillar}</span>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}

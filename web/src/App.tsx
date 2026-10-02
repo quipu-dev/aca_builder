@@ -1,8 +1,13 @@
-import { type ProfileSummary, PromptViewer } from '@/components/editor/PromptViewer';
+import {
+  type ProfileSummary,
+  type PromptChunk,
+  PromptViewer,
+} from '@/components/editor/PromptViewer';
 import { Button } from '@/components/ui/button';
 import { AtomEditorDrawer } from '@/features/authoring/AtomEditorDrawer';
 import { CreateAtomModal } from '@/features/authoring/CreateAtomModal';
 import { CreateLookupModal } from '@/features/authoring/CreateLookupModal';
+import { EditLookupModal } from '@/features/authoring/EditLookupModal';
 import { VisualComposer } from '@/features/composer/VisualComposer';
 import { DiagnosticsDrawer, type LintIssue } from '@/features/diagnostics/DiagnosticsDrawer';
 import { PackageExplorer, type PackageItem } from '@/features/explorer/PackageExplorer';
@@ -28,14 +33,18 @@ export function App() {
   const [packages, setPackages] = useState<PackageItem[]>([]);
   const [selectedManifest, setSelectedManifest] = useState<string>('');
   const [prompt, setPrompt] = useState<string>('');
+  const [hookedPrompt, setHookedPrompt] = useState<string | null>(null);
+  const [chunks, setChunks] = useState<PromptChunk[]>([]);
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [status, setStatus] = useState<string>('检测中...');
   const [viewMode, setViewMode] = useState<'composer' | 'graph' | 'preview'>('composer');
   const [leftTab, setLeftTab] = useState<'manifests' | 'packages'>('manifests');
+  const [isHookActive, setIsHookActive] = useState(false);
 
-  // 状态：创作弹窗、查找接口弹窗、诊断抽屉与原子在线编辑器
+  // 模态弹窗与抽屉
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isLookupOpen, setIsLookupOpen] = useState(false);
+  const [editingLookupKey, setEditingLookupKey] = useState<string | null>(null);
   const [lookupTargetPkg, setLookupTargetPkg] = useState<string>('');
   const [lookupIsPublic, setLookupIsPublic] = useState(true);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
@@ -77,6 +86,49 @@ export function App() {
       .finally(() => setLintLoading(false));
   }, []);
 
+  const executeCompile = useCallback(
+    (targetManifest?: string, hookFlag = isHookActive) => {
+      if (targetManifest) {
+        fetch('/api/build', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            manifest: targetManifest,
+            is_file: false,
+            apply_hook: hookFlag,
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.prompt) setPrompt(data.prompt);
+            setHookedPrompt(data.hooked_prompt || null);
+            setChunks(data.chunks || []);
+            if (data.profile) setProfile(data.profile);
+          })
+          .catch(console.error);
+      } else if (composerItems.length > 0) {
+        fetch('/api/compile-adhoc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imports: composerItems.map((item) => ({ lookup: item.lookup })),
+            overrides: Object.keys(composerOverrides).length > 0 ? composerOverrides : undefined,
+            apply_hook: hookFlag,
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.prompt) setPrompt(data.prompt);
+            setHookedPrompt(data.hooked_prompt || null);
+            setChunks(data.chunks || []);
+            if (data.profile) setProfile(data.profile);
+          })
+          .catch(console.error);
+      }
+    },
+    [composerItems, composerOverrides, isHookActive],
+  );
+
   useEffect(() => {
     fetch('/api/health')
       .then((res) => res.json())
@@ -86,73 +138,32 @@ export function App() {
     fetchAssets();
     fetchLintReport();
 
-    // 建立 Server-Sent Events 事件监听通道
     const eventSource = new EventSource('/api/events/stream');
-
     eventSource.addEventListener('change', () => {
-      // 收到后端广播的文件变动，静默热刷新资产与诊断报告
       fetchAssets();
       fetchLintReport();
+      executeCompile(selectedManifest);
     });
-
-    eventSource.onerror = () => {
-      // 网络波动自动重连，无需干扰用户
-    };
 
     return () => {
       eventSource.close();
     };
-  }, [fetchAssets, fetchLintReport]);
+  }, [fetchAssets, fetchLintReport, executeCompile, selectedManifest]);
 
-  // 装配与 Overrides 变动防抖编译
   useEffect(() => {
-    if (composerItems.length === 0) return;
-
-    const timer = setTimeout(() => {
-      fetch('/api/compile-adhoc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imports: composerItems.map((item) => ({ lookup: item.lookup })),
-          overrides: Object.keys(composerOverrides).length > 0 ? composerOverrides : undefined,
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.prompt) {
-            setPrompt(data.prompt);
-          }
-          if (data.profile) {
-            setProfile(data.profile);
-          }
-        })
-        .catch(console.error);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [composerItems, composerOverrides]);
+    if (selectedManifest) {
+      executeCompile(selectedManifest);
+    } else if (composerItems.length > 0) {
+      const timer = setTimeout(() => {
+        executeCompile();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [composerItems, selectedManifest, executeCompile]);
 
   const handleSelectManifest = async (mName: string) => {
     setSelectedManifest(mName);
-    // 1. 构建并预览 Prompt 及画像
-    try {
-      const res = await fetch('/api/build', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ manifest: mName, is_file: false }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setPrompt(data.prompt);
-        if (data.profile) {
-          setProfile(data.profile);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-
-    // 2. 读取清单配置并回显到装配器
+    executeCompile(mName);
     try {
       const mRes = await fetch(`/api/manifests/${encodeURIComponent(mName)}`);
       if (mRes.ok) {
@@ -168,6 +179,8 @@ export function App() {
     resetNewManifest();
     setSelectedManifest('');
     setPrompt('');
+    setHookedPrompt(null);
+    setChunks([]);
     setViewMode('composer');
   };
 
@@ -207,7 +220,6 @@ export function App() {
         </div>
 
         <div className="flex items-center space-x-3">
-          {/* 新建原子向导按钮 */}
           <Button
             size="sm"
             onClick={() => setIsCreateOpen(true)}
@@ -216,7 +228,6 @@ export function App() {
             <Plus className="h-3.5 w-3.5" /> 新建原子
           </Button>
 
-          {/* 实时合规诊断指示灯 */}
           <button
             type="button"
             onClick={() => setIsDiagnosticsOpen(true)}
@@ -323,6 +334,7 @@ export function App() {
                   setLookupIsPublic(isPublic);
                   setIsLookupOpen(true);
                 }}
+                onEditLookup={(lKey) => setEditingLookupKey(lKey)}
               />
             )}
           </div>
@@ -330,7 +342,6 @@ export function App() {
 
         {/* 中栏与右栏工作区 */}
         <main className="flex-1 flex flex-col overflow-hidden bg-slate-900/30">
-          {/* 模式切换栏 */}
           <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-950/40">
             <div className="flex items-center space-x-2 text-xs font-mono">
               <span className="text-slate-500">目标清单:</span>
@@ -360,7 +371,7 @@ export function App() {
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  <Network className="h-3.5 w-3.5" /> 依赖拓扑图
+                  <Network className="h-3.5 w-3.5" /> 白板拓扑图
                 </button>
                 <button
                   type="button"
@@ -371,7 +382,7 @@ export function App() {
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  <Eye className="h-3.5 w-3.5" /> 全屏提示词预览
+                  <Eye className="h-3.5 w-3.5" /> 全屏提示词视图
                 </button>
               </div>
             </div>
@@ -387,8 +398,13 @@ export function App() {
                 <div className="w-1/2 p-4 overflow-hidden bg-slate-950">
                   <PromptViewer
                     value={prompt}
+                    hookedValue={hookedPrompt}
+                    chunks={chunks}
                     profile={profile}
                     onSelectAtom={(aid) => setEditingAtomId(aid)}
+                    onReload={() => executeCompile(selectedManifest)}
+                    isHookActive={isHookActive}
+                    onToggleHook={(active) => setIsHookActive(active)}
                   />
                 </div>
               </>
@@ -396,7 +412,10 @@ export function App() {
 
             {viewMode === 'graph' && (
               <div className="flex-1 h-full">
-                <TopologyGraph manifest={selectedManifest} />
+                <TopologyGraph
+                  manifest={selectedManifest}
+                  onSelectAtom={(aid) => setEditingAtomId(aid)}
+                />
               </div>
             )}
 
@@ -404,8 +423,13 @@ export function App() {
               <div className="flex-1 p-4 h-full bg-slate-950">
                 <PromptViewer
                   value={prompt}
+                  hookedValue={hookedPrompt}
+                  chunks={chunks}
                   profile={profile}
                   onSelectAtom={(aid) => setEditingAtomId(aid)}
+                  onReload={() => executeCompile(selectedManifest)}
+                  isHookActive={isHookActive}
+                  onToggleHook={(active) => setIsHookActive(active)}
                 />
               </div>
             )}
@@ -413,7 +437,6 @@ export function App() {
         </main>
       </div>
 
-      {/* 新建原子向导模态框 */}
       <CreateAtomModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
@@ -421,10 +444,10 @@ export function App() {
         onCreated={() => {
           fetchAssets();
           fetchLintReport();
+          executeCompile(selectedManifest);
         }}
       />
 
-      {/* 新建 D4 查找接口向导模态框 */}
       <CreateLookupModal
         isOpen={isLookupOpen}
         onClose={() => setIsLookupOpen(false)}
@@ -434,10 +457,22 @@ export function App() {
         onCreated={() => {
           fetchAssets();
           fetchLintReport();
+          executeCompile(selectedManifest);
         }}
       />
 
-      {/* 合规诊断抽屉 */}
+      <EditLookupModal
+        isOpen={!!editingLookupKey}
+        onClose={() => setEditingLookupKey(null)}
+        packages={packages}
+        lookupKey={editingLookupKey}
+        onSaved={() => {
+          fetchAssets();
+          fetchLintReport();
+          executeCompile(selectedManifest);
+        }}
+      />
+
       <DiagnosticsDrawer
         isOpen={isDiagnosticsOpen}
         onClose={() => setIsDiagnosticsOpen(false)}
@@ -448,7 +483,6 @@ export function App() {
         loading={lintLoading}
       />
 
-      {/* 原子在线编辑抽屉 */}
       <AtomEditorDrawer
         atomId={editingAtomId}
         isOpen={!!editingAtomId}
@@ -456,9 +490,7 @@ export function App() {
         onSaved={() => {
           fetchAssets();
           fetchLintReport();
-          if (selectedManifest) {
-            handleSelectManifest(selectedManifest);
-          }
+          executeCompile(selectedManifest);
         }}
       />
     </div>

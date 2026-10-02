@@ -109,7 +109,13 @@ function autoLayout(nodes: Node[], edges: Edge[]): Node[] {
   return layoutedNodes;
 }
 
-export function TopologyGraph({ manifest }: { manifest: string }) {
+export function TopologyGraph({
+  manifest,
+  onSelectAtom,
+}: {
+  manifest: string;
+  onSelectAtom?: (atomId: string) => void;
+}) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
@@ -119,13 +125,25 @@ export function TopologyGraph({ manifest }: { manifest: string }) {
       .then((res) => res.json())
       .then((data: { nodes: Node[]; edges: Edge[] }) => {
         const layoutedNodes = autoLayout(data.nodes || [], data.edges || []);
-        setNodes(layoutedNodes);
+        const connectedNodes = layoutedNodes.map((n) => {
+          if (n.type === 'atomNode') {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                onEdit: onSelectAtom,
+              },
+            };
+          }
+          return n;
+        });
+        setNodes(connectedNodes);
         setEdges(data.edges || []);
       })
       .catch((err) => {
         console.error('获取拓扑数据失败:', err);
       });
-  }, [manifest, setNodes, setEdges]);
+  }, [manifest, onSelectAtom, setNodes, setEdges]);
 
   if (!manifest) {
     return (

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import subprocess
 from typing import Any
 
 import yaml
@@ -11,7 +12,15 @@ from pydantic import BaseModel
 from aca_builder import config
 from aca_builder.commands import _bootstrap
 from aca_builder.domain.events import BuildError
-from aca_builder.use_cases.builder import BuilderService
+from aca_builder.domain.services import (
+    evaluate_lookup,
+    generate_prompt_chunks,
+    generate_prompt_profile,
+    resolve_dependencies,
+    resolve_lookup_by_key,
+    select_atoms_by_query,
+    serialize_prompt,
+)
 
 router = APIRouter()
 
@@ -19,6 +28,7 @@ router = APIRouter()
 class BuildRequest(BaseModel):
     manifest: str
     is_file: bool = False
+    apply_hook: bool = False
 
 
 class AtomTokenProfile(BaseModel):
@@ -38,8 +48,21 @@ class ProfileSummary(BaseModel):
     atoms: list[AtomTokenProfile]
 
 
+class PromptChunk(BaseModel):
+    id: str
+    type: str
+    priority: int | None = None
+    package: str | None = None
+    source_file: str | None = None
+    meta: dict[str, Any] = {}
+    content: str
+    via_lookups: list[str] = []
+
+
 class BuildResponse(BaseModel):
     prompt: str
+    hooked_prompt: str | None = None
+    chunks: list[PromptChunk] = []
     profile: ProfileSummary | None = None
 
 
@@ -79,7 +102,6 @@ def get_assets_overview() -> dict[str, Any]:
     interfaces = lib_repo.load_interfaces(library_paths)
     manifest_names = man_repo.list_manifests(manifest_paths)
 
-    # 归集包信息
     packages_map: dict[str, dict[str, Any]] = {}
     legacy_atoms = []
 
@@ -140,11 +162,6 @@ def get_assets_overview() -> dict[str, Any]:
 @router.get("/graph")
 def get_dependency_graph(manifest: str) -> dict[str, Any]:
     """生成指定 Manifest 的完整依赖有向图 (DAG: nodes & edges)"""
-    from aca_builder.domain.services import (
-        evaluate_lookup,
-        resolve_lookup_by_key,
-    )
-
     lib_repo, man_repo, _ = _bootstrap()
     app_config = config.load_config()
     library_paths = config.get_library_paths(app_config)
@@ -163,7 +180,6 @@ def get_dependency_graph(manifest: str) -> dict[str, Any]:
     visited_nodes: set[str] = set()
     visited_edges: set[tuple[str, str]] = set()
 
-    # 根节点: Manifest
     manifest_node_id = f"manifest::{manifest}"
     nodes.append(
         {
@@ -232,7 +248,6 @@ def get_dependency_graph(manifest: str) -> dict[str, Any]:
         if not target_def:
             return
 
-        # 评估此 lookup 对应的 atoms
         try:
             matched_atom_ids = evaluate_lookup(library, target_def, interfaces)
         except (BuildError, KeyError, ValueError):
@@ -251,6 +266,7 @@ def get_dependency_graph(manifest: str) -> dict[str, Any]:
         atom_type = meta.get("type", "unknown")
         priority = meta.get("priority")
         pkg = atom.get("package")
+        content = atom.get("content", "")
 
         if atom_node_id not in visited_nodes:
             nodes.append(
@@ -262,6 +278,8 @@ def get_dependency_graph(manifest: str) -> dict[str, Any]:
                         "type": atom_type,
                         "priority": priority,
                         "package": pkg,
+                        "content": content,
+                        "source_file": atom.get("source_file"),
                     },
                 }
             )
@@ -269,19 +287,16 @@ def get_dependency_graph(manifest: str) -> dict[str, Any]:
 
         add_edge(parent_id, atom_node_id)
 
-        # 如果是 D2 原子，递归处理其 uses
         if atom_type == "d2":
             uses = meta.get("uses", [])
             for use_ref in uses:
                 process_lookup(use_ref, atom_node_id, context_pkg=pkg)
 
-    # 1. 展开 imports
     imports = manifest_data.get("imports", [])
     for item in imports:
         if isinstance(item, dict) and "lookup" in item:
             process_lookup(item["lookup"], manifest_node_id, context_pkg=None)
 
-    # 2. 注入 Kernel 节点
     for atom_id, atom in library.items():
         if atom["meta"].get("type") == "kernel":
             process_atom(atom_id, manifest_node_id)
@@ -292,6 +307,7 @@ def get_dependency_graph(manifest: str) -> dict[str, Any]:
 class AdhocCompileRequest(BaseModel):
     imports: list[dict[str, Any]]
     overrides: dict[str, Any] | None = None
+    apply_hook: bool = False
 
 
 class SaveManifestRequest(BaseModel):
@@ -302,40 +318,99 @@ class SaveManifestRequest(BaseModel):
     overrides: dict[str, Any] | None = None
 
 
+def _execute_hook(app_config: dict[str, Any], prompt_text: str) -> str | None:
+    hook_command = config.get_post_process_hook(app_config)
+    if not hook_command:
+        return None
+    try:
+        proc = subprocess.run(
+            hook_command,
+            shell=True,
+            input=prompt_text,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if proc.returncode == 0:
+            return proc.stdout
+        return f"[Hook Execution Error: exit code {proc.returncode}]\n{proc.stderr}"
+    except Exception as e:  # noqa: BLE001
+        return f"[Hook Execution Exception: {e}]"
+
+
 @router.post("/build", response_model=BuildResponse)
 def build_prompt(req: BuildRequest):
-    """编译指定 Manifest 生成完整 Prompt 文本并返回上下文剖析画像"""
+    """编译指定 Manifest 生成完整 Prompt 文本、结构化 Chunks 并返回上下文剖析画像"""
+    from pathlib import Path
+
     lib_repo, man_repo, _ = _bootstrap()
-    builder = BuilderService(lib_repo, man_repo)
     app_config = config.load_config()
     library_paths = config.get_library_paths(app_config)
     manifest_paths = config.get_manifest_paths(app_config)
 
-    try:
-        final_prompt, profile_data = builder.build_with_profile(
-            req.manifest,
-            library_paths,
-            manifest_paths,
-            is_file_path=req.is_file,
-        )
-        return BuildResponse(prompt=final_prompt, profile=profile_data)
-    except BuildError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=str(e))
+    if req.is_file:
+        manifest_path = Path(req.manifest)
+        if not manifest_path.exists():
+            raise HTTPException(status_code=404, detail="Manifest file not found")
+    else:
+        manifest_path = man_repo.find_manifest(req.manifest, manifest_paths)
+        if not manifest_path:
+            raise HTTPException(
+                status_code=404, detail=f"Manifest '{req.manifest}' not found"
+            )
+
+    manifest = man_repo.load_manifest(manifest_path)
+    library = lib_repo.load_library(library_paths, fail_fast=False)
+    interfaces = lib_repo.load_interfaces(library_paths)
+
+    if not library:
+        raise HTTPException(status_code=400, detail="Library is empty")
+
+    if "overrides" in manifest:
+        for lkey, override in manifest["overrides"].items():
+            if lkey in interfaces["lookups"]:
+                interfaces["lookups"][lkey]["selectors"] = override.get("selectors", [])
+
+    initial_map: dict[str, set[str]] = {}
+    for item in manifest.get("imports", []):
+        if "lookup" in item:
+            lkey = item["lookup"]
+            l_def = resolve_lookup_by_key(lkey, None, interfaces)
+            if not l_def:
+                continue
+            matched_ids = evaluate_lookup(library, l_def, interfaces)
+            for aid in matched_ids:
+                initial_map.setdefault(aid, set()).add(lkey)
+        elif "query" in item:
+            matched_ids = select_atoms_by_query(library, item["query"])
+            for aid in matched_ids:
+                initial_map.setdefault(aid, set())
+
+    final_atom_map = resolve_dependencies(initial_map, library, interfaces)
+    kernel_ids = {k for k, v in library.items() if v["meta"].get("type") == "kernel"}
+    for k_id in kernel_ids:
+        if k_id not in final_atom_map:
+            final_atom_map[k_id] = set()
+
+    prompt_text = serialize_prompt(final_atom_map, library)
+    chunks_data = generate_prompt_chunks(final_atom_map, library)
+    profile_data = generate_prompt_profile(final_atom_map, library)
+
+    hooked_output = None
+    if req.apply_hook:
+        hooked_output = _execute_hook(app_config, prompt_text)
+
+    return BuildResponse(
+        prompt=prompt_text,
+        hooked_prompt=hooked_output,
+        chunks=[PromptChunk(**c) for c in chunks_data],
+        profile=profile_data,
+    )
 
 
 @router.post("/compile-adhoc", response_model=BuildResponse)
 def compile_adhoc(req: AdhocCompileRequest):
-    """根据前端传入的内存草稿组件列表，进行即席拓扑求解与序列化"""
-    from aca_builder.domain.services import (
-        evaluate_lookup,
-        resolve_dependencies,
-        resolve_lookup_by_key,
-        select_atoms_by_query,
-        serialize_prompt,
-    )
-
+    """根据前端传入的内存草稿组件列表，进行即席拓扑求解、生成 Chunks 与序列化"""
     lib_repo, _, _ = _bootstrap()
     app_config = config.load_config()
     library_paths = config.get_library_paths(app_config)
@@ -346,13 +421,11 @@ def compile_adhoc(req: AdhocCompileRequest):
     if not library:
         raise HTTPException(status_code=400, detail="Library is empty")
 
-    # 1. 覆盖机制
     if req.overrides:
         for lkey, override in req.overrides.items():
             if lkey in interfaces["lookups"]:
                 interfaces["lookups"][lkey]["selectors"] = override.get("selectors", [])
 
-    # 2. 导入求解
     initial_map: dict[str, set[str]] = {}
     for item in req.imports:
         if "lookup" in item:
@@ -368,21 +441,26 @@ def compile_adhoc(req: AdhocCompileRequest):
             for aid in matched_ids:
                 initial_map.setdefault(aid, set())
 
-    # 3. 递归依赖解析
     final_atom_map = resolve_dependencies(initial_map, library, interfaces)
-
-    # 4. Kernel 注入
-    kernel_ids = {k for k, v in library.items() if v["meta"]["type"] == "kernel"}
+    kernel_ids = {k for k, v in library.items() if v["meta"].get("type") == "kernel"}
     for k_id in kernel_ids:
         if k_id not in final_atom_map:
             final_atom_map[k_id] = set()
 
-    # 5. 序列化与上下文剖析
-    from aca_builder.domain.services import generate_prompt_profile
-
-    final_prompt = serialize_prompt(final_atom_map, library)
+    prompt_text = serialize_prompt(final_atom_map, library)
+    chunks_data = generate_prompt_chunks(final_atom_map, library)
     profile_data = generate_prompt_profile(final_atom_map, library)
-    return BuildResponse(prompt=final_prompt, profile=profile_data)
+
+    hooked_output = None
+    if req.apply_hook:
+        hooked_output = _execute_hook(app_config, prompt_text)
+
+    return BuildResponse(
+        prompt=prompt_text,
+        hooked_prompt=hooked_output,
+        chunks=[PromptChunk(**c) for c in chunks_data],
+        profile=profile_data,
+    )
 
 
 @router.post("/manifests")
@@ -454,8 +532,6 @@ def delete_manifest(manifest_name: str) -> dict[str, str]:
 
 
 class CollectingMessageBus:
-    """用于捕获 Linter 事件并格式化为结构化列表的消息总线适配器"""
-
     def __init__(self):
         self.issues: list[dict[str, Any]] = []
         self.error_count = 0
@@ -526,7 +602,6 @@ def run_linter() -> dict[str, Any]:
     try:
         linter.lint(library_paths, manifest_paths)
     except BuildError:
-        # Linter 会在存在错误时抛出 BuildError("LINT_FAILED_SILENTLY")，结果已由 bus 收集
         pass
 
     return {
@@ -545,6 +620,12 @@ class CreateLookupRequest(BaseModel):
     selectors: list[dict[str, Any]] = []
 
 
+class UpdateLookupRequest(BaseModel):
+    description: str | None = None
+    selectors: list[dict[str, Any]] | None = None
+    is_public: bool | None = None
+
+
 class OpenObsidianRequest(BaseModel):
     file_path: str
 
@@ -552,7 +633,6 @@ class OpenObsidianRequest(BaseModel):
 @router.post("/system/open-obsidian")
 def open_in_obsidian(req: OpenObsidianRequest):
     """通过系统命令调起 Obsidian 打开对应路径文件"""
-    import subprocess
     import sys
     import urllib.parse
     from pathlib import Path
@@ -577,14 +657,14 @@ def open_in_obsidian(req: OpenObsidianRequest):
 
 
 @router.post("/lookups")
-def create_lookup(req: CreateLookupRequest):
-    """创建或更新 D4 查找表（支持写入 package.yaml 的 exports 或 d4/lookups.yaml）"""
-
+def create_or_update_lookup(req: CreateLookupRequest):
+    """创建或覆盖 D4 查找表"""
     if req.pillar not in ["d1", "d2", "d3"]:
         raise HTTPException(status_code=400, detail="构造类别必须为 d1, d2 或 d3")
 
     expected_prefix = f"{req.pillar}l-"
-    if not req.key.startswith(expected_prefix):
+    raw_key = req.key.split("::")[-1]
+    if not raw_key.startswith(expected_prefix):
         raise HTTPException(
             status_code=400,
             detail=f"查找接口名称必须以 '{expected_prefix}' 开头",
@@ -624,19 +704,18 @@ def create_lookup(req: CreateLookupRequest):
     }
 
     try:
+        lookup_name = raw_key
         if req.is_public:
-            # 写入 package.yaml exports 节
             pkg_content = (
                 yaml.safe_load(target_pkg_yaml.read_text(encoding="utf-8")) or {}
             )
             exports = pkg_content.setdefault("exports", {})
-            exports[req.key] = lookup_data
+            exports[lookup_name] = lookup_data
             target_pkg_yaml.write_text(
                 yaml.safe_dump(pkg_content, sort_keys=False, allow_unicode=True),
                 encoding="utf-8",
             )
         else:
-            # 写入 d4/lookups.yaml 内部查找节
             d4_dir = target_pkg_dir / "d4"
             d4_dir.mkdir(parents=True, exist_ok=True)
             d4_file = d4_dir / "lookups.yaml"
@@ -652,16 +731,58 @@ def create_lookup(req: CreateLookupRequest):
 
             d4_content["type"] = "d4"
             lookups = d4_content.setdefault("lookups", {})
-            lookups[req.key] = lookup_data
+            lookups[lookup_name] = lookup_data
             d4_file.write_text(
                 yaml.safe_dump(d4_content, sort_keys=False, allow_unicode=True),
                 encoding="utf-8",
             )
 
         broadcast_change("LIBRARY_DIRTY")
-        return {"status": "ok", "key": req.key, "package": req.package}
+        return {"status": "ok", "key": lookup_name, "package": req.package}
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"保存 Lookup 失败: {e}")
+
+
+@router.put("/lookups/{lookup_key:path}")
+def update_lookup(lookup_key: str, req: UpdateLookupRequest):
+    """就地修改已存在的 Lookup 定义（描述、选择器等）"""
+    lib_repo, _, _ = _bootstrap()
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+    interfaces = lib_repo.load_interfaces(library_paths)
+
+    lookup_def = interfaces.get("lookups", {}).get(lookup_key)
+    if not lookup_def:
+        raise HTTPException(status_code=404, detail=f"Lookup '{lookup_key}' not found")
+
+    pkg_name = lookup_def.get("package")
+    pillar = lookup_def.get("pillar")
+    is_public = lookup_def.get("visibility") == "public"
+
+    if not pkg_name:
+        raise HTTPException(
+            status_code=400, detail="Cannot edit legacy non-packaged lookup directly"
+        )
+
+    new_desc = (
+        req.description
+        if req.description is not None
+        else lookup_def.get("description", "")
+    )
+    new_selectors = (
+        req.selectors if req.selectors is not None else lookup_def.get("selectors", [])
+    )
+    new_public = req.is_public if req.is_public is not None else is_public
+
+    create_req = CreateLookupRequest(
+        package=pkg_name,
+        key=lookup_key,
+        pillar=pillar,
+        is_public=new_public,
+        description=new_desc,
+        selectors=new_selectors,
+    )
+    return create_or_update_lookup(create_req)
 
 
 class CreateAtomRequest(BaseModel):
@@ -682,7 +803,6 @@ def create_atom(req: CreateAtomRequest):
     if not library_paths:
         raise HTTPException(status_code=400, detail="未配置知识库路径")
 
-    # 寻找目标包的根目录
     target_pkg_dir = None
     for lib_root in library_paths:
         if not lib_root.exists():
@@ -703,13 +823,10 @@ def create_atom(req: CreateAtomRequest):
             status_code=404, detail=f"未找到组件包 '{req.package}' 的存放目录"
         )
 
-    # 按照构造归类目录
     type_dir = target_pkg_dir / req.type
     type_dir.mkdir(parents=True, exist_ok=True)
-
     target_file = type_dir / f"{req.id}.md"
 
-    # 构建合法的前置元数据 (Frontmatter)
     meta: dict[str, Any] = {
         "id": req.id,
         "type": req.type,
@@ -772,12 +889,13 @@ def get_atom_detail(atom_id: str) -> dict[str, Any]:
 
 
 class UpdateAtomRequest(BaseModel):
-    raw_content: str
+    raw_content: str | None = None
+    content: str | None = None  # 支持仅更新正文，自动保留 Frontmatter
 
 
 @router.put("/atoms/{atom_id}")
 def update_atom(atom_id: str, req: UpdateAtomRequest) -> dict[str, str]:
-    """直接保存并覆盖原子的 Markdown 文件内容"""
+    """保存并覆盖原子的 Markdown 文件内容或正文"""
     from pathlib import Path
 
     lib_repo, _, _ = _bootstrap()
@@ -791,14 +909,33 @@ def update_atom(atom_id: str, req: UpdateAtomRequest) -> dict[str, str]:
 
     source_path = Path(atom["source_file"])
     try:
-        source_path.write_text(req.raw_content, encoding="utf-8")
+        if req.raw_content is not None:
+            source_path.write_text(req.raw_content, encoding="utf-8")
+        elif req.content is not None:
+            # 仅修改正文，保留现有的元数据 frontmatter
+            current_raw = source_path.read_text(encoding="utf-8")
+            parts = current_raw.split("---", 2)
+            if len(parts) >= 3 and parts[0].strip() == "":
+                meta_section = parts[1].strip()
+                new_full = f"---\n{meta_section}\n---\n\n{req.content.strip()}\n"
+            else:
+                meta = atom.get("meta", {"id": atom_id, "type": "unknown"})
+                meta_yaml = yaml.safe_dump(
+                    meta, sort_keys=False, allow_unicode=True
+                ).strip()
+                new_full = f"---\n{meta_yaml}\n---\n\n{req.content.strip()}\n"
+            source_path.write_text(new_full, encoding="utf-8")
+        else:
+            raise HTTPException(
+                status_code=400, detail="Either raw_content or content must be provided"
+            )
+
         broadcast_change("LIBRARY_DIRTY")
         return {"status": "ok", "id": atom_id}
     except OSError as e:
         raise HTTPException(status_code=500, detail=f"Failed to write atom file: {e}")
 
 
-# 全局客户端事件广播队列集合
 active_subscribers: set[asyncio.Queue] = set()
 
 
@@ -810,7 +947,6 @@ async def event_stream():
 
     async def sse_generator():
         try:
-            # 建立初始握手
             yield "event: ping\ndata: connected\n\n"
             while True:
                 data = await queue.get()
@@ -832,7 +968,6 @@ async def event_stream():
 
 
 def broadcast_change(change_type: str = "LIBRARY_DIRTY"):
-    """向所有在线前端客户端广播变更通知"""
     for q in list(active_subscribers):
         try:
             q.put_nowait(change_type)

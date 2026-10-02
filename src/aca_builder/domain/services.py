@@ -251,3 +251,53 @@ def generate_prompt_profile(
         "by_pillar": by_pillar,
         "atoms": atoms_profile,
     }
+
+
+def generate_prompt_chunks(
+    atom_lookup_map: dict[str, set[str]], library: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Generates ordered structured prompt chunks for block-based UI rendering."""
+    final_ids = atom_lookup_map.keys()
+    atoms_to_serialize = [
+        library[atom_id] for atom_id in final_ids if atom_id in library
+    ]
+
+    def sort_key(atom):
+        meta = atom["meta"]
+        if meta.get("type") == "kernel":
+            return (-1,)
+        priority = meta.get("priority", 99)
+        if meta.get("type") == "d3":
+            if priority == 0:
+                return (0,)
+            if priority == 1:
+                return (1,)
+            if priority == 2:
+                return (4,)
+        elif meta.get("type") == "d1":
+            return (2,)
+        elif meta.get("type") == "d2":
+            return (3,)
+        return (99,)
+
+    atoms_to_serialize.sort(key=sort_key)
+    chunks = []
+
+    for atom in atoms_to_serialize:
+        meta = atom["meta"]
+        atom_id = atom["id"]
+        lookups = sorted(atom_lookup_map.get(atom_id, set()))
+        chunks.append(
+            {
+                "id": atom_id,
+                "type": meta.get("type", "unknown").lower(),
+                "priority": meta.get("priority"),
+                "package": atom.get("package"),
+                "source_file": atom.get("source_file"),
+                "meta": meta,
+                "content": atom.get("content", "").strip(),
+                "via_lookups": lookups,
+            }
+        )
+
+    return chunks
