@@ -21,7 +21,13 @@ export interface PackageItem {
   }>;
 }
 
-export function PackageExplorer({ packages }: { packages: PackageItem[] }) {
+export function PackageExplorer({
+  packages,
+  onSelectAtom,
+}: {
+  packages: PackageItem[];
+  onSelectAtom?: (atomId: string) => void;
+}) {
   const [expandedPkg, setExpandedPkg] = useState<Record<string, boolean>>({});
 
   const toggle = (pkgName: string) => {
@@ -112,13 +118,15 @@ export function PackageExplorer({ packages }: { packages: PackageItem[] }) {
                     </div>
                     <div className="space-y-1 pl-2">
                       {pkg.atoms.map((atom) => (
-                        <div
+                        <button
+                          type="button"
                           key={atom.id}
-                          className="text-xs font-mono text-slate-400 truncate flex items-center gap-1.5"
+                          onClick={() => onSelectAtom?.(atom.id)}
+                          className="w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60 rounded px-1.5 py-1 truncate flex items-center gap-1.5 transition-colors group"
                         >
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
-                          <span>{atom.id}</span>
-                        </div>
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-indigo-400" />
+                          <span className="truncate">{atom.id}</span>
+                        </button>
                       ))}
                     </div>
                   </div>

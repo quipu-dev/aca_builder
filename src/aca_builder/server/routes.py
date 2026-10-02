@@ -387,9 +387,46 @@ def save_manifest(req: SaveManifestRequest):
             yaml.safe_dump(manifest_content, sort_keys=False, allow_unicode=True),
             encoding="utf-8",
         )
+        broadcast_change("LIBRARY_DIRTY")
         return {"status": "ok", "path": str(target_file)}
     except (OSError, yaml.YAMLError) as e:
         raise HTTPException(status_code=500, detail=f"Failed to save manifest: {e}")
+
+
+@router.get("/manifests/{manifest_name:path}")
+def get_manifest_detail(manifest_name: str) -> dict[str, Any]:
+    """获取指定清单的详细结构配置"""
+    _, man_repo, _ = _bootstrap()
+    app_config = config.load_config()
+    manifest_paths = config.get_manifest_paths(app_config)
+    m_path = man_repo.find_manifest(manifest_name, manifest_paths)
+    if not m_path or not m_path.exists():
+        raise HTTPException(
+            status_code=404, detail=f"Manifest '{manifest_name}' not found"
+        )
+    try:
+        return man_repo.load_manifest(m_path)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Failed to load manifest: {e}")
+
+
+@router.delete("/manifests/{manifest_name:path}")
+def delete_manifest(manifest_name: str) -> dict[str, str]:
+    """删除指定的清单文件"""
+    _, man_repo, _ = _bootstrap()
+    app_config = config.load_config()
+    manifest_paths = config.get_manifest_paths(app_config)
+    m_path = man_repo.find_manifest(manifest_name, manifest_paths)
+    if not m_path or not m_path.exists():
+        raise HTTPException(
+            status_code=404, detail=f"Manifest '{manifest_name}' not found"
+        )
+    try:
+        m_path.unlink()
+        broadcast_change("LIBRARY_DIRTY")
+        return {"status": "ok", "deleted": manifest_name}
+    except OSError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete manifest: {e}")
 
 
 class CollectingMessageBus:
@@ -542,6 +579,7 @@ def create_atom(req: CreateAtomRequest):
 
     try:
         target_file.write_text(full_content, encoding="utf-8")
+        broadcast_change("LIBRARY_DIRTY")
         return {
             "status": "ok",
             "file": str(target_file),
@@ -549,6 +587,63 @@ def create_atom(req: CreateAtomRequest):
         }
     except OSError as e:
         raise HTTPException(status_code=500, detail=f"保存原子失败: {e}")
+
+
+@router.get("/atoms/{atom_id}")
+def get_atom_detail(atom_id: str) -> dict[str, Any]:
+    """获取单个原子的完整内容（包含元数据、正文以及原始 markdown）"""
+    from pathlib import Path
+
+    lib_repo, _, _ = _bootstrap()
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+    library = lib_repo.load_library(library_paths, fail_fast=False)
+
+    atom = library.get(atom_id)
+    if not atom:
+        raise HTTPException(status_code=404, detail=f"Atom '{atom_id}' not found")
+
+    source_path = Path(atom["source_file"])
+    try:
+        raw_text = source_path.read_text(encoding="utf-8")
+    except OSError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read atom file: {e}")
+
+    return {
+        "id": atom_id,
+        "package": atom.get("package"),
+        "meta": atom["meta"],
+        "content": atom["content"],
+        "raw": raw_text,
+        "source_file": str(source_path),
+    }
+
+
+class UpdateAtomRequest(BaseModel):
+    raw_content: str
+
+
+@router.put("/atoms/{atom_id}")
+def update_atom(atom_id: str, req: UpdateAtomRequest) -> dict[str, str]:
+    """直接保存并覆盖原子的 Markdown 文件内容"""
+    from pathlib import Path
+
+    lib_repo, _, _ = _bootstrap()
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+    library = lib_repo.load_library(library_paths, fail_fast=False)
+
+    atom = library.get(atom_id)
+    if not atom:
+        raise HTTPException(status_code=404, detail=f"Atom '{atom_id}' not found")
+
+    source_path = Path(atom["source_file"])
+    try:
+        source_path.write_text(req.raw_content, encoding="utf-8")
+        broadcast_change("LIBRARY_DIRTY")
+        return {"status": "ok", "id": atom_id}
+    except OSError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to write atom file: {e}")
 
 
 # 全局客户端事件广播队列集合

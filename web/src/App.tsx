@@ -1,5 +1,6 @@
 import { PromptViewer } from '@/components/editor/PromptViewer';
 import { Button } from '@/components/ui/button';
+import { AtomEditorDrawer } from '@/features/authoring/AtomEditorDrawer';
 import { CreateAtomModal } from '@/features/authoring/CreateAtomModal';
 import { VisualComposer } from '@/features/composer/VisualComposer';
 import { DiagnosticsDrawer, type LintIssue } from '@/features/diagnostics/DiagnosticsDrawer';
@@ -10,12 +11,14 @@ import {
   AlertCircle,
   Cpu,
   Eye,
+  FilePlus2,
   Layers,
   Network,
   Package,
   Plus,
   ShieldCheck,
   Sliders,
+  Trash2,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -28,15 +31,18 @@ export function App() {
   const [viewMode, setViewMode] = useState<'composer' | 'graph' | 'preview'>('composer');
   const [leftTab, setLeftTab] = useState<'manifests' | 'packages'>('manifests');
 
-  // M3 状态：创作弹窗与诊断抽屉
+  // M3 状态：创作弹窗、诊断抽屉与原子在线编辑器
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
   const [lintLoading, setLintLoading] = useState(false);
   const [lintErrors, setLintErrors] = useState(0);
   const [lintWarnings, setLintWarnings] = useState(0);
   const [lintIssues, setLintIssues] = useState<LintIssue[]>([]);
+  const [editingAtomId, setEditingAtomId] = useState<string | null>(null);
 
   const composerItems = useComposerStore((state) => state.items);
+  const loadManifestData = useComposerStore((state) => state.loadManifestData);
+  const resetNewManifest = useComposerStore((state) => state.resetNewManifest);
 
   const fetchAssets = useCallback(() => {
     fetch('/api/assets')
@@ -116,8 +122,9 @@ export function App() {
     return () => clearTimeout(timer);
   }, [composerItems]);
 
-  const handleBuildManifest = async (mName: string) => {
+  const handleSelectManifest = async (mName: string) => {
     setSelectedManifest(mName);
+    // 1. 构建并预览 Prompt
     try {
       const res = await fetch('/api/build', {
         method: 'POST',
@@ -130,6 +137,47 @@ export function App() {
       }
     } catch (e) {
       console.error(e);
+    }
+
+    // 2. 读取清单配置并回显到装配器
+    try {
+      const mRes = await fetch(`/api/manifests/${encodeURIComponent(mName)}`);
+      if (mRes.ok) {
+        const mData = await mRes.json();
+        loadManifestData(mData);
+      }
+    } catch (e) {
+      console.error('回显清单数据失败:', e);
+    }
+  };
+
+  const handleCreateNewManifest = () => {
+    resetNewManifest();
+    setSelectedManifest('');
+    setPrompt('');
+    setViewMode('composer');
+  };
+
+  const handleDeleteManifest = async (mName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm(`确定要删除清单 "${mName}" 吗？此操作不可逆。`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        fetchAssets();
+        if (selectedManifest === mName) {
+          handleCreateNewManifest();
+        }
+      } else {
+        const data = await res.json();
+        alert(`删除失败: ${data.detail}`);
+      }
+    } catch (_err) {
+      alert('删除清单网络请求异常');
     }
   };
 
@@ -212,24 +260,52 @@ export function App() {
             </button>
           </div>
 
+          {leftTab === 'manifests' && (
+            <div className="pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCreateNewManifest}
+                className="w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50"
+              >
+                <FilePlus2 className="h-3.5 w-3.5 text-indigo-400" /> 新建清单蓝图
+              </Button>
+            </div>
+          )}
+
           <div className="flex-1 overflow-y-auto space-y-1">
             {leftTab === 'manifests' ? (
               manifests.map((m) => (
-                <button
-                  type="button"
+                <div
                   key={m}
-                  onClick={() => handleBuildManifest(m)}
-                  className={`w-full text-left px-3 py-2 rounded text-xs font-mono truncate transition-colors ${
+                  className={`group w-full flex items-center justify-between px-2 py-1 rounded text-xs font-mono transition-colors ${
                     selectedManifest === m
                       ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/50'
                       : 'text-slate-300 hover:bg-slate-900'
                   }`}
                 >
-                  {m}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectManifest(m)}
+                    className="flex-1 text-left truncate py-1 px-1 hover:text-white"
+                  >
+                    {m}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteManifest(m, e)}
+                    className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-opacity p-1 rounded"
+                    title="删除清单"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               ))
             ) : (
-              <PackageExplorer packages={packages} />
+              <PackageExplorer
+                packages={packages}
+                onSelectAtom={(atomId) => setEditingAtomId(atomId)}
+              />
             )}
           </div>
         </aside>
@@ -331,6 +407,20 @@ export function App() {
         issues={lintIssues}
         onRefresh={fetchLintReport}
         loading={lintLoading}
+      />
+
+      {/* 原子在线编辑抽屉 */}
+      <AtomEditorDrawer
+        atomId={editingAtomId}
+        isOpen={!!editingAtomId}
+        onClose={() => setEditingAtomId(null)}
+        onSaved={() => {
+          fetchAssets();
+          fetchLintReport();
+          if (selectedManifest) {
+            handleSelectManifest(selectedManifest);
+          }
+        }}
       />
     </div>
   );

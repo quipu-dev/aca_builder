@@ -21,6 +21,13 @@ interface ComposerState {
   moveItem: (index: number, direction: 'up' | 'down') => void;
   clearItems: () => void;
   loadFromManifest: (name: string, imports: Array<{ lookup?: string }>) => void;
+  loadManifestData: (manifest: {
+    name: string;
+    version?: string;
+    description?: string;
+    imports?: Array<{ lookup?: string }>;
+  }) => void;
+  resetNewManifest: () => void;
 }
 
 export const useComposerStore = create<ComposerState>((set) => ({
@@ -75,5 +82,26 @@ export const useComposerStore = create<ComposerState>((set) => ({
           id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           lookup: imp.lookup as string,
         })),
+    }),
+
+  loadManifestData: (manifest) =>
+    set({
+      manifestName: manifest.name,
+      version: manifest.version || '1.0.0',
+      description: manifest.description || '',
+      items: (manifest.imports || [])
+        .filter((imp) => !!imp.lookup)
+        .map((imp) => ({
+          id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          lookup: imp.lookup as string,
+        })),
+    }),
+
+  resetNewManifest: () =>
+    set({
+      manifestName: 'new_agent',
+      version: '1.0.0',
+      description: '',
+      items: [],
     }),
 }));
