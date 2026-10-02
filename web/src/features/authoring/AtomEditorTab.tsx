@@ -3,7 +3,17 @@ import { Button } from '@/components/ui/button';
 import { useIdeStore } from '@/stores/ide-store';
 import { markdown } from '@codemirror/lang-markdown';
 import CodeMirror from '@uiw/react-codemirror';
-import { AlertCircle, Check, ExternalLink, Layers, Loader2, Save, Shield, Tag } from 'lucide-react';
+import {
+  AlertCircle,
+  Check,
+  ExternalLink,
+  Layers,
+  Loader2,
+  Save,
+  Shield,
+  Tag,
+  Trash2,
+} from 'lucide-react';
 import type React from 'react';
 import { useEffect, useState } from 'react';
 
@@ -11,10 +21,12 @@ export function AtomEditorTab({
   atomId,
   packages = [],
   onSaved,
+  onDeleted,
 }: {
   atomId: string;
   packages?: Array<{ name: string }>;
   onSaved?: () => void;
+  onDeleted?: () => void;
 }) {
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const openTab = useIdeStore((state) => state.openTab);
@@ -267,6 +279,29 @@ export function AtomEditorTab({
     }
   };
 
+  const handleDelete = async () => {
+    if (isDraft) return;
+    if (!window.confirm(`确定要永久删除原子组件 "${currentId}" 吗？此操作将物理删除文件。`)) {
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/atoms/${encodeURIComponent(currentId)}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        onDeleted?.();
+      } else {
+        const data = await res.json();
+        setErrorMsg(data.detail || '删除原子失败');
+      }
+    } catch (_err) {
+      setErrorMsg('删除请求网络异常');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // 支持键盘快捷键 Ctrl+S / Cmd+S
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -355,6 +390,19 @@ export function AtomEditorTab({
               <ExternalLink className="h-3 w-3" />
               <span>Obsidian</span>
             </button>
+          )}
+          {!isDraft && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDelete}
+              disabled={saving}
+              className="h-7 text-xs flex items-center gap-1 px-2 text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700 cursor-pointer"
+              title="物理删除该原子 Markdown 文件"
+            >
+              <Trash2 className="h-3 w-3" />
+              <span>删除</span>
+            </Button>
           )}
           <Button
             size="sm"

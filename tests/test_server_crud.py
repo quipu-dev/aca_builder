@@ -1,0 +1,112 @@
+from pathlib import Path
+
+import pytest
+import yaml
+from fastapi.testclient import TestClient
+
+from aca_builder.server.app import create_app
+
+ATOM_SAMPLE = """---
+id: d1-crud-atom
+type: d1
+---
+Crud Test Content
+"""
+
+PKG_SAMPLE = """
+name: pkg_crud
+version: "1.0.0"
+exports:
+  d1l-public-crud:
+    pillar: d1
+    selectors:
+      - query: { id: "d1-crud-atom" }
+"""
+
+D4_SAMPLE = """
+type: d4
+lookups:
+  d1l-private-crud:
+    pillar: d1
+    selectors:
+      - query: { id: "d1-crud-atom" }
+"""
+
+
+@pytest.fixture
+def setup_crud_env(tmp_path: Path, monkeypatch):
+    lib_path = tmp_path / "lib"
+    lib_path.mkdir()
+
+    pkg_dir = lib_path / "pkg_crud"
+    pkg_dir.mkdir()
+    (pkg_dir / "d1").mkdir()
+    (pkg_dir / "d4").mkdir()
+
+    (pkg_dir / "package.yaml").write_text(PKG_SAMPLE, encoding="utf-8")
+    (pkg_dir / "d1" / "atom.md").write_text(ATOM_SAMPLE, encoding="utf-8")
+    (pkg_dir / "d4" / "lookups.yaml").write_text(D4_SAMPLE, encoding="utf-8")
+
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    config_file = config_dir / "config.yaml"
+    config_file.write_text(
+        yaml.dump({"library_paths": [str(lib_path)], "manifest_paths": []}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("aca_builder.config.CONFIG_PATH", config_file)
+
+    app = create_app()
+    client = TestClient(app)
+    return client, lib_path, pkg_dir
+
+
+def test_delete_public_and_private_lookup(setup_crud_env):
+    client, _, pkg_dir = setup_crud_env
+
+    # 1. 验证删除公开接口
+    res_pub = client.delete("/api/lookups/pkg_crud::d1l-public-crud")
+    assert res_pub.status_code == 200
+    pkg_yaml = yaml.safe_load((pkg_dir / "package.yaml").read_text(encoding="utf-8"))
+    assert "d1l-public-crud" not in pkg_yaml.get("exports", {})
+
+    # 2. 验证删除私有接口
+    res_priv = client.delete("/api/lookups/d1l-private-crud")
+    assert res_priv.status_code == 200
+    d4_yaml = yaml.safe_load(
+        (pkg_dir / "d4" / "lookups.yaml").read_text(encoding="utf-8")
+    )
+    assert "d1l-private-crud" not in d4_yaml.get("lookups", {})
+
+
+def test_delete_atom_file(setup_crud_env):
+    client, _, pkg_dir = setup_crud_env
+    atom_file = pkg_dir / "d1" / "atom.md"
+    assert atom_file.exists()
+
+    res = client.delete("/api/atoms/d1-crud-atom")
+    assert res.status_code == 200
+    assert not atom_file.exists()
+
+
+def test_create_and_delete_package(setup_crud_env):
+    client, lib_path, _ = setup_crud_env
+
+    # 1. 创建新包
+    res_create = client.post(
+        "/api/packages",
+        json={
+            "name": "pkg_new",
+            "description": "Brand new package",
+            "version": "1.0.0",
+        },
+    )
+    assert res_create.status_code == 200
+    new_pkg_dir = lib_path / "pkg_new"
+    assert new_pkg_dir.is_dir()
+    assert (new_pkg_dir / "package.yaml").exists()
+
+    # 2. 删除新包
+    res_del = client.delete("/api/packages/pkg_new")
+    assert res_del.status_code == 200
+    assert not new_pkg_dir.exists()

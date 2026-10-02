@@ -1107,6 +1107,92 @@ def update_lookup(lookup_key: str, req: UpdateLookupRequest):
     return create_or_update_lookup(create_req)
 
 
+@router.delete("/lookups/{lookup_key:path}")
+def delete_lookup(lookup_key: str):
+    """删除指定的 Lookup 定义（从 package.yaml 或 d4/lookups.yaml 中移除）"""
+    lib_repo, _, _ = _bootstrap()
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+    interfaces = lib_repo.load_interfaces(library_paths)
+
+    lookup_def = interfaces.get("lookups", {}).get(lookup_key)
+    if not lookup_def:
+        raise HTTPException(status_code=404, detail=f"Lookup '{lookup_key}' not found")
+
+    pkg_name = lookup_def.get("package")
+    raw_key = lookup_key.split("::")[-1]
+    is_public = lookup_def.get("visibility") == "public"
+
+    if not pkg_name:
+        raise HTTPException(
+            status_code=400, detail="Cannot delete legacy non-packaged lookup directly"
+        )
+
+    target_pkg_dir = None
+    target_pkg_yaml = None
+    for lib_root in library_paths:
+        if not lib_root.exists():
+            continue
+        for pkg_file in lib_root.rglob("package.yaml"):
+            try:
+                pkg_data = yaml.safe_load(pkg_file.read_text(encoding="utf-8"))
+                if pkg_data and pkg_data.get("name") == pkg_name:
+                    target_pkg_dir = pkg_file.parent
+                    target_pkg_yaml = pkg_file
+                    break
+            except (yaml.YAMLError, OSError):
+                continue
+        if target_pkg_dir:
+            break
+
+    if not target_pkg_dir or not target_pkg_yaml:
+        raise HTTPException(
+            status_code=404, detail=f"未找到组件包 '{pkg_name}' 的存放目录"
+        )
+
+    try:
+        if is_public:
+            pkg_content = (
+                yaml.safe_load(target_pkg_yaml.read_text(encoding="utf-8")) or {}
+            )
+            exports = pkg_content.get("exports", {})
+            if raw_key in exports:
+                del exports[raw_key]
+                target_pkg_yaml.write_text(
+                    yaml.safe_dump(pkg_content, sort_keys=False, allow_unicode=True),
+                    encoding="utf-8",
+                )
+        else:
+            d4_dir = target_pkg_dir / "d4"
+            if d4_dir.exists():
+                for d4_file in d4_dir.glob("*.yaml"):
+                    try:
+                        d4_content = (
+                            yaml.safe_load(d4_file.read_text(encoding="utf-8")) or {}
+                        )
+                        if (
+                            isinstance(d4_content, dict)
+                            and d4_content.get("type") == "d4"
+                            and "lookups" in d4_content
+                            and raw_key in d4_content["lookups"]
+                        ):
+                            del d4_content["lookups"][raw_key]
+                            d4_file.write_text(
+                                yaml.safe_dump(
+                                    d4_content, sort_keys=False, allow_unicode=True
+                                ),
+                                encoding="utf-8",
+                            )
+                            break
+                    except (yaml.YAMLError, OSError):
+                        continue
+
+        broadcast_change("LIBRARY_DIRTY")
+        return {"status": "ok", "deleted": lookup_key}
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"删除 Lookup 失败: {e}")
+
+
 class CreateAtomRequest(BaseModel):
     package: str
     id: str
@@ -1272,6 +1358,117 @@ def update_atom(atom_id: str, req: UpdateAtomRequest) -> dict[str, str]:
         return {"status": "ok", "id": atom_id}
     except OSError as e:
         raise HTTPException(status_code=500, detail=f"Failed to write atom file: {e}")
+
+
+@router.delete("/atoms/{atom_id}")
+def delete_atom(atom_id: str) -> dict[str, str]:
+    """物理删除指定的原子组件 Markdown 文件"""
+    from pathlib import Path
+
+    lib_repo, _, _ = _bootstrap()
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+    library = lib_repo.load_library(library_paths, fail_fast=False)
+
+    atom = library.get(atom_id)
+    if not atom:
+        raise HTTPException(status_code=404, detail=f"Atom '{atom_id}' not found")
+
+    source_path = Path(atom["source_file"])
+    try:
+        if source_path.exists():
+            source_path.unlink()
+        broadcast_change("LIBRARY_DIRTY")
+        return {"status": "ok", "deleted": atom_id}
+    except OSError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete atom file: {e}")
+
+
+class CreatePackageRequest(BaseModel):
+    name: str
+    description: str = ""
+    version: str = "1.0.0"
+
+
+@router.post("/packages")
+def create_package(req: CreatePackageRequest) -> dict[str, Any]:
+    """创建新的组件包与基础骨架目录"""
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+    if not library_paths:
+        raise HTTPException(status_code=400, detail="未配置知识库路径")
+
+    target_lib = library_paths[0]
+    target_lib.mkdir(parents=True, exist_ok=True)
+    pkg_dir = target_lib / req.name
+
+    if pkg_dir.exists():
+        raise HTTPException(status_code=400, detail=f"组件包目录 '{req.name}' 已存在")
+
+    try:
+        pkg_dir.mkdir(parents=True, exist_ok=True)
+        (pkg_dir / "d1").mkdir(exist_ok=True)
+        (pkg_dir / "d2").mkdir(exist_ok=True)
+        (pkg_dir / "d3").mkdir(exist_ok=True)
+        (pkg_dir / "d4").mkdir(exist_ok=True)
+
+        pkg_yaml = pkg_dir / "package.yaml"
+        pkg_content = {
+            "name": req.name,
+            "version": req.version,
+            "description": req.description,
+            "exports": {},
+        }
+        pkg_yaml.write_text(
+            yaml.safe_dump(pkg_content, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+
+        d4_lookups = pkg_dir / "d4" / "lookups.yaml"
+        d4_lookups.write_text("type: d4\nlookups: {}\n", encoding="utf-8")
+
+        broadcast_change("LIBRARY_DIRTY")
+        return {"status": "ok", "package": req.name, "path": str(pkg_dir)}
+    except OSError as e:
+        raise HTTPException(status_code=500, detail=f"创建组件包失败: {e}")
+
+
+@router.delete("/packages/{package_name}")
+def delete_package(package_name: str) -> dict[str, str]:
+    """物理删除指定的组件包及其目录下所有文件"""
+    import shutil
+
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+    if not library_paths:
+        raise HTTPException(status_code=400, detail="未配置知识库路径")
+
+    target_pkg_dir = None
+    for lib_root in library_paths:
+        if not lib_root.exists():
+            continue
+        for pkg_file in lib_root.rglob("package.yaml"):
+            try:
+                pkg_data = yaml.safe_load(pkg_file.read_text(encoding="utf-8"))
+                if pkg_data and pkg_data.get("name") == package_name:
+                    target_pkg_dir = pkg_file.parent
+                    break
+            except (yaml.YAMLError, OSError):
+                continue
+        if target_pkg_dir:
+            break
+
+    if not target_pkg_dir:
+        raise HTTPException(
+            status_code=404, detail=f"未找到组件包 '{package_name}' 的存放目录"
+        )
+
+    try:
+        shutil.rmtree(target_pkg_dir)
+        broadcast_change("LIBRARY_DIRTY")
+        return {"status": "ok", "deleted": package_name}
+    except OSError as e:
+        raise HTTPException(status_code=500, detail=f"删除组件包失败: {e}")
 
 
 active_subscribers: set[asyncio.Queue] = set()

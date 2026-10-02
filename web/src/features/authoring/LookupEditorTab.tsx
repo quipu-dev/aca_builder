@@ -50,10 +50,12 @@ export function LookupEditorTab({
   lookupKey,
   packages,
   onSaved,
+  onDeleted,
 }: {
   lookupKey: string;
   packages: PackageItem[];
   onSaved?: () => void;
+  onDeleted?: () => void;
 }) {
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const openTab = useIdeStore((state) => state.openTab);
@@ -361,6 +363,29 @@ export function LookupEditorTab({
     }
   };
 
+  const handleDelete = async () => {
+    if (isDraft) return;
+    if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？此操作将从包定义中移除。`)) {
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        onDeleted?.();
+      } else {
+        const data = await res.json();
+        setSaveStatus(`删除失败: ${data.detail}`);
+      }
+    } catch (_err) {
+      setSaveStatus('删除请求网络异常');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const fullLookupKey = `${pillar}l-${rawKeyName.trim() || '...'}`;
 
   return (
@@ -379,6 +404,19 @@ export function LookupEditorTab({
 
         <div className="flex items-center gap-2">
           {saveStatus && <span className="text-xs text-indigo-400">{saveStatus}</span>}
+          {!isDraft && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDelete}
+              disabled={saving}
+              className="h-7 text-xs flex items-center gap-1 px-2.5 text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700 cursor-pointer"
+              title="删除此接口契约"
+            >
+              <Trash2 className="h-3 w-3" />
+              <span>删除接口</span>
+            </Button>
+          )}
           <Button
             size="sm"
             onClick={handleSave}

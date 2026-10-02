@@ -40,6 +40,7 @@ interface TabPaneProps {
   packages: PackageItem[];
   manifestsCount: number;
   onSaved: () => void;
+  onDeleted: (tabId: string) => void;
   onOpenCommandPalette: () => void;
   onCreateManifest: () => void;
   onCreateAtom: () => void;
@@ -52,6 +53,7 @@ const TabPane = memo(
     packages,
     manifestsCount,
     onSaved,
+    onDeleted,
     onOpenCommandPalette,
     onCreateManifest,
     onCreateAtom,
@@ -73,6 +75,7 @@ const TabPane = memo(
             atomId={tab.atomId}
             packages={packages}
             onSaved={onSaved}
+            onDeleted={() => onDeleted(tab.id)}
           />
         )}
         {tab.type === 'manifest' && (
@@ -89,6 +92,7 @@ const TabPane = memo(
             lookupKey={tab.lookupKey}
             packages={packages}
             onSaved={onSaved}
+            onDeleted={() => onDeleted(tab.id)}
           />
         )}
       </div>
@@ -381,6 +385,107 @@ export function App() {
     fetchLintReport();
   }, [fetchAssets, fetchLintReport]);
 
+  const handleTabDeleted = useCallback(
+    (tabId: string) => {
+      ideStore.closeTab(tabId);
+      fetchAssets();
+      fetchLintReport();
+    },
+    [ideStore, fetchAssets, fetchLintReport],
+  );
+
+  const handleCreatePackage = useCallback(() => {
+    const pkgName = window.prompt('请输入新建组件包名称（英文字符/下划线）:');
+    if (!pkgName || !pkgName.trim()) return;
+
+    fetch('/api/packages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: pkgName.trim() }),
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          fetchAssets();
+          fetchLintReport();
+        } else {
+          const data = await res.json();
+          alert(`创建组件包失败: ${data.detail}`);
+        }
+      })
+      .catch(() => alert('创建组件包网络异常'));
+  }, [fetchAssets, fetchLintReport]);
+
+  const handleDeletePackage = useCallback(
+    (pkgName: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!window.confirm(`确定要彻底删除组件包 "${pkgName}" 及其所有文件吗？此操作不可逆。`)) {
+        return;
+      }
+      fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
+        method: 'DELETE',
+      })
+        .then(async (res) => {
+          if (res.ok) {
+            fetchAssets();
+            fetchLintReport();
+          } else {
+            const data = await res.json();
+            alert(`删除组件包失败: ${data.detail}`);
+          }
+        })
+        .catch(() => alert('删除组件包网络异常'));
+    },
+    [fetchAssets, fetchLintReport],
+  );
+
+  const handleDeleteLookup = useCallback(
+    (lookupKey: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？`)) {
+        return;
+      }
+      fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
+        method: 'DELETE',
+      })
+        .then(async (res) => {
+          if (res.ok) {
+            ideStore.closeTab(`lookup:${lookupKey}`);
+            fetchAssets();
+            fetchLintReport();
+          } else {
+            const data = await res.json();
+            alert(`删除接口失败: ${data.detail}`);
+          }
+        })
+        .catch(() => alert('删除接口网络异常'));
+    },
+    [ideStore, fetchAssets, fetchLintReport],
+  );
+
+  const handleDeleteAtom = useCallback(
+    (atomId: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!window.confirm(`确定要物理删除原子文件 "${atomId}" 吗？`)) {
+        return;
+      }
+      fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
+        method: 'DELETE',
+      })
+        .then(async (res) => {
+          if (res.ok) {
+            ideStore.closeTab(`atom:${atomId}`);
+            fetchAssets();
+            fetchLintReport();
+          } else {
+            const data = await res.json();
+            alert(`删除原子失败: ${data.detail}`);
+          }
+        })
+        .catch(() => alert('删除原子网络异常'));
+    },
+    [ideStore, fetchAssets, fetchLintReport],
+  );
+
   const activeTab = ideStore.tabs.find((t) => t.id === ideStore.activeTabId);
   const canGoBack = ideStore.historyIndex > 0;
   const canGoForward = ideStore.historyIndex < ideStore.navigationHistory.length - 1;
@@ -451,8 +556,8 @@ export function App() {
                 </button>
               </div>
 
-              {explorerTab === 'manifests' && (
-                <div className="pt-2">
+              <div className="pt-2">
+                {explorerTab === 'manifests' ? (
                   <Button
                     variant="outline"
                     size="sm"
@@ -461,8 +566,17 @@ export function App() {
                   >
                     <FilePlus2 className="h-3.5 w-3.5 text-indigo-400" /> 新建清单蓝图
                   </Button>
-                </div>
-              )}
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCreatePackage}
+                    className="w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5 text-indigo-400" /> 新建组件包
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
@@ -478,6 +592,9 @@ export function App() {
                   packages={packages}
                   onSelectAtom={(atomId, e) => handleOpenAtomTab(atomId, e)}
                   onOpenLookup={(lKey, e) => handleOpenLookupTab(lKey, e)}
+                  onDeletePackage={handleDeletePackage}
+                  onDeleteLookup={handleDeleteLookup}
+                  onDeleteAtom={handleDeleteAtom}
                 />
               )}
             </div>
@@ -590,6 +707,7 @@ export function App() {
                   packages={packages}
                   manifestsCount={manifests.length}
                   onSaved={handleTabSaved}
+                  onDeleted={handleTabDeleted}
                   onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
                   onCreateManifest={handleCreateNewManifest}
                   onCreateAtom={handleCreateNewAtomDraft}

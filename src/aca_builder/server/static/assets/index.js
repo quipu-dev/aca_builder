@@ -1,4 +1,4 @@
-import { j as jsxRuntimeExports, c as create, p as persist, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, d as Check, e as Save, f as Shield, T as Tag, i as ReactCodeMirror, k as CodeXml, W as WandSparkles, l as ChartColumn, m as ChevronUp, n as ChevronDown, o as Copy, X, P as PenLine, M as Markdown, H as Handle, q as Pen, s as TriangleAlert, u as useNodesState, t as useEdgesState, v as Cpu, w as CircleCheckBig, x as index, y as Background, z as BackgroundVariant, A as Controls, N as Network, F as Filter, D as Plus, G as Link2, I as Trash2, J as Eye, K as RotateCcw, O as EyeOff, Q as SlidersVertical, U as ChevronRight, V as FolderOpen, Y as Folder, Z as Package, _ as Globe, $ as Lock, a0 as FileCode, a1 as FilePlus2, a2 as MousePointerClick, a3 as FolderTree, a4 as ArrowLeft, a5 as ArrowRight, a6 as RefreshCw, a7 as ShieldCheck, a8 as OctagonAlert, a9 as ReactDOM } from "./vendor-react.js";
+import { j as jsxRuntimeExports, c as create, p as persist, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, T as Trash2, d as Check, e as Save, f as Shield, i as Tag, k as ReactCodeMirror, l as CodeXml, W as WandSparkles, m as ChartColumn, n as ChevronUp, o as ChevronDown, q as Copy, X, P as PenLine, M as Markdown, H as Handle, s as Pen, t as TriangleAlert, u as useNodesState, v as useEdgesState, w as Cpu, x as CircleCheckBig, y as index, z as Background, A as BackgroundVariant, D as Controls, N as Network, F as Filter, G as Plus, I as Link2, J as Eye, K as RotateCcw, O as EyeOff, Q as SlidersVertical, U as ChevronRight, V as FolderOpen, Y as Folder, Z as Package, _ as Globe, $ as Lock, a0 as FileCode, a1 as FilePlus2, a2 as MousePointerClick, a3 as FolderTree, a4 as ArrowLeft, a5 as ArrowRight, a6 as RefreshCw, a7 as ShieldCheck, a8 as OctagonAlert, a9 as ReactDOM } from "./vendor-react.js";
 import { U as twMerge, W as clsx, X as remarkGfm } from "./vendor-others.js";
 import { m as markdown } from "./vendor-codemirror.js";
 import { P as Position } from "./vendor-xyflow.js";
@@ -433,7 +433,8 @@ Button.displayName = "Button";
 function AtomEditorTab({
   atomId,
   packages = [],
-  onSaved
+  onSaved,
+  onDeleted
 }) {
   var _a;
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
@@ -638,6 +639,28 @@ function AtomEditorTab({
       setSaving(false);
     }
   };
+  const handleDelete = async () => {
+    if (isDraft) return;
+    if (!window.confirm(`确定要永久删除原子组件 "${currentId}" 吗？此操作将物理删除文件。`)) {
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/atoms/${encodeURIComponent(currentId)}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        onDeleted == null ? void 0 : onDeleted();
+      } else {
+        const data = await res.json();
+        setErrorMsg(data.detail || "删除原子失败");
+      }
+    } catch (_err) {
+      setErrorMsg("删除请求网络异常");
+    } finally {
+      setSaving(false);
+    }
+  };
   const handleKeyDown = (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "s") {
       e.preventDefault();
@@ -717,6 +740,21 @@ function AtomEditorTab({
                 children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "h-3 w-3" }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Obsidian" })
+                ]
+              }
+            ),
+            !isDraft && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              Button,
+              {
+                variant: "outline",
+                size: "sm",
+                onClick: handleDelete,
+                disabled: saving,
+                className: "h-7 text-xs flex items-center gap-1 px-2 text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700 cursor-pointer",
+                title: "物理删除该原子 Markdown 文件",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "删除" })
                 ]
               }
             ),
@@ -1845,7 +1883,8 @@ const TopologyGraph = React.memo(function TopologyGraph2({
 function LookupEditorTab({
   lookupKey,
   packages,
-  onSaved
+  onSaved,
+  onDeleted
 }) {
   var _a;
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
@@ -2080,6 +2119,28 @@ function LookupEditorTab({
       setSaving(false);
     }
   };
+  const handleDelete = async () => {
+    if (isDraft) return;
+    if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？此操作将从包定义中移除。`)) {
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
+        method: "DELETE"
+      });
+      if (res.ok) {
+        onDeleted == null ? void 0 : onDeleted();
+      } else {
+        const data = await res.json();
+        setSaveStatus(`删除失败: ${data.detail}`);
+      }
+    } catch (_err) {
+      setSaveStatus("删除请求网络异常");
+    } finally {
+      setSaving(false);
+    }
+  };
   const fullLookupKey = `${pillar}l-${rawKeyName.trim() || "..."}`;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none font-mono", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 text-xs shrink-0", children: [
@@ -2093,6 +2154,21 @@ function LookupEditorTab({
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
         saveStatus && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs text-indigo-400", children: saveStatus }),
+        !isDraft && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          Button,
+          {
+            variant: "outline",
+            size: "sm",
+            onClick: handleDelete,
+            disabled: saving,
+            className: "h-7 text-xs flex items-center gap-1 px-2.5 text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700 cursor-pointer",
+            title: "删除此接口契约",
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "删除接口" })
+            ]
+          }
+        ),
         /* @__PURE__ */ jsxRuntimeExports.jsxs(
           Button,
           {
@@ -3366,7 +3442,10 @@ function ManifestExplorer({
 function PackageExplorer({
   packages,
   onSelectAtom,
-  onOpenLookup
+  onOpenLookup,
+  onDeletePackage,
+  onDeleteLookup,
+  onDeleteAtom
 }) {
   const [expandedPkg, setExpandedPkg] = reactExports.useState({});
   const toggle = (pkgName) => {
@@ -3383,25 +3462,36 @@ function PackageExplorer({
       {
         className: "rounded border border-slate-800/60 bg-slate-900/30 overflow-hidden",
         children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "button",
-            {
-              type: "button",
-              onClick: () => toggle(pkg.name),
-              className: "flex items-center justify-between w-full px-3 py-2 text-left hover:bg-slate-800/40 text-xs font-mono transition-colors",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between w-full px-3 py-2 text-left hover:bg-slate-800/40 text-xs font-mono transition-colors group", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "button",
+              {
+                type: "button",
+                onClick: () => toggle(pkg.name),
+                className: "flex items-center gap-2 flex-1 text-left cursor-pointer",
+                children: [
                   isExp ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3.5 w-3.5 text-slate-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5 text-slate-400" }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx(Package, { className: "h-3.5 w-3.5 text-indigo-400" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200", children: pkg.name })
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex gap-1 text-[10px]", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-500", children: [
-                  atomsCount,
-                  " 个原子"
-                ] }) })
-              ]
-            }
-          ),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200", children: pkg.name }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-slate-500 ml-1", children: [
+                    "(",
+                    atomsCount,
+                    ")"
+                  ] })
+                ]
+              }
+            ),
+            onDeletePackage && /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                type: "button",
+                onClick: (e) => onDeletePackage(pkg.name, e),
+                className: "opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-rose-400 transition-opacity rounded cursor-pointer",
+                title: `删除组件包 ${pkg.name}`,
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3.5 w-3.5" })
+              }
+            )
+          ] }),
           isExp && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-3 pb-2.5 pt-1 space-y-2 border-t border-slate-800/40 bg-slate-950/40", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-emerald-400 flex items-center justify-between mb-1", children: [
@@ -3421,15 +3511,33 @@ function PackageExplorer({
                 )
               ] }),
               exportsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.exports).map(([k, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "button",
+                "div",
                 {
-                  type: "button",
-                  onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
-                  className: "w-full text-left text-xs font-mono text-slate-300 hover:text-emerald-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors",
-                  title: "点击就地打开，按住 Ctrl 点击新建标签页",
+                  className: "w-full text-left text-xs font-mono text-slate-300 hover:text-emerald-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer",
                   children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "outline", className: "text-[9px] px-1 py-0", children: def.pillar })
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
+                        className: "flex-1 text-left truncate flex items-center gap-1 cursor-pointer",
+                        title: "点击打开，按住 Ctrl 点击新建标签页",
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "outline", className: "text-[9px] px-1 py-0", children: def.pillar })
+                        ]
+                      }
+                    ),
+                    onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: (e) => onDeleteLookup(k, e),
+                        className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
+                        title: "删除此公开接口",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+                      }
+                    )
                   ]
                 },
                 k
@@ -3446,22 +3554,40 @@ function PackageExplorer({
                   {
                     type: "button",
                     onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}`, e),
-                    className: "text-slate-400 hover:text-indigo-400 p-0.5 rounded",
+                    className: "text-slate-400 hover:text-indigo-400 p-0.5 rounded cursor-pointer",
                     title: "新建内部查找",
                     children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
                   }
                 )
               ] }),
               internalCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.internal_lookups).map(([k, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "button",
+                "div",
                 {
-                  type: "button",
-                  onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
-                  className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors",
-                  title: "点击就地打开，按住 Ctrl 点击新建标签页",
+                  className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer",
                   children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] text-slate-600", children: def.pillar })
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
+                        className: "flex-1 text-left truncate flex items-center gap-1 cursor-pointer",
+                        title: "点击打开，按住 Ctrl 点击新建标签页",
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] text-slate-600", children: def.pillar })
+                        ]
+                      }
+                    ),
+                    onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: (e) => onDeleteLookup(k, e),
+                        className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
+                        title: "删除此内部查找",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+                      }
+                    )
                   ]
                 },
                 k
@@ -3488,15 +3614,33 @@ function PackageExplorer({
                 )
               ] }),
               atomsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: pkg.atoms.map((atom) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "button",
+                "div",
                 {
-                  type: "button",
-                  onClick: (e) => onSelectAtom == null ? void 0 : onSelectAtom(atom.id, e),
-                  className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60 rounded px-1.5 py-1 truncate flex items-center gap-1.5 transition-colors group cursor-pointer",
-                  title: "点击就地打开，按住 Ctrl 点击新建标签页",
+                  className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60 rounded px-1.5 py-1 truncate flex items-center justify-between transition-colors group cursor-pointer",
                   children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-indigo-400" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: atom.id })
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: (e) => onSelectAtom == null ? void 0 : onSelectAtom(atom.id, e),
+                        className: "flex items-center gap-1.5 flex-1 min-w-0 text-left cursor-pointer",
+                        title: "点击就地打开，按住 Ctrl 点击新建标签页",
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-indigo-400 shrink-0" }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: atom.id })
+                        ]
+                      }
+                    ),
+                    onDeleteAtom && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: (e) => onDeleteAtom(atom.id, e),
+                        className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
+                        title: "删除此原子组件",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+                      }
+                    )
                   ]
                 },
                 atom.id
@@ -3603,6 +3747,7 @@ const TabPane = reactExports.memo(
     packages,
     manifestsCount,
     onSaved,
+    onDeleted,
     onOpenCommandPalette,
     onCreateManifest,
     onCreateAtom
@@ -3623,7 +3768,8 @@ const TabPane = reactExports.memo(
         {
           atomId: tab.atomId,
           packages,
-          onSaved
+          onSaved,
+          onDeleted: () => onDeleted(tab.id)
         },
         tab.atomId
       ),
@@ -3641,7 +3787,8 @@ const TabPane = reactExports.memo(
         {
           lookupKey: tab.lookupKey,
           packages,
-          onSaved
+          onSaved,
+          onDeleted: () => onDeleted(tab.id)
         },
         tab.id
       )
@@ -3869,6 +4016,93 @@ function App() {
     fetchAssets();
     fetchLintReport();
   }, [fetchAssets, fetchLintReport]);
+  const handleTabDeleted = reactExports.useCallback(
+    (tabId) => {
+      ideStore.closeTab(tabId);
+      fetchAssets();
+      fetchLintReport();
+    },
+    [ideStore, fetchAssets, fetchLintReport]
+  );
+  const handleCreatePackage = reactExports.useCallback(() => {
+    const pkgName = window.prompt("请输入新建组件包名称（英文字符/下划线）:");
+    if (!pkgName || !pkgName.trim()) return;
+    fetch("/api/packages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: pkgName.trim() })
+    }).then(async (res) => {
+      if (res.ok) {
+        fetchAssets();
+        fetchLintReport();
+      } else {
+        const data = await res.json();
+        alert(`创建组件包失败: ${data.detail}`);
+      }
+    }).catch(() => alert("创建组件包网络异常"));
+  }, [fetchAssets, fetchLintReport]);
+  const handleDeletePackage = reactExports.useCallback(
+    (pkgName, e) => {
+      e.stopPropagation();
+      if (!window.confirm(`确定要彻底删除组件包 "${pkgName}" 及其所有文件吗？此操作不可逆。`)) {
+        return;
+      }
+      fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
+        method: "DELETE"
+      }).then(async (res) => {
+        if (res.ok) {
+          fetchAssets();
+          fetchLintReport();
+        } else {
+          const data = await res.json();
+          alert(`删除组件包失败: ${data.detail}`);
+        }
+      }).catch(() => alert("删除组件包网络异常"));
+    },
+    [fetchAssets, fetchLintReport]
+  );
+  const handleDeleteLookup = reactExports.useCallback(
+    (lookupKey, e) => {
+      e.stopPropagation();
+      if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？`)) {
+        return;
+      }
+      fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
+        method: "DELETE"
+      }).then(async (res) => {
+        if (res.ok) {
+          ideStore.closeTab(`lookup:${lookupKey}`);
+          fetchAssets();
+          fetchLintReport();
+        } else {
+          const data = await res.json();
+          alert(`删除接口失败: ${data.detail}`);
+        }
+      }).catch(() => alert("删除接口网络异常"));
+    },
+    [ideStore, fetchAssets, fetchLintReport]
+  );
+  const handleDeleteAtom = reactExports.useCallback(
+    (atomId, e) => {
+      e.stopPropagation();
+      if (!window.confirm(`确定要物理删除原子文件 "${atomId}" 吗？`)) {
+        return;
+      }
+      fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
+        method: "DELETE"
+      }).then(async (res) => {
+        if (res.ok) {
+          ideStore.closeTab(`atom:${atomId}`);
+          fetchAssets();
+          fetchLintReport();
+        } else {
+          const data = await res.json();
+          alert(`删除原子失败: ${data.detail}`);
+        }
+      }).catch(() => alert("删除原子网络异常"));
+    },
+    [ideStore, fetchAssets, fetchLintReport]
+  );
   const activeTab = ideStore.tabs.find((t) => t.id === ideStore.activeTabId);
   const canGoBack = ideStore.historyIndex > 0;
   const canGoForward = ideStore.historyIndex < ideStore.navigationHistory.length - 1;
@@ -3928,7 +4162,7 @@ function App() {
               }
             )
           ] }),
-          explorerTab === "manifests" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2", children: explorerTab === "manifests" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
             Button,
             {
               variant: "outline",
@@ -3938,6 +4172,18 @@ function App() {
               children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(FilePlus2, { className: "h-3.5 w-3.5 text-indigo-400" }),
                 " 新建清单蓝图"
+              ]
+            }
+          ) : /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            Button,
+            {
+              variant: "outline",
+              size: "sm",
+              onClick: handleCreatePackage,
+              className: "w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5 text-indigo-400" }),
+                " 新建组件包"
               ]
             }
           ) })
@@ -3955,7 +4201,10 @@ function App() {
           {
             packages,
             onSelectAtom: (atomId, e) => handleOpenAtomTab(atomId, e),
-            onOpenLookup: (lKey, e) => handleOpenLookupTab(lKey, e)
+            onOpenLookup: (lKey, e) => handleOpenLookupTab(lKey, e),
+            onDeletePackage: handleDeletePackage,
+            onDeleteLookup: handleDeleteLookup,
+            onDeleteAtom: handleDeleteAtom
           }
         ) })
       ] }),
@@ -4058,6 +4307,7 @@ function App() {
             packages,
             manifestsCount: manifests.length,
             onSaved: handleTabSaved,
+            onDeleted: handleTabDeleted,
             onOpenCommandPalette: () => setIsCommandPaletteOpen(true),
             onCreateManifest: handleCreateNewManifest,
             onCreateAtom: handleCreateNewAtomDraft
