@@ -162,6 +162,10 @@ def get_assets_overview() -> dict[str, Any]:
 @router.get("/graph")
 def get_dependency_graph(manifest: str) -> dict[str, Any]:
     """生成指定 Manifest 的完整依赖有向图 (DAG: nodes & edges)"""
+    import time
+
+    t_start = time.perf_counter()
+
     lib_repo, man_repo, _ = _bootstrap()
     app_config = config.load_config()
     library_paths = config.get_library_paths(app_config)
@@ -169,6 +173,7 @@ def get_dependency_graph(manifest: str) -> dict[str, Any]:
 
     manifest_path = man_repo.find_manifest(manifest, manifest_paths)
     if not manifest_path:
+        print(f"[ACA Graph] [404] 未找到清单: {manifest}")
         raise HTTPException(status_code=404, detail=f"Manifest '{manifest}' not found")
 
     manifest_data = man_repo.load_manifest(manifest_path)
@@ -209,6 +214,12 @@ def get_dependency_graph(manifest: str) -> dict[str, Any]:
 
     def process_lookup(lkey: str, parent_id: str, context_pkg: str | None = None):
         lookup_node_id = f"lookup::{lkey}"
+
+        # 记忆化剪枝：如果此 Lookup 节点此前已经完全探索展开过，仅需补连边并立即返回，阻断递归环
+        if lookup_node_id in visited_nodes:
+            add_edge(parent_id, lookup_node_id)
+            return
+
         target_def = resolve_lookup_by_key(lkey, context_pkg, interfaces)
 
         is_broken = target_def is None
@@ -227,22 +238,20 @@ def get_dependency_graph(manifest: str) -> dict[str, Any]:
             ):
                 is_private_access = True
 
-        if lookup_node_id not in visited_nodes:
-            nodes.append(
-                {
-                    "id": lookup_node_id,
-                    "type": "lookupNode",
-                    "data": {
-                        "key": lkey,
-                        "pillar": pillar,
-                        "description": desc,
-                        "isBroken": is_broken,
-                        "isPrivate": is_private_access,
-                    },
-                }
-            )
-            visited_nodes.add(lookup_node_id)
-
+        nodes.append(
+            {
+                "id": lookup_node_id,
+                "type": "lookupNode",
+                "data": {
+                    "key": lkey,
+                    "pillar": pillar,
+                    "description": desc,
+                    "isBroken": is_broken,
+                    "isPrivate": is_private_access,
+                },
+            }
+        )
+        visited_nodes.add(lookup_node_id)
         add_edge(parent_id, lookup_node_id)
 
         if not target_def:
@@ -258,6 +267,12 @@ def get_dependency_graph(manifest: str) -> dict[str, Any]:
 
     def process_atom(atom_id: str, parent_id: str):
         atom_node_id = f"atom::{atom_id}"
+
+        # 记忆化剪枝：如果此原子节点此前已经遍历过，仅需补连边并立即返回，避免重复下探 uses 形成死循环
+        if atom_node_id in visited_nodes:
+            add_edge(parent_id, atom_node_id)
+            return
+
         atom = library.get(atom_id)
         if not atom:
             return
@@ -268,23 +283,21 @@ def get_dependency_graph(manifest: str) -> dict[str, Any]:
         pkg = atom.get("package")
         content = atom.get("content", "")
 
-        if atom_node_id not in visited_nodes:
-            nodes.append(
-                {
-                    "id": atom_node_id,
-                    "type": "atomNode",
-                    "data": {
-                        "id": atom_id,
-                        "type": atom_type,
-                        "priority": priority,
-                        "package": pkg,
-                        "content": content,
-                        "source_file": atom.get("source_file"),
-                    },
-                }
-            )
-            visited_nodes.add(atom_node_id)
-
+        nodes.append(
+            {
+                "id": atom_node_id,
+                "type": "atomNode",
+                "data": {
+                    "id": atom_id,
+                    "type": atom_type,
+                    "priority": priority,
+                    "package": pkg,
+                    "content": content,
+                    "source_file": atom.get("source_file"),
+                },
+            }
+        )
+        visited_nodes.add(atom_node_id)
         add_edge(parent_id, atom_node_id)
 
         if atom_type == "d2":
@@ -301,6 +314,12 @@ def get_dependency_graph(manifest: str) -> dict[str, Any]:
         if atom["meta"].get("type") == "kernel":
             process_atom(atom_id, manifest_node_id)
 
+    elapsed_ms = (time.perf_counter() - t_start) * 1000
+    print(
+        f"[ACA Graph] 清单 '{manifest}' 拓扑生成成功: {len(nodes)} 个节点, "
+        f"{len(edges)} 条关系边, 耗时: {elapsed_ms:.2f}ms"
+    )
+
     return {"nodes": nodes, "edges": edges}
 
 
@@ -316,6 +335,7 @@ class SaveManifestRequest(BaseModel):
     description: str = ""
     imports: list[dict[str, Any]]
     overrides: dict[str, Any] | None = None
+    identifier: str | None = None  # 支持包含子路径的标识符，如 ats/auditai-agent
 
 
 def _execute_hook(app_config: dict[str, Any], prompt_text: str) -> str | None:
@@ -472,8 +492,9 @@ def save_manifest(req: SaveManifestRequest):
         raise HTTPException(status_code=400, detail="No manifest_paths configured")
 
     target_dir = manifest_paths[0]
-    target_dir.mkdir(parents=True, exist_ok=True)
-    target_file = target_dir / f"{req.name}.yaml"
+    file_rel_path = req.identifier if req.identifier else req.name
+    target_file = target_dir / f"{file_rel_path}.yaml"
+    target_file.parent.mkdir(parents=True, exist_ok=True)
 
     manifest_content = {
         "name": req.name,
@@ -624,6 +645,53 @@ class UpdateLookupRequest(BaseModel):
     description: str | None = None
     selectors: list[dict[str, Any]] | None = None
     is_public: bool | None = None
+
+
+class EvaluateLookupRequest(BaseModel):
+    selectors: list[dict[str, Any]]
+    package: str | None = None
+    pillar: str = "d1"
+
+
+@router.post("/lookups/evaluate")
+def evaluate_lookup_adhoc(req: EvaluateLookupRequest) -> dict[str, Any]:
+    """即席演算给定的选择器规则，返回当前库中实时命中的原子列表 (Live Debug)"""
+    lib_repo, _, _ = _bootstrap()
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+    library = lib_repo.load_library(library_paths, fail_fast=False)
+    interfaces = lib_repo.load_interfaces(library_paths)
+
+    lookup_def = {
+        "selectors": req.selectors,
+        "package": req.package,
+        "pillar": req.pillar,
+    }
+
+    try:
+        atom_ids = evaluate_lookup(library, lookup_def, interfaces)
+    except Exception as e:  # noqa: BLE001
+        return {"error": str(e), "matched_atoms": [], "count": 0}
+
+    matched_atoms = []
+    for aid in sorted(atom_ids):
+        atom = library.get(aid)
+        if not atom:
+            continue
+        meta = atom.get("meta", {})
+        matched_atoms.append(
+            {
+                "id": aid,
+                "type": meta.get("type", "unknown"),
+                "priority": meta.get("priority"),
+                "package": atom.get("package"),
+                "source_file": atom.get("source_file"),
+                "domain": meta.get("domain", []),
+                "preview": atom.get("content", "").strip()[:140],
+            }
+        )
+
+    return {"matched_atoms": matched_atoms, "count": len(matched_atoms)}
 
 
 class OpenObsidianRequest(BaseModel):
@@ -890,7 +958,8 @@ def get_atom_detail(atom_id: str) -> dict[str, Any]:
 
 class UpdateAtomRequest(BaseModel):
     raw_content: str | None = None
-    content: str | None = None  # 支持仅更新正文，自动保留 Frontmatter
+    content: str | None = None  # 支持仅更新正文
+    meta: dict[str, Any] | None = None  # 支持结构化元数据直接覆写
 
 
 @router.put("/atoms/{atom_id}")
@@ -911,23 +980,38 @@ def update_atom(atom_id: str, req: UpdateAtomRequest) -> dict[str, str]:
     try:
         if req.raw_content is not None:
             source_path.write_text(req.raw_content, encoding="utf-8")
-        elif req.content is not None:
-            # 仅修改正文，保留现有的元数据 frontmatter
+        elif req.content is not None or req.meta is not None:
             current_raw = source_path.read_text(encoding="utf-8")
             parts = current_raw.split("---", 2)
+            existing_meta: dict[str, Any] = {}
+            existing_content = ""
             if len(parts) >= 3 and parts[0].strip() == "":
-                meta_section = parts[1].strip()
-                new_full = f"---\n{meta_section}\n---\n\n{req.content.strip()}\n"
+                try:
+                    existing_meta = yaml.safe_load(parts[1]) or {}
+                except Exception:  # noqa: BLE001
+                    existing_meta = atom.get("meta", {})
+                existing_content = parts[2].strip()
             else:
-                meta = atom.get("meta", {"id": atom_id, "type": "unknown"})
-                meta_yaml = yaml.safe_dump(
-                    meta, sort_keys=False, allow_unicode=True
-                ).strip()
-                new_full = f"---\n{meta_yaml}\n---\n\n{req.content.strip()}\n"
+                existing_meta = atom.get("meta", {})
+                existing_content = atom.get("content", "")
+
+            new_meta = req.meta if req.meta is not None else existing_meta
+            new_content = req.content if req.content is not None else existing_content
+
+            if "id" not in new_meta:
+                new_meta["id"] = atom_id
+            if "type" not in new_meta and "type" in existing_meta:
+                new_meta["type"] = existing_meta["type"]
+
+            meta_yaml = yaml.safe_dump(
+                new_meta, sort_keys=False, allow_unicode=True
+            ).strip()
+            new_full = f"---\n{meta_yaml}\n---\n\n{new_content.strip()}\n"
             source_path.write_text(new_full, encoding="utf-8")
         else:
             raise HTTPException(
-                status_code=400, detail="Either raw_content or content must be provided"
+                status_code=400,
+                detail="Either raw_content, content, or meta must be provided",
             )
 
         broadcast_change("LIBRARY_DIRTY")

@@ -24,13 +24,11 @@ export interface PackageItem {
 export function PackageExplorer({
   packages,
   onSelectAtom,
-  onCreateLookup,
-  onEditLookup,
+  onOpenLookup,
 }: {
   packages: PackageItem[];
   onSelectAtom?: (atomId: string) => void;
-  onCreateLookup?: (pkgName: string, isPublic: boolean) => void;
-  onEditLookup?: (lookupKey: string) => void;
+  onOpenLookup?: (lookupKey: string) => void;
 }) {
   const [expandedPkg, setExpandedPkg] = useState<Record<string, boolean>>({});
 
@@ -80,7 +78,7 @@ export function PackageExplorer({
                     </span>
                     <button
                       type="button"
-                      onClick={() => onCreateLookup?.(pkg.name, true)}
+                      onClick={() => onOpenLookup?.(`draft:${pkg.name}`)}
                       className="text-slate-400 hover:text-emerald-400 p-0.5 rounded"
                       title="新建公开导出接口"
                     >
@@ -93,9 +91,9 @@ export function PackageExplorer({
                         <button
                           type="button"
                           key={k}
-                          onClick={() => onEditLookup?.(k)}
+                          onClick={() => onOpenLookup?.(k)}
                           className="w-full text-left text-xs font-mono text-slate-300 hover:text-emerald-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors"
-                          title="点击编辑此公开接口"
+                          title="点击以 Tab 编辑此接口契约"
                         >
                           <span className="truncate">{k}</span>
                           <Badge variant="outline" className="text-[9px] px-1 py-0">
@@ -115,7 +113,7 @@ export function PackageExplorer({
                     </span>
                     <button
                       type="button"
-                      onClick={() => onCreateLookup?.(pkg.name, false)}
+                      onClick={() => onOpenLookup?.(`draft:${pkg.name}`)}
                       className="text-slate-400 hover:text-indigo-400 p-0.5 rounded"
                       title="新建内部查找"
                     >
@@ -128,9 +126,9 @@ export function PackageExplorer({
                         <button
                           type="button"
                           key={k}
-                          onClick={() => onEditLookup?.(k)}
+                          onClick={() => onOpenLookup?.(k)}
                           className="w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors"
-                          title="点击编辑此内部私有查找"
+                          title="点击以 Tab 编辑此接口契约"
                         >
                           <span className="truncate">{k}</span>
                           <span className="text-[9px] text-slate-600">{def.pillar}</span>

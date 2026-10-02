@@ -154,13 +154,31 @@ class FSManifestRepository(ManifestRepository):
             # If caller passes file path as identifier for direct load, we support it potentially.
             return path_obj
 
-        # Search by logic name
+        # 1. 直接按相对路径/逻辑标识查找: base_path / f"{manifest_identifier}.yaml"
         for base_path in manifest_paths:
             if not base_path.is_dir():
                 continue
             potential_path = base_path / f"{manifest_identifier}.yaml"
             if potential_path.is_file():
                 return potential_path
+            potential_path_yml = base_path / f"{manifest_identifier}.yml"
+            if potential_path_yml.is_file():
+                return potential_path_yml
+
+        # 2. 增强回退：如果标识符包含空格或与文件名不一致，遍历清单比对内部 name 属性
+        for base_path in manifest_paths:
+            if not base_path.is_dir():
+                continue
+            for yaml_file in base_path.rglob("*.yaml"):
+                try:
+                    data = yaml.safe_load(yaml_file.read_text(encoding="utf-8"))
+                    if isinstance(data, dict) and (
+                        data.get("name") == manifest_identifier
+                        or yaml_file.stem == manifest_identifier
+                    ):
+                        return yaml_file
+                except (yaml.YAMLError, OSError):
+                    continue
         return None
 
     def load_manifest(self, path: Path) -> dict[str, Any]:

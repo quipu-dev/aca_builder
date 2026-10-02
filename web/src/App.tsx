@@ -1,63 +1,55 @@
-import {
-  type ProfileSummary,
-  type PromptChunk,
-  PromptViewer,
-} from '@/components/editor/PromptViewer';
+import { CommandPalette } from '@/components/CommandPalette';
 import { Button } from '@/components/ui/button';
-import { AtomEditorDrawer } from '@/features/authoring/AtomEditorDrawer';
-import { CreateAtomModal } from '@/features/authoring/CreateAtomModal';
-import { CreateLookupModal } from '@/features/authoring/CreateLookupModal';
-import { EditLookupModal } from '@/features/authoring/EditLookupModal';
-import { VisualComposer } from '@/features/composer/VisualComposer';
-import { DiagnosticsDrawer, type LintIssue } from '@/features/diagnostics/DiagnosticsDrawer';
+import { SplitPane } from '@/components/ui/split-pane';
+import { AtomEditorTab } from '@/features/authoring/AtomEditorTab';
+import { LookupEditorTab } from '@/features/authoring/LookupEditorTab';
+import { ManifestEditorTab } from '@/features/composer/ManifestEditorTab';
 import { PackageExplorer, type PackageItem } from '@/features/explorer/PackageExplorer';
-import { TopologyGraph } from '@/features/graph/TopologyGraph';
-import { useComposerStore } from '@/stores/composer-store';
+import { type IdeTab, useIdeStore } from '@/stores/ide-store';
 import {
   AlertCircle,
+  AlertOctagon,
+  AlertTriangle,
+  Columns,
   Cpu,
-  Eye,
+  ExternalLink,
   FilePlus2,
+  FolderTree,
   Layers,
-  Network,
   Package,
   Plus,
+  RefreshCw,
+  Search,
   ShieldCheck,
-  Sliders,
   Trash2,
+  X,
 } from 'lucide-react';
+import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
+export interface LintIssue {
+  level: string;
+  code: string;
+  message: string;
+}
+
 export function App() {
+  const ideStore = useIdeStore();
   const [manifests, setManifests] = useState<string[]>([]);
   const [packages, setPackages] = useState<PackageItem[]>([]);
-  const [selectedManifest, setSelectedManifest] = useState<string>('');
-  const [prompt, setPrompt] = useState<string>('');
-  const [hookedPrompt, setHookedPrompt] = useState<string | null>(null);
-  const [chunks, setChunks] = useState<PromptChunk[]>([]);
-  const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [status, setStatus] = useState<string>('检测中...');
-  const [viewMode, setViewMode] = useState<'composer' | 'graph' | 'preview'>('composer');
-  const [leftTab, setLeftTab] = useState<'manifests' | 'packages'>('manifests');
-  const [isHookActive, setIsHookActive] = useState(false);
 
-  // 模态弹窗与抽屉
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isLookupOpen, setIsLookupOpen] = useState(false);
-  const [editingLookupKey, setEditingLookupKey] = useState<string | null>(null);
-  const [lookupTargetPkg, setLookupTargetPkg] = useState<string>('');
-  const [lookupIsPublic, setLookupIsPublic] = useState(true);
-  const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
+  // 命令面板
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // 诊断控制台数据
   const [lintLoading, setLintLoading] = useState(false);
   const [lintErrors, setLintErrors] = useState(0);
   const [lintWarnings, setLintWarnings] = useState(0);
   const [lintIssues, setLintIssues] = useState<LintIssue[]>([]);
-  const [editingAtomId, setEditingAtomId] = useState<string | null>(null);
 
-  const composerItems = useComposerStore((state) => state.items);
-  const composerOverrides = useComposerStore((state) => state.overrides);
-  const loadManifestData = useComposerStore((state) => state.loadManifestData);
-  const resetNewManifest = useComposerStore((state) => state.resetNewManifest);
+  // 侧边栏子视图
+  const [explorerTab, setExplorerTab] = useState<'manifests' | 'packages'>('manifests');
 
   const fetchAssets = useCallback(() => {
     fetch('/api/assets')
@@ -65,7 +57,6 @@ export function App() {
       .then((data) => {
         setManifests(data.manifests || []);
         setPackages(data.packages || []);
-        setSelectedManifest((prev) => prev || (data.manifests?.[0] ?? ''));
       })
       .catch(() => {
         setManifests([]);
@@ -86,49 +77,6 @@ export function App() {
       .finally(() => setLintLoading(false));
   }, []);
 
-  const executeCompile = useCallback(
-    (targetManifest?: string, hookFlag = isHookActive) => {
-      if (targetManifest) {
-        fetch('/api/build', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            manifest: targetManifest,
-            is_file: false,
-            apply_hook: hookFlag,
-          }),
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.prompt) setPrompt(data.prompt);
-            setHookedPrompt(data.hooked_prompt || null);
-            setChunks(data.chunks || []);
-            if (data.profile) setProfile(data.profile);
-          })
-          .catch(console.error);
-      } else if (composerItems.length > 0) {
-        fetch('/api/compile-adhoc', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            imports: composerItems.map((item) => ({ lookup: item.lookup })),
-            overrides: Object.keys(composerOverrides).length > 0 ? composerOverrides : undefined,
-            apply_hook: hookFlag,
-          }),
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.prompt) setPrompt(data.prompt);
-            setHookedPrompt(data.hooked_prompt || null);
-            setChunks(data.chunks || []);
-            if (data.profile) setProfile(data.profile);
-          })
-          .catch(console.error);
-      }
-    },
-    [composerItems, composerOverrides, isHookActive],
-  );
-
   useEffect(() => {
     fetch('/api/health')
       .then((res) => res.json())
@@ -142,46 +90,110 @@ export function App() {
     eventSource.addEventListener('change', () => {
       fetchAssets();
       fetchLintReport();
-      executeCompile(selectedManifest);
     });
+
+    // 全局快捷键监听: Ctrl+P / Cmd+P 唤起命令面板
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
 
     return () => {
       eventSource.close();
+      window.removeEventListener('keydown', handleGlobalKeyDown);
     };
-  }, [fetchAssets, fetchLintReport, executeCompile, selectedManifest]);
+  }, [fetchAssets, fetchLintReport]);
 
+  // 首次启动时若无打开 Tab，默认打开第一个 Manifest
   useEffect(() => {
-    if (selectedManifest) {
-      executeCompile(selectedManifest);
-    } else if (composerItems.length > 0) {
-      const timer = setTimeout(() => {
-        executeCompile();
-      }, 300);
-      return () => clearTimeout(timer);
+    if (ideStore.tabs.length === 0 && manifests.length > 0) {
+      const defaultM = manifests[0];
+      ideStore.openTab({
+        id: `manifest:${defaultM}`,
+        type: 'manifest',
+        title: defaultM,
+        closable: true,
+        manifestName: defaultM,
+      });
     }
-  }, [composerItems, selectedManifest, executeCompile]);
+  }, [manifests, ideStore]);
 
-  const handleSelectManifest = async (mName: string) => {
-    setSelectedManifest(mName);
-    executeCompile(mName);
-    try {
-      const mRes = await fetch(`/api/manifests/${encodeURIComponent(mName)}`);
-      if (mRes.ok) {
-        const mData = await mRes.json();
-        loadManifestData(mData);
-      }
-    } catch (e) {
-      console.error('回显清单数据失败:', e);
+  const handleOpenManifestTab = (mName: string) => {
+    ideStore.openTab({
+      id: `manifest:${mName}`,
+      type: 'manifest',
+      title: mName,
+      closable: true,
+      manifestName: mName,
+    });
+  };
+
+  const handleOpenAtomTab = (atomId: string) => {
+    ideStore.openTab({
+      id: `atom:${atomId}`,
+      type: 'atom',
+      title: atomId,
+      closable: true,
+      atomId,
+    });
+  };
+
+  // 诊断直通：解析 issue 中的实体并一键在主编辑区打开对应 Tab
+  const handleProblemClick = (issue: LintIssue) => {
+    const text = `${issue.code} ${issue.message}`;
+
+    // 1. 尝试匹配 Atom ID (如 d1-valid, d2-core)
+    const atomMatch = text.match(/\b(d[1-3]-[a-zA-Z0-9_-]+)\b/);
+    if (atomMatch) {
+      handleOpenAtomTab(atomMatch[1]);
+      return;
+    }
+
+    // 2. 尝试匹配 Manifest (如 Manifest 'agent_name')
+    const manifestMatch = text.match(/Manifest '([^']+)'/);
+    if (manifestMatch) {
+      handleOpenManifestTab(manifestMatch[1]);
+      return;
+    }
+
+    // 3. 尝试匹配 Lookup (如 Lookup 'pkg::d1l-name' 或 'd1l-name')
+    const lookupMatch = text.match(/Lookup '([^']+)'/);
+    if (lookupMatch) {
+      const lKey = lookupMatch[1];
+      ideStore.openTab({
+        id: `lookup:${lKey}`,
+        type: 'lookup',
+        title: lKey.split('::').pop() || lKey,
+        closable: true,
+        lookupKey: lKey,
+      });
     }
   };
 
+  const handleCreateNewAtomDraft = () => {
+    const defaultPkg = packages[0]?.name || '';
+    const draftId = `draft_${Date.now().toString().slice(-4)}`;
+    ideStore.openTab({
+      id: `atom:${draftId}`,
+      type: 'atom',
+      title: '新建原子草稿',
+      closable: true,
+      atomId: `draft:${defaultPkg}`,
+    });
+  };
+
   const handleCreateNewManifest = () => {
-    resetNewManifest();
-    setSelectedManifest('');
-    setPrompt('');
-    setHookedPrompt(null);
-    setChunks([]);
-    setViewMode('composer');
+    const draftName = `未命名蓝图_${Date.now().toString().slice(-4)}`;
+    ideStore.openTab({
+      id: `manifest:${draftName}`,
+      type: 'manifest',
+      title: draftName,
+      closable: true,
+      manifestName: '', // 空字符串触发新建草稿
+    });
   };
 
   const handleDeleteManifest = async (mName: string, e: React.MouseEvent) => {
@@ -195,9 +207,7 @@ export function App() {
       });
       if (res.ok) {
         fetchAssets();
-        if (selectedManifest === mName) {
-          handleCreateNewManifest();
-        }
+        ideStore.closeTab(`manifest:${mName}`);
       } else {
         const data = await res.json();
         alert(`删除失败: ${data.detail}`);
@@ -207,30 +217,119 @@ export function App() {
     }
   };
 
+  // 渲染特定的 Tab 内容
+  const renderTabContent = (tab: IdeTab | undefined) => {
+    if (!tab) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center text-xs text-slate-600 font-mono">
+          <Layers className="h-8 w-8 text-slate-700 mb-2" />
+          工作区就绪。请从左侧资源管理器打开原子或清单。
+        </div>
+      );
+    }
+
+    if (tab.type === 'atom' && tab.atomId) {
+      return (
+        <AtomEditorTab
+          key={tab.atomId}
+          atomId={tab.atomId}
+          packages={packages}
+          onSaved={() => {
+            fetchAssets();
+            fetchLintReport();
+          }}
+        />
+      );
+    }
+
+    if (tab.type === 'manifest') {
+      return (
+        <ManifestEditorTab
+          key={tab.id}
+          manifestName={tab.manifestName || ''}
+          packages={packages}
+          onSaved={() => {
+            fetchAssets();
+            fetchLintReport();
+          }}
+        />
+      );
+    }
+
+    if (tab.type === 'lookup' && tab.lookupKey) {
+      return (
+        <LookupEditorTab
+          key={tab.id}
+          lookupKey={tab.lookupKey}
+          packages={packages}
+          onSaved={() => {
+            fetchAssets();
+            fetchLintReport();
+          }}
+        />
+      );
+    }
+
+    return null;
+  };
+
+  const activeTab = ideStore.tabs.find((t) => t.id === ideStore.activeTabId);
+  const splitTab = ideStore.tabs.find((t) => t.id === ideStore.splitTabId);
+
   return (
-    <div className="flex h-screen flex-col bg-slate-950 text-slate-100">
-      {/* 顶部栏 */}
-      <header className="flex h-14 items-center justify-between border-b border-slate-800 px-6 bg-slate-900/60">
+    <div className="flex h-screen flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans select-none">
+      {/* 顶部简明标题与操作栏 */}
+      <header className="flex h-11 items-center justify-between border-b border-slate-800 px-4 bg-slate-900/80 shrink-0">
         <div className="flex items-center space-x-3">
-          <Cpu className="h-6 w-6 text-indigo-400" />
-          <h1 className="text-lg font-bold tracking-wide">ACA 工作台</h1>
-          <span className="text-xs text-indigo-300/80 font-mono bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-800/40">
-            服务: {status}
+          <Cpu className="h-5 w-5 text-indigo-400" />
+          <span className="text-sm font-bold tracking-wide">ACA Studio IDE</span>
+          <span className="text-[10px] text-indigo-300 font-mono bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-800/40">
+            {status}
           </span>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <Button
-            size="sm"
-            onClick={() => setIsCreateOpen(true)}
-            className="flex items-center gap-1.5 h-8 text-xs font-medium"
-          >
-            <Plus className="h-3.5 w-3.5" /> 新建原子
-          </Button>
-
+        <div className="flex items-center space-x-2">
+          {/* 全局命令面板按钮 (提示 Ctrl+P) */}
           <button
             type="button"
-            onClick={() => setIsDiagnosticsOpen(true)}
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono border border-slate-800 bg-slate-950 text-slate-400 hover:text-white hover:border-slate-700 transition-colors"
+            title="快捷全局跳转 (Ctrl+P / Cmd+P)"
+          >
+            <Search className="h-3.5 w-3.5 text-indigo-400" />
+            <span className="hidden sm:inline">跳转文件...</span>
+            <span className="text-[10px] text-slate-500 bg-slate-900 px-1 py-0.2 rounded border border-slate-800">
+              Ctrl+P
+            </span>
+          </button>
+
+          <Button
+            size="sm"
+            onClick={handleCreateNewAtomDraft}
+            className="h-7 text-xs flex items-center gap-1 font-medium bg-indigo-600 hover:bg-indigo-500"
+          >
+            <Plus className="h-3 w-3" /> 新建原子
+          </Button>
+
+          {/* 分屏开关按钮 */}
+          <button
+            type="button"
+            onClick={ideStore.toggleSplit}
+            className={`p-1.5 rounded border text-xs font-mono transition-colors flex items-center gap-1 ${
+              ideStore.isSplitActive
+                ? 'border-indigo-500 bg-indigo-950/80 text-indigo-300 font-semibold'
+                : 'border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+            title="开启/关闭并排分屏视口 (Split View)"
+          >
+            <Columns className="h-3.5 w-3.5" />
+            <span className="text-[11px]">{ideStore.isSplitActive ? '关闭分屏' : '并排分屏'}</span>
+          </button>
+
+          {/* 底部诊断抽屉开关 */}
+          <button
+            type="button"
+            onClick={ideStore.toggleBottomPanel}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono border transition-colors ${
               lintErrors > 0
                 ? 'border-rose-600 bg-rose-950/40 text-rose-300 hover:bg-rose-900/40'
@@ -246,252 +345,287 @@ export function App() {
             )}
             <span>
               {lintErrors > 0
-                ? `${lintErrors} 处错误`
+                ? `${lintErrors} 错误`
                 : lintWarnings > 0
-                  ? `${lintWarnings} 处警告`
-                  : '完全合规'}
+                  ? `${lintWarnings} 警告`
+                  : '合规'}
             </span>
           </button>
         </div>
       </header>
 
-      {/* 主体三栏布局 */}
+      {/* 主体视口 */}
       <div className="flex flex-1 overflow-hidden">
-        {/* 左侧：资产浏览区 */}
-        <aside className="w-80 border-r border-slate-800 p-4 flex flex-col space-y-3 bg-slate-950">
-          <div className="flex rounded bg-slate-900 p-1 border border-slate-800 text-xs">
-            <button
-              type="button"
-              onClick={() => setLeftTab('manifests')}
-              className={`flex-1 py-1 rounded font-medium flex items-center justify-center gap-1.5 transition-colors ${
-                leftTab === 'manifests'
-                  ? 'bg-indigo-600 text-white shadow'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Layers className="h-3.5 w-3.5" /> 清单列表
-            </button>
-            <button
-              type="button"
-              onClick={() => setLeftTab('packages')}
-              className={`flex-1 py-1 rounded font-medium flex items-center justify-center gap-1.5 transition-colors ${
-                leftTab === 'packages'
-                  ? 'bg-indigo-600 text-white shadow'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Package className="h-3.5 w-3.5" /> 组件包
-            </button>
+        {/* 最左侧：活动栏 (Activity Bar) */}
+        <div className="w-12 border-r border-slate-800 bg-slate-950 flex flex-col items-center py-3 space-y-4 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              if (!ideStore.sidebarOpen) ideStore.setSidebarOpen(true);
+              ideStore.setActiveSidebarView('explorer');
+            }}
+            className={`p-2 rounded-lg transition-colors ${
+              ideStore.sidebarOpen && ideStore.activeSidebarView === 'explorer'
+                ? 'text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40'
+                : 'text-slate-400 hover:text-white'
+            }`}
+            title="资源管理器 (Explorer)"
+          >
+            <FolderTree className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* 侧边栏：资源视图 */}
+        {ideStore.sidebarOpen && (
+          <aside className="w-72 border-r border-slate-800 bg-slate-900/40 flex flex-col shrink-0 overflow-hidden">
+            <div className="p-3 border-b border-slate-800/80 flex items-center justify-between">
+              <span className="text-xs font-bold font-mono tracking-wider text-slate-300">
+                资源视图
+              </span>
+              <button
+                type="button"
+                onClick={ideStore.toggleSidebar}
+                className="text-slate-400 hover:text-white p-0.5"
+                title="折叠侧边栏"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+            <div className="p-2 border-b border-slate-800/60 bg-slate-950/40">
+              <div className="flex rounded bg-slate-900 p-0.5 border border-slate-800 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setExplorerTab('manifests')}
+                  className={`flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors ${
+                    explorerTab === 'manifests'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Layers className="h-3.5 w-3.5" /> 清单蓝图
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExplorerTab('packages')}
+                  className={`flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors ${
+                    explorerTab === 'packages'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Package className="h-3.5 w-3.5" /> 组件包
+                </button>
+              </div>
+
+              {explorerTab === 'manifests' && (
+                <div className="pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCreateNewManifest}
+                    className="w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7"
+                  >
+                    <FilePlus2 className="h-3.5 w-3.5 text-indigo-400" /> 新建清单蓝图
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              {explorerTab === 'manifests' ? (
+                manifests.map((m) => (
+                  <div
+                    key={m}
+                    className={`group w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs font-mono transition-colors ${
+                      activeTab?.manifestName === m
+                        ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/50'
+                        : 'text-slate-300 hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleOpenManifestTab(m)}
+                      className="flex-1 text-left truncate hover:text-white"
+                    >
+                      {m}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteManifest(m, e)}
+                      className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-opacity p-0.5 rounded"
+                      title="删除清单"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <PackageExplorer
+                  packages={packages}
+                  onSelectAtom={(atomId) => handleOpenAtomTab(atomId)}
+                  onOpenLookup={(lKey) => {
+                    ideStore.openTab({
+                      id: `lookup:${lKey}`,
+                      type: 'lookup',
+                      title: lKey.split('::').pop() || lKey,
+                      closable: true,
+                      lookupKey: lKey,
+                    });
+                  }}
+                />
+              )}
+            </div>
+          </aside>
+        )}
+
+        {/* 中央主工作区 */}
+        <main className="flex-1 flex flex-col overflow-hidden bg-slate-950">
+          {/* Tab 标签栏 */}
+          <div className="flex items-center border-b border-slate-800 bg-slate-900/60 overflow-x-auto shrink-0 scrollbar-none">
+            {ideStore.tabs.map((tab) => {
+              const isActive = tab.id === ideStore.activeTabId;
+              const isSecondary = tab.id === ideStore.splitTabId;
+              return (
+                <div
+                  key={tab.id}
+                  onClick={() => ideStore.setActiveTab(tab.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      ideStore.setActiveTab(tab.id);
+                    }
+                  }}
+                  className={`group flex items-center gap-2 px-3.5 py-2 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 ${
+                    isActive
+                      ? 'bg-slate-950 text-indigo-300 border-t-2 border-t-indigo-500 font-semibold'
+                      : isSecondary
+                        ? 'bg-slate-950/70 text-purple-300 border-t-2 border-t-purple-500'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent'
+                  }`}
+                >
+                  <span className="truncate max-w-[140px]">{tab.title}</span>
+                  {tab.isDirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                  {tab.closable && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        ideStore.closeTab(tab.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          {leftTab === 'manifests' && (
-            <div className="pt-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCreateNewManifest}
-                className="w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50"
-              >
-                <FilePlus2 className="h-3.5 w-3.5 text-indigo-400" /> 新建清单蓝图
-              </Button>
+          {/* 编辑器视口：单视口 VS 左右分屏视口 (SplitPane) */}
+          <div className="flex-1 overflow-hidden relative">
+            {ideStore.isSplitActive ? (
+              <SplitPane
+                direction="horizontal"
+                initialRatio={0.5}
+                primary={
+                  <div className="h-full overflow-hidden">{renderTabContent(activeTab)}</div>
+                }
+                secondary={
+                  <div className="h-full overflow-hidden border-l border-slate-800">
+                    {renderTabContent(splitTab)}
+                  </div>
+                }
+              />
+            ) : (
+              renderTabContent(activeTab)
+            )}
+          </div>
+
+          {/* 底部控制台：诊断问题 */}
+          {ideStore.bottomPanelOpen && (
+            <div className="h-56 border-t border-slate-800 bg-slate-900/95 flex flex-col shrink-0 font-mono text-xs">
+              <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-800 bg-slate-950 text-slate-300">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1.5 font-bold text-indigo-400">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    <span>问题与诊断 ({lintIssues.length})</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={fetchLintReport}
+                    disabled={lintLoading}
+                    className="text-slate-400 hover:text-indigo-400 p-1"
+                    title="重新运行规范诊断"
+                  >
+                    <RefreshCw className={`h-3 w-3 ${lintLoading ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={ideStore.toggleBottomPanel}
+                  className="text-slate-400 hover:text-white p-1"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-3 space-y-1.5 select-text">
+                {lintIssues.length === 0 ? (
+                  <div className="flex items-center gap-2 text-emerald-400 py-4 justify-center">
+                    <ShieldCheck className="h-4 w-4" />
+                    <span>所有知识库、Lookup 接口与 Manifest 清单均严格合规</span>
+                  </div>
+                ) : (
+                  lintIssues.map((issue) => {
+                    const isErr = issue.level === '错误';
+                    return (
+                      <div
+                        key={`${issue.level}-${issue.code}-${issue.message}`}
+                        onClick={() => handleProblemClick(issue)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleProblemClick(issue);
+                          }
+                        }}
+                        className={`flex items-start justify-between p-2 rounded border cursor-pointer group transition-colors ${
+                          isErr
+                            ? 'border-rose-900/50 bg-rose-950/20 text-rose-200 hover:bg-rose-950/40 hover:border-rose-700'
+                            : 'border-amber-900/50 bg-amber-950/20 text-amber-200 hover:bg-amber-950/40 hover:border-amber-700'
+                        }`}
+                        title="点击直接在主编辑区打开对应文件定位"
+                      >
+                        <div className="flex items-start gap-2 flex-1">
+                          {isErr ? (
+                            <AlertOctagon className="h-3.5 w-3.5 text-rose-400 mt-0.5 shrink-0" />
+                          ) : (
+                            <AlertTriangle className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
+                          )}
+                          <span className="font-sans leading-relaxed flex-1">{issue.message}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 ml-3">
+                          <span className="text-[10px] text-slate-500 font-mono">{issue.code}</span>
+                          <ExternalLink className="h-3 w-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-400" />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           )}
-
-          <div className="flex-1 overflow-y-auto space-y-1">
-            {leftTab === 'manifests' ? (
-              manifests.map((m) => (
-                <div
-                  key={m}
-                  className={`group w-full flex items-center justify-between px-2 py-1 rounded text-xs font-mono transition-colors ${
-                    selectedManifest === m
-                      ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/50'
-                      : 'text-slate-300 hover:bg-slate-900'
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleSelectManifest(m)}
-                    className="flex-1 text-left truncate py-1 px-1 hover:text-white"
-                  >
-                    {m}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => handleDeleteManifest(m, e)}
-                    className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-opacity p-1 rounded"
-                    title="删除清单"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))
-            ) : (
-              <PackageExplorer
-                packages={packages}
-                onSelectAtom={(atomId) => setEditingAtomId(atomId)}
-                onCreateLookup={(pkgName, isPublic) => {
-                  setLookupTargetPkg(pkgName);
-                  setLookupIsPublic(isPublic);
-                  setIsLookupOpen(true);
-                }}
-                onEditLookup={(lKey) => setEditingLookupKey(lKey)}
-              />
-            )}
-          </div>
-        </aside>
-
-        {/* 中栏与右栏工作区 */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-slate-900/30">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-950/40">
-            <div className="flex items-center space-x-2 text-xs font-mono">
-              <span className="text-slate-500">目标清单:</span>
-              <span className="text-indigo-300 font-bold">
-                {selectedManifest || '即席装配草稿'}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="flex rounded bg-slate-900 border border-slate-800 p-0.5 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('composer')}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded transition-colors ${
-                    viewMode === 'composer'
-                      ? 'bg-indigo-600 text-white font-medium'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Sliders className="h-3.5 w-3.5" /> 可视化装配
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('graph')}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded transition-colors ${
-                    viewMode === 'graph'
-                      ? 'bg-indigo-600 text-white font-medium'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Network className="h-3.5 w-3.5" /> 白板拓扑图
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('preview')}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded transition-colors ${
-                    viewMode === 'preview'
-                      ? 'bg-indigo-600 text-white font-medium'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Eye className="h-3.5 w-3.5" /> 全屏提示词视图
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* 核心工作视图 */}
-          <div className="flex-1 flex overflow-hidden">
-            {viewMode === 'composer' && (
-              <>
-                <div className="w-1/2 border-r border-slate-800 overflow-hidden">
-                  <VisualComposer packages={packages} />
-                </div>
-                <div className="w-1/2 p-4 overflow-hidden bg-slate-950">
-                  <PromptViewer
-                    value={prompt}
-                    hookedValue={hookedPrompt}
-                    chunks={chunks}
-                    profile={profile}
-                    onSelectAtom={(aid) => setEditingAtomId(aid)}
-                    onReload={() => executeCompile(selectedManifest)}
-                    isHookActive={isHookActive}
-                    onToggleHook={(active) => setIsHookActive(active)}
-                  />
-                </div>
-              </>
-            )}
-
-            {viewMode === 'graph' && (
-              <div className="flex-1 h-full">
-                <TopologyGraph
-                  manifest={selectedManifest}
-                  onSelectAtom={(aid) => setEditingAtomId(aid)}
-                />
-              </div>
-            )}
-
-            {viewMode === 'preview' && (
-              <div className="flex-1 p-4 h-full bg-slate-950">
-                <PromptViewer
-                  value={prompt}
-                  hookedValue={hookedPrompt}
-                  chunks={chunks}
-                  profile={profile}
-                  onSelectAtom={(aid) => setEditingAtomId(aid)}
-                  onReload={() => executeCompile(selectedManifest)}
-                  isHookActive={isHookActive}
-                  onToggleHook={(active) => setIsHookActive(active)}
-                />
-              </div>
-            )}
-          </div>
         </main>
       </div>
 
-      <CreateAtomModal
-        isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
+      {/* 全局命令与搜索面板 (Ctrl+P / Cmd+P) */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        manifests={manifests}
         packages={packages}
-        onCreated={() => {
-          fetchAssets();
-          fetchLintReport();
-          executeCompile(selectedManifest);
-        }}
-      />
-
-      <CreateLookupModal
-        isOpen={isLookupOpen}
-        onClose={() => setIsLookupOpen(false)}
-        packages={packages}
-        defaultPkg={lookupTargetPkg}
-        defaultPublic={lookupIsPublic}
-        onCreated={() => {
-          fetchAssets();
-          fetchLintReport();
-          executeCompile(selectedManifest);
-        }}
-      />
-
-      <EditLookupModal
-        isOpen={!!editingLookupKey}
-        onClose={() => setEditingLookupKey(null)}
-        packages={packages}
-        lookupKey={editingLookupKey}
-        onSaved={() => {
-          fetchAssets();
-          fetchLintReport();
-          executeCompile(selectedManifest);
-        }}
-      />
-
-      <DiagnosticsDrawer
-        isOpen={isDiagnosticsOpen}
-        onClose={() => setIsDiagnosticsOpen(false)}
-        errorCount={lintErrors}
-        warnCount={lintWarnings}
-        issues={lintIssues}
-        onRefresh={fetchLintReport}
-        loading={lintLoading}
-      />
-
-      <AtomEditorDrawer
-        atomId={editingAtomId}
-        isOpen={!!editingAtomId}
-        onClose={() => setEditingAtomId(null)}
-        onSaved={() => {
-          fetchAssets();
-          fetchLintReport();
-          executeCompile(selectedManifest);
-        }}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { f as findClusterBreak$1, S as StyleModule, k as keyName, b as base, s as shift, d as crelt, T as Tree, N as NodeProp, t as tagHighlighter, e as tags$1, h as highlightTree, I as IterMode, g as TreeFragment, P as Parser, i as NodeType, j as styleTags, p as parser, l as NodeWeakMap, m as parser$1, n as configureNesting, o as parser$2, M as MarkdownParser, q as parseCode, G as GFM, u as Subscript, v as Superscript, E as Emoji, w as parser$3 } from "./vendor-others.js";
+import { g as findClusterBreak$1, S as StyleModule, k as keyName, h as base, s as shift, i as crelt, T as Tree, N as NodeProp, j as tagHighlighter, l as tags$1, m as highlightTree, I as IterMode, n as TreeFragment, P as Parser, o as NodeType, p as styleTags, q as parser, w as NodeWeakMap, x as parser$1, y as configureNesting, z as parser$2, M as MarkdownParser, A as parseCode, G as GFM, B as Subscript, C as Superscript, E as Emoji, D as parser$3 } from "./vendor-others.js";
 class Text {
   /**
   Get the line description around the given position.
