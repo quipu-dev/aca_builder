@@ -1,0 +1,33 @@
+import path from 'node:path';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  server: {
+    port: 43700,
+    strictPort: true,
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_TARGET || 'http://127.0.0.1:43699',
+        changeOrigin: true,
+      },
+    },
+  },
+  build: {
+    outDir: '../src/aca_builder/server/static',
+    emptyOutDir: true,
+    // 显式关闭代码压缩，确保构建产物对 git 历史追踪友好
+    minify: false,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
+  },
+});

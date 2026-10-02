@@ -2,7 +2,7 @@
 
 import typer
 
-from .commands import build, debug_lookup, info, lint, list_manifests
+from .commands import build, debug_lookup, info, lint, list_manifests, studio
 
 app = typer.Typer(help="ACA (Axiomatic Component Architecture) Prompt Builder")
 
@@ -12,6 +12,7 @@ app.command()(build)
 app.command()(info)
 app.command()(lint)
 app.command(name="debug")(debug_lookup)
+app.command(name="studio")(studio)
 
 
 if __name__ == "__main__":

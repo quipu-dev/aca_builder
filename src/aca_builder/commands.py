@@ -4,6 +4,7 @@ from aca_builder.cli.commands.debug import debug_lookup
 from aca_builder.cli.commands.info import info
 from aca_builder.cli.commands.lint import lint
 from aca_builder.cli.commands.manifests import list_manifests
+from aca_builder.cli.commands.studio import studio
 from aca_builder.infra.bus import ConsoleMessageBus
 from aca_builder.infra.filesystem import FSLibraryRepository, FSManifestRepository
 
@@ -23,4 +24,5 @@ __all__ = [
     "info",
     "lint",
     "list_manifests",
+    "studio",
 ]
