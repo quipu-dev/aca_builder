@@ -22,11 +22,29 @@ export default defineConfig({
   build: {
     outDir: '../src/aca_builder/server/static',
     emptyOutDir: true,
-    // 显式关闭代码压缩，确保构建产物对 git 历史追踪友好
+    chunkSizeWarningLimit: 600,
+    // 显式关闭代码与样式压缩，确保构建产物对 git 历史追踪友好
     minify: false,
+    cssMinify: false,
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        entryFileNames: 'assets/[name].js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name].[ext]',
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('zustand')) {
+              return 'vendor-react';
+            }
+            if (id.includes('@xyflow')) {
+              return 'vendor-xyflow';
+            }
+            if (id.includes('codemirror') || id.includes('@uiw')) {
+              return 'vendor-codemirror';
+            }
+            return 'vendor-others';
+          }
+        },
       },
     },
   },
