@@ -43,11 +43,6 @@ export function AtomEditorDrawer({
 
   const handleOpenInObsidian = async () => {
     if (!sourceFile) return;
-    // 1. 尝试通过前端 URI scheme 直调
-    const obsidianUri = `obsidian://open?path=${encodeURIComponent(sourceFile)}`;
-    window.open(obsidianUri, '_blank');
-
-    // 2. 调用后端系统级打开接口兜底
     try {
       await fetch('/api/system/open-obsidian', {
         method: 'POST',
@@ -55,7 +50,7 @@ export function AtomEditorDrawer({
         body: JSON.stringify({ file_path: sourceFile }),
       });
     } catch (_err) {
-      // 忽略兜底失败
+      // 忽略打开失败
     }
   };
 
