@@ -13,6 +13,7 @@ import {
   ArrowDown,
   ArrowUp,
   Box,
+  ExternalLink,
   Eye,
   Network,
   Plus,
@@ -266,6 +267,16 @@ export function ManifestEditorTab({
     });
   };
 
+  const handleOpenLookup = (lookupKey: string) => {
+    openTab({
+      id: `lookup:${lookupKey}`,
+      type: 'lookup',
+      title: lookupKey.split('::').pop() || lookupKey,
+      closable: true,
+      lookupKey,
+    });
+  };
+
   return (
     <div className="flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none">
       {/* 顶部工具栏：视角切换、保存、实时编译开关 */}
@@ -440,11 +451,19 @@ export function ManifestEditorTab({
                       items.map((item, idx) => (
                         <div key={item.id} className="space-y-1">
                           <div className="flex items-center justify-between rounded border border-slate-800 bg-slate-950/80 p-2 text-xs font-mono">
-                            <div className="flex items-center gap-2">
-                              <span className="text-slate-600 font-bold">{idx + 1}.</span>
-                              <span className="text-slate-100 font-semibold">{item.lookup}</span>
+                            <div className="flex items-center gap-2 truncate">
+                              <span className="text-slate-600 font-bold shrink-0">{idx + 1}.</span>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenLookup(item.lookup)}
+                                className="text-slate-100 font-semibold hover:text-indigo-300 hover:underline transition-colors text-left truncate flex items-center gap-1.5 group cursor-pointer"
+                                title={`点击编辑接口契约: ${item.lookup}`}
+                              >
+                                <span className="truncate">{item.lookup}</span>
+                                <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 text-indigo-400 shrink-0 transition-opacity" />
+                              </button>
                               {item.pillar && (
-                                <Badge variant="outline" className="text-[9px] px-1 py-0">
+                                <Badge variant="outline" className="text-[9px] px-1 py-0 shrink-0">
                                   {item.pillar}
                                 </Badge>
                               )}

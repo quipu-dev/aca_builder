@@ -92,35 +92,35 @@ export function LookupEditorTab({
   useEffect(() => {
     if (isDraft) return;
 
+    const rawKey = lookupKey.includes('::') ? lookupKey.split('::')[1] : lookupKey;
+    const targetPkg = lookupKey.includes('::') ? lookupKey.split('::')[0] : null;
+
     for (const pkg of packages) {
-      if (pkg.exports?.[lookupKey]) {
-        const def = pkg.exports[lookupKey];
+      if (targetPkg && pkg.name !== targetPkg) continue;
+
+      const exportDef =
+        pkg.exports?.[lookupKey] ||
+        pkg.exports?.[`${pkg.name}::${rawKey}`] ||
+        pkg.exports?.[rawKey];
+
+      if (exportDef) {
         setPkgName(pkg.name);
-        setPillar((def.pillar as 'd1' | 'd2' | 'd3') || 'd1');
+        setPillar((exportDef.pillar as 'd1' | 'd2' | 'd3') || 'd1');
         setIsPublic(true);
-        setDescription(def.description || '');
-        setRawKeyName(
-          lookupKey
-            .split('::')
-            .pop()
-            ?.replace(/^d[1-3]l-/, '') || '',
-        );
-        setSelectors((def.selectors as SelectorRule[]) || []);
+        setDescription(exportDef.description || '');
+        setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
+        setSelectors((exportDef.selectors as SelectorRule[]) || []);
         return;
       }
-      if (pkg.internal_lookups?.[lookupKey]) {
-        const def = pkg.internal_lookups[lookupKey];
+
+      const internalDef = pkg.internal_lookups?.[lookupKey] || pkg.internal_lookups?.[rawKey];
+      if (internalDef) {
         setPkgName(pkg.name);
-        setPillar((def.pillar as 'd1' | 'd2' | 'd3') || 'd1');
+        setPillar((internalDef.pillar as 'd1' | 'd2' | 'd3') || 'd1');
         setIsPublic(false);
-        setDescription(def.description || '');
-        setRawKeyName(
-          lookupKey
-            .split('::')
-            .pop()
-            ?.replace(/^d[1-3]l-/, '') || '',
-        );
-        setSelectors((def.selectors as SelectorRule[]) || []);
+        setDescription(internalDef.description || '');
+        setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
+        setSelectors((internalDef.selectors as SelectorRule[]) || []);
         return;
       }
     }

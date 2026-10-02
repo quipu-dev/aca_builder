@@ -947,31 +947,30 @@ function LookupEditorTab({
     }
   };
   reactExports.useEffect(() => {
-    var _a2, _b, _c, _d;
+    var _a2, _b, _c, _d, _e;
     if (isDraft) return;
+    const rawKey = lookupKey.includes("::") ? lookupKey.split("::")[1] : lookupKey;
+    const targetPkg = lookupKey.includes("::") ? lookupKey.split("::")[0] : null;
     for (const pkg of packages) {
-      if ((_a2 = pkg.exports) == null ? void 0 : _a2[lookupKey]) {
-        const def = pkg.exports[lookupKey];
+      if (targetPkg && pkg.name !== targetPkg) continue;
+      const exportDef = ((_a2 = pkg.exports) == null ? void 0 : _a2[lookupKey]) || ((_b = pkg.exports) == null ? void 0 : _b[`${pkg.name}::${rawKey}`]) || ((_c = pkg.exports) == null ? void 0 : _c[rawKey]);
+      if (exportDef) {
         setPkgName(pkg.name);
-        setPillar(def.pillar || "d1");
+        setPillar(exportDef.pillar || "d1");
         setIsPublic(true);
-        setDescription(def.description || "");
-        setRawKeyName(
-          ((_b = lookupKey.split("::").pop()) == null ? void 0 : _b.replace(/^d[1-3]l-/, "")) || ""
-        );
-        setSelectors(def.selectors || []);
+        setDescription(exportDef.description || "");
+        setRawKeyName(rawKey.replace(/^d[1-3]l-/, "") || "");
+        setSelectors(exportDef.selectors || []);
         return;
       }
-      if ((_c = pkg.internal_lookups) == null ? void 0 : _c[lookupKey]) {
-        const def = pkg.internal_lookups[lookupKey];
+      const internalDef = ((_d = pkg.internal_lookups) == null ? void 0 : _d[lookupKey]) || ((_e = pkg.internal_lookups) == null ? void 0 : _e[rawKey]);
+      if (internalDef) {
         setPkgName(pkg.name);
-        setPillar(def.pillar || "d1");
+        setPillar(internalDef.pillar || "d1");
         setIsPublic(false);
-        setDescription(def.description || "");
-        setRawKeyName(
-          ((_d = lookupKey.split("::").pop()) == null ? void 0 : _d.replace(/^d[1-3]l-/, "")) || ""
-        );
-        setSelectors(def.selectors || []);
+        setDescription(internalDef.description || "");
+        setRawKeyName(rawKey.replace(/^d[1-3]l-/, "") || "");
+        setSelectors(internalDef.selectors || []);
         return;
       }
     }
@@ -2426,6 +2425,15 @@ function ManifestEditorTab({
       atomId
     });
   };
+  const handleOpenLookup = (lookupKey) => {
+    openTab({
+      id: `lookup:${lookupKey}`,
+      type: "lookup",
+      title: lookupKey.split("::").pop() || lookupKey,
+      closable: true,
+      lookupKey
+    });
+  };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 font-mono text-xs shrink-0", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
@@ -2604,13 +2612,25 @@ function ManifestEditorTab({
               "尚未添加任何 Lookup 接口。"
             ] }) : items.map((item, idx) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between rounded border border-slate-800 bg-slate-950/80 p-2 text-xs font-mono", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-600 font-bold", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 truncate", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-600 font-bold shrink-0", children: [
                     idx + 1,
                     "."
                   ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-100 font-semibold", children: item.lookup }),
-                  item.pillar && /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "outline", className: "text-[9px] px-1 py-0", children: item.pillar })
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => handleOpenLookup(item.lookup),
+                      className: "text-slate-100 font-semibold hover:text-indigo-300 hover:underline transition-colors text-left truncate flex items-center gap-1.5 group cursor-pointer",
+                      title: `点击编辑接口契约: ${item.lookup}`,
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: item.lookup }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "h-3 w-3 opacity-0 group-hover:opacity-100 text-indigo-400 shrink-0 transition-opacity" })
+                      ]
+                    }
+                  ),
+                  item.pillar && /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "outline", className: "text-[9px] px-1 py-0 shrink-0", children: item.pillar })
                 ] }),
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1", children: [
                   overrides[item.lookup] && /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "d3", className: "text-[9px] px-1 py-0", children: "已覆写" }),
