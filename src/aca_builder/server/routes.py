@@ -103,10 +103,11 @@ def get_assets_overview() -> dict[str, Any]:
     manifest_names = man_repo.list_manifests(manifest_paths)
 
     packages_map: dict[str, dict[str, Any]] = {}
-    legacy_atoms = []
 
     for atom_id, atom in library.items():
         pkg = atom.get("package")
+        if not pkg:
+            continue
         meta = atom["meta"]
         atom_summary = {
             "id": atom_id,
@@ -117,17 +118,14 @@ def get_assets_overview() -> dict[str, Any]:
             "uses": meta.get("uses", []),
         }
 
-        if pkg:
-            if pkg not in packages_map:
-                packages_map[pkg] = {
-                    "name": pkg,
-                    "exports": {},
-                    "internal_lookups": {},
-                    "atoms": [],
-                }
-            packages_map[pkg]["atoms"].append(atom_summary)
-        else:
-            legacy_atoms.append(atom_summary)
+        if pkg not in packages_map:
+            packages_map[pkg] = {
+                "name": pkg,
+                "exports": {},
+                "internal_lookups": {},
+                "atoms": [],
+            }
+        packages_map[pkg]["atoms"].append(atom_summary)
 
     for key, l_def in interfaces.get("lookups", {}).items():
         pkg = l_def.get("package")
@@ -154,7 +152,6 @@ def get_assets_overview() -> dict[str, Any]:
 
     return {
         "packages": list(packages_map.values()),
-        "legacy_atoms": legacy_atoms,
         "manifests": manifest_names,
     }
 

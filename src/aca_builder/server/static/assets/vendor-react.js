@@ -7066,6 +7066,30 @@ const ExternalLink = createLucideIcon("ExternalLink", [
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
+const EyeOff = createLucideIcon("EyeOff", [
+  [
+    "path",
+    {
+      d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49",
+      key: "ct8e1f"
+    }
+  ],
+  ["path", { d: "M14.084 14.158a3 3 0 0 1-4.242-4.242", key: "151rxh" }],
+  [
+    "path",
+    {
+      d: "M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143",
+      key: "13bj9a"
+    }
+  ],
+  ["path", { d: "m2 2 20 20", key: "1ooewy" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
 const Eye = createLucideIcon("Eye", [
   [
     "path",
@@ -11609,7 +11633,7 @@ function ResizeControl({ nodeId, position, variant = ResizeControlVariant.Handle
 }
 reactExports.memo(ResizeControl);
 export {
-  Lock as $,
+  Globe as $,
   Plus as A,
   Box as B,
   CircleAlert as C,
@@ -11620,34 +11644,35 @@ export {
   Handle as H,
   Eye as I,
   RotateCcw as J,
-  SlidersVertical as K,
+  EyeOff as K,
   Layers as L,
   Markdown as M,
   Network as N,
-  ArrowUp as O,
+  SlidersVertical as O,
   PenLine as P,
-  ArrowDown as Q,
+  ArrowUp as Q,
   React as R,
   Search as S,
   Tag as T,
-  ChevronRight as U,
-  FolderOpen as V,
+  ArrowDown as U,
+  ChevronRight as V,
   WandSparkles as W,
   X,
-  Folder as Y,
-  Package as Z,
-  Globe as _,
+  FolderOpen as Y,
+  Folder as Z,
+  Package as _,
   Sparkles as a,
-  FileCode as a0,
-  FilePlus2 as a1,
-  MousePointerClick as a2,
-  ArrowLeft as a3,
-  ArrowRight as a4,
-  ShieldCheck as a5,
-  FolderTree as a6,
+  Lock as a0,
+  FileCode as a1,
+  FilePlus2 as a2,
+  MousePointerClick as a3,
+  FolderTree as a4,
+  ArrowLeft as a5,
+  ArrowRight as a6,
   RefreshCw as a7,
-  OctagonAlert as a8,
-  ReactDOM as a9,
+  ShieldCheck as a8,
+  OctagonAlert as a9,
+  ReactDOM as aa,
   LoaderCircle as b,
   create as c,
   Check as d,

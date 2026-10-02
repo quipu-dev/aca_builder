@@ -228,15 +228,17 @@ export function App() {
 
   const handleOpenAtomTab = (atomId: string, e?: React.MouseEvent) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
+    const isDraft = atomId.startsWith('draft:');
+    const tabTitle = isDraft ? `新建原子 (${atomId.replace('draft:', '')})` : atomId;
     ideStore.openTab(
       {
         id: `atom:${atomId}`,
         type: 'atom',
-        title: atomId,
+        title: tabTitle,
         closable: true,
         atomId,
       },
-      { newTab },
+      { newTab: isDraft ? true : newTab },
     );
   };
 
@@ -354,89 +356,6 @@ export function App() {
 
   return (
     <div className="flex h-screen flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans select-none">
-      {/* 顶部简明标题与操作栏 */}
-      <header className="flex h-11 items-center justify-between border-b border-slate-800 px-4 bg-slate-900/80 shrink-0">
-        <div className="flex items-center space-x-3">
-          <Cpu className="h-5 w-5 text-indigo-400" />
-          <span className="text-sm font-bold tracking-wide">ACA Studio IDE</span>
-          <span className="text-[10px] text-indigo-300 font-mono bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-800/40">
-            {status}
-          </span>
-
-          {/* 类似浏览器的历史导航按钮组 */}
-          <div className="flex items-center gap-0.5 border-l border-slate-800 pl-3 ml-1">
-            <button
-              type="button"
-              onClick={ideStore.goBack}
-              disabled={!canGoBack}
-              className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors"
-              title="后退 (Cmd + [ 或 Alt + ←)"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={ideStore.goForward}
-              disabled={!canGoForward}
-              className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors"
-              title="前进 (Cmd + ] 或 Alt + →)"
-            >
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          {/* 全局命令面板按钮 (提示 Ctrl+P) */}
-          <button
-            type="button"
-            onClick={() => setIsCommandPaletteOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono border border-slate-800 bg-slate-950 text-slate-400 hover:text-white hover:border-slate-700 transition-colors"
-            title="快捷全局跳转 (Ctrl+P / Cmd+P)"
-          >
-            <Search className="h-3.5 w-3.5 text-indigo-400" />
-            <span className="hidden sm:inline">跳转文件...</span>
-            <span className="text-[10px] text-slate-500 bg-slate-900 px-1 py-0.2 rounded border border-slate-800">
-              Ctrl+P
-            </span>
-          </button>
-
-          <Button
-            size="sm"
-            onClick={handleCreateNewAtomDraft}
-            className="h-7 text-xs flex items-center gap-1 font-medium bg-indigo-600 hover:bg-indigo-500"
-          >
-            <Plus className="h-3 w-3" /> 新建原子
-          </Button>
-
-          {/* 底部诊断抽屉开关 */}
-          <button
-            type="button"
-            onClick={ideStore.toggleBottomPanel}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono border transition-colors ${
-              lintErrors > 0
-                ? 'border-rose-600 bg-rose-950/40 text-rose-300 hover:bg-rose-900/40'
-                : lintWarnings > 0
-                  ? 'border-amber-600 bg-amber-950/40 text-amber-300 hover:bg-amber-900/40'
-                  : 'border-emerald-600 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/40'
-            }`}
-          >
-            {lintErrors > 0 ? (
-              <AlertCircle className="h-3.5 w-3.5" />
-            ) : (
-              <ShieldCheck className="h-3.5 w-3.5" />
-            )}
-            <span>
-              {lintErrors > 0
-                ? `${lintErrors} 错误`
-                : lintWarnings > 0
-                  ? `${lintWarnings} 警告`
-                  : '合规'}
-            </span>
-          </button>
-        </div>
-      </header>
-
       {/* 主体视口 */}
       <div className="flex flex-1 overflow-hidden">
         {/* 最左侧：活动栏 (Activity Bar) */}
@@ -447,7 +366,7 @@ export function App() {
               if (!ideStore.sidebarOpen) ideStore.setSidebarOpen(true);
               ideStore.setActiveSidebarView('explorer');
             }}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-2 rounded-lg transition-colors cursor-pointer ${
               ideStore.sidebarOpen && ideStore.activeSidebarView === 'explorer'
                 ? 'text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40'
                 : 'text-slate-400 hover:text-white'
@@ -468,7 +387,7 @@ export function App() {
               <button
                 type="button"
                 onClick={ideStore.toggleSidebar}
-                className="text-slate-400 hover:text-white p-0.5"
+                className="text-slate-400 hover:text-white p-0.5 cursor-pointer"
                 title="折叠侧边栏"
               >
                 <X className="h-3.5 w-3.5" />
@@ -480,7 +399,7 @@ export function App() {
                 <button
                   type="button"
                   onClick={() => setExplorerTab('manifests')}
-                  className={`flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors ${
+                  className={`flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${
                     explorerTab === 'manifests'
                       ? 'bg-indigo-600 text-white shadow-sm'
                       : 'text-slate-400 hover:text-slate-200'
@@ -491,7 +410,7 @@ export function App() {
                 <button
                   type="button"
                   onClick={() => setExplorerTab('packages')}
-                  className={`flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors ${
+                  className={`flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${
                     explorerTab === 'packages'
                       ? 'bg-indigo-600 text-white shadow-sm'
                       : 'text-slate-400 hover:text-slate-200'
@@ -507,7 +426,7 @@ export function App() {
                     variant="outline"
                     size="sm"
                     onClick={handleCreateNewManifest}
-                    className="w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7"
+                    className="w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer"
                   >
                     <FilePlus2 className="h-3.5 w-3.5 text-indigo-400" /> 新建清单蓝图
                   </Button>
@@ -536,8 +455,30 @@ export function App() {
 
         {/* 中央主工作区 */}
         <main className="flex-1 flex flex-col overflow-hidden bg-slate-950">
-          {/* Tab 标签栏 */}
-          <div className="flex items-center border-b border-slate-800 bg-slate-900/60 overflow-x-auto shrink-0 scrollbar-none">
+          {/* Tab 标签栏与历史导航 */}
+          <div className="flex items-center border-b border-slate-800 bg-slate-900/60 overflow-x-auto shrink-0 scrollbar-none h-9">
+            {/* 紧凑历史后退/前进导航 */}
+            <div className="flex items-center gap-0.5 px-2 border-r border-slate-800 shrink-0">
+              <button
+                type="button"
+                onClick={ideStore.goBack}
+                disabled={!canGoBack}
+                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors cursor-pointer"
+                title="后退 (Cmd+[ 或 Alt+←)"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={ideStore.goForward}
+                disabled={!canGoForward}
+                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors cursor-pointer"
+                title="前进 (Cmd+] 或 Alt+→)"
+              >
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
             {ideStore.tabs.map((tab) => {
               const isActive = tab.id === ideStore.activeTabId;
               return (
@@ -565,7 +506,7 @@ export function App() {
                         e.stopPropagation();
                         ideStore.closeTab(tab.id);
                       }}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded"
+                      className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded cursor-pointer"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -625,7 +566,7 @@ export function App() {
                     type="button"
                     onClick={fetchLintReport}
                     disabled={lintLoading}
-                    className="text-slate-400 hover:text-indigo-400 p-1"
+                    className="text-slate-400 hover:text-indigo-400 p-1 cursor-pointer"
                     title="重新运行规范诊断"
                   >
                     <RefreshCw className={`h-3 w-3 ${lintLoading ? 'animate-spin' : ''}`} />
@@ -635,7 +576,7 @@ export function App() {
                 <button
                   type="button"
                   onClick={ideStore.toggleBottomPanel}
-                  className="text-slate-400 hover:text-white p-1"
+                  className="text-slate-400 hover:text-white p-1 cursor-pointer"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -688,6 +629,69 @@ export function App() {
           )}
         </main>
       </div>
+
+      {/* 底部紧凑状态栏 (Status Bar) */}
+      <footer className="h-6 border-t border-slate-800 bg-slate-950 px-3 flex items-center justify-between text-[11px] font-mono text-slate-400 shrink-0 select-none z-20">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 text-slate-300">
+            <Cpu className="h-3.5 w-3.5 text-indigo-400" />
+            <span className="font-semibold text-slate-200">ACA Studio</span>
+          </div>
+          <span className="text-slate-600">·</span>
+          <span className="flex items-center gap-1.5">
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                status === '正常'
+                  ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]'
+                  : 'bg-rose-500'
+              }`}
+            />
+            <span>{status}</span>
+          </span>
+          <span className="text-slate-600">·</span>
+          <button
+            type="button"
+            onClick={ideStore.toggleBottomPanel}
+            className={`flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors cursor-pointer ${
+              lintErrors > 0
+                ? 'text-rose-400 hover:bg-rose-950/60 font-semibold'
+                : lintWarnings > 0
+                  ? 'text-amber-400 hover:bg-amber-950/60'
+                  : 'text-slate-400 hover:text-emerald-300'
+            }`}
+            title="切换架构合规与诊断面板"
+          >
+            {lintErrors > 0 ? (
+              <AlertCircle className="h-3 w-3 text-rose-400" />
+            ) : (
+              <ShieldCheck className="h-3 w-3 text-emerald-400" />
+            )}
+            <span>
+              {lintErrors > 0
+                ? `${lintErrors} 错误`
+                : lintWarnings > 0
+                  ? `${lintWarnings} 警告`
+                  : '合规'}
+            </span>
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="text-slate-500 hidden sm:inline">
+            {manifests.length} 清单 · {packages.length} 组件包
+          </span>
+          <span className="text-slate-600 hidden sm:inline">·</span>
+          <button
+            type="button"
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
+            title="打开命令面板 (Ctrl+P / Cmd+P)"
+          >
+            <Search className="h-3 w-3 text-indigo-400" />
+            <span className="text-[10px]">Ctrl+P</span>
+          </button>
+        </div>
+      </footer>
 
       {/* 全局命令与搜索面板 (Ctrl+P / Cmd+P) */}
       <CommandPalette

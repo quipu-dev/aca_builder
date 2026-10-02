@@ -140,18 +140,31 @@ export function PackageExplorer({
                 </div>
 
                 {/* 包含原子 */}
-                {atomsCount > 0 && (
-                  <div>
-                    <div className="text-[10px] font-semibold text-slate-400 flex items-center gap-1 mb-1">
+                <div>
+                  <div className="text-[10px] font-semibold text-slate-400 flex items-center justify-between mb-1">
+                    <span className="flex items-center gap-1">
                       <FileCode className="h-3 w-3" /> 包含原子清单
-                    </div>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectAtom?.(`draft:${pkg.name}`, e);
+                      }}
+                      className="text-slate-400 hover:text-indigo-400 p-0.5 rounded transition-colors cursor-pointer"
+                      title={`在包 ${pkg.name} 中新建原子组件`}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
+                  {atomsCount > 0 && (
                     <div className="space-y-1 pl-2">
                       {pkg.atoms.map((atom) => (
                         <button
                           type="button"
                           key={atom.id}
                           onClick={(e) => onSelectAtom?.(atom.id, e)}
-                          className="w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60 rounded px-1.5 py-1 truncate flex items-center gap-1.5 transition-colors group"
+                          className="w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60 rounded px-1.5 py-1 truncate flex items-center gap-1.5 transition-colors group cursor-pointer"
                           title="点击就地打开，按住 Ctrl 点击新建标签页"
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-indigo-400" />
@@ -159,8 +172,8 @@ export function PackageExplorer({
                         </button>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             )}
           </div>

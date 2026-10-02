@@ -1,4 +1,4 @@
-import { j as jsxRuntimeExports, c as create, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, d as Check, e as Save, f as Shield, T as Tag, i as ReactCodeMirror, k as CodeXml, W as WandSparkles, l as ChartColumn, m as ChevronUp, n as ChevronDown, o as Copy, X, P as PenLine, M as Markdown, H as Handle, p as Pen, q as TriangleAlert, u as useNodesState, s as useEdgesState, t as Cpu, v as CircleCheckBig, w as index, x as Background, y as BackgroundVariant, z as Controls, N as Network, F as Filter, A as Plus, D as Link2, G as Trash2, I as Eye, J as RotateCcw, K as SlidersVertical, O as ArrowUp, Q as ArrowDown, U as ChevronRight, V as FolderOpen, Y as Folder, Z as Package, _ as Globe, $ as Lock, a0 as FileCode, a1 as FilePlus2, a2 as MousePointerClick, a3 as ArrowLeft, a4 as ArrowRight, a5 as ShieldCheck, a6 as FolderTree, a7 as RefreshCw, a8 as OctagonAlert, a9 as ReactDOM } from "./vendor-react.js";
+import { j as jsxRuntimeExports, c as create, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, d as Check, e as Save, f as Shield, T as Tag, i as ReactCodeMirror, k as CodeXml, W as WandSparkles, l as ChartColumn, m as ChevronUp, n as ChevronDown, o as Copy, X, P as PenLine, M as Markdown, H as Handle, p as Pen, q as TriangleAlert, u as useNodesState, s as useEdgesState, t as Cpu, v as CircleCheckBig, w as index, x as Background, y as BackgroundVariant, z as Controls, N as Network, F as Filter, A as Plus, D as Link2, G as Trash2, I as Eye, J as RotateCcw, K as EyeOff, O as SlidersVertical, Q as ArrowUp, U as ArrowDown, V as ChevronRight, Y as FolderOpen, Z as Folder, _ as Package, $ as Globe, a0 as Lock, a1 as FileCode, a2 as FilePlus2, a3 as MousePointerClick, a4 as FolderTree, a5 as ArrowLeft, a6 as ArrowRight, a7 as RefreshCw, a8 as ShieldCheck, a9 as OctagonAlert, aa as ReactDOM } from "./vendor-react.js";
 import { U as twMerge, W as clsx, X as remarkGfm } from "./vendor-others.js";
 import { m as markdown } from "./vendor-codemirror.js";
 import { P as Position } from "./vendor-xyflow.js";
@@ -3028,57 +3028,29 @@ function ManifestEditorTab({
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 font-mono text-xs shrink-0", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-1.5", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200", children: name }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex rounded bg-slate-950 border border-slate-800 p-0.5 text-xs", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "button",
-            {
-              type: "button",
-              onClick: () => {
-                setRightView("graph");
-                if (!showRightPanel) setShowRightPanel(true);
-              },
-              className: `flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors ${showRightPanel && rightView === "graph" ? "bg-indigo-600 text-white font-medium shadow-sm" : "text-slate-400 hover:text-white"}`,
-              title: "在右侧观察依赖拓扑 DAG 变化",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(Network, { className: "h-3 w-3" }),
-                " 白板拓扑"
-              ]
-            }
-          ),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "button",
-            {
-              type: "button",
-              onClick: () => {
-                setRightView("prompt");
-                if (!showRightPanel) setShowRightPanel(true);
-              },
-              className: `flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors ${showRightPanel && rightView === "prompt" ? "bg-indigo-600 text-white font-medium shadow-sm" : "text-slate-400 hover:text-white"}`,
-              title: "在右侧查看拼接好的完整 Prompt 文本与词元",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(CodeXml, { className: "h-3 w-3" }),
-                " 实时编译"
-              ]
-            }
-          )
-        ] })
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-        saveStatus && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs text-indigo-400 font-mono", children: saveStatus }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200", children: name }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-slate-500 font-mono", children: [
+            "v",
+            version
+          ] })
+        ] }),
+        !showRightPanel && /* @__PURE__ */ jsxRuntimeExports.jsxs(
           "button",
           {
             type: "button",
-            onClick: () => setShowRightPanel(!showRightPanel),
-            className: `flex items-center gap-1 px-2 py-1 rounded text-[11px] border transition-colors ${showRightPanel ? "border-indigo-500 bg-indigo-950/60 text-indigo-300" : "border-slate-800 text-slate-400 hover:text-white"}`,
-            title: "开关右侧伴生栏（白板拓扑 / 编译产物）",
+            onClick: () => setShowRightPanel(true),
+            className: "flex items-center gap-1 px-2 py-0.5 rounded text-[11px] border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer",
+            title: "展开白板拓扑 / 编译产物伴生栏",
             children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Eye, { className: "h-3 w-3" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: showRightPanel ? "折叠伴生栏" : "展开伴生栏" })
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Eye, { className: "h-3 w-3 text-indigo-400" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "展开伴生栏" })
             ]
           }
-        ),
+        )
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+        saveStatus && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs text-indigo-400 font-mono", children: saveStatus }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs(
           Button,
           {
@@ -3117,27 +3089,69 @@ function ManifestEditorTab({
         minPrimarySize: 380,
         minSecondarySize: 320,
         primary: renderBlueprintContent(false),
-        secondary: rightView === "graph" ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full w-full bg-slate-950 overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-          TopologyGraph,
-          {
-            manifest: manifestIdentifier || name,
-            imports: items.map((i) => ({ lookup: i.lookup })),
-            overrides,
-            onSelectAtom: handleOpenAtom
-          }
-        ) }) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full p-3 bg-slate-950 overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-          PromptViewer,
-          {
-            value: prompt,
-            hookedValue: hookedPrompt,
-            chunks,
-            profile,
-            onSelectAtom: handleOpenAtom,
-            onReload: () => compileCurrent(),
-            isHookActive,
-            onToggleHook: (active) => setIsHookActive(active)
-          }
-        ) })
+        secondary: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "h-full flex flex-col bg-slate-900/30 overflow-hidden", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-3.5 py-1.5 border-b border-slate-800 bg-slate-950/70 shrink-0", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex rounded bg-slate-950 border border-slate-800 p-0.5 text-[11px]", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => setRightView("graph"),
+                  className: `flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors cursor-pointer ${rightView === "graph" ? "bg-indigo-600 text-white font-medium shadow-sm" : "text-slate-400 hover:text-white"}`,
+                  title: "在右侧观察依赖拓扑 DAG 变化",
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(Network, { className: "h-3 w-3" }),
+                    " 白板拓扑"
+                  ]
+                }
+              ),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => setRightView("prompt"),
+                  className: `flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors cursor-pointer ${rightView === "prompt" ? "bg-indigo-600 text-white font-medium shadow-sm" : "text-slate-400 hover:text-white"}`,
+                  title: "在右侧查看拼接好的完整 Prompt 文本与词元",
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(CodeXml, { className: "h-3 w-3" }),
+                    " 实时编译"
+                  ]
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => setShowRightPanel(false),
+                className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer",
+                title: "折叠伴生栏",
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(EyeOff, { className: "h-3.5 w-3.5" })
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-hidden", children: rightView === "graph" ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full w-full bg-slate-950 overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+            TopologyGraph,
+            {
+              manifest: manifestIdentifier || name,
+              imports: items.map((i) => ({ lookup: i.lookup })),
+              overrides,
+              onSelectAtom: handleOpenAtom
+            }
+          ) }) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full p-3 bg-slate-950 overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+            PromptViewer,
+            {
+              value: prompt,
+              hookedValue: hookedPrompt,
+              chunks,
+              profile,
+              onSelectAtom: handleOpenAtom,
+              onReload: () => compileCurrent(),
+              isHookActive,
+              onToggleHook: (active) => setIsHookActive(active)
+            }
+          ) }) })
+        ] })
       }
     ) : renderBlueprintContent(true) })
   ] });
@@ -3399,17 +3413,32 @@ function PackageExplorer({
                 k
               )) })
             ] }),
-            atomsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-slate-400 flex items-center gap-1 mb-1", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(FileCode, { className: "h-3 w-3" }),
-                " 包含原子清单"
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-slate-400 flex items-center justify-between mb-1", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(FileCode, { className: "h-3 w-3" }),
+                  " 包含原子清单"
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: (e) => {
+                      e.stopPropagation();
+                      onSelectAtom == null ? void 0 : onSelectAtom(`draft:${pkg.name}`, e);
+                    },
+                    className: "text-slate-400 hover:text-indigo-400 p-0.5 rounded transition-colors cursor-pointer",
+                    title: `在包 ${pkg.name} 中新建原子组件`,
+                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
+                  }
+                )
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: pkg.atoms.map((atom) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              atomsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: pkg.atoms.map((atom) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
                 "button",
                 {
                   type: "button",
                   onClick: (e) => onSelectAtom == null ? void 0 : onSelectAtom(atom.id, e),
-                  className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60 rounded px-1.5 py-1 truncate flex items-center gap-1.5 transition-colors group",
+                  className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60 rounded px-1.5 py-1 truncate flex items-center gap-1.5 transition-colors group cursor-pointer",
                   title: "点击就地打开，按住 Ctrl 点击新建标签页",
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-indigo-400" }),
@@ -3659,15 +3688,17 @@ function App() {
   };
   const handleOpenAtomTab = (atomId, e) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
+    const isDraft = atomId.startsWith("draft:");
+    const tabTitle = isDraft ? `新建原子 (${atomId.replace("draft:", "")})` : atomId;
     ideStore.openTab(
       {
         id: `atom:${atomId}`,
         type: "atom",
-        title: atomId,
+        title: tabTitle,
         closable: true,
         atomId
       },
-      { newTab }
+      { newTab: isDraft ? true : newTab }
     );
   };
   const handleOpenLookupTab = (lookupKey, e) => {
@@ -3770,77 +3801,6 @@ function App() {
   const canGoBack = ideStore.historyIndex > 0;
   const canGoForward = ideStore.historyIndex < ideStore.navigationHistory.length - 1;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-screen flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans select-none", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: "flex h-11 items-center justify-between border-b border-slate-800 px-4 bg-slate-900/80 shrink-0", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-3", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Cpu, { className: "h-5 w-5 text-indigo-400" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-sm font-bold tracking-wide", children: "ACA Studio IDE" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-indigo-300 font-mono bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-800/40", children: status }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-0.5 border-l border-slate-800 pl-3 ml-1", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              type: "button",
-              onClick: ideStore.goBack,
-              disabled: !canGoBack,
-              className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors",
-              title: "后退 (Cmd + [ 或 Alt + ←)",
-              children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowLeft, { className: "h-4 w-4" })
-            }
-          ),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              type: "button",
-              onClick: ideStore.goForward,
-              disabled: !canGoForward,
-              className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors",
-              title: "前进 (Cmd + ] 或 Alt + →)",
-              children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowRight, { className: "h-4 w-4" })
-            }
-          )
-        ] })
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center space-x-2", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "button",
-          {
-            type: "button",
-            onClick: () => setIsCommandPaletteOpen(true),
-            className: "flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono border border-slate-800 bg-slate-950 text-slate-400 hover:text-white hover:border-slate-700 transition-colors",
-            title: "快捷全局跳转 (Ctrl+P / Cmd+P)",
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Search, { className: "h-3.5 w-3.5 text-indigo-400" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "跳转文件..." }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 bg-slate-900 px-1 py-0.2 rounded border border-slate-800", children: "Ctrl+P" })
-            ]
-          }
-        ),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          Button,
-          {
-            size: "sm",
-            onClick: handleCreateNewAtomDraft,
-            className: "h-7 text-xs flex items-center gap-1 font-medium bg-indigo-600 hover:bg-indigo-500",
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" }),
-              " 新建原子"
-            ]
-          }
-        ),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "button",
-          {
-            type: "button",
-            onClick: ideStore.toggleBottomPanel,
-            className: `flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono border transition-colors ${lintErrors > 0 ? "border-rose-600 bg-rose-950/40 text-rose-300 hover:bg-rose-900/40" : lintWarnings > 0 ? "border-amber-600 bg-amber-950/40 text-amber-300 hover:bg-amber-900/40" : "border-emerald-600 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/40"}`,
-            children: [
-              lintErrors > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-3.5 w-3.5" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ShieldCheck, { className: "h-3.5 w-3.5" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: lintErrors > 0 ? `${lintErrors} 错误` : lintWarnings > 0 ? `${lintWarnings} 警告` : "合规" })
-            ]
-          }
-        )
-      ] })
-    ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-1 overflow-hidden", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-12 border-r border-slate-800 bg-slate-950 flex flex-col items-center py-3 space-y-4 shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
         "button",
@@ -3850,7 +3810,7 @@ function App() {
             if (!ideStore.sidebarOpen) ideStore.setSidebarOpen(true);
             ideStore.setActiveSidebarView("explorer");
           },
-          className: `p-2 rounded-lg transition-colors ${ideStore.sidebarOpen && ideStore.activeSidebarView === "explorer" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
+          className: `p-2 rounded-lg transition-colors cursor-pointer ${ideStore.sidebarOpen && ideStore.activeSidebarView === "explorer" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
           title: "资源管理器 (Explorer)",
           children: /* @__PURE__ */ jsxRuntimeExports.jsx(FolderTree, { className: "h-5 w-5" })
         }
@@ -3863,7 +3823,7 @@ function App() {
             {
               type: "button",
               onClick: ideStore.toggleSidebar,
-              className: "text-slate-400 hover:text-white p-0.5",
+              className: "text-slate-400 hover:text-white p-0.5 cursor-pointer",
               title: "折叠侧边栏",
               children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3.5 w-3.5" })
             }
@@ -3876,7 +3836,7 @@ function App() {
               {
                 type: "button",
                 onClick: () => setExplorerTab("manifests"),
-                className: `flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors ${explorerTab === "manifests" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"}`,
+                className: `flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${explorerTab === "manifests" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"}`,
                 children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-3.5 w-3.5" }),
                   " 清单蓝图"
@@ -3888,7 +3848,7 @@ function App() {
               {
                 type: "button",
                 onClick: () => setExplorerTab("packages"),
-                className: `flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors ${explorerTab === "packages" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"}`,
+                className: `flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${explorerTab === "packages" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"}`,
                 children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx(Package, { className: "h-3.5 w-3.5" }),
                   " 组件包"
@@ -3902,7 +3862,7 @@ function App() {
               variant: "outline",
               size: "sm",
               onClick: handleCreateNewManifest,
-              className: "w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7",
+              className: "w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer",
               children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(FilePlus2, { className: "h-3.5 w-3.5 text-indigo-400" }),
                 " 新建清单蓝图"
@@ -3928,7 +3888,31 @@ function App() {
         ) })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { className: "flex-1 flex flex-col overflow-hidden bg-slate-950", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center border-b border-slate-800 bg-slate-900/60 overflow-x-auto shrink-0 scrollbar-none", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center border-b border-slate-800 bg-slate-900/60 overflow-x-auto shrink-0 scrollbar-none h-9", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-0.5 px-2 border-r border-slate-800 shrink-0", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                type: "button",
+                onClick: ideStore.goBack,
+                disabled: !canGoBack,
+                className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors cursor-pointer",
+                title: "后退 (Cmd+[ 或 Alt+←)",
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowLeft, { className: "h-3.5 w-3.5" })
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                type: "button",
+                onClick: ideStore.goForward,
+                disabled: !canGoForward,
+                className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors cursor-pointer",
+                title: "前进 (Cmd+] 或 Alt+→)",
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowRight, { className: "h-3.5 w-3.5" })
+              }
+            )
+          ] }),
           ideStore.tabs.map((tab) => {
             const isActive = tab.id === ideStore.activeTabId;
             return /* @__PURE__ */ jsxRuntimeExports.jsxs(
@@ -3953,7 +3937,7 @@ function App() {
                         e.stopPropagation();
                         ideStore.closeTab(tab.id);
                       },
-                      className: "opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded",
+                      className: "opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded cursor-pointer",
                       children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3 w-3" })
                     }
                   )
@@ -4013,7 +3997,7 @@ function App() {
                   type: "button",
                   onClick: fetchLintReport,
                   disabled: lintLoading,
-                  className: "text-slate-400 hover:text-indigo-400 p-1",
+                  className: "text-slate-400 hover:text-indigo-400 p-1 cursor-pointer",
                   title: "重新运行规范诊断",
                   children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefreshCw, { className: `h-3 w-3 ${lintLoading ? "animate-spin" : ""}` })
                 }
@@ -4024,7 +4008,7 @@ function App() {
               {
                 type: "button",
                 onClick: ideStore.toggleBottomPanel,
-                className: "text-slate-400 hover:text-white p-1",
+                className: "text-slate-400 hover:text-white p-1 cursor-pointer",
                 children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3.5 w-3.5" })
               }
             )
@@ -4061,6 +4045,60 @@ function App() {
             );
           }) })
         ] })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("footer", { className: "h-6 border-t border-slate-800 bg-slate-950 px-3 flex items-center justify-between text-[11px] font-mono text-slate-400 shrink-0 select-none z-20", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 text-slate-300", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Cpu, { className: "h-3.5 w-3.5 text-indigo-400" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200", children: "ACA Studio" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-600", children: "·" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1.5", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "span",
+            {
+              className: `w-1.5 h-1.5 rounded-full ${status === "正常" ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-rose-500"}`
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: status })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-600", children: "·" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            type: "button",
+            onClick: ideStore.toggleBottomPanel,
+            className: `flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors cursor-pointer ${lintErrors > 0 ? "text-rose-400 hover:bg-rose-950/60 font-semibold" : lintWarnings > 0 ? "text-amber-400 hover:bg-amber-950/60" : "text-slate-400 hover:text-emerald-300"}`,
+            title: "切换架构合规与诊断面板",
+            children: [
+              lintErrors > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-3 w-3 text-rose-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ShieldCheck, { className: "h-3 w-3 text-emerald-400" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: lintErrors > 0 ? `${lintErrors} 错误` : lintWarnings > 0 ? `${lintWarnings} 警告` : "合规" })
+            ]
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-500 hidden sm:inline", children: [
+          manifests.length,
+          " 清单 · ",
+          packages.length,
+          " 组件包"
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-600 hidden sm:inline", children: "·" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            type: "button",
+            onClick: () => setIsCommandPaletteOpen(true),
+            className: "flex items-center gap-1 px-1.5 py-0.5 rounded text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer",
+            title: "打开命令面板 (Ctrl+P / Cmd+P)",
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Search, { className: "h-3 w-3 text-indigo-400" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px]", children: "Ctrl+P" })
+            ]
+          }
+        )
       ] })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(

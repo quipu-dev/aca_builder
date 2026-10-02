@@ -16,6 +16,7 @@ import {
   Code2,
   ExternalLink,
   Eye,
+  EyeOff,
   Network,
   Plus,
   RotateCcw,
@@ -644,64 +645,29 @@ export function ManifestEditorTab({
 
   return (
     <div className="flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none">
-      {/* 顶部工具栏：蓝图状态、右侧伴生视口模式、展开/折叠、重置与保存 */}
+      {/* 顶部工具栏：蓝图状态、重置与保存 */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 font-mono text-xs shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <span className="font-semibold text-slate-200">{name}</span>
+            <span className="text-[10px] text-slate-500 font-mono">v{version}</span>
           </div>
 
-          {/* 右侧伴生视口切换器：白板拓扑 VS 实时编译 */}
-          <div className="flex rounded bg-slate-950 border border-slate-800 p-0.5 text-xs">
+          {!showRightPanel && (
             <button
               type="button"
-              onClick={() => {
-                setRightView('graph');
-                if (!showRightPanel) setShowRightPanel(true);
-              }}
-              className={`flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors ${
-                showRightPanel && rightView === 'graph'
-                  ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="在右侧观察依赖拓扑 DAG 变化"
+              onClick={() => setShowRightPanel(true)}
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
+              title="展开白板拓扑 / 编译产物伴生栏"
             >
-              <Network className="h-3 w-3" /> 白板拓扑
+              <Eye className="h-3 w-3 text-indigo-400" />
+              <span>展开伴生栏</span>
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setRightView('prompt');
-                if (!showRightPanel) setShowRightPanel(true);
-              }}
-              className={`flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors ${
-                showRightPanel && rightView === 'prompt'
-                  ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              title="在右侧查看拼接好的完整 Prompt 文本与词元"
-            >
-              <Code2 className="h-3 w-3" /> 实时编译
-            </button>
-          </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
           {saveStatus && <span className="text-xs text-indigo-400 font-mono">{saveStatus}</span>}
-
-          <button
-            type="button"
-            onClick={() => setShowRightPanel(!showRightPanel)}
-            className={`flex items-center gap-1 px-2 py-1 rounded text-[11px] border transition-colors ${
-              showRightPanel
-                ? 'border-indigo-500 bg-indigo-950/60 text-indigo-300'
-                : 'border-slate-800 text-slate-400 hover:text-white'
-            }`}
-            title="开关右侧伴生栏（白板拓扑 / 编译产物）"
-          >
-            <Eye className="h-3 w-3" />
-            <span>{showRightPanel ? '折叠伴生栏' : '展开伴生栏'}</span>
-          </button>
 
           <Button
             variant="outline"
@@ -737,29 +703,72 @@ export function ManifestEditorTab({
             minSecondarySize={320}
             primary={renderBlueprintContent(false)}
             secondary={
-              rightView === 'graph' ? (
-                <div className="h-full w-full bg-slate-950 overflow-hidden">
-                  <TopologyGraph
-                    manifest={manifestIdentifier || name}
-                    imports={items.map((i) => ({ lookup: i.lookup }))}
-                    overrides={overrides}
-                    onSelectAtom={handleOpenAtom}
-                  />
+              <div className="h-full flex flex-col bg-slate-900/30 overflow-hidden">
+                {/* 伴生面板专属 Header：视角切换与折叠控制 */}
+                <div className="flex items-center justify-between px-3.5 py-1.5 border-b border-slate-800 bg-slate-950/70 shrink-0">
+                  <div className="flex rounded bg-slate-950 border border-slate-800 p-0.5 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => setRightView('graph')}
+                      className={`flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors cursor-pointer ${
+                        rightView === 'graph'
+                          ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="在右侧观察依赖拓扑 DAG 变化"
+                    >
+                      <Network className="h-3 w-3" /> 白板拓扑
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRightView('prompt')}
+                      className={`flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors cursor-pointer ${
+                        rightView === 'prompt'
+                          ? 'bg-indigo-600 text-white font-medium shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="在右侧查看拼接好的完整 Prompt 文本与词元"
+                    >
+                      <Code2 className="h-3 w-3" /> 实时编译
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowRightPanel(false)}
+                    className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors cursor-pointer"
+                    title="折叠伴生栏"
+                  >
+                    <EyeOff className="h-3.5 w-3.5" />
+                  </button>
                 </div>
-              ) : (
-                <div className="h-full p-3 bg-slate-950 overflow-hidden">
-                  <PromptViewer
-                    value={prompt}
-                    hookedValue={hookedPrompt}
-                    chunks={chunks}
-                    profile={profile}
-                    onSelectAtom={handleOpenAtom}
-                    onReload={() => compileCurrent()}
-                    isHookActive={isHookActive}
-                    onToggleHook={(active) => setIsHookActive(active)}
-                  />
+
+                <div className="flex-1 overflow-hidden">
+                  {rightView === 'graph' ? (
+                    <div className="h-full w-full bg-slate-950 overflow-hidden">
+                      <TopologyGraph
+                        manifest={manifestIdentifier || name}
+                        imports={items.map((i) => ({ lookup: i.lookup }))}
+                        overrides={overrides}
+                        onSelectAtom={handleOpenAtom}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-full p-3 bg-slate-950 overflow-hidden">
+                      <PromptViewer
+                        value={prompt}
+                        hookedValue={hookedPrompt}
+                        chunks={chunks}
+                        profile={profile}
+                        onSelectAtom={handleOpenAtom}
+                        onReload={() => compileCurrent()}
+                        isHookActive={isHookActive}
+                        onToggleHook={(active) => setIsHookActive(active)}
+                      />
+                    </div>
+                  )}
                 </div>
-              )
+              </div>
             }
           />
         ) : (
