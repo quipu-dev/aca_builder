@@ -10,6 +10,16 @@ from aca_builder.domain.ports import LibraryRepository, ManifestRepository
 
 
 class FSLibraryRepository(LibraryRepository):
+    def __init__(self, cache_db: Any | None = None):
+        if cache_db is None:
+            from aca_builder import config
+            from aca_builder.infra.cache_db import SQLiteAtomCache
+
+            db_path = config.get_cache_db_path()
+            self.cache = SQLiteAtomCache(db_path)
+        else:
+            self.cache = cache_db
+
     def _parse_atom(
         self, file_path: Path, package_name: str | None = None
     ) -> dict[str, Any]:
@@ -70,43 +80,13 @@ class FSLibraryRepository(LibraryRepository):
         fail_fast: bool = True,
         errors: list[str] | None = None,
     ) -> dict[str, dict[str, Any]]:
-        library = {}
-        pkg_cache = {}
-
-        for lib_root in library_paths:
-            if not lib_root.exists():
-                continue
-
-            for file_path in lib_root.glob("**/*.md"):
-                parent_dir = file_path.parent
-                pkg_name = None
-
-                if parent_dir in pkg_cache:
-                    pkg_name = pkg_cache[parent_dir]
-                else:
-                    pkg_info = self._find_package_config(parent_dir, lib_root)
-                    if pkg_info and "name" in pkg_info:
-                        pkg_name = pkg_info["name"]
-                    pkg_cache[parent_dir] = pkg_name
-
-                try:
-                    atom = self._parse_atom(file_path, pkg_name)
-                    if atom["id"] in library:
-                        from aca_builder.messages import MESSAGES
-
-                        raise BuildError(
-                            MESSAGES["linter.atom.duplicate_id"].format(
-                                atom_id=atom["id"]
-                            )
-                        )
-                    library[atom["id"]] = atom
-                except BuildError as e:
-                    if fail_fast:
-                        raise
-                    if errors is not None:
-                        errors.append(str(e))
-                    continue
-        return library
+        return self.cache.sync_and_load(
+            library_paths=library_paths,
+            parse_fn=self._parse_atom,
+            find_pkg_fn=self._find_package_config,
+            fail_fast=fail_fast,
+            errors=errors,
+        )
 
     def load_interfaces(self, library_paths: list[Path]) -> dict[str, Any]:
         """Loads d4 files and package exports."""

@@ -45,3 +45,21 @@ def get_manifest_paths(config: dict[str, Any]) -> list[Path]:
 def get_post_process_hook(config: dict[str, Any]) -> str | None:
     """Gets the post-processing hook command from the config."""
     return config.get("post_process_hook")
+
+
+def get_cache_db_path(config: dict[str, Any] | None = None) -> Path:
+    """Gets the SQLite cache database path from config, env or default."""
+    import os
+
+    if config is None:
+        config = load_config()
+
+    env_path = os.getenv("ACA_CACHE_DB_PATH")
+    if env_path:
+        return Path(env_path).expanduser().resolve()
+
+    custom_path = config.get("cache_db_path")
+    if custom_path:
+        return Path(custom_path).expanduser().resolve()
+
+    return Path.home() / ".cache" / "aca" / "cache.db"
