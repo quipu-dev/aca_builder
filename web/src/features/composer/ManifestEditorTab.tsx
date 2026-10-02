@@ -22,7 +22,7 @@ import {
   Sliders,
   Trash2,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export interface ImportItem {
   id: string;
@@ -88,23 +88,26 @@ export function ManifestEditorTab({
     }
   };
 
-  // 提取所有可用公开 Lookup
-  const availableExports: Array<{ key: string; pkg: string; pillar: string; desc: string }> = [];
-  for (const pkg of packages) {
-    for (const [key, def] of Object.entries(pkg.exports || {})) {
-      const exportDef = def as LookupExportItem;
-      availableExports.push({
-        key,
-        pkg: pkg.name,
-        pillar: exportDef.pillar || 'd1',
-        desc: exportDef.description || '',
-      });
+  // 提取所有可用公开 Lookup (使用 useMemo 缓存，防止随渲染周期空转)
+  const availableExports = useMemo(() => {
+    const list: Array<{ key: string; pkg: string; pillar: string; desc: string }> = [];
+    for (const pkg of packages) {
+      for (const [key, def] of Object.entries(pkg.exports || {})) {
+        const exportDef = def as LookupExportItem;
+        list.push({
+          key,
+          pkg: pkg.name,
+          pillar: exportDef.pillar || 'd1',
+          desc: exportDef.description || '',
+        });
+      }
     }
-  }
+    return list;
+  }, [packages]);
 
   // 加载已有清单数据
   useEffect(() => {
-    if (!manifestName) return;
+    if (!manifestName || isModified) return;
     fetch(`/api/manifests/${encodeURIComponent(manifestName)}`)
       .then((res) => {
         if (!res.ok) throw new Error('加载清单失败');
@@ -129,7 +132,7 @@ export function ManifestEditorTab({
       .catch((err) => {
         console.error(err);
       });
-  }, [manifestName, tabId, setTabDirty]);
+  }, [manifestName, tabId, setTabDirty, isModified]);
 
   // 实时编译当前清单
   const compileCurrent = useCallback(
@@ -257,25 +260,31 @@ export function ManifestEditorTab({
     }
   };
 
-  const handleOpenAtom = (atomId: string) => {
-    openTab({
-      id: `atom:${atomId}`,
-      type: 'atom',
-      title: atomId,
-      closable: true,
-      atomId,
-    });
-  };
+  const handleOpenAtom = useCallback(
+    (atomId: string) => {
+      openTab({
+        id: `atom:${atomId}`,
+        type: 'atom',
+        title: atomId,
+        closable: true,
+        atomId,
+      });
+    },
+    [openTab],
+  );
 
-  const handleOpenLookup = (lookupKey: string) => {
-    openTab({
-      id: `lookup:${lookupKey}`,
-      type: 'lookup',
-      title: lookupKey.split('::').pop() || lookupKey,
-      closable: true,
-      lookupKey,
-    });
-  };
+  const handleOpenLookup = useCallback(
+    (lookupKey: string) => {
+      openTab({
+        id: `lookup:${lookupKey}`,
+        type: 'lookup',
+        title: lookupKey.split('::').pop() || lookupKey,
+        closable: true,
+        lookupKey,
+      });
+    },
+    [openTab],
+  );
 
   return (
     <div className="flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none">

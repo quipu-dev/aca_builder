@@ -90,7 +90,7 @@ export function LookupEditorTab({
 
   // 1. 初始化回显已存在的 Lookup 定义
   useEffect(() => {
-    if (isDraft) return;
+    if (isDraft || isModified) return;
 
     const rawKey = lookupKey.includes('::') ? lookupKey.split('::')[1] : lookupKey;
     const targetPkg = lookupKey.includes('::') ? lookupKey.split('::')[0] : null;
@@ -124,7 +124,7 @@ export function LookupEditorTab({
         return;
       }
     }
-  }, [lookupKey, packages, isDraft]);
+  }, [lookupKey, packages, isDraft, isModified]);
 
   // 2. 实时演算核心：防抖调用 `/api/lookups/evaluate`
   const runLiveDebug = useCallback(() => {

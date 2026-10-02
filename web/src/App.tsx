@@ -5,6 +5,7 @@ import { AtomEditorTab } from '@/features/authoring/AtomEditorTab';
 import { LookupEditorTab } from '@/features/authoring/LookupEditorTab';
 import { ManifestEditorTab } from '@/features/composer/ManifestEditorTab';
 import { PackageExplorer, type PackageItem } from '@/features/explorer/PackageExplorer';
+import { EmptyTab } from '@/features/home/EmptyTab';
 import { type IdeTab, useIdeStore } from '@/stores/ide-store';
 import {
   AlertCircle,
@@ -25,13 +26,87 @@ import {
   X,
 } from 'lucide-react';
 import type React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 
 export interface LintIssue {
   level: string;
   code: string;
   message: string;
 }
+
+interface TabPaneProps {
+  tab: IdeTab;
+  isActive: boolean;
+  packages: PackageItem[];
+  manifestsCount: number;
+  onSaved: () => void;
+  onOpenCommandPalette: () => void;
+  onCreateManifest: () => void;
+  onCreateAtom: () => void;
+}
+
+const TabPane = memo(
+  function TabPane({
+    tab,
+    isActive,
+    packages,
+    manifestsCount,
+    onSaved,
+    onOpenCommandPalette,
+    onCreateManifest,
+    onCreateAtom,
+  }: TabPaneProps) {
+    return (
+      <div className={`h-full w-full ${isActive ? 'block' : 'hidden'}`}>
+        {tab.type === 'empty' && (
+          <EmptyTab
+            manifestsCount={manifestsCount}
+            packagesCount={packages.length}
+            onOpenCommandPalette={onOpenCommandPalette}
+            onCreateManifest={onCreateManifest}
+            onCreateAtom={onCreateAtom}
+          />
+        )}
+        {tab.type === 'atom' && tab.atomId && (
+          <AtomEditorTab
+            key={tab.atomId}
+            atomId={tab.atomId}
+            packages={packages}
+            onSaved={onSaved}
+          />
+        )}
+        {tab.type === 'manifest' && (
+          <ManifestEditorTab
+            key={tab.id}
+            manifestName={tab.manifestName || ''}
+            packages={packages}
+            onSaved={onSaved}
+          />
+        )}
+        {tab.type === 'lookup' && tab.lookupKey && (
+          <LookupEditorTab
+            key={tab.id}
+            lookupKey={tab.lookupKey}
+            packages={packages}
+            onSaved={onSaved}
+          />
+        )}
+      </div>
+    );
+  },
+  (prev, next) => {
+    // 性能核心拦截：若前后均处于非激活状态，且核心元数据无变动，直接跳过整个组件树的 Diff
+    return (
+      prev.isActive === next.isActive &&
+      prev.tab.id === next.tab.id &&
+      prev.tab.isDirty === next.tab.isDirty &&
+      prev.tab.title === next.tab.title &&
+      prev.packages === next.packages &&
+      prev.manifestsCount === next.manifestsCount &&
+      prev.onSaved === next.onSaved
+    );
+  },
+);
 
 export function App() {
   const ideStore = useIdeStore();
@@ -92,11 +167,14 @@ export function App() {
       fetchLintReport();
     });
 
-    // 全局快捷键监听: Ctrl+P / Cmd+P 唤起命令面板
+    // 全局快捷键监听: Ctrl+P 唤起命令面板，Ctrl+T 新建标签页
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        handleCreateEmptyTab();
       }
     };
     window.addEventListener('keydown', handleGlobalKeyDown);
@@ -107,38 +185,46 @@ export function App() {
     };
   }, [fetchAssets, fetchLintReport]);
 
-  // 首次启动时若无打开 Tab，默认打开第一个 Manifest
-  useEffect(() => {
-    if (ideStore.tabs.length === 0 && manifests.length > 0) {
-      const defaultM = manifests[0];
-      ideStore.openTab({
-        id: `manifest:${defaultM}`,
+  const handleOpenManifestTab = (mName: string, e?: React.MouseEvent) => {
+    const newTab = e ? e.ctrlKey || e.metaKey : false;
+    ideStore.openTab(
+      {
+        id: `manifest:${mName}`,
         type: 'manifest',
-        title: defaultM,
+        title: mName,
         closable: true,
-        manifestName: defaultM,
-      });
-    }
-  }, [manifests, ideStore]);
-
-  const handleOpenManifestTab = (mName: string) => {
-    ideStore.openTab({
-      id: `manifest:${mName}`,
-      type: 'manifest',
-      title: mName,
-      closable: true,
-      manifestName: mName,
-    });
+        manifestName: mName,
+      },
+      { newTab },
+    );
   };
 
-  const handleOpenAtomTab = (atomId: string) => {
-    ideStore.openTab({
-      id: `atom:${atomId}`,
-      type: 'atom',
-      title: atomId,
-      closable: true,
-      atomId,
-    });
+  const handleOpenAtomTab = (atomId: string, e?: React.MouseEvent) => {
+    const newTab = e ? e.ctrlKey || e.metaKey : false;
+    ideStore.openTab(
+      {
+        id: `atom:${atomId}`,
+        type: 'atom',
+        title: atomId,
+        closable: true,
+        atomId,
+      },
+      { newTab },
+    );
+  };
+
+  const handleOpenLookupTab = (lookupKey: string, e?: React.MouseEvent) => {
+    const newTab = e ? e.ctrlKey || e.metaKey : false;
+    ideStore.openTab(
+      {
+        id: `lookup:${lookupKey}`,
+        type: 'lookup',
+        title: lookupKey.split('::').pop() || lookupKey,
+        closable: true,
+        lookupKey,
+      },
+      { newTab },
+    );
   };
 
   // 诊断直通：解析 issue 中的实体并一键在主编辑区打开对应 Tab
@@ -163,37 +249,50 @@ export function App() {
     const lookupMatch = text.match(/Lookup '([^']+)'/);
     if (lookupMatch) {
       const lKey = lookupMatch[1];
-      ideStore.openTab({
-        id: `lookup:${lKey}`,
-        type: 'lookup',
-        title: lKey.split('::').pop() || lKey,
-        closable: true,
-        lookupKey: lKey,
-      });
+      handleOpenLookupTab(lKey);
     }
   };
 
   const handleCreateNewAtomDraft = () => {
     const defaultPkg = packages[0]?.name || '';
     const draftId = `draft_${Date.now().toString().slice(-4)}`;
-    ideStore.openTab({
-      id: `atom:${draftId}`,
-      type: 'atom',
-      title: '新建原子草稿',
-      closable: true,
-      atomId: `draft:${defaultPkg}`,
-    });
+    ideStore.openTab(
+      {
+        id: `atom:${draftId}`,
+        type: 'atom',
+        title: '新建原子草稿',
+        closable: true,
+        atomId: `draft:${defaultPkg}`,
+      },
+      { newTab: true },
+    );
   };
 
   const handleCreateNewManifest = () => {
     const draftName = `未命名蓝图_${Date.now().toString().slice(-4)}`;
-    ideStore.openTab({
-      id: `manifest:${draftName}`,
-      type: 'manifest',
-      title: draftName,
-      closable: true,
-      manifestName: '', // 空字符串触发新建草稿
-    });
+    ideStore.openTab(
+      {
+        id: `manifest:${draftName}`,
+        type: 'manifest',
+        title: draftName,
+        closable: true,
+        manifestName: '', // 空字符串触发新建草稿
+      },
+      { newTab: true },
+    );
+  };
+
+  const handleCreateEmptyTab = () => {
+    const newTabId = `empty_${Date.now()}`;
+    ideStore.openTab(
+      {
+        id: newTabId,
+        type: 'empty',
+        title: '新标签页',
+        closable: true,
+      },
+      { newTab: true },
+    );
   };
 
   const handleDeleteManifest = async (mName: string, e: React.MouseEvent) => {
@@ -217,61 +316,10 @@ export function App() {
     }
   };
 
-  // 渲染特定的 Tab 内容
-  const renderTabContent = (tab: IdeTab | undefined) => {
-    if (!tab) {
-      return (
-        <div className="flex h-full flex-col items-center justify-center text-xs text-slate-600 font-mono">
-          <Layers className="h-8 w-8 text-slate-700 mb-2" />
-          工作区就绪。请从左侧资源管理器打开原子或清单。
-        </div>
-      );
-    }
-
-    if (tab.type === 'atom' && tab.atomId) {
-      return (
-        <AtomEditorTab
-          key={tab.atomId}
-          atomId={tab.atomId}
-          packages={packages}
-          onSaved={() => {
-            fetchAssets();
-            fetchLintReport();
-          }}
-        />
-      );
-    }
-
-    if (tab.type === 'manifest') {
-      return (
-        <ManifestEditorTab
-          key={tab.id}
-          manifestName={tab.manifestName || ''}
-          packages={packages}
-          onSaved={() => {
-            fetchAssets();
-            fetchLintReport();
-          }}
-        />
-      );
-    }
-
-    if (tab.type === 'lookup' && tab.lookupKey) {
-      return (
-        <LookupEditorTab
-          key={tab.id}
-          lookupKey={tab.lookupKey}
-          packages={packages}
-          onSaved={() => {
-            fetchAssets();
-            fetchLintReport();
-          }}
-        />
-      );
-    }
-
-    return null;
-  };
+  const handleTabSaved = useCallback(() => {
+    fetchAssets();
+    fetchLintReport();
+  }, [fetchAssets, fetchLintReport]);
 
   const activeTab = ideStore.tabs.find((t) => t.id === ideStore.activeTabId);
   const splitTab = ideStore.tabs.find((t) => t.id === ideStore.splitTabId);
@@ -445,8 +493,9 @@ export function App() {
                   >
                     <button
                       type="button"
-                      onClick={() => handleOpenManifestTab(m)}
+                      onClick={(e) => handleOpenManifestTab(m, e)}
                       className="flex-1 text-left truncate hover:text-white"
+                      title="点击在当前标签页打开，按住 Ctrl 点击新建标签页"
                     >
                       {m}
                     </button>
@@ -463,16 +512,8 @@ export function App() {
               ) : (
                 <PackageExplorer
                   packages={packages}
-                  onSelectAtom={(atomId) => handleOpenAtomTab(atomId)}
-                  onOpenLookup={(lKey) => {
-                    ideStore.openTab({
-                      id: `lookup:${lKey}`,
-                      type: 'lookup',
-                      title: lKey.split('::').pop() || lKey,
-                      closable: true,
-                      lookupKey: lKey,
-                    });
-                  }}
+                  onSelectAtom={(atomId, e) => handleOpenAtomTab(atomId, e)}
+                  onOpenLookup={(lKey, e) => handleOpenLookupTab(lKey, e)}
                 />
               )}
             </div>
@@ -521,6 +562,16 @@ export function App() {
                 </div>
               );
             })}
+
+            {/* 新建标签页按钮 (+) */}
+            <button
+              type="button"
+              onClick={handleCreateEmptyTab}
+              className="flex items-center justify-center p-1.5 ml-1.5 mr-2 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded transition-colors shrink-0 cursor-pointer"
+              title="新建标签页 (Ctrl+T)"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
           </div>
 
           {/* 编辑器视口：单视口 VS 左右分屏视口 (SplitPane) */}
@@ -530,16 +581,70 @@ export function App() {
                 direction="horizontal"
                 initialRatio={0.5}
                 primary={
-                  <div className="h-full overflow-hidden">{renderTabContent(activeTab)}</div>
+                  <div className="h-full w-full relative overflow-hidden">
+                    {ideStore.tabs.map((tab) => (
+                      <TabPane
+                        key={tab.id}
+                        tab={tab}
+                        isActive={tab.id === ideStore.activeTabId}
+                        packages={packages}
+                        manifestsCount={manifests.length}
+                        onSaved={handleTabSaved}
+                        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+                        onCreateManifest={handleCreateNewManifest}
+                        onCreateAtom={handleCreateNewAtomDraft}
+                      />
+                    ))}
+                  </div>
                 }
                 secondary={
                   <div className="h-full overflow-hidden border-l border-slate-800">
-                    {renderTabContent(splitTab)}
+                    {splitTab ? (
+                      <TabPane
+                        key={`split_${splitTab.id}`}
+                        tab={splitTab}
+                        isActive={true}
+                        packages={packages}
+                        manifestsCount={manifests.length}
+                        onSaved={handleTabSaved}
+                        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+                        onCreateManifest={handleCreateNewManifest}
+                        onCreateAtom={handleCreateNewAtomDraft}
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-xs text-slate-600 font-mono">
+                        未选择分屏视口内容
+                      </div>
+                    )}
                   </div>
                 }
               />
             ) : (
-              renderTabContent(activeTab)
+              <div className="h-full w-full relative overflow-hidden">
+                {ideStore.tabs.length === 0 ? (
+                  <EmptyTab
+                    manifestsCount={manifests.length}
+                    packagesCount={packages.length}
+                    onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+                    onCreateManifest={handleCreateNewManifest}
+                    onCreateAtom={handleCreateNewAtomDraft}
+                  />
+                ) : (
+                  ideStore.tabs.map((tab) => (
+                    <TabPane
+                      key={tab.id}
+                      tab={tab}
+                      isActive={tab.id === ideStore.activeTabId}
+                      packages={packages}
+                      manifestsCount={manifests.length}
+                      onSaved={handleTabSaved}
+                      onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+                      onCreateManifest={handleCreateNewManifest}
+                      onCreateAtom={handleCreateNewAtomDraft}
+                    />
+                  ))
+                )}
+              </div>
             )}
           </div>
 

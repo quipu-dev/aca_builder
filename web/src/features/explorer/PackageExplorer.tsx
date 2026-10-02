@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, ChevronRight, FileCode, Globe, Lock, Package, Plus } from 'lucide-react';
+import type React from 'react';
 import { useState } from 'react';
 
 export interface LookupExportItem {
@@ -27,8 +28,8 @@ export function PackageExplorer({
   onOpenLookup,
 }: {
   packages: PackageItem[];
-  onSelectAtom?: (atomId: string) => void;
-  onOpenLookup?: (lookupKey: string) => void;
+  onSelectAtom?: (atomId: string, e?: React.MouseEvent) => void;
+  onOpenLookup?: (lookupKey: string, e?: React.MouseEvent) => void;
 }) {
   const [expandedPkg, setExpandedPkg] = useState<Record<string, boolean>>({});
 
@@ -91,9 +92,9 @@ export function PackageExplorer({
                         <button
                           type="button"
                           key={k}
-                          onClick={() => onOpenLookup?.(k)}
+                          onClick={(e) => onOpenLookup?.(k, e)}
                           className="w-full text-left text-xs font-mono text-slate-300 hover:text-emerald-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors"
-                          title="点击以 Tab 编辑此接口契约"
+                          title="点击就地打开，按住 Ctrl 点击新建标签页"
                         >
                           <span className="truncate">{k}</span>
                           <Badge variant="outline" className="text-[9px] px-1 py-0">
@@ -113,7 +114,7 @@ export function PackageExplorer({
                     </span>
                     <button
                       type="button"
-                      onClick={() => onOpenLookup?.(`draft:${pkg.name}`)}
+                      onClick={(e) => onOpenLookup?.(`draft:${pkg.name}`, e)}
                       className="text-slate-400 hover:text-indigo-400 p-0.5 rounded"
                       title="新建内部查找"
                     >
@@ -126,9 +127,9 @@ export function PackageExplorer({
                         <button
                           type="button"
                           key={k}
-                          onClick={() => onOpenLookup?.(k)}
+                          onClick={(e) => onOpenLookup?.(k, e)}
                           className="w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors"
-                          title="点击以 Tab 编辑此接口契约"
+                          title="点击就地打开，按住 Ctrl 点击新建标签页"
                         >
                           <span className="truncate">{k}</span>
                           <span className="text-[9px] text-slate-600">{def.pillar}</span>
@@ -149,8 +150,9 @@ export function PackageExplorer({
                         <button
                           type="button"
                           key={atom.id}
-                          onClick={() => onSelectAtom?.(atom.id)}
+                          onClick={(e) => onSelectAtom?.(atom.id, e)}
                           className="w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60 rounded px-1.5 py-1 truncate flex items-center gap-1.5 transition-colors group"
+                          title="点击就地打开，按住 Ctrl 点击新建标签页"
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-indigo-400" />
                           <span className="truncate">{atom.id}</span>

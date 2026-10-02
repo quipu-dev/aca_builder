@@ -1,4 +1,4 @@
-import { j as jsxRuntimeExports, c as create, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, d as Check, e as Save, f as Shield, T as Tag, i as ReactCodeMirror, k as CircleCheck, F as Filter, P as Plus, l as Link2, m as Trash2, n as CodeXml, W as WandSparkles, o as ChartColumn, p as ChevronUp, q as ChevronDown, s as Copy, X, t as PenLine, M as Markdown, H as Handle, u as Pen, v as TriangleAlert, w as useNodesState, x as useEdgesState, y as Cpu, z as CircleCheckBig, A as index, D as Background, G as BackgroundVariant, I as Controls, J as SlidersVertical, N as Network, K as Eye, O as ArrowUp, Q as ArrowDown, U as RotateCcw, V as ChevronRight, Y as Package, Z as Globe, _ as Lock, $ as FileCode, a0 as Columns2, a1 as ShieldCheck, a2 as FolderTree, a3 as FilePlus2, a4 as RefreshCw, a5 as OctagonAlert, a6 as ReactDOM } from "./vendor-react.js";
+import { j as jsxRuntimeExports, c as create, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, d as Check, e as Save, f as Shield, T as Tag, i as ReactCodeMirror, k as CircleCheck, F as Filter, P as Plus, l as Link2, m as Trash2, n as CodeXml, W as WandSparkles, o as ChartColumn, p as ChevronUp, q as ChevronDown, s as Copy, X, t as PenLine, M as Markdown, H as Handle, u as Pen, v as TriangleAlert, w as useNodesState, x as useEdgesState, y as Cpu, z as CircleCheckBig, A as index, D as Background, G as BackgroundVariant, I as Controls, J as SlidersVertical, N as Network, K as Eye, O as ArrowUp, Q as ArrowDown, U as RotateCcw, V as ChevronRight, Y as Package, Z as Globe, _ as Lock, $ as FileCode, a0 as FilePlus2, a1 as MousePointerClick, a2 as Columns2, a3 as ShieldCheck, a4 as FolderTree, a5 as RefreshCw, a6 as OctagonAlert, a7 as ReactDOM } from "./vendor-react.js";
 import { U as twMerge, W as clsx, X as remarkGfm } from "./vendor-others.js";
 import { m as markdown } from "./vendor-codemirror.js";
 import { P as Position } from "./vendor-xyflow.js";
@@ -65,9 +65,15 @@ function Badge({ className, variant = "default", ...props }) {
     }
   );
 }
+const INITIAL_EMPTY_TAB = {
+  id: "empty:home",
+  type: "empty",
+  title: "开始",
+  closable: false
+};
 const useIdeStore = create((set, get) => ({
-  tabs: [],
-  activeTabId: "",
+  tabs: [INITIAL_EMPTY_TAB],
+  activeTabId: INITIAL_EMPTY_TAB.id,
   splitTabId: null,
   isSplitActive: false,
   sidebarOpen: true,
@@ -80,19 +86,49 @@ const useIdeStore = create((set, get) => ({
   setBottomPanelOpen: (open) => set({ bottomPanelOpen: open }),
   toggleBottomPanel: () => set((state) => ({ bottomPanelOpen: !state.bottomPanelOpen })),
   setActiveBottomTab: (tab) => set({ activeBottomTab: tab, bottomPanelOpen: true }),
-  openTab: (tab, splitSide = "primary") => {
-    const { tabs } = get();
-    const existing = tabs.find((t) => t.id === tab.id);
-    const updatedTabs = existing ? tabs : [...tabs, tab];
+  openTab: (tab, options = "primary") => {
+    const { tabs, activeTabId } = get();
+    let newTab = false;
+    let splitSide = "primary";
+    if (typeof options === "boolean") {
+      newTab = options;
+    } else if (typeof options === "string") {
+      splitSide = options;
+    } else if (options && typeof options === "object") {
+      newTab = !!options.newTab;
+      splitSide = options.splitSide || "primary";
+    }
+    const existingIndex = tabs.findIndex((t) => t.id === tab.id);
+    if (existingIndex !== -1) {
+      if (splitSide === "secondary") {
+        set({ splitTabId: tab.id, isSplitActive: true });
+      } else {
+        set({ activeTabId: tab.id });
+      }
+      return;
+    }
     if (splitSide === "secondary") {
       set({
-        tabs: updatedTabs,
+        tabs: [...tabs, tab],
         splitTabId: tab.id,
         isSplitActive: true
       });
-    } else {
+      return;
+    }
+    const currentActiveTab = tabs.find((t) => t.id === activeTabId);
+    const canReplaceCurrent = !newTab && currentActiveTab && !currentActiveTab.isDirty;
+    if (canReplaceCurrent) {
+      const currentIndex = tabs.findIndex((t) => t.id === activeTabId);
+      const updatedTabs = [...tabs];
+      updatedTabs[currentIndex] = tab;
       set({
         tabs: updatedTabs,
+        activeTabId: tab.id
+      });
+    } else {
+      const cleanTabs = tabs.length === 1 && tabs[0].type === "empty" && !tabs[0].isDirty ? [] : tabs;
+      set({
+        tabs: [...cleanTabs, tab],
         activeTabId: tab.id
       });
     }
@@ -105,6 +141,21 @@ const useIdeStore = create((set, get) => ({
     const remaining = tabs.filter((t) => t.id !== tabId);
     let nextActiveId = activeTabId;
     let nextSplitId = splitTabId;
+    if (remaining.length === 0) {
+      const emptyTab = {
+        id: "empty:home",
+        type: "empty",
+        title: "开始",
+        closable: false
+      };
+      set({
+        tabs: [emptyTab],
+        activeTabId: emptyTab.id,
+        splitTabId: null,
+        isSplitActive: false
+      });
+      return;
+    }
     if (activeTabId === tabId) {
       const closedIndex = tabs.findIndex((t) => t.id === tabId);
       const nextTab = remaining[Math.max(0, closedIndex - 1)];
@@ -948,7 +999,7 @@ function LookupEditorTab({
   };
   reactExports.useEffect(() => {
     var _a2, _b, _c, _d, _e;
-    if (isDraft) return;
+    if (isDraft || isModified) return;
     const rawKey = lookupKey.includes("::") ? lookupKey.split("::")[1] : lookupKey;
     const targetPkg = lookupKey.includes("::") ? lookupKey.split("::")[0] : null;
     for (const pkg of packages) {
@@ -974,7 +1025,7 @@ function LookupEditorTab({
         return;
       }
     }
-  }, [lookupKey, packages, isDraft]);
+  }, [lookupKey, packages, isDraft, isModified]);
   const runLiveDebug = reactExports.useCallback(() => {
     if (selectors.length === 0) {
       setMatchedAtoms([]);
@@ -2117,7 +2168,7 @@ function autoLayoutSafe(nodes, edges) {
     cycleNodes: Array.from(cycleNodesSet)
   };
 }
-function TopologyGraph({
+const TopologyGraph = React.memo(function TopologyGraph2({
   manifest,
   onSelectAtom
 }) {
@@ -2236,7 +2287,7 @@ function TopologyGraph({
       }
     )
   ] });
-}
+});
 function ManifestEditorTab({
   manifestName,
   packages,
@@ -2272,20 +2323,23 @@ function ManifestEditorTab({
       setTabDirty(tabId, true);
     }
   };
-  const availableExports = [];
-  for (const pkg of packages) {
-    for (const [key, def] of Object.entries(pkg.exports || {})) {
-      const exportDef = def;
-      availableExports.push({
-        key,
-        pkg: pkg.name,
-        pillar: exportDef.pillar || "d1",
-        desc: exportDef.description || ""
-      });
+  const availableExports = reactExports.useMemo(() => {
+    const list = [];
+    for (const pkg of packages) {
+      for (const [key, def] of Object.entries(pkg.exports || {})) {
+        const exportDef = def;
+        list.push({
+          key,
+          pkg: pkg.name,
+          pillar: exportDef.pillar || "d1",
+          desc: exportDef.description || ""
+        });
+      }
     }
-  }
+    return list;
+  }, [packages]);
   reactExports.useEffect(() => {
-    if (!manifestName) return;
+    if (!manifestName || isModified) return;
     fetch(`/api/manifests/${encodeURIComponent(manifestName)}`).then((res) => {
       if (!res.ok) throw new Error("加载清单失败");
       return res.json();
@@ -2305,7 +2359,7 @@ function ManifestEditorTab({
     }).catch((err) => {
       console.error(err);
     });
-  }, [manifestName, tabId, setTabDirty]);
+  }, [manifestName, tabId, setTabDirty, isModified]);
   const compileCurrent = reactExports.useCallback(
     (hookFlag = isHookActive) => {
       const targetQueryKey = manifestIdentifier || name;
@@ -2416,24 +2470,30 @@ function ManifestEditorTab({
       setIsSaving(false);
     }
   };
-  const handleOpenAtom = (atomId) => {
-    openTab({
-      id: `atom:${atomId}`,
-      type: "atom",
-      title: atomId,
-      closable: true,
-      atomId
-    });
-  };
-  const handleOpenLookup = (lookupKey) => {
-    openTab({
-      id: `lookup:${lookupKey}`,
-      type: "lookup",
-      title: lookupKey.split("::").pop() || lookupKey,
-      closable: true,
-      lookupKey
-    });
-  };
+  const handleOpenAtom = reactExports.useCallback(
+    (atomId) => {
+      openTab({
+        id: `atom:${atomId}`,
+        type: "atom",
+        title: atomId,
+        closable: true,
+        atomId
+      });
+    },
+    [openTab]
+  );
+  const handleOpenLookup = reactExports.useCallback(
+    (lookupKey) => {
+      openTab({
+        id: `lookup:${lookupKey}`,
+        type: "lookup",
+        title: lookupKey.split("::").pop() || lookupKey,
+        closable: true,
+        lookupKey
+      });
+    },
+    [openTab]
+  );
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 font-mono text-xs shrink-0", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
@@ -2832,9 +2892,9 @@ function PackageExplorer({
                 "button",
                 {
                   type: "button",
-                  onClick: () => onOpenLookup == null ? void 0 : onOpenLookup(k),
+                  onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
                   className: "w-full text-left text-xs font-mono text-slate-300 hover:text-emerald-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors",
-                  title: "点击以 Tab 编辑此接口契约",
+                  title: "点击就地打开，按住 Ctrl 点击新建标签页",
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "outline", className: "text-[9px] px-1 py-0", children: def.pillar })
@@ -2853,7 +2913,7 @@ function PackageExplorer({
                   "button",
                   {
                     type: "button",
-                    onClick: () => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}`),
+                    onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}`, e),
                     className: "text-slate-400 hover:text-indigo-400 p-0.5 rounded",
                     title: "新建内部查找",
                     children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
@@ -2864,9 +2924,9 @@ function PackageExplorer({
                 "button",
                 {
                   type: "button",
-                  onClick: () => onOpenLookup == null ? void 0 : onOpenLookup(k),
+                  onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
                   className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors",
-                  title: "点击以 Tab 编辑此接口契约",
+                  title: "点击就地打开，按住 Ctrl 点击新建标签页",
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] text-slate-600", children: def.pillar })
@@ -2884,8 +2944,9 @@ function PackageExplorer({
                 "button",
                 {
                   type: "button",
-                  onClick: () => onSelectAtom == null ? void 0 : onSelectAtom(atom.id),
+                  onClick: (e) => onSelectAtom == null ? void 0 : onSelectAtom(atom.id, e),
                   className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60 rounded px-1.5 py-1 truncate flex items-center gap-1.5 transition-colors group",
+                  title: "点击就地打开，按住 Ctrl 点击新建标签页",
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-indigo-400" }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: atom.id })
@@ -2901,6 +2962,148 @@ function PackageExplorer({
     );
   }) });
 }
+function EmptyTab({
+  manifestsCount,
+  packagesCount,
+  onOpenCommandPalette,
+  onCreateManifest,
+  onCreateAtom
+}) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex h-full w-full flex-col items-center justify-center p-6 text-slate-200 select-none overflow-y-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-md w-full space-y-6 text-center", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "inline-flex p-3 rounded-2xl bg-indigo-950/60 border border-indigo-800/40 text-indigo-400 mb-2 shadow-lg shadow-indigo-950/40", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Cpu, { className: "h-8 w-8" }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-xl font-bold font-sans tracking-wide text-slate-100", children: "ACA Studio 工作台" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-400 font-mono leading-relaxed", children: "公理化组件架构（ACA）可视化装配与开发控制台" })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-3 pt-2 text-left font-mono", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "button",
+        {
+          type: "button",
+          onClick: onCreateManifest,
+          className: "flex flex-col gap-1.5 p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-indigo-950/40 hover:border-indigo-500/50 transition-all text-xs group cursor-pointer",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 text-indigo-400 font-semibold", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(FilePlus2, { className: "h-4 w-4" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "新建蓝图" })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] text-slate-500 font-sans", children: "创建新的智能体装配清单 (Manifest)" })
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "button",
+        {
+          type: "button",
+          onClick: onCreateAtom,
+          className: "flex flex-col gap-1.5 p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-emerald-950/40 hover:border-emerald-500/50 transition-all text-xs group cursor-pointer",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 text-emerald-400 font-semibold", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-4 w-4" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "新建原子" })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] text-slate-500 font-sans", children: "向组件包追加 D1 / D2 / D3 规范" })
+          ]
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-1", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      Button,
+      {
+        variant: "outline",
+        onClick: onOpenCommandPalette,
+        className: "w-full flex items-center justify-between px-3.5 py-2 text-xs font-mono border-slate-800 bg-slate-900/40 hover:bg-slate-800 text-slate-300",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Search, { className: "h-3.5 w-3.5 text-indigo-400" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "跳转到清单、原子或接口..." })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800", children: "Ctrl + P" })
+        ]
+      }
+    ) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-500", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-3.5 w-3.5 text-indigo-400" }),
+          manifestsCount,
+          " 个清单"
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Box, { className: "h-3.5 w-3.5 text-purple-400" }),
+          packagesCount,
+          " 个组件包"
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "div",
+        {
+          className: "flex items-center gap-1 text-slate-400",
+          title: "点击在当前标签页打开，按住 Ctrl 点击将在新标签页中打开",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(MousePointerClick, { className: "h-3.5 w-3.5 text-indigo-400" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "按住 Ctrl 点击可新建标签页" })
+          ]
+        }
+      )
+    ] })
+  ] }) });
+}
+const TabPane = reactExports.memo(
+  function TabPane2({
+    tab,
+    isActive,
+    packages,
+    manifestsCount,
+    onSaved,
+    onOpenCommandPalette,
+    onCreateManifest,
+    onCreateAtom
+  }) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `h-full w-full ${isActive ? "block" : "hidden"}`, children: [
+      tab.type === "empty" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+        EmptyTab,
+        {
+          manifestsCount,
+          packagesCount: packages.length,
+          onOpenCommandPalette,
+          onCreateManifest,
+          onCreateAtom
+        }
+      ),
+      tab.type === "atom" && tab.atomId && /* @__PURE__ */ jsxRuntimeExports.jsx(
+        AtomEditorTab,
+        {
+          atomId: tab.atomId,
+          packages,
+          onSaved
+        },
+        tab.atomId
+      ),
+      tab.type === "manifest" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+        ManifestEditorTab,
+        {
+          manifestName: tab.manifestName || "",
+          packages,
+          onSaved
+        },
+        tab.id
+      ),
+      tab.type === "lookup" && tab.lookupKey && /* @__PURE__ */ jsxRuntimeExports.jsx(
+        LookupEditorTab,
+        {
+          lookupKey: tab.lookupKey,
+          packages,
+          onSaved
+        },
+        tab.id
+      )
+    ] });
+  },
+  (prev, next) => {
+    return prev.isActive === next.isActive && prev.tab.id === next.tab.id && prev.tab.isDirty === next.tab.isDirty && prev.tab.title === next.tab.title && prev.packages === next.packages && prev.manifestsCount === next.manifestsCount && prev.onSaved === next.onSaved;
+  }
+);
 function App() {
   const ideStore = useIdeStore();
   const [manifests, setManifests] = reactExports.useState([]);
@@ -2942,6 +3145,9 @@ function App() {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "t") {
+        e.preventDefault();
+        handleCreateEmptyTab();
       }
     };
     window.addEventListener("keydown", handleGlobalKeyDown);
@@ -2950,35 +3156,44 @@ function App() {
       window.removeEventListener("keydown", handleGlobalKeyDown);
     };
   }, [fetchAssets, fetchLintReport]);
-  reactExports.useEffect(() => {
-    if (ideStore.tabs.length === 0 && manifests.length > 0) {
-      const defaultM = manifests[0];
-      ideStore.openTab({
-        id: `manifest:${defaultM}`,
+  const handleOpenManifestTab = (mName, e) => {
+    const newTab = e ? e.ctrlKey || e.metaKey : false;
+    ideStore.openTab(
+      {
+        id: `manifest:${mName}`,
         type: "manifest",
-        title: defaultM,
+        title: mName,
         closable: true,
-        manifestName: defaultM
-      });
-    }
-  }, [manifests, ideStore]);
-  const handleOpenManifestTab = (mName) => {
-    ideStore.openTab({
-      id: `manifest:${mName}`,
-      type: "manifest",
-      title: mName,
-      closable: true,
-      manifestName: mName
-    });
+        manifestName: mName
+      },
+      { newTab }
+    );
   };
-  const handleOpenAtomTab = (atomId) => {
-    ideStore.openTab({
-      id: `atom:${atomId}`,
-      type: "atom",
-      title: atomId,
-      closable: true,
-      atomId
-    });
+  const handleOpenAtomTab = (atomId, e) => {
+    const newTab = e ? e.ctrlKey || e.metaKey : false;
+    ideStore.openTab(
+      {
+        id: `atom:${atomId}`,
+        type: "atom",
+        title: atomId,
+        closable: true,
+        atomId
+      },
+      { newTab }
+    );
+  };
+  const handleOpenLookupTab = (lookupKey, e) => {
+    const newTab = e ? e.ctrlKey || e.metaKey : false;
+    ideStore.openTab(
+      {
+        id: `lookup:${lookupKey}`,
+        type: "lookup",
+        title: lookupKey.split("::").pop() || lookupKey,
+        closable: true,
+        lookupKey
+      },
+      { newTab }
+    );
   };
   const handleProblemClick = (issue) => {
     const text = `${issue.code} ${issue.message}`;
@@ -2995,37 +3210,49 @@ function App() {
     const lookupMatch = text.match(/Lookup '([^']+)'/);
     if (lookupMatch) {
       const lKey = lookupMatch[1];
-      ideStore.openTab({
-        id: `lookup:${lKey}`,
-        type: "lookup",
-        title: lKey.split("::").pop() || lKey,
-        closable: true,
-        lookupKey: lKey
-      });
+      handleOpenLookupTab(lKey);
     }
   };
   const handleCreateNewAtomDraft = () => {
     var _a;
     const defaultPkg = ((_a = packages[0]) == null ? void 0 : _a.name) || "";
     const draftId = `draft_${Date.now().toString().slice(-4)}`;
-    ideStore.openTab({
-      id: `atom:${draftId}`,
-      type: "atom",
-      title: "新建原子草稿",
-      closable: true,
-      atomId: `draft:${defaultPkg}`
-    });
+    ideStore.openTab(
+      {
+        id: `atom:${draftId}`,
+        type: "atom",
+        title: "新建原子草稿",
+        closable: true,
+        atomId: `draft:${defaultPkg}`
+      },
+      { newTab: true }
+    );
   };
   const handleCreateNewManifest = () => {
     const draftName = `未命名蓝图_${Date.now().toString().slice(-4)}`;
-    ideStore.openTab({
-      id: `manifest:${draftName}`,
-      type: "manifest",
-      title: draftName,
-      closable: true,
-      manifestName: ""
-      // 空字符串触发新建草稿
-    });
+    ideStore.openTab(
+      {
+        id: `manifest:${draftName}`,
+        type: "manifest",
+        title: draftName,
+        closable: true,
+        manifestName: ""
+        // 空字符串触发新建草稿
+      },
+      { newTab: true }
+    );
+  };
+  const handleCreateEmptyTab = () => {
+    const newTabId = `empty_${Date.now()}`;
+    ideStore.openTab(
+      {
+        id: newTabId,
+        type: "empty",
+        title: "新标签页",
+        closable: true
+      },
+      { newTab: true }
+    );
   };
   const handleDeleteManifest = async (mName, e) => {
     e.stopPropagation();
@@ -3047,57 +3274,10 @@ function App() {
       alert("删除清单网络请求异常");
     }
   };
-  const renderTabContent = (tab) => {
-    if (!tab) {
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-full flex-col items-center justify-center text-xs text-slate-600 font-mono", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-8 w-8 text-slate-700 mb-2" }),
-        "工作区就绪。请从左侧资源管理器打开原子或清单。"
-      ] });
-    }
-    if (tab.type === "atom" && tab.atomId) {
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(
-        AtomEditorTab,
-        {
-          atomId: tab.atomId,
-          packages,
-          onSaved: () => {
-            fetchAssets();
-            fetchLintReport();
-          }
-        },
-        tab.atomId
-      );
-    }
-    if (tab.type === "manifest") {
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(
-        ManifestEditorTab,
-        {
-          manifestName: tab.manifestName || "",
-          packages,
-          onSaved: () => {
-            fetchAssets();
-            fetchLintReport();
-          }
-        },
-        tab.id
-      );
-    }
-    if (tab.type === "lookup" && tab.lookupKey) {
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(
-        LookupEditorTab,
-        {
-          lookupKey: tab.lookupKey,
-          packages,
-          onSaved: () => {
-            fetchAssets();
-            fetchLintReport();
-          }
-        },
-        tab.id
-      );
-    }
-    return null;
-  };
+  const handleTabSaved = reactExports.useCallback(() => {
+    fetchAssets();
+    fetchLintReport();
+  }, [fetchAssets, fetchLintReport]);
   const activeTab = ideStore.tabs.find((t) => t.id === ideStore.activeTabId);
   const splitTab = ideStore.tabs.find((t) => t.id === ideStore.splitTabId);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-screen flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans select-none", children: [
@@ -3239,8 +3419,9 @@ function App() {
                 "button",
                 {
                   type: "button",
-                  onClick: () => handleOpenManifestTab(m),
+                  onClick: (e) => handleOpenManifestTab(m, e),
                   className: "flex-1 text-left truncate hover:text-white",
+                  title: "点击在当前标签页打开，按住 Ctrl 点击新建标签页",
                   children: m
                 }
               ),
@@ -3261,63 +3442,115 @@ function App() {
           PackageExplorer,
           {
             packages,
-            onSelectAtom: (atomId) => handleOpenAtomTab(atomId),
-            onOpenLookup: (lKey) => {
-              ideStore.openTab({
-                id: `lookup:${lKey}`,
-                type: "lookup",
-                title: lKey.split("::").pop() || lKey,
-                closable: true,
-                lookupKey: lKey
-              });
-            }
+            onSelectAtom: (atomId, e) => handleOpenAtomTab(atomId, e),
+            onOpenLookup: (lKey, e) => handleOpenLookupTab(lKey, e)
           }
         ) })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { className: "flex-1 flex flex-col overflow-hidden bg-slate-950", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center border-b border-slate-800 bg-slate-900/60 overflow-x-auto shrink-0 scrollbar-none", children: ideStore.tabs.map((tab) => {
-          const isActive = tab.id === ideStore.activeTabId;
-          const isSecondary = tab.id === ideStore.splitTabId;
-          return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "div",
-            {
-              onClick: () => ideStore.setActiveTab(tab.id),
-              onKeyDown: (e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  ideStore.setActiveTab(tab.id);
-                }
-              },
-              className: `group flex items-center gap-2 px-3.5 py-2 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 ${isActive ? "bg-slate-950 text-indigo-300 border-t-2 border-t-indigo-500 font-semibold" : isSecondary ? "bg-slate-950/70 text-purple-300 border-t-2 border-t-purple-500" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent"}`,
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate max-w-[140px]", children: tab.title }),
-                tab.isDirty && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-amber-400" }),
-                tab.closable && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: (e) => {
-                      e.stopPropagation();
-                      ideStore.closeTab(tab.id);
-                    },
-                    className: "opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded",
-                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3 w-3" })
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center border-b border-slate-800 bg-slate-900/60 overflow-x-auto shrink-0 scrollbar-none", children: [
+          ideStore.tabs.map((tab) => {
+            const isActive = tab.id === ideStore.activeTabId;
+            const isSecondary = tab.id === ideStore.splitTabId;
+            return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "div",
+              {
+                onClick: () => ideStore.setActiveTab(tab.id),
+                onKeyDown: (e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    ideStore.setActiveTab(tab.id);
                   }
-                )
-              ]
-            },
-            tab.id
-          );
-        }) }),
+                },
+                className: `group flex items-center gap-2 px-3.5 py-2 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 ${isActive ? "bg-slate-950 text-indigo-300 border-t-2 border-t-indigo-500 font-semibold" : isSecondary ? "bg-slate-950/70 text-purple-300 border-t-2 border-t-purple-500" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent"}`,
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate max-w-[140px]", children: tab.title }),
+                  tab.isDirty && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-amber-400" }),
+                  tab.closable && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: (e) => {
+                        e.stopPropagation();
+                        ideStore.closeTab(tab.id);
+                      },
+                      className: "opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded",
+                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3 w-3" })
+                    }
+                  )
+                ]
+              },
+              tab.id
+            );
+          }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              type: "button",
+              onClick: handleCreateEmptyTab,
+              className: "flex items-center justify-center p-1.5 ml-1.5 mr-2 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded transition-colors shrink-0 cursor-pointer",
+              title: "新建标签页 (Ctrl+T)",
+              children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5" })
+            }
+          )
+        ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-hidden relative", children: ideStore.isSplitActive ? /* @__PURE__ */ jsxRuntimeExports.jsx(
           SplitPane,
           {
             direction: "horizontal",
             initialRatio: 0.5,
-            primary: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full overflow-hidden", children: renderTabContent(activeTab) }),
-            secondary: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full overflow-hidden border-l border-slate-800", children: renderTabContent(splitTab) })
+            primary: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full w-full relative overflow-hidden", children: ideStore.tabs.map((tab) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+              TabPane,
+              {
+                tab,
+                isActive: tab.id === ideStore.activeTabId,
+                packages,
+                manifestsCount: manifests.length,
+                onSaved: handleTabSaved,
+                onOpenCommandPalette: () => setIsCommandPaletteOpen(true),
+                onCreateManifest: handleCreateNewManifest,
+                onCreateAtom: handleCreateNewAtomDraft
+              },
+              tab.id
+            )) }),
+            secondary: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full overflow-hidden border-l border-slate-800", children: splitTab ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+              TabPane,
+              {
+                tab: splitTab,
+                isActive: true,
+                packages,
+                manifestsCount: manifests.length,
+                onSaved: handleTabSaved,
+                onOpenCommandPalette: () => setIsCommandPaletteOpen(true),
+                onCreateManifest: handleCreateNewManifest,
+                onCreateAtom: handleCreateNewAtomDraft
+              },
+              `split_${splitTab.id}`
+            ) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex h-full items-center justify-center text-xs text-slate-600 font-mono", children: "未选择分屏视口内容" }) })
           }
-        ) : renderTabContent(activeTab) }),
+        ) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full w-full relative overflow-hidden", children: ideStore.tabs.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+          EmptyTab,
+          {
+            manifestsCount: manifests.length,
+            packagesCount: packages.length,
+            onOpenCommandPalette: () => setIsCommandPaletteOpen(true),
+            onCreateManifest: handleCreateNewManifest,
+            onCreateAtom: handleCreateNewAtomDraft
+          }
+        ) : ideStore.tabs.map((tab) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+          TabPane,
+          {
+            tab,
+            isActive: tab.id === ideStore.activeTabId,
+            packages,
+            manifestsCount: manifests.length,
+            onSaved: handleTabSaved,
+            onOpenCommandPalette: () => setIsCommandPaletteOpen(true),
+            onCreateManifest: handleCreateNewManifest,
+            onCreateAtom: handleCreateNewAtomDraft
+          },
+          tab.id
+        )) }) }),
         ideStore.bottomPanelOpen && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "h-56 border-t border-slate-800 bg-slate-900/95 flex flex-col shrink-0 font-mono text-xs", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-3 py-1.5 border-b border-slate-800 bg-slate-950 text-slate-300", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [

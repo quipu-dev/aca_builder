@@ -9,7 +9,7 @@ import {
   useNodesState,
 } from '@xyflow/react';
 import { AlertTriangle, CheckCircle, Cpu, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import '@xyflow/react/dist/style.css';
 import { AtomNode, LookupNode, ManifestNode } from './CustomNodes';
 
@@ -143,7 +143,7 @@ function autoLayoutSafe(nodes: Node[], edges: Edge[]): LayoutResult {
   };
 }
 
-export function TopologyGraph({
+export const TopologyGraph = React.memo(function TopologyGraph({
   manifest,
   onSelectAtom,
 }: {
@@ -289,4 +289,4 @@ export function TopologyGraph({
       </ReactFlow>
     </div>
   );
-}
+});
