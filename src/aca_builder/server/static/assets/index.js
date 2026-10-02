@@ -1,4 +1,4 @@
-import { j as jsxRuntimeExports, c as create, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, d as Check, e as Save, f as Shield, T as Tag, i as ReactCodeMirror, k as CodeXml, W as WandSparkles, l as ChartColumn, m as ChevronUp, n as ChevronDown, o as Copy, X, P as PenLine, M as Markdown, H as Handle, p as Pen, q as TriangleAlert, u as useNodesState, s as useEdgesState, t as Cpu, v as CircleCheckBig, w as index, x as Background, y as BackgroundVariant, z as Controls, N as Network, F as Filter, A as Plus, D as Link2, G as Trash2, I as Eye, J as RotateCcw, K as EyeOff, O as SlidersVertical, Q as ArrowUp, U as ArrowDown, V as ChevronRight, Y as FolderOpen, Z as Folder, _ as Package, $ as Globe, a0 as Lock, a1 as FileCode, a2 as FilePlus2, a3 as MousePointerClick, a4 as FolderTree, a5 as ArrowLeft, a6 as ArrowRight, a7 as RefreshCw, a8 as ShieldCheck, a9 as OctagonAlert, aa as ReactDOM } from "./vendor-react.js";
+import { j as jsxRuntimeExports, c as create, p as persist, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, d as Check, e as Save, f as Shield, T as Tag, i as ReactCodeMirror, k as CodeXml, W as WandSparkles, l as ChartColumn, m as ChevronUp, n as ChevronDown, o as Copy, X, P as PenLine, M as Markdown, H as Handle, q as Pen, s as TriangleAlert, u as useNodesState, t as useEdgesState, v as Cpu, w as CircleCheckBig, x as index, y as Background, z as BackgroundVariant, A as Controls, N as Network, F as Filter, D as Plus, G as Link2, I as Trash2, J as Eye, K as RotateCcw, O as EyeOff, Q as SlidersVertical, U as ChevronRight, V as FolderOpen, Y as Folder, Z as Package, _ as Globe, $ as Lock, a0 as FileCode, a1 as FilePlus2, a2 as MousePointerClick, a3 as FolderTree, a4 as ArrowLeft, a5 as ArrowRight, a6 as RefreshCw, a7 as ShieldCheck, a8 as OctagonAlert, a9 as ReactDOM } from "./vendor-react.js";
 import { U as twMerge, W as clsx, X as remarkGfm } from "./vendor-others.js";
 import { m as markdown } from "./vendor-codemirror.js";
 import { P as Position } from "./vendor-xyflow.js";
@@ -71,123 +71,152 @@ const INITIAL_EMPTY_TAB = {
   title: "开始",
   closable: false
 };
-const useIdeStore = create((set, get) => ({
-  tabs: [INITIAL_EMPTY_TAB],
-  activeTabId: INITIAL_EMPTY_TAB.id,
-  navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
-  historyIndex: 0,
-  tabSnapshots: {},
-  saveSnapshot: (tabId, snapshot) => set((state) => ({
-    tabSnapshots: {
-      ...state.tabSnapshots,
-      [tabId]: snapshot
-    }
-  })),
-  getSnapshot: (tabId) => get().tabSnapshots[tabId],
-  clearSnapshot: (tabId) => set((state) => {
-    const rest = { ...state.tabSnapshots };
-    delete rest[tabId];
-    return { tabSnapshots: rest };
-  }),
-  sidebarOpen: true,
-  activeSidebarView: "explorer",
-  bottomPanelOpen: false,
-  activeBottomTab: "problems",
-  setSidebarOpen: (open) => set({ sidebarOpen: open }),
-  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-  setActiveSidebarView: (view) => set({ activeSidebarView: view, sidebarOpen: true }),
-  setBottomPanelOpen: (open) => set({ bottomPanelOpen: open }),
-  toggleBottomPanel: () => set((state) => ({ bottomPanelOpen: !state.bottomPanelOpen })),
-  setActiveBottomTab: (tab) => set({ activeBottomTab: tab, bottomPanelOpen: true }),
-  openTab: (tab, options = false) => {
-    const { tabs, activeTabId, navigationHistory, historyIndex } = get();
-    const newTab = typeof options === "boolean" ? options : !!(options == null ? void 0 : options.newTab);
-    const fromHistory = typeof options === "object" && !!(options == null ? void 0 : options.fromHistory);
-    if (!fromHistory) {
-      const currentEntry = navigationHistory[historyIndex];
-      if (!currentEntry || currentEntry.tab.id !== tab.id) {
-        const truncated = navigationHistory.slice(0, historyIndex + 1);
-        const updatedHistory = [...truncated, { tab }];
+const useIdeStore = create()(
+  persist(
+    (set, get) => ({
+      tabs: [INITIAL_EMPTY_TAB],
+      activeTabId: INITIAL_EMPTY_TAB.id,
+      navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
+      historyIndex: 0,
+      tabSnapshots: {},
+      saveSnapshot: (tabId, snapshot) => set((state) => ({
+        tabSnapshots: {
+          ...state.tabSnapshots,
+          [tabId]: snapshot
+        }
+      })),
+      getSnapshot: (tabId) => get().tabSnapshots[tabId],
+      clearSnapshot: (tabId) => set((state) => {
+        const rest = { ...state.tabSnapshots };
+        delete rest[tabId];
+        return { tabSnapshots: rest };
+      }),
+      sidebarOpen: true,
+      activeSidebarView: "explorer",
+      bottomPanelOpen: false,
+      activeBottomTab: "problems",
+      setSidebarOpen: (open) => set({ sidebarOpen: open }),
+      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      setActiveSidebarView: (view) => set({ activeSidebarView: view, sidebarOpen: true }),
+      setBottomPanelOpen: (open) => set({ bottomPanelOpen: open }),
+      toggleBottomPanel: () => set((state) => ({ bottomPanelOpen: !state.bottomPanelOpen })),
+      setActiveBottomTab: (tab) => set({ activeBottomTab: tab, bottomPanelOpen: true }),
+      pinTab: (tabId) => set((state) => ({
+        tabs: state.tabs.map((t) => t.id === tabId ? { ...t, isPreview: false } : t)
+      })),
+      openTab: (tab, options = false) => {
+        const { tabs, navigationHistory, historyIndex } = get();
+        const newTab = typeof options === "boolean" ? options : !!(options == null ? void 0 : options.newTab);
+        const fromHistory = typeof options === "object" && !!(options == null ? void 0 : options.fromHistory);
+        const isPreview = typeof options === "object" && (options == null ? void 0 : options.isPreview) !== void 0 ? options.isPreview : tab.isPreview ?? false;
+        const tabToOpen = { ...tab, isPreview };
+        if (!fromHistory) {
+          const currentEntry = navigationHistory[historyIndex];
+          if (!currentEntry || currentEntry.tab.id !== tabToOpen.id) {
+            const truncated = navigationHistory.slice(0, historyIndex + 1);
+            const updatedHistory = [...truncated, { tab: tabToOpen }];
+            set({
+              navigationHistory: updatedHistory,
+              historyIndex: updatedHistory.length - 1
+            });
+          }
+        }
+        const existingIndex = tabs.findIndex((t) => t.id === tabToOpen.id);
+        if (existingIndex !== -1) {
+          if (!isPreview && tabs[existingIndex].isPreview) {
+            const updated = [...tabs];
+            updated[existingIndex] = { ...updated[existingIndex], isPreview: false };
+            set({ tabs: updated, activeTabId: tabToOpen.id });
+          } else {
+            set({ activeTabId: tabToOpen.id });
+          }
+          return;
+        }
+        const previewIndex = tabs.findIndex((t) => t.isPreview && !t.isDirty);
+        if (!newTab && isPreview && previewIndex !== -1) {
+          const updatedTabs = [...tabs];
+          updatedTabs[previewIndex] = tabToOpen;
+          set({
+            tabs: updatedTabs,
+            activeTabId: tabToOpen.id
+          });
+          return;
+        }
+        const cleanTabs = tabs.length === 1 && tabs[0].type === "empty" && !tabs[0].isDirty ? [] : tabs;
         set({
-          navigationHistory: updatedHistory,
-          historyIndex: updatedHistory.length - 1
+          tabs: [...cleanTabs, tabToOpen],
+          activeTabId: tabToOpen.id
         });
-      }
+      },
+      goBack: () => {
+        const { historyIndex, navigationHistory } = get();
+        if (historyIndex <= 0) return;
+        const nextIndex = historyIndex - 1;
+        const targetTab = navigationHistory[nextIndex].tab;
+        set({ historyIndex: nextIndex });
+        get().openTab(targetTab, { fromHistory: true });
+      },
+      goForward: () => {
+        const { historyIndex, navigationHistory } = get();
+        if (historyIndex >= navigationHistory.length - 1) return;
+        const nextIndex = historyIndex + 1;
+        const targetTab = navigationHistory[nextIndex].tab;
+        set({ historyIndex: nextIndex });
+        get().openTab(targetTab, { fromHistory: true });
+      },
+      closeTab: (tabId) => {
+        var _a;
+        const { tabs, activeTabId } = get();
+        const target = tabs.find((t) => t.id === tabId);
+        if (!target || !target.closable) return;
+        const remaining = tabs.filter((t) => t.id !== tabId);
+        let nextActiveId = activeTabId;
+        if (remaining.length === 0) {
+          const emptyTab = {
+            id: "empty:home",
+            type: "empty",
+            title: "开始",
+            closable: false
+          };
+          set({
+            tabs: [emptyTab],
+            activeTabId: emptyTab.id
+          });
+          return;
+        }
+        if (activeTabId === tabId) {
+          const closedIndex = tabs.findIndex((t) => t.id === tabId);
+          const nextTab = remaining[Math.max(0, closedIndex - 1)];
+          nextActiveId = nextTab ? nextTab.id : ((_a = remaining[0]) == null ? void 0 : _a.id) ?? "";
+        }
+        set({
+          tabs: remaining,
+          activeTabId: nextActiveId
+        });
+      },
+      setActiveTab: (tabId) => set({ activeTabId: tabId }),
+      setTabDirty: (tabId, isDirty) => set((state) => ({
+        tabs: state.tabs.map(
+          (t) => t.id === tabId ? {
+            ...t,
+            isDirty,
+            // 一旦发生编辑修改，自动固定标签页
+            isPreview: isDirty ? false : t.isPreview
+          } : t
+        )
+      }))
+    }),
+    {
+      name: "aca-studio-ide-v1",
+      partialize: (state) => ({
+        tabs: state.tabs,
+        activeTabId: state.activeTabId,
+        tabSnapshots: state.tabSnapshots,
+        sidebarOpen: state.sidebarOpen
+      })
     }
-    const existingIndex = tabs.findIndex((t) => t.id === tab.id);
-    if (existingIndex !== -1) {
-      set({ activeTabId: tab.id });
-      return;
-    }
-    const currentActiveTab = tabs.find((t) => t.id === activeTabId);
-    const canReplaceCurrent = !newTab && currentActiveTab && !currentActiveTab.isDirty;
-    if (canReplaceCurrent) {
-      const currentIndex = tabs.findIndex((t) => t.id === activeTabId);
-      const updatedTabs = [...tabs];
-      updatedTabs[currentIndex] = tab;
-      set({
-        tabs: updatedTabs,
-        activeTabId: tab.id
-      });
-    } else {
-      const cleanTabs = tabs.length === 1 && tabs[0].type === "empty" && !tabs[0].isDirty ? [] : tabs;
-      set({
-        tabs: [...cleanTabs, tab],
-        activeTabId: tab.id
-      });
-    }
-  },
-  goBack: () => {
-    const { historyIndex, navigationHistory } = get();
-    if (historyIndex <= 0) return;
-    const nextIndex = historyIndex - 1;
-    const targetTab = navigationHistory[nextIndex].tab;
-    set({ historyIndex: nextIndex });
-    get().openTab(targetTab, { fromHistory: true });
-  },
-  goForward: () => {
-    const { historyIndex, navigationHistory } = get();
-    if (historyIndex >= navigationHistory.length - 1) return;
-    const nextIndex = historyIndex + 1;
-    const targetTab = navigationHistory[nextIndex].tab;
-    set({ historyIndex: nextIndex });
-    get().openTab(targetTab, { fromHistory: true });
-  },
-  closeTab: (tabId) => {
-    var _a;
-    const { tabs, activeTabId } = get();
-    const target = tabs.find((t) => t.id === tabId);
-    if (!target || !target.closable) return;
-    const remaining = tabs.filter((t) => t.id !== tabId);
-    let nextActiveId = activeTabId;
-    if (remaining.length === 0) {
-      const emptyTab = {
-        id: "empty:home",
-        type: "empty",
-        title: "开始",
-        closable: false
-      };
-      set({
-        tabs: [emptyTab],
-        activeTabId: emptyTab.id
-      });
-      return;
-    }
-    if (activeTabId === tabId) {
-      const closedIndex = tabs.findIndex((t) => t.id === tabId);
-      const nextTab = remaining[Math.max(0, closedIndex - 1)];
-      nextActiveId = nextTab ? nextTab.id : ((_a = remaining[0]) == null ? void 0 : _a.id) ?? "";
-    }
-    set({
-      tabs: remaining,
-      activeTabId: nextActiveId
-    });
-  },
-  setActiveTab: (tabId) => set({ activeTabId: tabId }),
-  setTabDirty: (tabId, isDirty) => set((state) => ({
-    tabs: state.tabs.map((t) => t.id === tabId ? { ...t, isDirty } : t)
-  }))
-}));
+  )
+);
 function CommandPalette({
   isOpen,
   onClose,
@@ -1846,6 +1875,16 @@ function LookupEditorTab({
   const [queryIdInput, setQueryIdInput] = reactExports.useState("");
   const [domainInput, setDomainInput] = reactExports.useState("");
   const [refInput, setRefInput] = reactExports.useState("");
+  const candidateLookupRefs = packages.flatMap((pkg) => {
+    const list = [];
+    for (const key of Object.keys(pkg.exports || {})) {
+      list.push(key);
+    }
+    for (const key of Object.keys(pkg.internal_lookups || {})) {
+      list.push(key);
+    }
+    return list;
+  });
   const tabId = `lookup:${lookupKey}`;
   const markDirty = () => {
     if (!isModified) {
@@ -2251,16 +2290,20 @@ function LookupEditorTab({
                   className: "flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
                 }
               ),
-              selectorMode === "ref" && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "input",
-                {
-                  type: "text",
-                  value: refInput,
-                  onChange: (e) => setRefInput(e.target.value),
-                  placeholder: "输入引用的另一个 lookup 键名，例如: pkg::d1l-public-name",
-                  className: "flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-                }
-              ),
+              selectorMode === "ref" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "input",
+                  {
+                    type: "text",
+                    list: "lookup-ref-candidates",
+                    value: refInput,
+                    onChange: (e) => setRefInput(e.target.value),
+                    placeholder: "输入或选择引用的另一个 lookup，如 pkg::d1l-name",
+                    className: "flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("datalist", { id: "lookup-ref-candidates", children: candidateLookupRefs.map((refKey) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: refKey }, refKey)) })
+              ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs(
                 Button,
                 {
@@ -2514,6 +2557,7 @@ function ManifestEditorTab({
   const [isModified, setIsModified] = reactExports.useState(false);
   const [initialSnapshot, setInitialSnapshot] = reactExports.useState(null);
   const [selectedLookup, setSelectedLookup] = reactExports.useState("");
+  const [lookupFilterQuery, setLookupFilterQuery] = reactExports.useState("");
   const [editingOverrideKey, setEditingOverrideKey] = reactExports.useState(null);
   const [overrideQueryId, setOverrideQueryId] = reactExports.useState("");
   const [isSaving, setIsSaving] = reactExports.useState(false);
@@ -2687,16 +2731,6 @@ function ManifestEditorTab({
     setItems(items.filter((i) => i.id !== id));
     markDirty();
   };
-  const handleMoveItem = (index2, direction) => {
-    const targetIndex = direction === "up" ? index2 - 1 : index2 + 1;
-    if (targetIndex < 0 || targetIndex >= items.length) return;
-    const nextItems = [...items];
-    const temp = nextItems[index2];
-    nextItems[index2] = nextItems[targetIndex];
-    nextItems[targetIndex] = temp;
-    setItems(nextItems);
-    markDirty();
-  };
   const handleSaveManifest = async () => {
     if (!name.trim() || items.length === 0) return;
     setIsSaving(true);
@@ -2843,184 +2877,204 @@ function ManifestEditorTab({
             )
           ] })
         ] }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-slate-800 bg-slate-900/40 p-3 flex gap-2", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "select",
-            {
-              value: selectedLookup,
-              onChange: (e) => setSelectedLookup(e.target.value),
-              className: "flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "", children: "-- 选择要注入的公开查找接口 --" }),
-                availableExports.map((exp) => /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: exp.key, children: [
-                  "[",
-                  exp.pkg,
-                  "] ",
-                  exp.key,
-                  " (",
-                  exp.pillar.toUpperCase(),
-                  ")"
-                ] }, exp.key))
-              ]
-            }
-          ),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            Button,
-            {
-              size: "sm",
-              onClick: handleAddLookup,
-              disabled: !selectedLookup,
-              className: "h-7 text-xs flex items-center gap-1",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5" }),
-                " 注入"
-              ]
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 rounded-lg border border-slate-800 bg-slate-900/20 p-3 space-y-2 overflow-y-auto", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center justify-between text-xs font-mono text-slate-400", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
-            "已声明组件 (",
-            items.length,
-            ")"
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative flex-1", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Filter, { className: "h-3.5 w-3.5 text-slate-500 absolute left-2.5 top-2" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "input",
+              {
+                type: "text",
+                value: lookupFilterQuery,
+                onChange: (e) => setLookupFilterQuery(e.target.value),
+                placeholder: "过滤可用公开接口 (按包名或键名搜索)...",
+                className: "w-full bg-slate-950 border border-slate-800 rounded pl-8 pr-2.5 py-1 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+              }
+            )
           ] }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "select",
+              {
+                value: selectedLookup,
+                onChange: (e) => setSelectedLookup(e.target.value),
+                className: "flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "", children: "-- 选择要注入的公开查找接口 --" }),
+                  availableExports.filter(
+                    (exp) => !lookupFilterQuery.trim() || exp.key.toLowerCase().includes(lookupFilterQuery.trim().toLowerCase()) || exp.pkg.toLowerCase().includes(lookupFilterQuery.trim().toLowerCase())
+                  ).map((exp) => /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: exp.key, children: [
+                    "[",
+                    exp.pkg,
+                    "] ",
+                    exp.key,
+                    " (",
+                    exp.pillar.toUpperCase(),
+                    ")"
+                  ] }, exp.key))
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              Button,
+              {
+                size: "sm",
+                onClick: handleAddLookup,
+                disabled: !selectedLookup,
+                className: "h-7 text-xs flex items-center gap-1 shrink-0",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5" }),
+                  " 注入蓝图"
+                ]
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 rounded-lg border border-slate-800 bg-slate-900/20 p-3 space-y-3 overflow-y-auto", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-xs font-mono text-slate-400", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+              "已注入组件清单 (",
+              items.length,
+              ")"
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500", children: "按基质架构语义分组渲染（序列化顺序由编译内核自动确定）" })
+          ] }),
           items.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center justify-center text-xs text-slate-600 font-mono py-12", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Box, { className: "h-8 w-8 text-slate-700 mb-2" }),
             "尚未添加任何 Lookup 接口。"
-          ] }) : items.map((item, idx) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between rounded border border-slate-800 bg-slate-950/80 p-2 text-xs font-mono", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 truncate", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-600 font-bold shrink-0", children: [
-                  idx + 1,
-                  "."
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: () => handleOpenLookup(item.lookup),
-                    className: "text-slate-100 font-semibold hover:text-indigo-300 hover:underline transition-colors text-left truncate flex items-center gap-1.5 group cursor-pointer",
-                    title: `点击编辑接口契约: ${item.lookup}`,
-                    children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: item.lookup }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "h-3 w-3 opacity-0 group-hover:opacity-100 text-indigo-400 shrink-0 transition-opacity" })
-                    ]
-                  }
-                ),
-                item.pillar && /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "outline", className: "text-[9px] px-1 py-0 shrink-0", children: item.pillar })
+          ] }) : [
+            { title: "D3 控制基质 (Directives)", key: "d3", variant: "d3" },
+            { title: "D2 程序基质 (Skills & ISA)", key: "d2", variant: "d2" },
+            { title: "D1 陈述基质 (Knowledge & Memory)", key: "d1", variant: "d1" },
+            { title: "其它接口 / 未识别基质", key: "other", variant: "outline" }
+          ].map((group) => {
+            const groupItems = items.filter((item) => {
+              const p = (item.pillar || (item.lookup.includes("::") ? item.lookup.split("::")[1].slice(0, 2) : item.lookup.slice(0, 2))).toLowerCase();
+              if (group.key === "other") {
+                return p !== "d1" && p !== "d2" && p !== "d3";
+              }
+              return p === group.key;
+            });
+            if (groupItems.length === 0) return null;
+            return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[11px] font-semibold text-slate-400 flex items-center gap-2 pt-1", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: group.variant, className: "text-[9px] px-1 py-0 uppercase", children: group.key }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: group.title }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-600 text-[10px]", children: [
+                  "(",
+                  groupItems.length,
+                  ")"
+                ] })
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1", children: [
-                overrides[item.lookup] && /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "d3", className: "text-[9px] px-1 py-0", children: "已覆写" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: () => {
-                      var _a, _b, _c;
-                      if (editingOverrideKey === item.lookup) {
-                        setEditingOverrideKey(null);
-                      } else {
-                        setEditingOverrideKey(item.lookup);
-                        const currentOverride = overrides[item.lookup];
-                        const targetId = (_c = (_b = (_a = currentOverride == null ? void 0 : currentOverride.selectors) == null ? void 0 : _a[0]) == null ? void 0 : _b.query) == null ? void 0 : _c.id;
-                        setOverrideQueryId(typeof targetId === "string" ? targetId : "");
-                      }
-                    },
-                    className: `p-1 rounded ${editingOverrideKey === item.lookup ? "text-indigo-400 bg-indigo-950" : "text-slate-400 hover:text-white"}`,
-                    title: "配置 Overrides 覆写",
-                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(SlidersVertical, { className: "h-3 w-3" })
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: () => handleMoveItem(idx, "up"),
-                    disabled: idx === 0,
-                    className: "p-1 text-slate-400 hover:text-white disabled:opacity-30",
-                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowUp, { className: "h-3 w-3" })
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: () => handleMoveItem(idx, "down"),
-                    disabled: idx === items.length - 1,
-                    className: "p-1 text-slate-400 hover:text-white disabled:opacity-30",
-                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowDown, { className: "h-3 w-3" })
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: () => handleRemoveLookup(item.id),
-                    className: "p-1 text-slate-500 hover:text-rose-400",
-                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
-                  }
-                )
-              ] })
-            ] }),
-            editingOverrideKey === item.lookup && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded border border-indigo-800/60 bg-indigo-950/30 p-2 text-xs font-mono space-y-2", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-indigo-300 font-semibold text-[11px]", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
-                  "覆写选择器: ",
-                  item.lookup
-                ] }),
-                overrides[item.lookup] && /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: () => {
-                      const nextOverrides = { ...overrides };
-                      delete nextOverrides[item.lookup];
-                      setOverrides(nextOverrides);
-                      markDirty();
-                    },
-                    className: "text-[10px] text-amber-400 hover:underline flex items-center gap-1",
-                    children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(RotateCcw, { className: "h-3 w-3" }),
-                      " 重置"
-                    ]
-                  }
-                )
-              ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "input",
-                  {
-                    type: "text",
-                    value: overrideQueryId,
-                    onChange: (e) => setOverrideQueryId(e.target.value),
-                    placeholder: "目标特定原子 ID，如 d1-custom",
-                    className: "flex-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  Button,
-                  {
-                    size: "sm",
-                    onClick: () => {
-                      if (overrideQueryId.trim()) {
-                        setOverrides({
-                          ...overrides,
-                          [item.lookup]: {
-                            selectors: [{ query: { id: overrideQueryId.trim() } }]
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-1", children: groupItems.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between rounded border border-slate-800 bg-slate-950/80 p-2 text-xs font-mono", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-2 truncate", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => handleOpenLookup(item.lookup),
+                      className: "text-slate-100 font-semibold hover:text-indigo-300 hover:underline transition-colors text-left truncate flex items-center gap-1.5 group cursor-pointer",
+                      title: `点击编辑接口契约: ${item.lookup}`,
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: item.lookup }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "h-3 w-3 opacity-0 group-hover:opacity-100 text-indigo-400 shrink-0 transition-opacity" })
+                      ]
+                    }
+                  ) }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1", children: [
+                    overrides[item.lookup] && /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "d3", className: "text-[9px] px-1 py-0", children: "已覆写" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => {
+                          var _a, _b, _c;
+                          if (editingOverrideKey === item.lookup) {
+                            setEditingOverrideKey(null);
+                          } else {
+                            setEditingOverrideKey(item.lookup);
+                            const currentOverride = overrides[item.lookup];
+                            const targetId = (_c = (_b = (_a = currentOverride == null ? void 0 : currentOverride.selectors) == null ? void 0 : _a[0]) == null ? void 0 : _b.query) == null ? void 0 : _c.id;
+                            setOverrideQueryId(typeof targetId === "string" ? targetId : "");
                           }
-                        });
-                        setEditingOverrideKey(null);
-                        markDirty();
+                        },
+                        className: `p-1 rounded ${editingOverrideKey === item.lookup ? "text-indigo-400 bg-indigo-950" : "text-slate-400 hover:text-white"}`,
+                        title: "配置 Overrides 覆写",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(SlidersVertical, { className: "h-3 w-3" })
                       }
-                    },
-                    disabled: !overrideQueryId.trim(),
-                    className: "h-7 text-xs",
-                    children: "应用"
-                  }
-                )
-              ] })
-            ] })
-          ] }, item.id))
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => handleRemoveLookup(item.id),
+                        className: "p-1 text-slate-500 hover:text-rose-400",
+                        title: "移除该接口",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+                      }
+                    )
+                  ] })
+                ] }),
+                editingOverrideKey === item.lookup && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded border border-indigo-800/60 bg-indigo-950/30 p-2 text-xs font-mono space-y-2", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-indigo-300 font-semibold text-[11px]", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+                      "覆写选择器: ",
+                      item.lookup
+                    ] }),
+                    overrides[item.lookup] && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => {
+                          const nextOverrides = { ...overrides };
+                          delete nextOverrides[item.lookup];
+                          setOverrides(nextOverrides);
+                          markDirty();
+                        },
+                        className: "text-[10px] text-amber-400 hover:underline flex items-center gap-1",
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(RotateCcw, { className: "h-3 w-3" }),
+                          " 重置"
+                        ]
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "input",
+                      {
+                        type: "text",
+                        value: overrideQueryId,
+                        onChange: (e) => setOverrideQueryId(e.target.value),
+                        placeholder: "目标特定原子 ID，如 d1-custom",
+                        className: "flex-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      Button,
+                      {
+                        size: "sm",
+                        onClick: () => {
+                          if (overrideQueryId.trim()) {
+                            setOverrides({
+                              ...overrides,
+                              [item.lookup]: {
+                                selectors: [{ query: { id: overrideQueryId.trim() } }]
+                              }
+                            });
+                            setEditingOverrideKey(null);
+                            markDirty();
+                          }
+                        },
+                        disabled: !overrideQueryId.trim(),
+                        className: "h-7 text-xs",
+                        children: "应用"
+                      }
+                    )
+                  ] })
+                ] })
+              ] }, item.id)) })
+            ] }, group.key);
+          })
         ] })
       ]
     }
@@ -3673,46 +3727,64 @@ function App() {
       window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [fetchAssets, fetchLintReport, ideStore.goBack, ideStore.goForward]);
-  const handleOpenManifestTab = (mName, e) => {
+  const handleOpenManifestTab = (mName, e, opts) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
+    const isPreview = !newTab;
     ideStore.openTab(
       {
         id: `manifest:${mName}`,
         type: "manifest",
         title: mName,
         closable: true,
-        manifestName: mName
+        manifestName: mName,
+        isPreview
       },
-      { newTab }
+      { newTab, isPreview }
     );
   };
-  const handleOpenAtomTab = (atomId, e) => {
+  const handleOpenAtomTab = (atomId, e, opts) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
     const isDraft = atomId.startsWith("draft:");
     const tabTitle = isDraft ? `新建原子 (${atomId.replace("draft:", "")})` : atomId;
+    const isPreview = isDraft ? false : !newTab;
     ideStore.openTab(
       {
         id: `atom:${atomId}`,
         type: "atom",
         title: tabTitle,
         closable: true,
-        atomId
+        atomId,
+        isPreview
       },
-      { newTab: isDraft ? true : newTab }
+      { newTab: isDraft ? true : newTab, isPreview }
     );
   };
-  const handleOpenLookupTab = (lookupKey, e) => {
+  const handleOpenLookupTab = (lookupKey, e, opts) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
+    const isDraft = lookupKey.startsWith("draft:");
+    const isPreview = isDraft ? false : !newTab;
     ideStore.openTab(
       {
         id: `lookup:${lookupKey}`,
         type: "lookup",
         title: lookupKey.split("::").pop() || lookupKey,
         closable: true,
-        lookupKey
+        lookupKey,
+        isPreview
       },
-      { newTab }
+      { newTab: isDraft ? true : newTab, isPreview }
     );
+  };
+  const handleSafeCloseTab = (tab, e) => {
+    if (e) e.stopPropagation();
+    if (!tab.closable) return;
+    if (tab.isDirty) {
+      const confirmDiscard = window.confirm(
+        `标签页「${tab.title}」存在尚未保存的更改。确定要放弃修改并关闭吗？`
+      );
+      if (!confirmDiscard) return;
+    }
+    ideStore.closeTab(tab.id);
   };
   const handleProblemClick = (issue) => {
     const text = `${issue.code} ${issue.message}`;
@@ -3919,6 +3991,13 @@ function App() {
               "div",
               {
                 onClick: () => ideStore.setActiveTab(tab.id),
+                onDoubleClick: () => ideStore.pinTab(tab.id),
+                onAuxClick: (e) => {
+                  if (e.button === 1) {
+                    e.preventDefault();
+                    handleSafeCloseTab(tab, e);
+                  }
+                },
                 onKeyDown: (e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
@@ -3926,18 +4005,23 @@ function App() {
                   }
                 },
                 className: `group flex items-center gap-2 px-3.5 py-2 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 ${isActive ? "bg-slate-950 text-indigo-300 border-t-2 border-t-indigo-500 font-semibold" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent"}`,
+                title: `${tab.title}${tab.isPreview ? " (预览态，双击标签固定)" : ""}`,
                 children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate max-w-[140px]", children: tab.title }),
-                  tab.isDirty && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-amber-400" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "span",
+                    {
+                      className: `truncate max-w-[140px] ${tab.isPreview ? "italic text-slate-300/80" : ""}`,
+                      children: tab.title
+                    }
+                  ),
+                  tab.isDirty && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" }),
                   tab.closable && /* @__PURE__ */ jsxRuntimeExports.jsx(
                     "button",
                     {
                       type: "button",
-                      onClick: (e) => {
-                        e.stopPropagation();
-                        ideStore.closeTab(tab.id);
-                      },
-                      className: "opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded cursor-pointer",
+                      onClick: (e) => handleSafeCloseTab(tab, e),
+                      className: "opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded cursor-pointer transition-opacity",
+                      title: "关闭标签页",
                       children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3 w-3" })
                     }
                   )

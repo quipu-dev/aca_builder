@@ -6806,7 +6806,205 @@ const createImpl = (createState) => {
   Object.assign(useBoundStore, api);
   return useBoundStore;
 };
-const create = ((createState) => createState ? createImpl(createState) : createImpl);
+const create = ((createState) => createImpl);
+function createJSONStorage(getStorage, options) {
+  let storage;
+  try {
+    storage = getStorage();
+  } catch (e) {
+    return;
+  }
+  const persistStorage = {
+    getItem: (name) => {
+      var _a;
+      const parse = (str2) => {
+        if (str2 === null) {
+          return null;
+        }
+        return JSON.parse(str2, void 0);
+      };
+      const str = (_a = storage.getItem(name)) != null ? _a : null;
+      if (str instanceof Promise) {
+        return str.then(parse);
+      }
+      return parse(str);
+    },
+    setItem: (name, newValue) => storage.setItem(name, JSON.stringify(newValue, void 0)),
+    removeItem: (name) => storage.removeItem(name)
+  };
+  return persistStorage;
+}
+const toThenable = (fn) => (input) => {
+  try {
+    const result = fn(input);
+    if (result instanceof Promise) {
+      return result;
+    }
+    return {
+      then(onFulfilled) {
+        return toThenable(onFulfilled)(result);
+      },
+      catch(_onRejected) {
+        return this;
+      }
+    };
+  } catch (e) {
+    return {
+      then(_onFulfilled) {
+        return this;
+      },
+      catch(onRejected) {
+        return toThenable(onRejected)(e);
+      }
+    };
+  }
+};
+const persistImpl = (config, baseOptions) => (set, get, api) => {
+  let options = {
+    storage: createJSONStorage(() => window.localStorage),
+    partialize: (state) => state,
+    version: 0,
+    merge: (persistedState, currentState) => ({
+      ...currentState,
+      ...persistedState
+    }),
+    ...baseOptions
+  };
+  let hasHydrated = false;
+  let hydrationVersion = 0;
+  const hydrationListeners = /* @__PURE__ */ new Set();
+  const finishHydrationListeners = /* @__PURE__ */ new Set();
+  let storage = options.storage;
+  if (!storage) {
+    return config(
+      (...args) => {
+        console.warn(
+          `[zustand persist middleware] Unable to update item '${options.name}', the given storage is currently unavailable.`
+        );
+        set(...args);
+      },
+      get,
+      api
+    );
+  }
+  const setItem = () => {
+    const state = options.partialize({ ...get() });
+    return storage.setItem(options.name, {
+      state,
+      version: options.version
+    });
+  };
+  const savedSetState = api.setState;
+  api.setState = (state, replace) => {
+    savedSetState(state, replace);
+    return setItem();
+  };
+  const configResult = config(
+    (...args) => {
+      set(...args);
+      return setItem();
+    },
+    get,
+    api
+  );
+  api.getInitialState = () => configResult;
+  let stateFromStorage;
+  const hydrate = () => {
+    var _a, _b;
+    if (!storage) return;
+    const currentVersion = ++hydrationVersion;
+    hasHydrated = false;
+    hydrationListeners.forEach((cb) => {
+      var _a2;
+      return cb((_a2 = get()) != null ? _a2 : configResult);
+    });
+    const postRehydrationCallback = ((_b = options.onRehydrateStorage) == null ? void 0 : _b.call(options, (_a = get()) != null ? _a : configResult)) || void 0;
+    return toThenable(storage.getItem.bind(storage))(options.name).then((deserializedStorageValue) => {
+      if (deserializedStorageValue) {
+        if (typeof deserializedStorageValue.version === "number" && deserializedStorageValue.version !== options.version) {
+          if (options.migrate) {
+            const migration = options.migrate(
+              deserializedStorageValue.state,
+              deserializedStorageValue.version
+            );
+            if (migration instanceof Promise) {
+              return migration.then((result) => [true, result]);
+            }
+            return [true, migration];
+          }
+          console.error(
+            `State loaded from storage couldn't be migrated since no migrate function was provided`
+          );
+        } else {
+          return [false, deserializedStorageValue.state];
+        }
+      }
+      return [false, void 0];
+    }).then((migrationResult) => {
+      var _a2;
+      if (currentVersion !== hydrationVersion) {
+        return;
+      }
+      const [migrated, migratedState] = migrationResult;
+      stateFromStorage = options.merge(
+        migratedState,
+        (_a2 = get()) != null ? _a2 : configResult
+      );
+      set(stateFromStorage, true);
+      if (migrated) {
+        return setItem();
+      }
+    }).then(() => {
+      if (currentVersion !== hydrationVersion) {
+        return;
+      }
+      postRehydrationCallback == null ? void 0 : postRehydrationCallback(get(), void 0);
+      stateFromStorage = get();
+      hasHydrated = true;
+      finishHydrationListeners.forEach((cb) => cb(stateFromStorage));
+    }).catch((e) => {
+      if (currentVersion !== hydrationVersion) {
+        return;
+      }
+      postRehydrationCallback == null ? void 0 : postRehydrationCallback(void 0, e);
+    });
+  };
+  api.persist = {
+    setOptions: (newOptions) => {
+      options = {
+        ...options,
+        ...newOptions
+      };
+      if (newOptions.storage) {
+        storage = newOptions.storage;
+      }
+    },
+    clearStorage: () => {
+      ++hydrationVersion;
+      storage == null ? void 0 : storage.removeItem(options.name);
+    },
+    getOptions: () => options,
+    rehydrate: () => hydrate(),
+    hasHydrated: () => hasHydrated,
+    onHydrate: (cb) => {
+      hydrationListeners.add(cb);
+      return () => {
+        hydrationListeners.delete(cb);
+      };
+    },
+    onFinishHydration: (cb) => {
+      finishHydrationListeners.add(cb);
+      return () => {
+        finishHydrationListeners.delete(cb);
+      };
+    }
+  };
+  if (!options.skipHydration) {
+    hydrate();
+  }
+  return stateFromStorage || configResult;
+};
+const persist = persistImpl;
 /**
  * @license lucide-react v0.468.0 - ISC
  *
@@ -6894,16 +7092,6 @@ const createLucideIcon = (iconName, iconNode) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const ArrowDown = createLucideIcon("ArrowDown", [
-  ["path", { d: "M12 5v14", key: "s699le" }],
-  ["path", { d: "m19 12-7 7-7-7", key: "1idqje" }]
-]);
-/**
- * @license lucide-react v0.468.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
 const ArrowLeft = createLucideIcon("ArrowLeft", [
   ["path", { d: "m12 19-7-7 7-7", key: "1l729n" }],
   ["path", { d: "M19 12H5", key: "x3x0zl" }]
@@ -6917,16 +7105,6 @@ const ArrowLeft = createLucideIcon("ArrowLeft", [
 const ArrowRight = createLucideIcon("ArrowRight", [
   ["path", { d: "M5 12h14", key: "1ays0h" }],
   ["path", { d: "m12 5 7 7-7 7", key: "xquz4c" }]
-]);
-/**
- * @license lucide-react v0.468.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const ArrowUp = createLucideIcon("ArrowUp", [
-  ["path", { d: "m5 12 7-7 7 7", key: "hav0vg" }],
-  ["path", { d: "M12 19V5", key: "x0mq9r" }]
 ]);
 /**
  * @license lucide-react v0.468.0 - ISC
@@ -11633,46 +11811,45 @@ function ResizeControl({ nodeId, position, variant = ResizeControlVariant.Handle
 }
 reactExports.memo(ResizeControl);
 export {
-  Globe as $,
-  Plus as A,
+  Lock as $,
+  Controls as A,
   Box as B,
   CircleAlert as C,
-  Link2 as D,
+  Plus as D,
   ExternalLink as E,
   Filter as F,
-  Trash2 as G,
+  Link2 as G,
   Handle as H,
-  Eye as I,
-  RotateCcw as J,
-  EyeOff as K,
+  Trash2 as I,
+  Eye as J,
+  RotateCcw as K,
   Layers as L,
   Markdown as M,
   Network as N,
-  SlidersVertical as O,
+  EyeOff as O,
   PenLine as P,
-  ArrowUp as Q,
+  SlidersVertical as Q,
   React as R,
   Search as S,
   Tag as T,
-  ArrowDown as U,
-  ChevronRight as V,
+  ChevronRight as U,
+  FolderOpen as V,
   WandSparkles as W,
   X,
-  FolderOpen as Y,
-  Folder as Z,
-  Package as _,
+  Folder as Y,
+  Package as Z,
+  Globe as _,
   Sparkles as a,
-  Lock as a0,
-  FileCode as a1,
-  FilePlus2 as a2,
-  MousePointerClick as a3,
-  FolderTree as a4,
-  ArrowLeft as a5,
-  ArrowRight as a6,
-  RefreshCw as a7,
-  ShieldCheck as a8,
-  OctagonAlert as a9,
-  ReactDOM as aa,
+  FileCode as a0,
+  FilePlus2 as a1,
+  MousePointerClick as a2,
+  FolderTree as a3,
+  ArrowLeft as a4,
+  ArrowRight as a5,
+  RefreshCw as a6,
+  ShieldCheck as a7,
+  OctagonAlert as a8,
+  ReactDOM as a9,
   LoaderCircle as b,
   create as c,
   Check as d,
@@ -11687,15 +11864,15 @@ export {
   ChevronUp as m,
   ChevronDown as n,
   Copy as o,
-  Pen as p,
-  TriangleAlert as q,
+  persist as p,
+  Pen as q,
   reactExports as r,
-  useEdgesState as s,
-  Cpu as t,
+  TriangleAlert as s,
+  useEdgesState as t,
   useNodesState as u,
-  CircleCheckBig as v,
-  index as w,
-  Background as x,
-  BackgroundVariant as y,
-  Controls as z
+  Cpu as v,
+  CircleCheckBig as w,
+  index as x,
+  Background as y,
+  BackgroundVariant as z
 };

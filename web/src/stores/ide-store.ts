@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export type TabType = 'atom' | 'manifest' | 'lookup' | 'composer' | 'graph' | 'preview' | 'empty';
 
@@ -11,6 +12,7 @@ export interface IdeTab {
   manifestName?: string;
   lookupKey?: string;
   isDirty?: boolean;
+  isPreview?: boolean;
 }
 
 export interface HistoryEntry {
@@ -44,8 +46,12 @@ interface IdeState {
   toggleBottomPanel: () => void;
   setActiveBottomTab: (tab: 'problems' | 'output') => void;
 
-  openTab: (tab: IdeTab, options?: boolean | { newTab?: boolean; fromHistory?: boolean }) => void;
+  openTab: (
+    tab: IdeTab,
+    options?: boolean | { newTab?: boolean; fromHistory?: boolean; isPreview?: boolean },
+  ) => void;
   closeTab: (tabId: string) => void;
+  pinTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
   setTabDirty: (tabId: string, isDirty: boolean) => void;
 
@@ -60,148 +66,186 @@ const INITIAL_EMPTY_TAB: IdeTab = {
   closable: false,
 };
 
-export const useIdeStore = create<IdeState>((set, get) => ({
-  tabs: [INITIAL_EMPTY_TAB],
-  activeTabId: INITIAL_EMPTY_TAB.id,
+export const useIdeStore = create<IdeState>()(
+  persist(
+    (set, get) => ({
+      tabs: [INITIAL_EMPTY_TAB],
+      activeTabId: INITIAL_EMPTY_TAB.id,
 
-  navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
-  historyIndex: 0,
+      navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
+      historyIndex: 0,
 
-  tabSnapshots: {},
-  saveSnapshot: (tabId, snapshot) =>
-    set((state) => ({
-      tabSnapshots: {
-        ...state.tabSnapshots,
-        [tabId]: snapshot,
-      },
-    })),
-  getSnapshot: <T>(tabId: string) => get().tabSnapshots[tabId] as T | undefined,
-  clearSnapshot: (tabId) =>
-    set((state) => {
-      const rest = { ...state.tabSnapshots };
-      delete rest[tabId];
-      return { tabSnapshots: rest };
-    }),
+      tabSnapshots: {},
+      saveSnapshot: (tabId, snapshot) =>
+        set((state) => ({
+          tabSnapshots: {
+            ...state.tabSnapshots,
+            [tabId]: snapshot,
+          },
+        })),
+      getSnapshot: <T>(tabId: string) => get().tabSnapshots[tabId] as T | undefined,
+      clearSnapshot: (tabId) =>
+        set((state) => {
+          const rest = { ...state.tabSnapshots };
+          delete rest[tabId];
+          return { tabSnapshots: rest };
+        }),
 
-  sidebarOpen: true,
-  activeSidebarView: 'explorer',
-  bottomPanelOpen: false,
-  activeBottomTab: 'problems',
+      sidebarOpen: true,
+      activeSidebarView: 'explorer',
+      bottomPanelOpen: false,
+      activeBottomTab: 'problems',
 
-  setSidebarOpen: (open) => set({ sidebarOpen: open }),
-  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-  setActiveSidebarView: (view) => set({ activeSidebarView: view, sidebarOpen: true }),
+      setSidebarOpen: (open) => set({ sidebarOpen: open }),
+      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      setActiveSidebarView: (view) => set({ activeSidebarView: view, sidebarOpen: true }),
 
-  setBottomPanelOpen: (open) => set({ bottomPanelOpen: open }),
-  toggleBottomPanel: () => set((state) => ({ bottomPanelOpen: !state.bottomPanelOpen })),
-  setActiveBottomTab: (tab) => set({ activeBottomTab: tab, bottomPanelOpen: true }),
+      setBottomPanelOpen: (open) => set({ bottomPanelOpen: open }),
+      toggleBottomPanel: () => set((state) => ({ bottomPanelOpen: !state.bottomPanelOpen })),
+      setActiveBottomTab: (tab) => set({ activeBottomTab: tab, bottomPanelOpen: true }),
 
-  openTab: (tab, options = false) => {
-    const { tabs, activeTabId, navigationHistory, historyIndex } = get();
-    const newTab = typeof options === 'boolean' ? options : !!options?.newTab;
-    const fromHistory = typeof options === 'object' && !!options?.fromHistory;
+      pinTab: (tabId) =>
+        set((state) => ({
+          tabs: state.tabs.map((t) => (t.id === tabId ? { ...t, isPreview: false } : t)),
+        })),
 
-    // 历史栈压入逻辑：非后退/前进触发时更新历史
-    if (!fromHistory) {
-      const currentEntry = navigationHistory[historyIndex];
-      // 避免重复入栈同一个目标
-      if (!currentEntry || currentEntry.tab.id !== tab.id) {
-        const truncated = navigationHistory.slice(0, historyIndex + 1);
-        const updatedHistory = [...truncated, { tab }];
+      openTab: (tab, options = false) => {
+        const { tabs, navigationHistory, historyIndex } = get();
+        const newTab = typeof options === 'boolean' ? options : !!options?.newTab;
+        const fromHistory = typeof options === 'object' && !!options?.fromHistory;
+        const isPreview =
+          typeof options === 'object' && options?.isPreview !== undefined
+            ? options.isPreview
+            : (tab.isPreview ?? false);
+
+        const tabToOpen: IdeTab = { ...tab, isPreview };
+
+        // 历史栈压入逻辑：非后退/前进触发时更新历史
+        if (!fromHistory) {
+          const currentEntry = navigationHistory[historyIndex];
+          if (!currentEntry || currentEntry.tab.id !== tabToOpen.id) {
+            const truncated = navigationHistory.slice(0, historyIndex + 1);
+            const updatedHistory = [...truncated, { tab: tabToOpen }];
+            set({
+              navigationHistory: updatedHistory,
+              historyIndex: updatedHistory.length - 1,
+            });
+          }
+        }
+
+        // 1. 若目标 Tab 已经打开
+        const existingIndex = tabs.findIndex((t) => t.id === tabToOpen.id);
+        if (existingIndex !== -1) {
+          // 如果是以非预览方式重新打开已经处于预览态的 tab，自动转为固定态
+          if (!isPreview && tabs[existingIndex].isPreview) {
+            const updated = [...tabs];
+            updated[existingIndex] = { ...updated[existingIndex], isPreview: false };
+            set({ tabs: updated, activeTabId: tabToOpen.id });
+          } else {
+            set({ activeTabId: tabToOpen.id });
+          }
+          return;
+        }
+
+        // 2. 寻找是否有可以被就地替换的 preview 标签页 (且未被编辑)
+        const previewIndex = tabs.findIndex((t) => t.isPreview && !t.isDirty);
+
+        if (!newTab && isPreview && previewIndex !== -1) {
+          const updatedTabs = [...tabs];
+          updatedTabs[previewIndex] = tabToOpen;
+          set({
+            tabs: updatedTabs,
+            activeTabId: tabToOpen.id,
+          });
+          return;
+        }
+
+        // 3. 过滤掉未使用的初始空白欢迎页（若存在）
+        const cleanTabs =
+          tabs.length === 1 && tabs[0].type === 'empty' && !tabs[0].isDirty ? [] : tabs;
+
         set({
-          navigationHistory: updatedHistory,
-          historyIndex: updatedHistory.length - 1,
+          tabs: [...cleanTabs, tabToOpen],
+          activeTabId: tabToOpen.id,
         });
-      }
-    }
+      },
 
-    // 1. 若目标 Tab 已经打开，直接激活跳转
-    const existingIndex = tabs.findIndex((t) => t.id === tab.id);
-    if (existingIndex !== -1) {
-      set({ activeTabId: tab.id });
-      return;
-    }
+      goBack: () => {
+        const { historyIndex, navigationHistory } = get();
+        if (historyIndex <= 0) return;
+        const nextIndex = historyIndex - 1;
+        const targetTab = navigationHistory[nextIndex].tab;
+        set({ historyIndex: nextIndex });
+        get().openTab(targetTab, { fromHistory: true });
+      },
 
-    // 2. 主视口默认模式：就地替换 vs 新建标签页
-    const currentActiveTab = tabs.find((t) => t.id === activeTabId);
-    // 可就地替换条件：未按 Ctrl 且 当前 Tab 未被编辑修改
-    const canReplaceCurrent = !newTab && currentActiveTab && !currentActiveTab.isDirty;
+      goForward: () => {
+        const { historyIndex, navigationHistory } = get();
+        if (historyIndex >= navigationHistory.length - 1) return;
+        const nextIndex = historyIndex + 1;
+        const targetTab = navigationHistory[nextIndex].tab;
+        set({ historyIndex: nextIndex });
+        get().openTab(targetTab, { fromHistory: true });
+      },
 
-    if (canReplaceCurrent) {
-      const currentIndex = tabs.findIndex((t) => t.id === activeTabId);
-      const updatedTabs = [...tabs];
-      updatedTabs[currentIndex] = tab;
-      set({
-        tabs: updatedTabs,
-        activeTabId: tab.id,
-      });
-    } else {
-      // 过滤掉不可关闭且未使用的初始空白欢迎页（若存在）
-      const cleanTabs =
-        tabs.length === 1 && tabs[0].type === 'empty' && !tabs[0].isDirty ? [] : tabs;
-      set({
-        tabs: [...cleanTabs, tab],
-        activeTabId: tab.id,
-      });
-    }
-  },
+      closeTab: (tabId) => {
+        const { tabs, activeTabId } = get();
+        const target = tabs.find((t) => t.id === tabId);
+        if (!target || !target.closable) return;
 
-  goBack: () => {
-    const { historyIndex, navigationHistory } = get();
-    if (historyIndex <= 0) return;
-    const nextIndex = historyIndex - 1;
-    const targetTab = navigationHistory[nextIndex].tab;
-    set({ historyIndex: nextIndex });
-    get().openTab(targetTab, { fromHistory: true });
-  },
+        const remaining = tabs.filter((t) => t.id !== tabId);
+        let nextActiveId = activeTabId;
 
-  goForward: () => {
-    const { historyIndex, navigationHistory } = get();
-    if (historyIndex >= navigationHistory.length - 1) return;
-    const nextIndex = historyIndex + 1;
-    const targetTab = navigationHistory[nextIndex].tab;
-    set({ historyIndex: nextIndex });
-    get().openTab(targetTab, { fromHistory: true });
-  },
+        if (remaining.length === 0) {
+          const emptyTab: IdeTab = {
+            id: 'empty:home',
+            type: 'empty',
+            title: '开始',
+            closable: false,
+          };
+          set({
+            tabs: [emptyTab],
+            activeTabId: emptyTab.id,
+          });
+          return;
+        }
 
-  closeTab: (tabId) => {
-    const { tabs, activeTabId } = get();
-    const target = tabs.find((t) => t.id === tabId);
-    if (!target || !target.closable) return;
+        if (activeTabId === tabId) {
+          const closedIndex = tabs.findIndex((t) => t.id === tabId);
+          const nextTab = remaining[Math.max(0, closedIndex - 1)];
+          nextActiveId = nextTab ? nextTab.id : (remaining[0]?.id ?? '');
+        }
 
-    const remaining = tabs.filter((t) => t.id !== tabId);
-    let nextActiveId = activeTabId;
+        set({
+          tabs: remaining,
+          activeTabId: nextActiveId,
+        });
+      },
 
-    if (remaining.length === 0) {
-      const emptyTab: IdeTab = {
-        id: 'empty:home',
-        type: 'empty',
-        title: '开始',
-        closable: false,
-      };
-      set({
-        tabs: [emptyTab],
-        activeTabId: emptyTab.id,
-      });
-      return;
-    }
+      setActiveTab: (tabId) => set({ activeTabId: tabId }),
 
-    if (activeTabId === tabId) {
-      const closedIndex = tabs.findIndex((t) => t.id === tabId);
-      const nextTab = remaining[Math.max(0, closedIndex - 1)];
-      nextActiveId = nextTab ? nextTab.id : (remaining[0]?.id ?? '');
-    }
-
-    set({
-      tabs: remaining,
-      activeTabId: nextActiveId,
-    });
-  },
-
-  setActiveTab: (tabId) => set({ activeTabId: tabId }),
-
-  setTabDirty: (tabId, isDirty) =>
-    set((state) => ({
-      tabs: state.tabs.map((t) => (t.id === tabId ? { ...t, isDirty } : t)),
-    })),
-}));
+      setTabDirty: (tabId, isDirty) =>
+        set((state) => ({
+          tabs: state.tabs.map((t) =>
+            t.id === tabId
+              ? {
+                  ...t,
+                  isDirty,
+                  // 一旦发生编辑修改，自动固定标签页
+                  isPreview: isDirty ? false : t.isPreview,
+                }
+              : t,
+          ),
+        })),
+    }),
+    {
+      name: 'aca-studio-ide-v1',
+      partialize: (state) => ({
+        tabs: state.tabs,
+        activeTabId: state.activeTabId,
+        tabSnapshots: state.tabSnapshots,
+        sidebarOpen: state.sidebarOpen,
+      }),
+    },
+  ),
+);

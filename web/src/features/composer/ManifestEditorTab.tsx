@@ -10,13 +10,12 @@ import type { LookupExportItem, PackageItem } from '@/features/explorer/PackageE
 import { TopologyGraph } from '@/features/graph/TopologyGraph';
 import { useIdeStore } from '@/stores/ide-store';
 import {
-  ArrowDown,
-  ArrowUp,
   Box,
   Code2,
   ExternalLink,
   Eye,
   EyeOff,
+  Filter,
   Network,
   Plus,
   RotateCcw,
@@ -82,6 +81,7 @@ export function ManifestEditorTab({
 
   // 操作交互
   const [selectedLookup, setSelectedLookup] = useState<string>('');
+  const [lookupFilterQuery, setLookupFilterQuery] = useState<string>('');
   const [editingOverrideKey, setEditingOverrideKey] = useState<string | null>(null);
   const [overrideQueryId, setOverrideQueryId] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
@@ -307,17 +307,6 @@ export function ManifestEditorTab({
     markDirty();
   };
 
-  const handleMoveItem = (index: number, direction: 'up' | 'down') => {
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= items.length) return;
-    const nextItems = [...items];
-    const temp = nextItems[index];
-    nextItems[index] = nextItems[targetIndex];
-    nextItems[targetIndex] = temp;
-    setItems(nextItems);
-    markDirty();
-  };
-
   const handleSaveManifest = async () => {
     if (!name.trim() || items.length === 0) return;
     setIsSaving(true);
@@ -475,34 +464,59 @@ export function ManifestEditorTab({
         </div>
       </div>
 
-      {/* 挑选 Lookup 区域 */}
-      <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 flex gap-2">
-        <select
-          value={selectedLookup}
-          onChange={(e) => setSelectedLookup(e.target.value)}
-          className="flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
-        >
-          <option value="">-- 选择要注入的公开查找接口 --</option>
-          {availableExports.map((exp) => (
-            <option key={exp.key} value={exp.key}>
-              [{exp.pkg}] {exp.key} ({exp.pillar.toUpperCase()})
-            </option>
-          ))}
-        </select>
-        <Button
-          size="sm"
-          onClick={handleAddLookup}
-          disabled={!selectedLookup}
-          className="h-7 text-xs flex items-center gap-1"
-        >
-          <Plus className="h-3.5 w-3.5" /> 注入
-        </Button>
+      {/* 挑选 Lookup 区域 (带过滤搜索) */}
+      <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Filter className="h-3.5 w-3.5 text-slate-500 absolute left-2.5 top-2" />
+            <input
+              type="text"
+              value={lookupFilterQuery}
+              onChange={(e) => setLookupFilterQuery(e.target.value)}
+              placeholder="过滤可用公开接口 (按包名或键名搜索)..."
+              className="w-full bg-slate-950 border border-slate-800 rounded pl-8 pr-2.5 py-1 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <select
+            value={selectedLookup}
+            onChange={(e) => setSelectedLookup(e.target.value)}
+            className="flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+          >
+            <option value="">-- 选择要注入的公开查找接口 --</option>
+            {availableExports
+              .filter(
+                (exp) =>
+                  !lookupFilterQuery.trim() ||
+                  exp.key.toLowerCase().includes(lookupFilterQuery.trim().toLowerCase()) ||
+                  exp.pkg.toLowerCase().includes(lookupFilterQuery.trim().toLowerCase()),
+              )
+              .map((exp) => (
+                <option key={exp.key} value={exp.key}>
+                  [{exp.pkg}] {exp.key} ({exp.pillar.toUpperCase()})
+                </option>
+              ))}
+          </select>
+          <Button
+            size="sm"
+            onClick={handleAddLookup}
+            disabled={!selectedLookup}
+            className="h-7 text-xs flex items-center gap-1 shrink-0"
+          >
+            <Plus className="h-3.5 w-3.5" /> 注入蓝图
+          </Button>
+        </div>
       </div>
 
-      {/* 已选组件列表 */}
-      <div className="flex-1 rounded-lg border border-slate-800 bg-slate-900/20 p-3 space-y-2 overflow-y-auto">
+      {/* 已选组件列表 (按 D3 控制 / D2 程序 / D1 陈述 基质分类呈现) */}
+      <div className="flex-1 rounded-lg border border-slate-800 bg-slate-900/20 p-3 space-y-3 overflow-y-auto">
         <div className="flex items-center justify-between text-xs font-mono text-slate-400">
-          <span>已声明组件 ({items.length})</span>
+          <span>已注入组件清单 ({items.length})</span>
+          <span className="text-[10px] text-slate-500">
+            按基质架构语义分组渲染（序列化顺序由编译内核自动确定）
+          </span>
         </div>
 
         {items.length === 0 ? (
@@ -511,133 +525,149 @@ export function ManifestEditorTab({
             尚未添加任何 Lookup 接口。
           </div>
         ) : (
-          items.map((item, idx) => (
-            <div key={item.id} className="space-y-1">
-              <div className="flex items-center justify-between rounded border border-slate-800 bg-slate-950/80 p-2 text-xs font-mono">
-                <div className="flex items-center gap-2 truncate">
-                  <span className="text-slate-600 font-bold shrink-0">{idx + 1}.</span>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenLookup(item.lookup)}
-                    className="text-slate-100 font-semibold hover:text-indigo-300 hover:underline transition-colors text-left truncate flex items-center gap-1.5 group cursor-pointer"
-                    title={`点击编辑接口契约: ${item.lookup}`}
-                  >
-                    <span className="truncate">{item.lookup}</span>
-                    <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 text-indigo-400 shrink-0 transition-opacity" />
-                  </button>
-                  {item.pillar && (
-                    <Badge variant="outline" className="text-[9px] px-1 py-0 shrink-0">
-                      {item.pillar}
-                    </Badge>
-                  )}
+          [
+            { title: 'D3 控制基质 (Directives)', key: 'd3', variant: 'd3' as const },
+            { title: 'D2 程序基质 (Skills & ISA)', key: 'd2', variant: 'd2' as const },
+            { title: 'D1 陈述基质 (Knowledge & Memory)', key: 'd1', variant: 'd1' as const },
+            { title: '其它接口 / 未识别基质', key: 'other', variant: 'outline' as const },
+          ].map((group) => {
+            const groupItems = items.filter((item) => {
+              const p = (
+                item.pillar ||
+                (item.lookup.includes('::')
+                  ? item.lookup.split('::')[1].slice(0, 2)
+                  : item.lookup.slice(0, 2))
+              ).toLowerCase();
+
+              if (group.key === 'other') {
+                return p !== 'd1' && p !== 'd2' && p !== 'd3';
+              }
+              return p === group.key;
+            });
+
+            if (groupItems.length === 0) return null;
+
+            return (
+              <div key={group.key} className="space-y-1.5">
+                <div className="text-[11px] font-semibold text-slate-400 flex items-center gap-2 pt-1">
+                  <Badge variant={group.variant} className="text-[9px] px-1 py-0 uppercase">
+                    {group.key}
+                  </Badge>
+                  <span>{group.title}</span>
+                  <span className="text-slate-600 text-[10px]">({groupItems.length})</span>
                 </div>
 
-                <div className="flex items-center gap-1">
-                  {overrides[item.lookup] && (
-                    <Badge variant="d3" className="text-[9px] px-1 py-0">
-                      已覆写
-                    </Badge>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (editingOverrideKey === item.lookup) {
-                        setEditingOverrideKey(null);
-                      } else {
-                        setEditingOverrideKey(item.lookup);
-                        const currentOverride = overrides[item.lookup] as {
-                          selectors?: Array<{ query?: { id?: string } }>;
-                        };
-                        const targetId = currentOverride?.selectors?.[0]?.query?.id;
-                        setOverrideQueryId(typeof targetId === 'string' ? targetId : '');
-                      }
-                    }}
-                    className={`p-1 rounded ${
-                      editingOverrideKey === item.lookup
-                        ? 'text-indigo-400 bg-indigo-950'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                    title="配置 Overrides 覆写"
-                  >
-                    <Sliders className="h-3 w-3" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleMoveItem(idx, 'up')}
-                    disabled={idx === 0}
-                    className="p-1 text-slate-400 hover:text-white disabled:opacity-30"
-                  >
-                    <ArrowUp className="h-3 w-3" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleMoveItem(idx, 'down')}
-                    disabled={idx === items.length - 1}
-                    className="p-1 text-slate-400 hover:text-white disabled:opacity-30"
-                  >
-                    <ArrowDown className="h-3 w-3" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveLookup(item.id)}
-                    className="p-1 text-slate-500 hover:text-rose-400"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
+                <div className="space-y-1 pl-1">
+                  {groupItems.map((item) => (
+                    <div key={item.id} className="space-y-1">
+                      <div className="flex items-center justify-between rounded border border-slate-800 bg-slate-950/80 p-2 text-xs font-mono">
+                        <div className="flex items-center gap-2 truncate">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenLookup(item.lookup)}
+                            className="text-slate-100 font-semibold hover:text-indigo-300 hover:underline transition-colors text-left truncate flex items-center gap-1.5 group cursor-pointer"
+                            title={`点击编辑接口契约: ${item.lookup}`}
+                          >
+                            <span className="truncate">{item.lookup}</span>
+                            <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 text-indigo-400 shrink-0 transition-opacity" />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          {overrides[item.lookup] && (
+                            <Badge variant="d3" className="text-[9px] px-1 py-0">
+                              已覆写
+                            </Badge>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (editingOverrideKey === item.lookup) {
+                                setEditingOverrideKey(null);
+                              } else {
+                                setEditingOverrideKey(item.lookup);
+                                const currentOverride = overrides[item.lookup] as {
+                                  selectors?: Array<{ query?: { id?: string } }>;
+                                };
+                                const targetId = currentOverride?.selectors?.[0]?.query?.id;
+                                setOverrideQueryId(typeof targetId === 'string' ? targetId : '');
+                              }
+                            }}
+                            className={`p-1 rounded ${
+                              editingOverrideKey === item.lookup
+                                ? 'text-indigo-400 bg-indigo-950'
+                                : 'text-slate-400 hover:text-white'
+                            }`}
+                            title="配置 Overrides 覆写"
+                          >
+                            <Sliders className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveLookup(item.id)}
+                            className="p-1 text-slate-500 hover:text-rose-400"
+                            title="移除该接口"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {editingOverrideKey === item.lookup && (
+                        <div className="rounded border border-indigo-800/60 bg-indigo-950/30 p-2 text-xs font-mono space-y-2">
+                          <div className="flex items-center justify-between text-indigo-300 font-semibold text-[11px]">
+                            <span>覆写选择器: {item.lookup}</span>
+                            {overrides[item.lookup] && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const nextOverrides = { ...overrides };
+                                  delete nextOverrides[item.lookup];
+                                  setOverrides(nextOverrides);
+                                  markDirty();
+                                }}
+                                className="text-[10px] text-amber-400 hover:underline flex items-center gap-1"
+                              >
+                                <RotateCcw className="h-3 w-3" /> 重置
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={overrideQueryId}
+                              onChange={(e) => setOverrideQueryId(e.target.value)}
+                              placeholder="目标特定原子 ID，如 d1-custom"
+                              className="flex-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                if (overrideQueryId.trim()) {
+                                  setOverrides({
+                                    ...overrides,
+                                    [item.lookup]: {
+                                      selectors: [{ query: { id: overrideQueryId.trim() } }],
+                                    },
+                                  });
+                                  setEditingOverrideKey(null);
+                                  markDirty();
+                                }
+                              }}
+                              disabled={!overrideQueryId.trim()}
+                              className="h-7 text-xs"
+                            >
+                              应用
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              {editingOverrideKey === item.lookup && (
-                <div className="rounded border border-indigo-800/60 bg-indigo-950/30 p-2 text-xs font-mono space-y-2">
-                  <div className="flex items-center justify-between text-indigo-300 font-semibold text-[11px]">
-                    <span>覆写选择器: {item.lookup}</span>
-                    {overrides[item.lookup] && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const nextOverrides = { ...overrides };
-                          delete nextOverrides[item.lookup];
-                          setOverrides(nextOverrides);
-                          markDirty();
-                        }}
-                        className="text-[10px] text-amber-400 hover:underline flex items-center gap-1"
-                      >
-                        <RotateCcw className="h-3 w-3" /> 重置
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={overrideQueryId}
-                      onChange={(e) => setOverrideQueryId(e.target.value)}
-                      placeholder="目标特定原子 ID，如 d1-custom"
-                      className="flex-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        if (overrideQueryId.trim()) {
-                          setOverrides({
-                            ...overrides,
-                            [item.lookup]: {
-                              selectors: [{ query: { id: overrideQueryId.trim() } }],
-                            },
-                          });
-                          setEditingOverrideKey(null);
-                          markDirty();
-                        }
-                      }}
-                      disabled={!overrideQueryId.trim()}
-                      className="h-7 text-xs"
-                    >
-                      应用
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

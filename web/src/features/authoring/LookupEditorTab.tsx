@@ -98,6 +98,18 @@ export function LookupEditorTab({
   const [domainInput, setDomainInput] = useState('');
   const [refInput, setRefInput] = useState('');
 
+  // 提取系统中所有公开或内部 lookup 候选用于 ref 自动补全
+  const candidateLookupRefs = packages.flatMap((pkg) => {
+    const list: string[] = [];
+    for (const key of Object.keys(pkg.exports || {})) {
+      list.push(key);
+    }
+    for (const key of Object.keys(pkg.internal_lookups || {})) {
+      list.push(key);
+    }
+    return list;
+  });
+
   const tabId = `lookup:${lookupKey}`;
 
   const markDirty = () => {
@@ -567,13 +579,21 @@ export function LookupEditorTab({
                   )}
 
                   {selectorMode === 'ref' && (
-                    <input
-                      type="text"
-                      value={refInput}
-                      onChange={(e) => setRefInput(e.target.value)}
-                      placeholder="输入引用的另一个 lookup 键名，例如: pkg::d1l-public-name"
-                      className="flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-                    />
+                    <>
+                      <input
+                        type="text"
+                        list="lookup-ref-candidates"
+                        value={refInput}
+                        onChange={(e) => setRefInput(e.target.value)}
+                        placeholder="输入或选择引用的另一个 lookup，如 pkg::d1l-name"
+                        className="flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                      />
+                      <datalist id="lookup-ref-candidates">
+                        {candidateLookupRefs.map((refKey) => (
+                          <option key={refKey} value={refKey} />
+                        ))}
+                      </datalist>
+                    </>
                   )}
 
                   <Button

@@ -212,8 +212,13 @@ export function App() {
     };
   }, [fetchAssets, fetchLintReport, ideStore.goBack, ideStore.goForward]);
 
-  const handleOpenManifestTab = (mName: string, e?: React.MouseEvent) => {
+  const handleOpenManifestTab = (
+    mName: string,
+    e?: React.MouseEvent,
+    opts?: { isPreview?: boolean },
+  ) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
+    const isPreview = opts?.isPreview ?? !newTab;
     ideStore.openTab(
       {
         id: `manifest:${mName}`,
@@ -221,15 +226,21 @@ export function App() {
         title: mName,
         closable: true,
         manifestName: mName,
+        isPreview,
       },
-      { newTab },
+      { newTab, isPreview },
     );
   };
 
-  const handleOpenAtomTab = (atomId: string, e?: React.MouseEvent) => {
+  const handleOpenAtomTab = (
+    atomId: string,
+    e?: React.MouseEvent,
+    opts?: { isPreview?: boolean },
+  ) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
     const isDraft = atomId.startsWith('draft:');
     const tabTitle = isDraft ? `新建原子 (${atomId.replace('draft:', '')})` : atomId;
+    const isPreview = isDraft ? false : (opts?.isPreview ?? !newTab);
     ideStore.openTab(
       {
         id: `atom:${atomId}`,
@@ -237,13 +248,20 @@ export function App() {
         title: tabTitle,
         closable: true,
         atomId,
+        isPreview,
       },
-      { newTab: isDraft ? true : newTab },
+      { newTab: isDraft ? true : newTab, isPreview },
     );
   };
 
-  const handleOpenLookupTab = (lookupKey: string, e?: React.MouseEvent) => {
+  const handleOpenLookupTab = (
+    lookupKey: string,
+    e?: React.MouseEvent,
+    opts?: { isPreview?: boolean },
+  ) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
+    const isDraft = lookupKey.startsWith('draft:');
+    const isPreview = isDraft ? false : (opts?.isPreview ?? !newTab);
     ideStore.openTab(
       {
         id: `lookup:${lookupKey}`,
@@ -251,9 +269,22 @@ export function App() {
         title: lookupKey.split('::').pop() || lookupKey,
         closable: true,
         lookupKey,
+        isPreview,
       },
-      { newTab },
+      { newTab: isDraft ? true : newTab, isPreview },
     );
+  };
+
+  const handleSafeCloseTab = (tab: IdeTab, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!tab.closable) return;
+    if (tab.isDirty) {
+      const confirmDiscard = window.confirm(
+        `标签页「${tab.title}」存在尚未保存的更改。确定要放弃修改并关闭吗？`,
+      );
+      if (!confirmDiscard) return;
+    }
+    ideStore.closeTab(tab.id);
   };
 
   // 诊断直通：解析 issue 中的实体并一键在主编辑区打开对应 Tab
@@ -485,6 +516,13 @@ export function App() {
                 <div
                   key={tab.id}
                   onClick={() => ideStore.setActiveTab(tab.id)}
+                  onDoubleClick={() => ideStore.pinTab(tab.id)}
+                  onAuxClick={(e) => {
+                    if (e.button === 1) {
+                      e.preventDefault();
+                      handleSafeCloseTab(tab, e);
+                    }
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
@@ -496,17 +534,24 @@ export function App() {
                       ? 'bg-slate-950 text-indigo-300 border-t-2 border-t-indigo-500 font-semibold'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent'
                   }`}
+                  title={`${tab.title}${tab.isPreview ? ' (预览态，双击标签固定)' : ''}`}
                 >
-                  <span className="truncate max-w-[140px]">{tab.title}</span>
-                  {tab.isDirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                  <span
+                    className={`truncate max-w-[140px] ${
+                      tab.isPreview ? 'italic text-slate-300/80' : ''
+                    }`}
+                  >
+                    {tab.title}
+                  </span>
+                  {tab.isDirty && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                  )}
                   {tab.closable && (
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        ideStore.closeTab(tab.id);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded cursor-pointer"
+                      onClick={(e) => handleSafeCloseTab(tab, e)}
+                      className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded cursor-pointer transition-opacity"
+                      title="关闭标签页"
                     >
                       <X className="h-3 w-3" />
                     </button>
