@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { AtomEditorTab } from '@/features/authoring/AtomEditorTab';
 import { LookupEditorTab } from '@/features/authoring/LookupEditorTab';
 import { ManifestEditorTab } from '@/features/composer/ManifestEditorTab';
+import { ManifestExplorer } from '@/features/explorer/ManifestExplorer';
 import { PackageExplorer, type PackageItem } from '@/features/explorer/PackageExplorer';
 import { EmptyTab } from '@/features/home/EmptyTab';
 import { type IdeTab, useIdeStore } from '@/stores/ide-store';
@@ -22,7 +23,6 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
-  Trash2,
   X,
 } from 'lucide-react';
 import type React from 'react';
@@ -517,33 +517,12 @@ export function App() {
 
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
               {explorerTab === 'manifests' ? (
-                manifests.map((m) => (
-                  <div
-                    key={m}
-                    className={`group w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs font-mono transition-colors ${
-                      activeTab?.manifestName === m
-                        ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/50'
-                        : 'text-slate-300 hover:bg-slate-800/60'
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={(e) => handleOpenManifestTab(m, e)}
-                      className="flex-1 text-left truncate hover:text-white"
-                      title="点击在当前标签页打开，按住 Ctrl 点击新建标签页"
-                    >
-                      {m}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => handleDeleteManifest(m, e)}
-                      className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-opacity p-0.5 rounded"
-                      title="删除清单"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))
+                <ManifestExplorer
+                  manifests={manifests}
+                  activeManifestName={activeTab?.manifestName}
+                  onSelectManifest={(m, e) => handleOpenManifestTab(m, e)}
+                  onDeleteManifest={(m, e) => handleDeleteManifest(m, e)}
+                />
               ) : (
                 <PackageExplorer
                   packages={packages}

@@ -1,4 +1,4 @@
-import { j as jsxRuntimeExports, c as create, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, d as Check, e as Save, f as Shield, T as Tag, i as ReactCodeMirror, k as CodeXml, W as WandSparkles, l as ChartColumn, m as ChevronUp, n as ChevronDown, o as Copy, X, P as PenLine, M as Markdown, H as Handle, p as Pen, q as TriangleAlert, u as useNodesState, s as useEdgesState, t as Cpu, v as CircleCheckBig, w as index, x as Background, y as BackgroundVariant, z as Controls, N as Network, F as Filter, A as Plus, D as Link2, G as Trash2, I as Eye, J as RotateCcw, K as SlidersVertical, O as ArrowUp, Q as ArrowDown, U as ChevronRight, V as Package, Y as Globe, Z as Lock, _ as FileCode, $ as FilePlus2, a0 as MousePointerClick, a1 as ArrowLeft, a2 as ArrowRight, a3 as ShieldCheck, a4 as FolderTree, a5 as RefreshCw, a6 as OctagonAlert, a7 as ReactDOM } from "./vendor-react.js";
+import { j as jsxRuntimeExports, c as create, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, d as Check, e as Save, f as Shield, T as Tag, i as ReactCodeMirror, k as CodeXml, W as WandSparkles, l as ChartColumn, m as ChevronUp, n as ChevronDown, o as Copy, X, P as PenLine, M as Markdown, H as Handle, p as Pen, q as TriangleAlert, u as useNodesState, s as useEdgesState, t as Cpu, v as CircleCheckBig, w as index, x as Background, y as BackgroundVariant, z as Controls, N as Network, F as Filter, A as Plus, D as Link2, G as Trash2, I as Eye, J as RotateCcw, K as SlidersVertical, O as ArrowUp, Q as ArrowDown, U as ChevronRight, V as FolderOpen, Y as Folder, Z as Package, _ as Globe, $ as Lock, a0 as FileCode, a1 as FilePlus2, a2 as MousePointerClick, a3 as ArrowLeft, a4 as ArrowRight, a5 as ShieldCheck, a6 as FolderTree, a7 as RefreshCw, a8 as OctagonAlert, a9 as ReactDOM } from "./vendor-react.js";
 import { U as twMerge, W as clsx, X as remarkGfm } from "./vendor-others.js";
 import { m as markdown } from "./vendor-codemirror.js";
 import { P as Position } from "./vendor-xyflow.js";
@@ -3142,6 +3142,159 @@ function ManifestEditorTab({
     ) : renderBlueprintContent(true) })
   ] });
 }
+function buildTree(paths) {
+  const root = {
+    children: /* @__PURE__ */ new Map()
+  };
+  for (const p of paths) {
+    const parts = p.split("/").filter(Boolean);
+    let curr = root;
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      const isLeaf = i === parts.length - 1;
+      const subPath = parts.slice(0, i + 1).join("/");
+      let nextNode = curr.children.get(part);
+      if (!nextNode) {
+        nextNode = {
+          name: part,
+          path: subPath,
+          isFolder: !isLeaf,
+          children: /* @__PURE__ */ new Map()
+        };
+        curr.children.set(part, nextNode);
+      } else if (!isLeaf) {
+        nextNode.isFolder = true;
+      }
+      curr = nextNode;
+    }
+  }
+  function toSortedNodes(node) {
+    const list = [];
+    for (const child of node.children.values()) {
+      list.push({
+        name: child.name,
+        path: child.path,
+        isFolder: child.isFolder,
+        children: toSortedNodes(child)
+      });
+    }
+    return list.sort((a, b) => {
+      if (a.isFolder && !b.isFolder) return -1;
+      if (!a.isFolder && b.isFolder) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  }
+  return toSortedNodes(root);
+}
+function ManifestTreeItem({
+  node,
+  depth,
+  activeManifestName,
+  expandedFolders,
+  onToggleFolder,
+  onSelectManifest,
+  onDeleteManifest
+}) {
+  const isExpanded = Boolean(expandedFolders[node.path]);
+  const isActive = !node.isFolder && activeManifestName === node.path;
+  const paddingLeft = `${depth * 14 + 6}px`;
+  if (node.isFolder) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-0.5", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "button",
+        {
+          type: "button",
+          onClick: () => onToggleFolder(node.path),
+          style: { paddingLeft },
+          className: "w-full flex items-center gap-1.5 py-1 pr-2 rounded text-xs font-mono text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors group cursor-pointer text-left",
+          title: node.path,
+          children: [
+            isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3.5 w-3.5 text-slate-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5 text-slate-400 shrink-0" }),
+            isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(FolderOpen, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Folder, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium truncate", children: node.name }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 ml-auto opacity-0 group-hover:opacity-100", children: node.children.length })
+          ]
+        }
+      ),
+      isExpanded && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-0.5", children: node.children.map((child) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        ManifestTreeItem,
+        {
+          node: child,
+          depth: depth + 1,
+          activeManifestName,
+          expandedFolders,
+          onToggleFolder,
+          onSelectManifest,
+          onDeleteManifest
+        },
+        child.path
+      )) })
+    ] });
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      style: { paddingLeft },
+      className: `group w-full flex items-center justify-between py-1 pr-1.5 rounded text-xs font-mono transition-colors ${isActive ? "bg-indigo-600/30 text-indigo-200 border border-indigo-500/50" : "text-slate-300 hover:bg-slate-800/60"}`,
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            type: "button",
+            onClick: (e) => onSelectManifest(node.path, e),
+            className: "flex items-center gap-1.5 flex-1 min-w-0 text-left hover:text-white cursor-pointer",
+            title: `${node.path} (点击在当前标签页打开，按住 Ctrl 点击新建标签页)`,
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-3.5 w-3.5 text-indigo-400/80 shrink-0" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: node.name })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            onClick: (e) => onDeleteManifest(node.path, e),
+            className: "opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-opacity p-0.5 rounded shrink-0 cursor-pointer",
+            title: "删除清单",
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3.5 w-3.5" })
+          }
+        )
+      ]
+    }
+  );
+}
+function ManifestExplorer({
+  manifests,
+  activeManifestName,
+  onSelectManifest,
+  onDeleteManifest
+}) {
+  const [expandedFolders, setExpandedFolders] = reactExports.useState({});
+  const tree = reactExports.useMemo(() => buildTree(manifests), [manifests]);
+  const toggleFolder = (folderPath) => {
+    setExpandedFolders((prev) => ({
+      ...prev,
+      [folderPath]: !prev[folderPath]
+    }));
+  };
+  if (manifests.length === 0) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "py-6 text-center text-xs font-mono text-slate-500", children: "暂无清单蓝图" });
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-0.5", children: tree.map((node) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+    ManifestTreeItem,
+    {
+      node,
+      depth: 0,
+      activeManifestName,
+      expandedFolders,
+      onToggleFolder: toggleFolder,
+      onSelectManifest,
+      onDeleteManifest
+    },
+    node.path
+  )) });
+}
 function PackageExplorer({
   packages,
   onSelectAtom,
@@ -3757,35 +3910,15 @@ function App() {
             }
           ) })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-y-auto p-2 space-y-1", children: explorerTab === "manifests" ? manifests.map((m) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "div",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-y-auto p-2 space-y-1", children: explorerTab === "manifests" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+          ManifestExplorer,
           {
-            className: `group w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs font-mono transition-colors ${(activeTab == null ? void 0 : activeTab.manifestName) === m ? "bg-indigo-600/30 text-indigo-200 border border-indigo-500/50" : "text-slate-300 hover:bg-slate-800/60"}`,
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "button",
-                {
-                  type: "button",
-                  onClick: (e) => handleOpenManifestTab(m, e),
-                  className: "flex-1 text-left truncate hover:text-white",
-                  title: "点击在当前标签页打开，按住 Ctrl 点击新建标签页",
-                  children: m
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "button",
-                {
-                  type: "button",
-                  onClick: (e) => handleDeleteManifest(m, e),
-                  className: "opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-opacity p-0.5 rounded",
-                  title: "删除清单",
-                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3.5 w-3.5" })
-                }
-              )
-            ]
-          },
-          m
-        )) : /* @__PURE__ */ jsxRuntimeExports.jsx(
+            manifests,
+            activeManifestName: activeTab == null ? void 0 : activeTab.manifestName,
+            onSelectManifest: (m, e) => handleOpenManifestTab(m, e),
+            onDeleteManifest: (m, e) => handleDeleteManifest(m, e)
+          }
+        ) : /* @__PURE__ */ jsxRuntimeExports.jsx(
           PackageExplorer,
           {
             packages,

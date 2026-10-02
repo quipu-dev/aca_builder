@@ -7115,6 +7115,21 @@ const Filter = createLucideIcon("Filter", [
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
+const FolderOpen = createLucideIcon("FolderOpen", [
+  [
+    "path",
+    {
+      d: "m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2",
+      key: "usdka0"
+    }
+  ]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
 const FolderTree = createLucideIcon("FolderTree", [
   [
     "path",
@@ -7132,6 +7147,21 @@ const FolderTree = createLucideIcon("FolderTree", [
   ],
   ["path", { d: "M3 5a2 2 0 0 0 2 2h3", key: "f2jnh7" }],
   ["path", { d: "M3 3v13a2 2 0 0 0 2 2h3", key: "k8epm1" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Folder = createLucideIcon("Folder", [
+  [
+    "path",
+    {
+      d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z",
+      key: "1kt360"
+    }
+  ]
 ]);
 /**
  * @license lucide-react v0.468.0 - ISC
@@ -11579,7 +11609,7 @@ function ResizeControl({ nodeId, position, variant = ResizeControlVariant.Handle
 }
 reactExports.memo(ResizeControl);
 export {
-  FilePlus2 as $,
+  Lock as $,
   Plus as A,
   Box as B,
   CircleAlert as C,
@@ -11601,21 +11631,23 @@ export {
   Search as S,
   Tag as T,
   ChevronRight as U,
-  Package as V,
+  FolderOpen as V,
   WandSparkles as W,
   X,
-  Globe as Y,
-  Lock as Z,
-  FileCode as _,
+  Folder as Y,
+  Package as Z,
+  Globe as _,
   Sparkles as a,
-  MousePointerClick as a0,
-  ArrowLeft as a1,
-  ArrowRight as a2,
-  ShieldCheck as a3,
-  FolderTree as a4,
-  RefreshCw as a5,
-  OctagonAlert as a6,
-  ReactDOM as a7,
+  FileCode as a0,
+  FilePlus2 as a1,
+  MousePointerClick as a2,
+  ArrowLeft as a3,
+  ArrowRight as a4,
+  ShieldCheck as a5,
+  FolderTree as a6,
+  RefreshCw as a7,
+  OctagonAlert as a8,
+  ReactDOM as a9,
   LoaderCircle as b,
   create as c,
   Check as d,

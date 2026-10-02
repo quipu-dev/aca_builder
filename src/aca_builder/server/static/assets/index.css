@@ -564,6 +564,9 @@ video {
 .ml-3 {
   margin-left: 0.75rem;
 }
+.ml-auto {
+  margin-left: auto;
+}
 .mr-1 {
   margin-right: 0.25rem;
 }
@@ -734,6 +737,9 @@ video {
 }
 .w-full {
   width: 100%;
+}
+.min-w-0 {
+  min-width: 0px;
 }
 .min-w-\[200px\] {
   min-width: 200px;
@@ -1366,6 +1372,12 @@ video {
 }
 .pl-3 {
   padding-left: 0.75rem;
+}
+.pr-1\.5 {
+  padding-right: 0.375rem;
+}
+.pr-2 {
+  padding-right: 0.5rem;
 }
 .pt-1 {
   padding-top: 0.25rem;
