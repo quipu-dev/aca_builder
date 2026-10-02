@@ -204,3 +204,50 @@ def serialize_prompt(
         prompt_parts.append(f"{header}\n{atom['content']}")
 
     return "\n---\n".join(prompt_parts) + "\n"
+
+
+def generate_prompt_profile(
+    atom_lookup_map: dict[str, set[str]], library: dict[str, Any]
+) -> dict[str, Any]:
+    """Generates structured context profiling metrics including tokens and pillar distributions."""
+    final_ids = atom_lookup_map.keys()
+    by_pillar = {"kernel": 0, "d1": 0, "d2": 0, "d3": 0}
+    atoms_profile = []
+    total_tokens = 0
+
+    for atom_id in final_ids:
+        atom = library.get(atom_id)
+        if not atom:
+            continue
+        meta = atom["meta"]
+        atom_type = str(meta.get("type", "unknown")).lower()
+        content = atom.get("content", "")
+        char_count = len(content)
+        # Token estimation: approximately 3.8 chars per token
+        tokens = max(1, round(char_count / 3.8))
+        total_tokens += tokens
+        if atom_type in by_pillar:
+            by_pillar[atom_type] += tokens
+        else:
+            by_pillar[atom_type] = tokens
+
+        lookups = sorted(atom_lookup_map.get(atom_id, set()))
+        atoms_profile.append(
+            {
+                "id": atom_id,
+                "type": atom_type,
+                "priority": meta.get("priority"),
+                "package": atom.get("package"),
+                "source_file": atom.get("source_file"),
+                "char_count": char_count,
+                "estimated_tokens": tokens,
+                "via_lookups": lookups,
+            }
+        )
+
+    atoms_profile.sort(key=lambda x: x["estimated_tokens"], reverse=True)
+    return {
+        "total_tokens": total_tokens,
+        "by_pillar": by_pillar,
+        "atoms": atoms_profile,
+    }

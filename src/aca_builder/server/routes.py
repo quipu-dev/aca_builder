@@ -21,8 +21,26 @@ class BuildRequest(BaseModel):
     is_file: bool = False
 
 
+class AtomTokenProfile(BaseModel):
+    id: str
+    type: str
+    priority: int | None = None
+    package: str | None = None
+    source_file: str | None = None
+    char_count: int
+    estimated_tokens: int
+    via_lookups: list[str] = []
+
+
+class ProfileSummary(BaseModel):
+    total_tokens: int
+    by_pillar: dict[str, int]
+    atoms: list[AtomTokenProfile]
+
+
 class BuildResponse(BaseModel):
     prompt: str
+    profile: ProfileSummary | None = None
 
 
 @router.get("/health")
@@ -281,11 +299,12 @@ class SaveManifestRequest(BaseModel):
     version: str = "1.0.0"
     description: str = ""
     imports: list[dict[str, Any]]
+    overrides: dict[str, Any] | None = None
 
 
 @router.post("/build", response_model=BuildResponse)
 def build_prompt(req: BuildRequest):
-    """编译指定 Manifest 生成完整 Prompt 文本"""
+    """编译指定 Manifest 生成完整 Prompt 文本并返回上下文剖析画像"""
     lib_repo, man_repo, _ = _bootstrap()
     builder = BuilderService(lib_repo, man_repo)
     app_config = config.load_config()
@@ -293,13 +312,13 @@ def build_prompt(req: BuildRequest):
     manifest_paths = config.get_manifest_paths(app_config)
 
     try:
-        final_prompt = builder.build_prompt(
+        final_prompt, profile_data = builder.build_with_profile(
             req.manifest,
             library_paths,
             manifest_paths,
             is_file_path=req.is_file,
         )
-        return BuildResponse(prompt=final_prompt)
+        return BuildResponse(prompt=final_prompt, profile=profile_data)
     except BuildError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:  # noqa: BLE001
@@ -358,9 +377,12 @@ def compile_adhoc(req: AdhocCompileRequest):
         if k_id not in final_atom_map:
             final_atom_map[k_id] = set()
 
-    # 5. 序列化
+    # 5. 序列化与上下文剖析
+    from aca_builder.domain.services import generate_prompt_profile
+
     final_prompt = serialize_prompt(final_atom_map, library)
-    return BuildResponse(prompt=final_prompt)
+    profile_data = generate_prompt_profile(final_atom_map, library)
+    return BuildResponse(prompt=final_prompt, profile=profile_data)
 
 
 @router.post("/manifests")
@@ -381,6 +403,8 @@ def save_manifest(req: SaveManifestRequest):
         "description": req.description,
         "imports": req.imports,
     }
+    if req.overrides:
+        manifest_content["overrides"] = req.overrides
 
     try:
         target_file.write_text(
@@ -510,6 +534,134 @@ def run_linter() -> dict[str, Any]:
         "warn_count": bus.warn_count,
         "issues": bus.issues,
     }
+
+
+class CreateLookupRequest(BaseModel):
+    package: str
+    key: str
+    pillar: str  # d1, d2, d3
+    is_public: bool = True
+    description: str = ""
+    selectors: list[dict[str, Any]] = []
+
+
+class OpenObsidianRequest(BaseModel):
+    file_path: str
+
+
+@router.post("/system/open-obsidian")
+def open_in_obsidian(req: OpenObsidianRequest):
+    """通过系统命令调起 Obsidian 打开对应路径文件"""
+    import subprocess
+    import sys
+    import urllib.parse
+    from pathlib import Path
+
+    p = Path(req.file_path)
+    if not p.exists():
+        raise HTTPException(status_code=404, detail=f"文件不存在: {req.file_path}")
+
+    abs_path = str(p.resolve())
+    obsidian_uri = f"obsidian://open?path={urllib.parse.quote(abs_path)}"
+
+    try:
+        if sys.platform == "darwin":
+            subprocess.run(["open", obsidian_uri], check=False)
+        elif sys.platform == "win32":
+            subprocess.run(["start", obsidian_uri], shell=True, check=False)
+        else:
+            subprocess.run(["xdg-open", obsidian_uri], check=False)
+        return {"status": "ok", "uri": obsidian_uri}
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"启动 Obsidian 失败: {e}")
+
+
+@router.post("/lookups")
+def create_lookup(req: CreateLookupRequest):
+    """创建或更新 D4 查找表（支持写入 package.yaml 的 exports 或 d4/lookups.yaml）"""
+
+    if req.pillar not in ["d1", "d2", "d3"]:
+        raise HTTPException(status_code=400, detail="构造类别必须为 d1, d2 或 d3")
+
+    expected_prefix = f"{req.pillar}l-"
+    if not req.key.startswith(expected_prefix):
+        raise HTTPException(
+            status_code=400,
+            detail=f"查找接口名称必须以 '{expected_prefix}' 开头",
+        )
+
+    app_config = config.load_config()
+    library_paths = config.get_library_paths(app_config)
+    if not library_paths:
+        raise HTTPException(status_code=400, detail="未配置知识库路径")
+
+    target_pkg_dir = None
+    target_pkg_yaml = None
+    for lib_root in library_paths:
+        if not lib_root.exists():
+            continue
+        for pkg_file in lib_root.rglob("package.yaml"):
+            try:
+                pkg_data = yaml.safe_load(pkg_file.read_text(encoding="utf-8"))
+                if pkg_data and pkg_data.get("name") == req.package:
+                    target_pkg_dir = pkg_file.parent
+                    target_pkg_yaml = pkg_file
+                    break
+            except (yaml.YAMLError, OSError):
+                continue
+        if target_pkg_dir:
+            break
+
+    if not target_pkg_dir or not target_pkg_yaml:
+        raise HTTPException(
+            status_code=404, detail=f"未找到组件包 '{req.package}' 的存放目录"
+        )
+
+    lookup_data = {
+        "pillar": req.pillar,
+        "description": req.description,
+        "selectors": req.selectors,
+    }
+
+    try:
+        if req.is_public:
+            # 写入 package.yaml exports 节
+            pkg_content = (
+                yaml.safe_load(target_pkg_yaml.read_text(encoding="utf-8")) or {}
+            )
+            exports = pkg_content.setdefault("exports", {})
+            exports[req.key] = lookup_data
+            target_pkg_yaml.write_text(
+                yaml.safe_dump(pkg_content, sort_keys=False, allow_unicode=True),
+                encoding="utf-8",
+            )
+        else:
+            # 写入 d4/lookups.yaml 内部查找节
+            d4_dir = target_pkg_dir / "d4"
+            d4_dir.mkdir(parents=True, exist_ok=True)
+            d4_file = d4_dir / "lookups.yaml"
+
+            d4_content = {}
+            if d4_file.exists():
+                try:
+                    d4_content = (
+                        yaml.safe_load(d4_file.read_text(encoding="utf-8")) or {}
+                    )
+                except (yaml.YAMLError, OSError):
+                    d4_content = {}
+
+            d4_content["type"] = "d4"
+            lookups = d4_content.setdefault("lookups", {})
+            lookups[req.key] = lookup_data
+            d4_file.write_text(
+                yaml.safe_dump(d4_content, sort_keys=False, allow_unicode=True),
+                encoding="utf-8",
+            )
+
+        broadcast_change("LIBRARY_DIRTY")
+        return {"status": "ok", "key": req.key, "package": req.package}
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"保存 Lookup 失败: {e}")
 
 
 class CreateAtomRequest(BaseModel):

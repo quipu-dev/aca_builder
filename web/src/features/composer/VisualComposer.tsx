@@ -2,7 +2,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { LookupExportItem, PackageItem } from '@/features/explorer/PackageExplorer';
 import { useComposerStore } from '@/stores/composer-store';
-import { ArrowDown, ArrowUp, Box, Plus, Save, Sparkles, Trash2 } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  Box,
+  Plus,
+  RotateCcw,
+  Save,
+  Sliders,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 
 export function VisualComposer({
@@ -14,6 +24,8 @@ export function VisualComposer({
   const [selectedLookup, setSelectedLookup] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string>('');
+  const [editingOverrideKey, setEditingOverrideKey] = useState<string | null>(null);
+  const [overrideQueryId, setOverrideQueryId] = useState<string>('');
 
   // 提取所有公开接口，替换嵌套 forEach 为 for...of
   const availableExports: Array<{ key: string; pkg: string; pillar: string; desc: string }> = [];
@@ -45,15 +57,19 @@ export function VisualComposer({
     setIsSaving(true);
     setSaveStatus('正在保存...');
     try {
+      const payload: Record<string, unknown> = {
+        name: store.manifestName,
+        version: store.version,
+        description: store.description,
+        imports: store.items.map((i) => ({ lookup: i.lookup })),
+      };
+      if (Object.keys(store.overrides).length > 0) {
+        payload.overrides = store.overrides;
+      }
       const res = await fetch('/api/manifests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: store.manifestName,
-          version: store.version,
-          description: store.description,
-          imports: store.items.map((i) => ({ lookup: i.lookup })),
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (res.ok) {
@@ -193,57 +209,125 @@ export function VisualComposer({
         ) : (
           <div className="space-y-2">
             {store.items.map((item, idx) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/80 p-2.5 shadow-sm text-xs font-mono"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-600 font-bold">{idx + 1}.</span>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-100 font-semibold">{item.lookup}</span>
-                      {item.pillar && (
-                        <Badge variant="outline" className="text-[10px] px-1 py-0">
-                          {item.pillar}
-                        </Badge>
+              <div key={item.id} className="space-y-1.5">
+                <div className="flex items-center justify-between rounded-md border border-slate-800 bg-slate-950/80 p-2.5 shadow-sm text-xs font-mono">
+                  <div className="flex items-center gap-3">
+                    <span className="text-slate-600 font-bold">{idx + 1}.</span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-100 font-semibold">{item.lookup}</span>
+                        {item.pillar && (
+                          <Badge variant="outline" className="text-[10px] px-1 py-0">
+                            {item.pillar}
+                          </Badge>
+                        )}
+                      </div>
+                      {item.description && (
+                        <div className="text-[11px] text-slate-500 font-sans mt-0.5">
+                          {item.description}
+                        </div>
                       )}
                     </div>
-                    {item.description && (
-                      <div className="text-[11px] text-slate-500 font-sans mt-0.5">
-                        {item.description}
-                      </div>
-                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    {store.overrides[item.lookup] ? (
+                      <Badge variant="d3" className="text-[9px] px-1 py-0 mr-1">
+                        已覆写
+                      </Badge>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (editingOverrideKey === item.lookup) {
+                          setEditingOverrideKey(null);
+                        } else {
+                          setEditingOverrideKey(item.lookup);
+                          const targetId = store.overrides[item.lookup]?.selectors?.[0]?.query?.id;
+                          setOverrideQueryId(typeof targetId === 'string' ? targetId : '');
+                        }
+                      }}
+                      className={`p-1 rounded transition-colors ${
+                        editingOverrideKey === item.lookup
+                          ? 'text-indigo-400 bg-indigo-950/60'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="配置 Overrides 覆写"
+                    >
+                      <Sliders className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => store.moveItem(idx, 'up')}
+                      disabled={idx === 0}
+                      className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+                      title="上移"
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => store.moveItem(idx, 'down')}
+                      disabled={idx === store.items.length - 1}
+                      className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+                      title="下移"
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => store.removeItem(item.id)}
+                      className="p-1 rounded text-slate-500 hover:text-rose-400"
+                      title="移除"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => store.moveItem(idx, 'up')}
-                    disabled={idx === 0}
-                    className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
-                    title="上移"
-                  >
-                    <ArrowUp className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => store.moveItem(idx, 'down')}
-                    disabled={idx === store.items.length - 1}
-                    className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
-                    title="下移"
-                  >
-                    <ArrowDown className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => store.removeItem(item.id)}
-                    className="p-1 rounded text-slate-500 hover:text-rose-400"
-                    title="移除"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                {editingOverrideKey === item.lookup && (
+                  <div className="rounded border border-indigo-800/60 bg-indigo-950/30 p-2.5 text-xs font-mono space-y-2">
+                    <div className="flex items-center justify-between text-indigo-300 font-semibold">
+                      <span>覆盖 '{item.lookup}' 的原子选择器 (Override Selectors)</span>
+                      {store.overrides[item.lookup] && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            store.removeOverride(item.lookup);
+                            setOverrideQueryId('');
+                          }}
+                          className="text-[10px] text-amber-400 hover:underline flex items-center gap-1"
+                        >
+                          <RotateCcw className="h-3 w-3" /> 重置为默认
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={overrideQueryId}
+                        onChange={(e) => setOverrideQueryId(e.target.value)}
+                        placeholder="指定特定目标原子 ID，如 d1-custom-rule"
+                        className="flex-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          if (overrideQueryId.trim()) {
+                            store.setOverride(item.lookup, [
+                              { query: { id: overrideQueryId.trim() } },
+                            ]);
+                            setEditingOverrideKey(null);
+                          }
+                        }}
+                        disabled={!overrideQueryId.trim()}
+                        className="h-7 text-xs"
+                      >
+                        应用覆写
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

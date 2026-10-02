@@ -1,7 +1,8 @@
-import { PromptViewer } from '@/components/editor/PromptViewer';
+import { type ProfileSummary, PromptViewer } from '@/components/editor/PromptViewer';
 import { Button } from '@/components/ui/button';
 import { AtomEditorDrawer } from '@/features/authoring/AtomEditorDrawer';
 import { CreateAtomModal } from '@/features/authoring/CreateAtomModal';
+import { CreateLookupModal } from '@/features/authoring/CreateLookupModal';
 import { VisualComposer } from '@/features/composer/VisualComposer';
 import { DiagnosticsDrawer, type LintIssue } from '@/features/diagnostics/DiagnosticsDrawer';
 import { PackageExplorer, type PackageItem } from '@/features/explorer/PackageExplorer';
@@ -27,12 +28,16 @@ export function App() {
   const [packages, setPackages] = useState<PackageItem[]>([]);
   const [selectedManifest, setSelectedManifest] = useState<string>('');
   const [prompt, setPrompt] = useState<string>('');
+  const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [status, setStatus] = useState<string>('检测中...');
   const [viewMode, setViewMode] = useState<'composer' | 'graph' | 'preview'>('composer');
   const [leftTab, setLeftTab] = useState<'manifests' | 'packages'>('manifests');
 
-  // M3 状态：创作弹窗、诊断抽屉与原子在线编辑器
+  // 状态：创作弹窗、查找接口弹窗、诊断抽屉与原子在线编辑器
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isLookupOpen, setIsLookupOpen] = useState(false);
+  const [lookupTargetPkg, setLookupTargetPkg] = useState<string>('');
+  const [lookupIsPublic, setLookupIsPublic] = useState(true);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = useState(false);
   const [lintLoading, setLintLoading] = useState(false);
   const [lintErrors, setLintErrors] = useState(0);
@@ -41,6 +46,7 @@ export function App() {
   const [editingAtomId, setEditingAtomId] = useState<string | null>(null);
 
   const composerItems = useComposerStore((state) => state.items);
+  const composerOverrides = useComposerStore((state) => state.overrides);
   const loadManifestData = useComposerStore((state) => state.loadManifestData);
   const resetNewManifest = useComposerStore((state) => state.resetNewManifest);
 
@@ -98,7 +104,7 @@ export function App() {
     };
   }, [fetchAssets, fetchLintReport]);
 
-  // 装配变动防抖编译
+  // 装配与 Overrides 变动防抖编译
   useEffect(() => {
     if (composerItems.length === 0) return;
 
@@ -108,6 +114,7 @@ export function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imports: composerItems.map((item) => ({ lookup: item.lookup })),
+          overrides: Object.keys(composerOverrides).length > 0 ? composerOverrides : undefined,
         }),
       })
         .then((res) => res.json())
@@ -115,16 +122,19 @@ export function App() {
           if (data.prompt) {
             setPrompt(data.prompt);
           }
+          if (data.profile) {
+            setProfile(data.profile);
+          }
         })
         .catch(console.error);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [composerItems]);
+  }, [composerItems, composerOverrides]);
 
   const handleSelectManifest = async (mName: string) => {
     setSelectedManifest(mName);
-    // 1. 构建并预览 Prompt
+    // 1. 构建并预览 Prompt 及画像
     try {
       const res = await fetch('/api/build', {
         method: 'POST',
@@ -134,6 +144,9 @@ export function App() {
       const data = await res.json();
       if (res.ok) {
         setPrompt(data.prompt);
+        if (data.profile) {
+          setProfile(data.profile);
+        }
       }
     } catch (e) {
       console.error(e);
@@ -305,6 +318,11 @@ export function App() {
               <PackageExplorer
                 packages={packages}
                 onSelectAtom={(atomId) => setEditingAtomId(atomId)}
+                onCreateLookup={(pkgName, isPublic) => {
+                  setLookupTargetPkg(pkgName);
+                  setLookupIsPublic(isPublic);
+                  setIsLookupOpen(true);
+                }}
               />
             )}
           </div>
@@ -367,7 +385,11 @@ export function App() {
                   <VisualComposer packages={packages} />
                 </div>
                 <div className="w-1/2 p-4 overflow-hidden bg-slate-950">
-                  <PromptViewer value={prompt} />
+                  <PromptViewer
+                    value={prompt}
+                    profile={profile}
+                    onSelectAtom={(aid) => setEditingAtomId(aid)}
+                  />
                 </div>
               </>
             )}
@@ -380,7 +402,11 @@ export function App() {
 
             {viewMode === 'preview' && (
               <div className="flex-1 p-4 h-full bg-slate-950">
-                <PromptViewer value={prompt} />
+                <PromptViewer
+                  value={prompt}
+                  profile={profile}
+                  onSelectAtom={(aid) => setEditingAtomId(aid)}
+                />
               </div>
             )}
           </div>
@@ -392,6 +418,19 @@ export function App() {
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         packages={packages}
+        onCreated={() => {
+          fetchAssets();
+          fetchLintReport();
+        }}
+      />
+
+      {/* 新建 D4 查找接口向导模态框 */}
+      <CreateLookupModal
+        isOpen={isLookupOpen}
+        onClose={() => setIsLookupOpen(false)}
+        packages={packages}
+        defaultPkg={lookupTargetPkg}
+        defaultPublic={lookupIsPublic}
         onCreated={() => {
           fetchAssets();
           fetchLintReport();

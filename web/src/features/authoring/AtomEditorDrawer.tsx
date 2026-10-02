@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { markdown } from '@codemirror/lang-markdown';
 import CodeMirror from '@uiw/react-codemirror';
-import { FileCode, Loader2, Save, X } from 'lucide-react';
+import { ExternalLink, FileCode, Loader2, Save, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export function AtomEditorDrawer({
@@ -40,6 +40,24 @@ export function AtomEditorDrawer({
       })
       .finally(() => setLoading(false));
   }, [atomId, isOpen]);
+
+  const handleOpenInObsidian = async () => {
+    if (!sourceFile) return;
+    // 1. 尝试通过前端 URI scheme 直调
+    const obsidianUri = `obsidian://open?path=${encodeURIComponent(sourceFile)}`;
+    window.open(obsidianUri, '_blank');
+
+    // 2. 调用后端系统级打开接口兜底
+    try {
+      await fetch('/api/system/open-obsidian', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_path: sourceFile }),
+      });
+    } catch (_err) {
+      // 忽略兜底失败
+    }
+  };
 
   const handleSave = async () => {
     if (!atomId) return;
@@ -86,6 +104,17 @@ export function AtomEditorDrawer({
 
         <div className="flex items-center gap-2">
           {statusMsg && <span className="text-xs text-indigo-400 font-mono">{statusMsg}</span>}
+          {sourceFile && (
+            <button
+              type="button"
+              onClick={handleOpenInObsidian}
+              className="flex items-center gap-1 px-2.5 py-1 text-xs font-mono text-purple-300 hover:text-purple-100 bg-purple-950/60 hover:bg-purple-900/60 border border-purple-800/80 rounded transition-colors"
+              title="在 Obsidian 中打开并编辑"
+            >
+              <ExternalLink className="h-3 w-3" />
+              <span>Obsidian</span>
+            </button>
+          )}
           <Button
             size="sm"
             onClick={handleSave}

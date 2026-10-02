@@ -7,11 +7,16 @@ export interface ImportItem {
   description?: string;
 }
 
+export interface LookupOverride {
+  selectors: Array<{ query?: Record<string, unknown>; ref?: string }>;
+}
+
 interface ComposerState {
   manifestName: string;
   version: string;
   description: string;
   items: ImportItem[];
+  overrides: Record<string, LookupOverride>;
 
   setManifestName: (name: string) => void;
   setVersion: (version: string) => void;
@@ -20,12 +25,18 @@ interface ComposerState {
   removeItem: (id: string) => void;
   moveItem: (index: number, direction: 'up' | 'down') => void;
   clearItems: () => void;
+  setOverride: (
+    lookupKey: string,
+    selectors: Array<{ query?: Record<string, unknown>; ref?: string }>,
+  ) => void;
+  removeOverride: (lookupKey: string) => void;
   loadFromManifest: (name: string, imports: Array<{ lookup?: string }>) => void;
   loadManifestData: (manifest: {
     name: string;
     version?: string;
     description?: string;
     imports?: Array<{ lookup?: string }>;
+    overrides?: Record<string, LookupOverride>;
   }) => void;
   resetNewManifest: () => void;
 }
@@ -35,10 +46,26 @@ export const useComposerStore = create<ComposerState>((set) => ({
   version: '1.0.0',
   description: 'Composed via ACA Studio',
   items: [],
+  overrides: {},
 
   setManifestName: (name) => set({ manifestName: name }),
   setVersion: (version) => set({ version }),
   setDescription: (description) => set({ description }),
+
+  setOverride: (lookupKey, selectors) =>
+    set((state) => ({
+      overrides: {
+        ...state.overrides,
+        [lookupKey]: { selectors },
+      },
+    })),
+
+  removeOverride: (lookupKey) =>
+    set((state) => {
+      const rest = { ...state.overrides };
+      delete rest[lookupKey];
+      return { overrides: rest };
+    }),
 
   addItem: (item) =>
     set((state) => {
@@ -89,6 +116,7 @@ export const useComposerStore = create<ComposerState>((set) => ({
       manifestName: manifest.name,
       version: manifest.version || '1.0.0',
       description: manifest.description || '',
+      overrides: manifest.overrides || {},
       items: (manifest.imports || [])
         .filter((imp) => !!imp.lookup)
         .map((imp) => ({
@@ -103,5 +131,6 @@ export const useComposerStore = create<ComposerState>((set) => ({
       version: '1.0.0',
       description: '',
       items: [],
+      overrides: {},
     }),
 }));

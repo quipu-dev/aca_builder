@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronRight, FileCode, Globe, Lock, Package } from 'lucide-react';
+import { ChevronDown, ChevronRight, FileCode, Globe, Lock, Package, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 export interface LookupExportItem {
@@ -24,9 +24,11 @@ export interface PackageItem {
 export function PackageExplorer({
   packages,
   onSelectAtom,
+  onCreateLookup,
 }: {
   packages: PackageItem[];
   onSelectAtom?: (atomId: string) => void;
+  onCreateLookup?: (pkgName: string, isPublic: boolean) => void;
 }) {
   const [expandedPkg, setExpandedPkg] = useState<Record<string, boolean>>({});
 
@@ -69,11 +71,21 @@ export function PackageExplorer({
             {isExp && (
               <div className="px-3 pb-2.5 pt-1 space-y-2 border-t border-slate-800/40 bg-slate-950/40">
                 {/* 公开导出 */}
-                {exportsCount > 0 && (
-                  <div>
-                    <div className="text-[10px] font-semibold text-emerald-400 flex items-center gap-1 mb-1">
+                <div>
+                  <div className="text-[10px] font-semibold text-emerald-400 flex items-center justify-between mb-1">
+                    <span className="flex items-center gap-1">
                       <Globe className="h-3 w-3" /> 公开导出接口
-                    </div>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onCreateLookup?.(pkg.name, true)}
+                      className="text-slate-400 hover:text-emerald-400 p-0.5 rounded"
+                      title="新建公开导出接口"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
+                  {exportsCount > 0 && (
                     <div className="space-y-1 pl-2">
                       {Object.entries(pkg.exports).map(([k, def]) => (
                         <div
@@ -87,15 +99,25 @@ export function PackageExplorer({
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* 内部查找 */}
-                {internalCount > 0 && (
-                  <div>
-                    <div className="text-[10px] font-semibold text-slate-400 flex items-center gap-1 mb-1">
+                <div>
+                  <div className="text-[10px] font-semibold text-slate-400 flex items-center justify-between mb-1">
+                    <span className="flex items-center gap-1">
                       <Lock className="h-3 w-3" /> 内部私有查找
-                    </div>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onCreateLookup?.(pkg.name, false)}
+                      className="text-slate-400 hover:text-indigo-400 p-0.5 rounded"
+                      title="新建内部查找"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
+                  {internalCount > 0 && (
                     <div className="space-y-1 pl-2">
                       {Object.entries(pkg.internal_lookups).map(([k, def]) => (
                         <div
@@ -107,8 +129,8 @@ export function PackageExplorer({
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* 包含原子 */}
                 {atomsCount > 0 && (
