@@ -5,7 +5,7 @@ import subprocess
 from typing import Any
 
 import yaml
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -24,52 +24,48 @@ from aca_builder.domain.services import (
 
 router = APIRouter()
 
+# 运行时全局活动工作区 ID
+_active_workspace_id: str | None = None
 
-class UpdateConfigRequest(BaseModel):
-    library_paths: list[str] | None = None
-    manifest_paths: list[str] | None = None
+
+def get_current_workspace_id(x_workspace: str | None = None) -> str:
+    global _active_workspace_id
+    if x_workspace:
+        return x_workspace
+    if _active_workspace_id:
+        return _active_workspace_id
+    ws_id, _ = config.resolve_workspace()
+    _active_workspace_id = ws_id
+    return ws_id
+
+
+class WorkspaceDetail(BaseModel):
+    id: str
+    name: str
+    root: str | None = None
+    library_paths: list[str] = []
+    manifest_paths: list[str] = []
     post_process_hook: str | None = None
+    is_default: bool = False
+    is_active: bool = False
 
 
-class BuildRequest(BaseModel):
-    manifest: str
-    is_file: bool = False
-    apply_hook: bool = False
-
-
-class AtomTokenProfile(BaseModel):
+class SwitchWorkspaceRequest(BaseModel):
     id: str
-    type: str
-    priority: int | None = None
-    package: str | None = None
-    source_file: str | None = None
-    char_count: int
-    estimated_tokens: int
-    via_lookups: list[str] = []
 
 
-class ProfileSummary(BaseModel):
-    total_tokens: int
-    by_pillar: dict[str, int]
-    atoms: list[AtomTokenProfile]
-
-
-class PromptChunk(BaseModel):
+class CreateWorkspaceRequest(BaseModel):
     id: str
-    type: str
-    priority: int | None = None
-    package: str | None = None
-    source_file: str | None = None
-    meta: dict[str, Any] = {}
-    content: str
-    via_lookups: list[str] = []
+    name: str
+    root: str | None = None
+    libraries: list[str] = []
+    manifests: list[str] = []
+    post_process_hook: str | None = None
+    set_default: bool = False
 
 
-class BuildResponse(BaseModel):
-    prompt: str
-    hooked_prompt: str | None = None
-    chunks: list[PromptChunk] = []
-    profile: ProfileSummary | None = None
+class SetDefaultWorkspaceRequest(BaseModel):
+    id: str
 
 
 @router.get("/health")
@@ -77,64 +73,192 @@ def health_check() -> dict[str, str]:
     return {"status": "ok", "service": "aca-studio"}
 
 
+@router.get("/workspaces")
+def list_all_workspaces(x_aca_workspace: str | None = Header(None)) -> dict[str, Any]:
+    """获取所有已注册的工作区及当前激活工作区"""
+    app_cfg = config.load_config()
+    default_ws = app_cfg.get("default_workspace")
+    workspaces = config.get_workspaces(app_cfg)
+    curr_active = get_current_workspace_id(x_aca_workspace)
+
+    items = []
+    for ws_id, ws in workspaces.items():
+        items.append(
+            WorkspaceDetail(
+                id=ws_id,
+                name=ws.name,
+                root=str(ws.root) if ws.root else None,
+                library_paths=[str(p) for p in ws.library_paths],
+                manifest_paths=[str(p) for p in ws.manifest_paths],
+                post_process_hook=ws.post_process_hook,
+                is_default=(ws_id == default_ws),
+                is_active=(ws_id == curr_active),
+            )
+        )
+
+    return {
+        "active_workspace": curr_active,
+        "default_workspace": default_ws,
+        "workspaces": items,
+    }
+
+
+@router.post("/workspaces/active")
+def switch_active_workspace(req: SwitchWorkspaceRequest):
+    """切换当前活跃工作区"""
+    global _active_workspace_id
+    workspaces = config.get_workspaces()
+    if req.id not in workspaces:
+        raise HTTPException(status_code=404, detail=f"工作区 '{req.id}' 不存在")
+    _active_workspace_id = req.id
+    broadcast_change("WORKSPACE_SWITCHED")
+    return {"status": "ok", "active_workspace": req.id}
+
+
+@router.post("/workspaces")
+def create_workspace(req: CreateWorkspaceRequest):
+    """注册新工作区"""
+    app_cfg = config.load_config()
+    workspaces = app_cfg.setdefault("workspaces", {})
+    if req.id in workspaces:
+        raise HTTPException(status_code=400, detail=f"工作区 '{req.id}' 已存在")
+
+    ws_data: dict[str, Any] = {"name": req.name}
+    if req.root:
+        ws_data["root"] = req.root
+    if req.libraries:
+        ws_data["libraries"] = req.libraries
+    if req.manifests:
+        ws_data["manifests"] = req.manifests
+    if req.post_process_hook:
+        ws_data["post_process_hook"] = req.post_process_hook
+
+    workspaces[req.id] = ws_data
+    if req.set_default or not app_cfg.get("default_workspace"):
+        app_cfg["default_workspace"] = req.id
+
+    config.save_config(app_cfg)
+    broadcast_change("WORKSPACE_DIRTY")
+    return {"status": "ok", "workspace": req.id}
+
+
+@router.delete("/workspaces/{workspace_id}")
+def delete_workspace(workspace_id: str):
+    """删除指定工作区"""
+    global _active_workspace_id
+    app_cfg = config.load_config()
+    workspaces = app_cfg.get("workspaces", {})
+    if workspace_id not in workspaces:
+        raise HTTPException(status_code=404, detail=f"工作区 '{workspace_id}' 不存在")
+
+    del workspaces[workspace_id]
+    if app_cfg.get("default_workspace") == workspace_id:
+        app_cfg["default_workspace"] = next(iter(workspaces.keys())) if workspaces else None
+
+    config.save_config(app_cfg)
+    if _active_workspace_id == workspace_id:
+        _active_workspace_id = app_cfg.get("default_workspace")
+
+    broadcast_change("WORKSPACE_DIRTY")
+    return {"status": "ok", "deleted": workspace_id}
+
+
+@router.put("/workspaces/default")
+def set_default_workspace(req: SetDefaultWorkspaceRequest):
+    """设置默认工作区"""
+    app_cfg = config.load_config()
+    workspaces = config.get_workspaces(app_cfg)
+    if req.id not in workspaces:
+        raise HTTPException(status_code=404, detail=f"工作区 '{req.id}' 不存在")
+
+    app_cfg["default_workspace"] = req.id
+    config.save_config(app_cfg)
+    broadcast_change("WORKSPACE_DIRTY")
+    return {"status": "ok", "default_workspace": req.id}
+
+
+class UpdateWorkspaceConfigRequest(BaseModel):
+    name: str | None = None
+    root: str | None = None
+    library_paths: list[str] | None = None
+    manifest_paths: list[str] | None = None
+    post_process_hook: str | None = None
+
+
 @router.get("/system/config")
-def get_system_config() -> dict[str, Any]:
-    return config.load_config()
+def get_current_workspace_config(x_aca_workspace: str | None = Header(None)) -> dict[str, Any]:
+    """获取当前工作区的配置详情"""
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    _, _, _, _, ws_cfg = _bootstrap(ws_id)
+    return {
+        "workspace": ws_id,
+        "name": ws_cfg.name,
+        "root": str(ws_cfg.root) if ws_cfg.root else None,
+        "library_paths": [str(p) for p in ws_cfg.library_paths],
+        "manifest_paths": [str(p) for p in ws_cfg.manifest_paths],
+        "post_process_hook": ws_cfg.post_process_hook,
+    }
 
 
 @router.put("/system/config")
-def update_system_config(req: UpdateConfigRequest):
-    app_config = config.load_config()
-    if req.library_paths is not None:
-        app_config["library_paths"] = req.library_paths
-    if req.manifest_paths is not None:
-        app_config["manifest_paths"] = req.manifest_paths
-    if req.post_process_hook is not None:
-        app_config["post_process_hook"] = req.post_process_hook
+def update_current_workspace_config(
+    req: UpdateWorkspaceConfigRequest,
+    x_aca_workspace: str | None = Header(None),
+):
+    """更新当前工作区专属配置"""
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    app_cfg = config.load_config()
+    workspaces = app_cfg.setdefault("workspaces", {})
+    ws_entry = workspaces.setdefault(ws_id, {})
 
-    config.save_config(app_config)
+    if req.name is not None:
+        ws_entry["name"] = req.name
+    if req.root is not None:
+        ws_entry["root"] = req.root
+    if req.library_paths is not None:
+        ws_entry["libraries"] = req.library_paths
+    if req.manifest_paths is not None:
+        ws_entry["manifests"] = req.manifest_paths
+    if req.post_process_hook is not None:
+        ws_entry["post_process_hook"] = req.post_process_hook
+
+    config.save_config(app_cfg)
     broadcast_change("LIBRARY_DIRTY")
-    return {"status": "ok"}
+    return {"status": "ok", "workspace": ws_id}
 
 
 @router.get("/packages")
-def get_packages() -> dict[str, Any]:
-    """获取所有已加载的 package 与 lookup 接口定义"""
-    lib_repo, _, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
-    interfaces = lib_repo.load_interfaces(library_paths)
-    return interfaces
+def get_packages(x_aca_workspace: str | None = Header(None)) -> dict[str, Any]:
+    """获取当前工作区所有已加载的 package 与 lookup 接口定义"""
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, _, _, _, ws_cfg = _bootstrap(ws_id)
+    return lib_repo.load_interfaces(ws_cfg.library_paths)
 
 
 @router.get("/manifests")
-def list_manifests() -> list[str]:
-    """获取当前配置的所有 manifest 清单名称"""
-    _, man_repo, _ = _bootstrap()
-    app_config = config.load_config()
-    manifest_paths = config.get_manifest_paths(app_config)
-    return man_repo.list_manifests(manifest_paths)
+def list_manifests_endpoint(x_aca_workspace: str | None = Header(None)) -> list[str]:
+    """获取当前工作区配置的所有 manifest 清单名称"""
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    _, man_repo, _, _, ws_cfg = _bootstrap(ws_id)
+    return man_repo.list_manifests(ws_cfg.manifest_paths)
 
 
 @router.get("/assets")
-def get_assets_overview() -> dict[str, Any]:
-    """获取系统完整的资产结构：包、公开接口、内部查找与所有原子清单"""
-    lib_repo, _man_repo, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
-    manifest_paths = config.get_manifest_paths(app_config)
+def get_assets_overview(x_aca_workspace: str | None = Header(None)) -> dict[str, Any]:
+    """获取当前活动工作区的独立资产结构：包、公开接口、内部查找与原子"""
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, man_repo, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
+    manifest_paths = ws_cfg.manifest_paths
 
     library = lib_repo.load_library(library_paths, fail_fast=False)
     interfaces = lib_repo.load_interfaces(library_paths)
 
     packages_map: dict[str, dict[str, Any]] = {}
 
-    # 0. 预扫描所有挂载点下的 package.yaml，并精准标记其所属的 workspace 归属
     for lib_root in library_paths:
         if not lib_root.exists():
             continue
-        workspace_name = lib_root.name
-        workspace_abs = str(lib_root.resolve())
         for pkg_file in lib_root.rglob("package.yaml"):
             try:
                 pkg_data = yaml.safe_load(pkg_file.read_text(encoding="utf-8"))
@@ -143,8 +267,8 @@ def get_assets_overview() -> dict[str, Any]:
                     if p_name not in packages_map:
                         packages_map[p_name] = {
                             "name": p_name,
-                            "workspace": workspace_name,
-                            "workspace_path": workspace_abs,
+                            "workspace": ws_id,
+                            "workspace_path": str(pkg_file.parent.resolve()),
                             "exports": {},
                             "internal_lookups": {},
                             "atoms": [],
@@ -152,13 +276,11 @@ def get_assets_overview() -> dict[str, Any]:
             except (yaml.YAMLError, OSError):
                 continue
 
-    # 收集清单文件并带上 workspace 溯源
+    # 清单收集
     manifest_items: list[dict[str, Any]] = []
     for base_path in manifest_paths:
         if not base_path.is_dir():
             continue
-        m_ws_name = base_path.name
-        m_ws_abs = str(base_path.resolve())
         for yaml_file in base_path.rglob("*.yaml"):
             try:
                 relative = yaml_file.relative_to(base_path)
@@ -166,8 +288,8 @@ def get_assets_overview() -> dict[str, Any]:
                 manifest_items.append(
                     {
                         "name": m_name,
-                        "workspace": m_ws_name,
-                        "workspace_path": m_ws_abs,
+                        "workspace": ws_id,
+                        "workspace_path": str(base_path.resolve()),
                     }
                 )
             except (yaml.YAMLError, OSError, ValueError):
@@ -188,10 +310,9 @@ def get_assets_overview() -> dict[str, Any]:
         }
 
         if pkg not in packages_map:
-            # 回退默认 workspace
             packages_map[pkg] = {
                 "name": pkg,
-                "workspace": "default",
+                "workspace": ws_id,
                 "workspace_path": "",
                 "exports": {},
                 "internal_lookups": {},
@@ -213,7 +334,7 @@ def get_assets_overview() -> dict[str, Any]:
             if pkg not in packages_map:
                 packages_map[pkg] = {
                     "name": pkg,
-                    "workspace": "default",
+                    "workspace": ws_id,
                     "workspace_path": "",
                     "exports": {},
                     "internal_lookups": {},
@@ -225,6 +346,7 @@ def get_assets_overview() -> dict[str, Any]:
                 packages_map[pkg]["internal_lookups"][key] = lookup_item
 
     return {
+        "workspace": ws_id,
         "packages": list(packages_map.values()),
         "manifests": manifest_items,
     }
@@ -236,13 +358,11 @@ def _build_topology_graph(
     library: dict[str, Any],
     interfaces: dict[str, Any],
 ) -> dict[str, Any]:
-    """核心算法：基于 Manifest 数据、原子库和接口映射生成 DAG 依赖图谱"""
     import copy
     import time
 
     t_start = time.perf_counter()
 
-    # 安全应用 overrides 覆写选择器规则
     if "overrides" in manifest_data and isinstance(manifest_data["overrides"], dict):
         interfaces = copy.deepcopy(interfaces)
         for lkey, override in manifest_data["overrides"].items():
@@ -284,7 +404,6 @@ def _build_topology_graph(
     def process_lookup(lkey: str, parent_id: str, context_pkg: str | None = None):
         lookup_node_id = f"lookup::{lkey}"
 
-        # 记忆化剪枝：如果此 Lookup 节点此前已经完全探索展开过，仅需补连边并立即返回，阻断递归环
         if lookup_node_id in visited_nodes:
             add_edge(parent_id, lookup_node_id)
             return
@@ -337,7 +456,6 @@ def _build_topology_graph(
     def process_atom(atom_id: str, parent_id: str):
         atom_node_id = f"atom::{atom_id}"
 
-        # 记忆化剪枝：如果此原子节点此前已经遍历过，仅需补连边并立即返回，避免重复下探 uses 形成死循环
         if atom_node_id in visited_nodes:
             add_edge(parent_id, atom_node_id)
             return
@@ -385,7 +503,7 @@ def _build_topology_graph(
 
     elapsed_ms = (time.perf_counter() - t_start) * 1000
     print(
-        f"[ACA Graph] 清单 '{manifest_label}' 拓扑生成成功: {len(nodes)} 个节点, "
+        f"[ACA Graph] 清单 '{manifest_label}' 拓扑生成成功: {len(nodes)} 节点, "
         f"{len(edges)} 条关系边, 耗时: {elapsed_ms:.2f}ms"
     )
 
@@ -399,14 +517,14 @@ class AdhocGraphRequest(BaseModel):
 
 
 @router.post("/graph/adhoc")
-def get_adhoc_dependency_graph(req: AdhocGraphRequest) -> dict[str, Any]:
-    """根据内存中正在编辑的草稿组件及覆写，即席演算生成有向无环图 (Live Topology Debug)"""
-    lib_repo, _, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
-
-    library = lib_repo.load_library(library_paths, fail_fast=False)
-    interfaces = lib_repo.load_interfaces(library_paths)
+def get_adhoc_dependency_graph(
+    req: AdhocGraphRequest,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, Any]:
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library = lib_repo.load_library(ws_cfg.library_paths, fail_fast=False)
+    interfaces = lib_repo.load_interfaces(ws_cfg.library_paths)
 
     manifest_data = {
         "name": req.name,
@@ -419,16 +537,17 @@ def get_adhoc_dependency_graph(req: AdhocGraphRequest) -> dict[str, Any]:
 
 
 @router.get("/graph")
-def get_dependency_graph(manifest: str) -> dict[str, Any]:
-    """生成指定 Manifest 的完整依赖有向图 (DAG: nodes & edges)"""
-    lib_repo, man_repo, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
-    manifest_paths = config.get_manifest_paths(app_config)
+def get_dependency_graph(
+    manifest: str,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, Any]:
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, man_repo, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
+    manifest_paths = ws_cfg.manifest_paths
 
     manifest_path = man_repo.find_manifest(manifest, manifest_paths)
     if not manifest_path:
-        print(f"[ACA Graph] [404] 未找到清单: {manifest}")
         raise HTTPException(status_code=404, detail=f"Manifest '{manifest}' not found")
 
     manifest_data = man_repo.load_manifest(manifest_path)
@@ -438,24 +557,48 @@ def get_dependency_graph(manifest: str) -> dict[str, Any]:
     return _build_topology_graph(manifest, manifest_data, library, interfaces)
 
 
-class AdhocCompileRequest(BaseModel):
-    imports: list[dict[str, Any]]
-    overrides: dict[str, Any] | None = None
+class BuildRequest(BaseModel):
+    manifest: str
+    is_file: bool = False
     apply_hook: bool = False
 
 
-class SaveManifestRequest(BaseModel):
-    name: str
-    version: str = "1.0.0"
-    description: str = ""
-    imports: list[dict[str, Any]]
-    overrides: dict[str, Any] | None = None
-    identifier: str | None = None  # 支持包含子路径的标识符，如 ats/auditai-agent
-    workspace_path: str | None = None
+class AtomTokenProfile(BaseModel):
+    id: str
+    type: str
+    priority: int | None = None
+    package: str | None = None
+    source_file: str | None = None
+    char_count: int
+    estimated_tokens: int
+    via_lookups: list[str] = []
 
 
-def _execute_hook(app_config: dict[str, Any], prompt_text: str) -> str | None:
-    hook_command = config.get_post_process_hook(app_config)
+class ProfileSummary(BaseModel):
+    total_tokens: int
+    by_pillar: dict[str, int]
+    atoms: list[AtomTokenProfile]
+
+
+class PromptChunk(BaseModel):
+    id: str
+    type: str
+    priority: int | None = None
+    package: str | None = None
+    source_file: str | None = None
+    meta: dict[str, Any] = {}
+    content: str
+    via_lookups: list[str] = []
+
+
+class BuildResponse(BaseModel):
+    prompt: str
+    hooked_prompt: str | None = None
+    chunks: list[PromptChunk] = []
+    profile: ProfileSummary | None = None
+
+
+def _execute_hook(hook_command: str | None, prompt_text: str) -> str | None:
     if not hook_command:
         return None
     try:
@@ -475,14 +618,16 @@ def _execute_hook(app_config: dict[str, Any], prompt_text: str) -> str | None:
 
 
 @router.post("/build", response_model=BuildResponse)
-def build_prompt(req: BuildRequest):
-    """编译指定 Manifest 生成完整 Prompt 文本、结构化 Chunks 并返回上下文剖析画像"""
+def build_prompt(
+    req: BuildRequest,
+    x_aca_workspace: str | None = Header(None),
+):
     from pathlib import Path
 
-    lib_repo, man_repo, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
-    manifest_paths = config.get_manifest_paths(app_config)
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, man_repo, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
+    manifest_paths = ws_cfg.manifest_paths
 
     if req.is_file:
         manifest_path = Path(req.manifest)
@@ -492,7 +637,7 @@ def build_prompt(req: BuildRequest):
         manifest_path = man_repo.find_manifest(req.manifest, manifest_paths)
         if not manifest_path:
             raise HTTPException(
-                status_code=404, detail=f"Manifest '{req.manifest}' not found"
+                status_code=404, detail=f"Manifest '{req.manifest}' not found in workspace '{ws_id}'"
             )
 
     manifest = man_repo.load_manifest(manifest_path)
@@ -534,7 +679,7 @@ def build_prompt(req: BuildRequest):
 
     hooked_output = None
     if req.apply_hook:
-        hooked_output = _execute_hook(app_config, prompt_text)
+        hooked_output = _execute_hook(ws_cfg.post_process_hook, prompt_text)
 
     return BuildResponse(
         prompt=prompt_text,
@@ -544,12 +689,20 @@ def build_prompt(req: BuildRequest):
     )
 
 
+class AdhocCompileRequest(BaseModel):
+    imports: list[dict[str, Any]]
+    overrides: dict[str, Any] | None = None
+    apply_hook: bool = False
+
+
 @router.post("/compile-adhoc", response_model=BuildResponse)
-def compile_adhoc(req: AdhocCompileRequest):
-    """根据前端传入的内存草稿组件列表，进行即席拓扑求解、生成 Chunks 与序列化"""
-    lib_repo, _, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
+def compile_adhoc(
+    req: AdhocCompileRequest,
+    x_aca_workspace: str | None = Header(None),
+):
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
 
     library = lib_repo.load_library(library_paths, fail_fast=False)
     interfaces = lib_repo.load_interfaces(library_paths)
@@ -589,7 +742,7 @@ def compile_adhoc(req: AdhocCompileRequest):
 
     hooked_output = None
     if req.apply_hook:
-        hooked_output = _execute_hook(app_config, prompt_text)
+        hooked_output = _execute_hook(ws_cfg.post_process_hook, prompt_text)
 
     return BuildResponse(
         prompt=prompt_text,
@@ -599,15 +752,29 @@ def compile_adhoc(req: AdhocCompileRequest):
     )
 
 
+class SaveManifestRequest(BaseModel):
+    name: str
+    version: str = "1.0.0"
+    description: str = ""
+    imports: list[dict[str, Any]]
+    overrides: dict[str, Any] | None = None
+    identifier: str | None = None
+    workspace_path: str | None = None
+
+
 @router.post("/manifests")
-def save_manifest(req: SaveManifestRequest):
-    """将装配好的结构持久化保存为 Manifest YAML 文件"""
+def save_manifest(
+    req: SaveManifestRequest,
+    x_aca_workspace: str | None = Header(None),
+):
     from pathlib import Path
 
-    app_config = config.load_config()
-    manifest_paths = config.get_manifest_paths(app_config)
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    _, _, _, _, ws_cfg = _bootstrap(ws_id)
+    manifest_paths = ws_cfg.manifest_paths
+
     if not manifest_paths:
-        raise HTTPException(status_code=400, detail="No manifest_paths configured")
+        raise HTTPException(status_code=400, detail="当前工作区未配置 manifest_paths")
 
     target_dir = (
         Path(req.workspace_path).expanduser().resolve()
@@ -635,43 +802,45 @@ def save_manifest(req: SaveManifestRequest):
         broadcast_change("LIBRARY_DIRTY")
         return {"status": "ok", "path": str(target_file)}
     except (OSError, yaml.YAMLError) as e:
-        raise HTTPException(status_code=500, detail=f"Failed to save manifest: {e}")
+        raise HTTPException(status_code=500, detail=f"保存清单失败: {e}")
 
 
 @router.get("/manifests/{manifest_name:path}")
-def get_manifest_detail(manifest_name: str) -> dict[str, Any]:
-    """获取指定清单的详细结构配置"""
-    _, man_repo, _ = _bootstrap()
-    app_config = config.load_config()
-    manifest_paths = config.get_manifest_paths(app_config)
-    m_path = man_repo.find_manifest(manifest_name, manifest_paths)
+def get_manifest_detail(
+    manifest_name: str,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, Any]:
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    _, man_repo, _, _, ws_cfg = _bootstrap(ws_id)
+    m_path = man_repo.find_manifest(manifest_name, ws_cfg.manifest_paths)
     if not m_path or not m_path.exists():
         raise HTTPException(
-            status_code=404, detail=f"Manifest '{manifest_name}' not found"
+            status_code=404, detail=f"Manifest '{manifest_name}' 在当前工作区未找到"
         )
     try:
         return man_repo.load_manifest(m_path)
     except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=f"Failed to load manifest: {e}")
+        raise HTTPException(status_code=500, detail=f"加载清单失败: {e}")
 
 
 @router.delete("/manifests/{manifest_name:path}")
-def delete_manifest(manifest_name: str) -> dict[str, str]:
-    """删除指定的清单文件"""
-    _, man_repo, _ = _bootstrap()
-    app_config = config.load_config()
-    manifest_paths = config.get_manifest_paths(app_config)
-    m_path = man_repo.find_manifest(manifest_name, manifest_paths)
+def delete_manifest(
+    manifest_name: str,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, str]:
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    _, man_repo, _, _, ws_cfg = _bootstrap(ws_id)
+    m_path = man_repo.find_manifest(manifest_name, ws_cfg.manifest_paths)
     if not m_path or not m_path.exists():
         raise HTTPException(
-            status_code=404, detail=f"Manifest '{manifest_name}' not found"
+            status_code=404, detail=f"Manifest '{manifest_name}' 未找到"
         )
     try:
         m_path.unlink()
         broadcast_change("LIBRARY_DIRTY")
         return {"status": "ok", "deleted": manifest_name}
     except OSError as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete manifest: {e}")
+        raise HTTPException(status_code=500, detail=f"删除清单失败: {e}")
 
 
 class CollectingMessageBus:
@@ -730,14 +899,14 @@ class CollectingMessageBus:
 
 
 @router.get("/lint")
-def run_linter() -> dict[str, Any]:
-    """运行全量规范检查，返回结构化诊断报告"""
+def run_linter(x_aca_workspace: str | None = Header(None)) -> dict[str, Any]:
+    """运行当前活动工作区的全量规范检查，返回结构化诊断报告"""
     from aca_builder.use_cases.linter import LinterService
 
-    lib_repo, man_repo, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
-    manifest_paths = config.get_manifest_paths(app_config)
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, man_repo, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
+    manifest_paths = ws_cfg.manifest_paths
 
     bus = CollectingMessageBus()
     linter = LinterService(bus, lib_repo, man_repo)
@@ -748,25 +917,11 @@ def run_linter() -> dict[str, Any]:
         pass
 
     return {
+        "workspace": ws_id,
         "error_count": bus.error_count,
         "warn_count": bus.warn_count,
         "issues": bus.issues,
     }
-
-
-class CreateLookupRequest(BaseModel):
-    package: str
-    key: str
-    pillar: str  # d1, d2, d3
-    is_public: bool = True
-    description: str = ""
-    selectors: list[dict[str, Any]] = []
-
-
-class UpdateLookupRequest(BaseModel):
-    description: str | None = None
-    selectors: list[dict[str, Any]] | None = None
-    is_public: bool | None = None
 
 
 class EvaluateLookupRequest(BaseModel):
@@ -776,11 +931,14 @@ class EvaluateLookupRequest(BaseModel):
 
 
 @router.post("/lookups/evaluate")
-def evaluate_lookup_adhoc(req: EvaluateLookupRequest) -> dict[str, Any]:
+def evaluate_lookup_adhoc(
+    req: EvaluateLookupRequest,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, Any]:
     """即席演算给定的选择器规则，返回当前库中实时命中的原子列表 (Live Debug)"""
-    lib_repo, _, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
     library = lib_repo.load_library(library_paths, fail_fast=False)
     interfaces = lib_repo.load_interfaces(library_paths)
 
@@ -825,11 +983,14 @@ class AdhocLookupCompileRequest(BaseModel):
 
 
 @router.post("/lookups/compile-adhoc", response_model=BuildResponse)
-def compile_lookup_adhoc(req: AdhocLookupCompileRequest):
+def compile_lookup_adhoc(
+    req: AdhocLookupCompileRequest,
+    x_aca_workspace: str | None = Header(None),
+):
     """根据 Lookup 选择器及其传递闭包依赖，生成局部切片 Prompt 与结构化 Chunks"""
-    lib_repo, _, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
 
     library = lib_repo.load_library(library_paths, fail_fast=False)
     interfaces = lib_repo.load_interfaces(library_paths)
@@ -863,7 +1024,7 @@ def compile_lookup_adhoc(req: AdhocLookupCompileRequest):
 
     hooked_output = None
     if req.apply_hook:
-        hooked_output = _execute_hook(app_config, prompt_text)
+        hooked_output = _execute_hook(ws_cfg.post_process_hook, prompt_text)
 
     return BuildResponse(
         prompt=prompt_text,
@@ -881,11 +1042,14 @@ class AdhocLookupGraphRequest(BaseModel):
 
 
 @router.post("/lookups/graph-adhoc")
-def get_adhoc_lookup_graph(req: AdhocLookupGraphRequest) -> dict[str, Any]:
+def get_adhoc_lookup_graph(
+    req: AdhocLookupGraphRequest,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, Any]:
     """以当前 Lookup 为根节点，生成包含一阶命中及 D2 级联依赖的有向拓扑图"""
-    lib_repo, _, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
 
     library = lib_repo.load_library(library_paths, fail_fast=False)
     interfaces = lib_repo.load_interfaces(library_paths)
@@ -1029,39 +1193,20 @@ def get_adhoc_lookup_graph(req: AdhocLookupGraphRequest) -> dict[str, Any]:
     return {"nodes": nodes, "edges": edges}
 
 
-class OpenObsidianRequest(BaseModel):
-    file_path: str
-
-
-@router.post("/system/open-obsidian")
-def open_in_obsidian(req: OpenObsidianRequest):
-    """通过系统命令调起 Obsidian 打开对应路径文件"""
-    import sys
-    import urllib.parse
-    from pathlib import Path
-
-    p = Path(req.file_path)
-    if not p.exists():
-        raise HTTPException(status_code=404, detail=f"文件不存在: {req.file_path}")
-
-    abs_path = str(p.resolve())
-    obsidian_uri = f"obsidian://open?path={urllib.parse.quote(abs_path)}"
-
-    try:
-        if sys.platform == "darwin":
-            subprocess.run(["open", obsidian_uri], check=False)
-        elif sys.platform == "win32":
-            subprocess.run(["start", obsidian_uri], shell=True, check=False)
-        else:
-            subprocess.run(["xdg-open", obsidian_uri], check=False)
-        return {"status": "ok", "uri": obsidian_uri}
-    except Exception as e:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=f"启动 Obsidian 失败: {e}")
+class CreateLookupRequest(BaseModel):
+    package: str
+    key: str
+    pillar: str  # d1, d2, d3
+    is_public: bool = True
+    description: str = ""
+    selectors: list[dict[str, Any]] = []
 
 
 @router.post("/lookups")
-def create_or_update_lookup(req: CreateLookupRequest):
-    """创建或覆盖 D4 查找表"""
+def create_or_update_lookup(
+    req: CreateLookupRequest,
+    x_aca_workspace: str | None = Header(None),
+):
     if req.pillar not in ["d1", "d2", "d3"]:
         raise HTTPException(status_code=400, detail="构造类别必须为 d1, d2 或 d3")
 
@@ -1073,10 +1218,11 @@ def create_or_update_lookup(req: CreateLookupRequest):
             detail=f"查找接口名称必须以 '{expected_prefix}' 开头",
         )
 
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    _, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
     if not library_paths:
-        raise HTTPException(status_code=400, detail="未配置知识库路径")
+        raise HTTPException(status_code=400, detail="当前工作区未配置知识库路径")
 
     target_pkg_dir = None
     target_pkg_yaml = None
@@ -1146,54 +1292,14 @@ def create_or_update_lookup(req: CreateLookupRequest):
         raise HTTPException(status_code=500, detail=f"保存 Lookup 失败: {e}")
 
 
-@router.put("/lookups/{lookup_key:path}")
-def update_lookup(lookup_key: str, req: UpdateLookupRequest):
-    """就地修改已存在的 Lookup 定义（描述、选择器等）"""
-    lib_repo, _, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
-    interfaces = lib_repo.load_interfaces(library_paths)
-
-    lookup_def = interfaces.get("lookups", {}).get(lookup_key)
-    if not lookup_def:
-        raise HTTPException(status_code=404, detail=f"Lookup '{lookup_key}' not found")
-
-    pkg_name = lookup_def.get("package")
-    pillar = lookup_def.get("pillar")
-    is_public = lookup_def.get("visibility") == "public"
-
-    if not pkg_name:
-        raise HTTPException(
-            status_code=400, detail="Cannot edit legacy non-packaged lookup directly"
-        )
-
-    new_desc = (
-        req.description
-        if req.description is not None
-        else lookup_def.get("description", "")
-    )
-    new_selectors = (
-        req.selectors if req.selectors is not None else lookup_def.get("selectors", [])
-    )
-    new_public = req.is_public if req.is_public is not None else is_public
-
-    create_req = CreateLookupRequest(
-        package=pkg_name,
-        key=lookup_key,
-        pillar=pillar,
-        is_public=new_public,
-        description=new_desc,
-        selectors=new_selectors,
-    )
-    return create_or_update_lookup(create_req)
-
-
 @router.delete("/lookups/{lookup_key:path}")
-def delete_lookup(lookup_key: str):
-    """删除指定的 Lookup 定义（从 package.yaml 或 d4/lookups.yaml 中移除）"""
-    lib_repo, _, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
+def delete_lookup(
+    lookup_key: str,
+    x_aca_workspace: str | None = Header(None),
+):
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
     interfaces = lib_repo.load_interfaces(library_paths)
 
     lookup_def = interfaces.get("lookups", {}).get(lookup_key)
@@ -1203,11 +1309,6 @@ def delete_lookup(lookup_key: str):
     pkg_name = lookup_def.get("package")
     raw_key = lookup_key.split("::")[-1]
     is_public = lookup_def.get("visibility") == "public"
-
-    if not pkg_name:
-        raise HTTPException(
-            status_code=400, detail="Cannot delete legacy non-packaged lookup directly"
-        )
 
     target_pkg_dir = None
     target_pkg_yaml = None
@@ -1285,12 +1386,15 @@ class CreateAtomRequest(BaseModel):
 
 
 @router.post("/atoms")
-def create_atom(req: CreateAtomRequest):
-    """创建并保存新的原子组件到对应的包目录下"""
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
+def create_atom(
+    req: CreateAtomRequest,
+    x_aca_workspace: str | None = Header(None),
+):
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    _, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
     if not library_paths:
-        raise HTTPException(status_code=400, detail="未配置知识库路径")
+        raise HTTPException(status_code=400, detail="当前工作区未配置知识库路径")
 
     target_pkg_dir = None
     for lib_root in library_paths:
@@ -1348,14 +1452,15 @@ def create_atom(req: CreateAtomRequest):
 
 
 @router.get("/atoms/{atom_id}")
-def get_atom_detail(atom_id: str) -> dict[str, Any]:
-    """获取单个原子的完整内容（包含元数据、正文以及原始 markdown）"""
+def get_atom_detail(
+    atom_id: str,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, Any]:
     from pathlib import Path
 
-    lib_repo, _, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
-    library = lib_repo.load_library(library_paths, fail_fast=False)
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library = lib_repo.load_library(ws_cfg.library_paths, fail_fast=False)
 
     atom = library.get(atom_id)
     if not atom:
@@ -1365,7 +1470,7 @@ def get_atom_detail(atom_id: str) -> dict[str, Any]:
     try:
         raw_text = source_path.read_text(encoding="utf-8")
     except OSError as e:
-        raise HTTPException(status_code=500, detail=f"Failed to read atom file: {e}")
+        raise HTTPException(status_code=500, detail=f"读取原子失败: {e}")
 
     return {
         "id": atom_id,
@@ -1379,19 +1484,21 @@ def get_atom_detail(atom_id: str) -> dict[str, Any]:
 
 class UpdateAtomRequest(BaseModel):
     raw_content: str | None = None
-    content: str | None = None  # 支持仅更新正文
-    meta: dict[str, Any] | None = None  # 支持结构化元数据直接覆写
+    content: str | None = None
+    meta: dict[str, Any] | None = None
 
 
 @router.put("/atoms/{atom_id}")
-def update_atom(atom_id: str, req: UpdateAtomRequest) -> dict[str, str]:
-    """保存并覆盖原子的 Markdown 文件内容或正文"""
+def update_atom(
+    atom_id: str,
+    req: UpdateAtomRequest,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, str]:
     from pathlib import Path
 
-    lib_repo, _, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
-    library = lib_repo.load_library(library_paths, fail_fast=False)
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library = lib_repo.load_library(ws_cfg.library_paths, fail_fast=False)
 
     atom = library.get(atom_id)
     if not atom:
@@ -1438,18 +1545,19 @@ def update_atom(atom_id: str, req: UpdateAtomRequest) -> dict[str, str]:
         broadcast_change("LIBRARY_DIRTY")
         return {"status": "ok", "id": atom_id}
     except OSError as e:
-        raise HTTPException(status_code=500, detail=f"Failed to write atom file: {e}")
+        raise HTTPException(status_code=500, detail=f"写入原子失败: {e}")
 
 
 @router.delete("/atoms/{atom_id}")
-def delete_atom(atom_id: str) -> dict[str, str]:
-    """物理删除指定的原子组件 Markdown 文件"""
+def delete_atom(
+    atom_id: str,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, str]:
     from pathlib import Path
 
-    lib_repo, _, _ = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
-    library = lib_repo.load_library(library_paths, fail_fast=False)
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library = lib_repo.load_library(ws_cfg.library_paths, fail_fast=False)
 
     atom = library.get(atom_id)
     if not atom:
@@ -1462,7 +1570,7 @@ def delete_atom(atom_id: str) -> dict[str, str]:
         broadcast_change("LIBRARY_DIRTY")
         return {"status": "ok", "deleted": atom_id}
     except OSError as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete atom file: {e}")
+        raise HTTPException(status_code=500, detail=f"删除原子失败: {e}")
 
 
 class CreatePackageRequest(BaseModel):
@@ -1473,14 +1581,17 @@ class CreatePackageRequest(BaseModel):
 
 
 @router.post("/packages")
-def create_package(req: CreatePackageRequest) -> dict[str, Any]:
-    """创建新的组件包与基础骨架目录"""
+def create_package(
+    req: CreatePackageRequest,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, Any]:
     from pathlib import Path
 
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    _, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
     if not library_paths:
-        raise HTTPException(status_code=400, detail="未配置知识库路径")
+        raise HTTPException(status_code=400, detail="当前工作区未配置知识库路径")
 
     for lib_root in library_paths:
         if not lib_root.exists():
@@ -1491,7 +1602,7 @@ def create_package(req: CreatePackageRequest) -> dict[str, Any]:
                 if pkg_data and pkg_data.get("name") == req.name:
                     raise HTTPException(
                         status_code=400,
-                        detail=f"全局范围内已存在同名组件包: '{req.name}'",
+                        detail=f"当前工作区内已存在同名组件包: '{req.name}'",
                     )
             except (yaml.YAMLError, OSError):
                 continue
@@ -1536,14 +1647,17 @@ def create_package(req: CreatePackageRequest) -> dict[str, Any]:
 
 
 @router.delete("/packages/{package_name}")
-def delete_package(package_name: str) -> dict[str, str]:
-    """物理删除指定的组件包及其目录下所有文件"""
+def delete_package(
+    package_name: str,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, str]:
     import shutil
 
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    _, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
     if not library_paths:
-        raise HTTPException(status_code=400, detail="未配置知识库路径")
+        raise HTTPException(status_code=400, detail="当前工作区未配置知识库路径")
 
     target_pkg_dir = None
     for lib_root in library_paths:
@@ -1573,12 +1687,40 @@ def delete_package(package_name: str) -> dict[str, str]:
         raise HTTPException(status_code=500, detail=f"删除组件包失败: {e}")
 
 
+class OpenObsidianRequest(BaseModel):
+    file_path: str
+
+
+@router.post("/system/open-obsidian")
+def open_in_obsidian(req: OpenObsidianRequest):
+    import sys
+    import urllib.parse
+    from pathlib import Path
+
+    p = Path(req.file_path)
+    if not p.exists():
+        raise HTTPException(status_code=404, detail=f"文件不存在: {req.file_path}")
+
+    abs_path = str(p.resolve())
+    obsidian_uri = f"obsidian://open?path={urllib.parse.quote(abs_path)}"
+
+    try:
+        if sys.platform == "darwin":
+            subprocess.run(["open", obsidian_uri], check=False)
+        elif sys.platform == "win32":
+            subprocess.run(["start", obsidian_uri], shell=True, check=False)
+        else:
+            subprocess.run(["xdg-open", obsidian_uri], check=False)
+        return {"status": "ok", "uri": obsidian_uri}
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"启动 Obsidian 失败: {e}")
+
+
 active_subscribers: set[asyncio.Queue] = set()
 
 
 @router.get("/events/stream")
 async def event_stream():
-    """Server-Sent Events 长连接，向前端推送文件系统变更事件"""
     queue: asyncio.Queue = asyncio.Queue(maxsize=100)
     active_subscribers.add(queue)
 

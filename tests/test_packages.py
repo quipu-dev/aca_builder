@@ -6,13 +6,12 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from aca_builder.core import (
-    _resolve_lookup_by_key,
-    evaluate_lookup,
-    load_interfaces,
-    load_library,
-)
 from aca_builder.domain.events import BuildError
+from aca_builder.domain.services import (
+    evaluate_lookup,
+    resolve_lookup_by_key,
+)
+from aca_builder.infra.filesystem import FSLibraryRepository
 from aca_builder.main import app
 
 runner = CliRunner()
@@ -97,13 +96,11 @@ def setup_package_env(tmp_path: Path, monkeypatch):
 def test_package_meta_injection(setup_package_env):
     """Test that atoms inside a directory with package.yaml get the 'package' meta."""
     lib_path = setup_package_env
-    library = load_library([lib_path])
+    repo = FSLibraryRepository()
+    library = repo.load_library([lib_path])
 
     assert "atom-a-core" in library
-    # Atom A is inside pkg_a
     assert library["atom-a-core"]["package"] == "pkg_a"
-
-    # Atom B is in root, no package
     assert library["atom-b-user"]["package"] is None
 
 
@@ -113,11 +110,12 @@ def test_ref_delegation_resolution(setup_package_env):
     Public Export (d1l-public-facade) -> Ref -> Private Lookup (d1l-internal-impl) -> Query -> Atom A
     """
     lib_path = setup_package_env
-    library = load_library([lib_path])
-    interfaces = load_interfaces([lib_path])
+    repo = FSLibraryRepository()
+    library = repo.load_library([lib_path])
+    interfaces = repo.load_interfaces([lib_path])
 
     # Locate the public lookup
-    public_def = _resolve_lookup_by_key(
+    public_def = resolve_lookup_by_key(
         "pkg_a::d1l-public-facade", context_pkg=None, interfaces=interfaces
     )
     assert public_def is not None
@@ -132,11 +130,11 @@ def test_ref_delegation_resolution(setup_package_env):
 def test_explicit_private_access_fails(setup_package_env):
     """Test that accessing a private lookup explicitly via pkg::name fails."""
     lib_path = setup_package_env
-    interfaces = load_interfaces([lib_path])
+    repo = FSLibraryRepository()
+    interfaces = repo.load_interfaces([lib_path])
 
-    # Try to resolve internal impl explicitly from outside
     with pytest.raises(BuildError) as excinfo:
-        _resolve_lookup_by_key(
+        resolve_lookup_by_key(
             "pkg_a::d1l-internal-impl", context_pkg="other_pkg", interfaces=interfaces
         )
 

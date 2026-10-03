@@ -1,6 +1,5 @@
 import typer
 
-from aca_builder import config
 from aca_builder.domain.events import BuildError
 from aca_builder.use_cases.debugger import DebuggerService
 
@@ -9,13 +8,15 @@ def debug_lookup(
     lookup_key: str = typer.Argument(
         ..., help="The lookup key to debug, e.g., 'pkg::d1l-name'"
     ),
+    workspace: str | None = typer.Option(
+        None, "--workspace", "-w", help="Target workspace identifier"
+    ),
 ):
     """Debug a lookup key to see which atoms it resolves to."""
     from aca_builder.commands import _bootstrap
 
-    lib_repo, _, bus = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
+    lib_repo, _, bus, _ws_id, ws_cfg = _bootstrap(workspace)
+    library_paths = ws_cfg.library_paths
 
     debugger = DebuggerService(bus, lib_repo)
     try:

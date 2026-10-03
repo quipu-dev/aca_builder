@@ -2,7 +2,6 @@ import subprocess
 
 import typer
 
-from aca_builder import config
 from aca_builder.domain.events import BuildError
 from aca_builder.use_cases.builder import BuilderService
 
@@ -12,15 +11,17 @@ def build(
     file: bool = typer.Option(
         False, "--file", "-f", help="Treat identifier as file path"
     ),
+    workspace: str | None = typer.Option(
+        None, "--workspace", "-w", help="Target workspace identifier"
+    ),
 ):
     """Build a compiled prompt from an ACA manifest identifier or file path."""
     from aca_builder.commands import _bootstrap
 
-    lib_repo, man_repo, bus = _bootstrap()
+    lib_repo, man_repo, bus, _ws_id, ws_cfg = _bootstrap(workspace)
     builder = BuilderService(lib_repo, man_repo)
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
-    manifest_paths = config.get_manifest_paths(app_config)
+    library_paths = ws_cfg.library_paths
+    manifest_paths = ws_cfg.manifest_paths
 
     if not library_paths:
         bus.error("system.config.no_lib")
@@ -31,7 +32,7 @@ def build(
             manifest_identifier, library_paths, manifest_paths, is_file_path=file
         )
 
-        hook_command = config.get_post_process_hook(app_config)
+        hook_command = ws_cfg.post_process_hook
         if hook_command:
             process = subprocess.run(
                 hook_command,

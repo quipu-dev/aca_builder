@@ -7,12 +7,12 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
+from aca_builder import config
 from aca_builder.infra.filesystem import FSLibraryRepository, FSManifestRepository
 from aca_builder.main import app
 
 runner = CliRunner()
 
-# --- Reusable Valid Atoms ---
 VALID_D1 = """---
 id: d1-valid
 type: d1
@@ -52,7 +52,6 @@ lookups:
       - query: { id: "d3-valid-p0" }
 """
 
-# --- Package-specific Atoms and Lookups ---
 PKG_ALPHA_CONFIG = """
 name: "alpha"
 exports:
@@ -86,7 +85,6 @@ type: d1
 Alpha Private Content
 """
 
-
 PKG_BETA_CONFIG = """
 name: "beta"
 exports:
@@ -112,53 +110,54 @@ def setup_lint_environment(tmp_path: Path, monkeypatch):
     manifests_path = tmp_path / "lint_test_manifests"
     manifests_path.mkdir()
 
-    # --- Create Global/Legacy Components ---
     (lib_path / "d1").mkdir()
     (lib_path / "d2").mkdir()
     (lib_path / "d3").mkdir()
     (lib_path / "d4").mkdir()
 
-    (lib_path / "d1/valid.md").write_text(VALID_D1)
-    (lib_path / "d2/valid.md").write_text(VALID_D2)
-    (lib_path / "d3/valid.md").write_text(VALID_D3_P0)
-    (lib_path / "kernel.md").write_text(VALID_KERNEL)
-    (lib_path / "d4/lookups_global.yaml").write_text(VALID_D4_GLOBAL)
+    (lib_path / "d1/valid.md").write_text(VALID_D1, encoding="utf-8")
+    (lib_path / "d2/valid.md").write_text(VALID_D2, encoding="utf-8")
+    (lib_path / "d3/valid.md").write_text(VALID_D3_P0, encoding="utf-8")
+    (lib_path / "kernel.md").write_text(VALID_KERNEL, encoding="utf-8")
+    (lib_path / "d4/lookups_global.yaml").write_text(VALID_D4_GLOBAL, encoding="utf-8")
 
-    # Legacy atom (no package.yaml, not kernel)
     (lib_path / "d1/legacy_atom.md").write_text(
-        "---id: legacy-atom\ntype: d1\n---\nLegacy content."
+        "---id: legacy-atom\ntype: d1\n---\nLegacy content.", encoding="utf-8"
     )
 
-    # --- Create Package Alpha ---
     pkg_alpha_path = lib_path / "pkg_alpha"
     pkg_alpha_path.mkdir()
-    (pkg_alpha_path / "package.yaml").write_text(PKG_ALPHA_CONFIG)
+    (pkg_alpha_path / "package.yaml").write_text(PKG_ALPHA_CONFIG, encoding="utf-8")
     (pkg_alpha_path / "d4").mkdir()
-    (pkg_alpha_path / "d4/lookups.yaml").write_text(PKG_ALPHA_D4)
+    (pkg_alpha_path / "d4/lookups.yaml").write_text(PKG_ALPHA_D4, encoding="utf-8")
     (pkg_alpha_path / "d1").mkdir()
-    (pkg_alpha_path / "d1/atom_alpha.md").write_text(ATOM_ALPHA)
-    (pkg_alpha_path / "d1/atom_alpha_private.md").write_text(ATOM_ALPHA_PRIVATE)
+    (pkg_alpha_path / "d1/atom_alpha.md").write_text(ATOM_ALPHA, encoding="utf-8")
+    (pkg_alpha_path / "d1/atom_alpha_private.md").write_text(ATOM_ALPHA_PRIVATE, encoding="utf-8")
 
-    # --- Create Package Beta ---
     pkg_beta_path = lib_path / "pkg_beta"
     pkg_beta_path.mkdir()
-    (pkg_beta_path / "package.yaml").write_text(PKG_BETA_CONFIG)
+    (pkg_beta_path / "package.yaml").write_text(PKG_BETA_CONFIG, encoding="utf-8")
     (pkg_beta_path / "d1").mkdir()
-    (pkg_beta_path / "d1/atom_beta.md").write_text(ATOM_BETA)
+    (pkg_beta_path / "d1/atom_beta.md").write_text(ATOM_BETA, encoding="utf-8")
 
-    # --- Config File Setup ---
     config_dir = tmp_path / "config"
     config_dir.mkdir()
     config_file = config_dir / "config.yaml"
 
     config_data = {
-        "library_paths": [str(lib_path)],
-        "manifest_paths": [str(manifests_path)],
+        "default_workspace": "lint_ws",
+        "workspaces": {
+            "lint_ws": {
+                "name": "Lint Workspace",
+                "libraries": [str(lib_path)],
+                "manifests": [str(manifests_path)],
+            }
+        },
     }
-    config_file.write_text(yaml.dump(config_data))
+    config_file.write_text(yaml.dump(config_data), encoding="utf-8")
 
-    # --- Monkeypatching ---
     monkeypatch.setattr("aca_builder.config.CONFIG_PATH", config_file)
+    monkeypatch.setenv("ACA_CACHE_DB_PATH", str(tmp_path / "cache.db"))
 
     return lib_path, manifests_path
 
@@ -166,10 +165,12 @@ def setup_lint_environment(tmp_path: Path, monkeypatch):
 @pytest.fixture
 def mock_deps(monkeypatch):
     mock_bus = MagicMock()
+    ws_id, ws_cfg = config.resolve_workspace()
     real_lib = FSLibraryRepository()
     real_man = FSManifestRepository()
     monkeypatch.setattr(
-        "aca_builder.commands._bootstrap", lambda: (real_lib, real_man, mock_bus)
+        "aca_builder.commands._bootstrap",
+        lambda ws=None: (real_lib, real_man, mock_bus, ws_id, ws_cfg),
     )
     return mock_bus
 
@@ -187,11 +188,7 @@ imports:
     result = runner.invoke(app, ["lint"])
 
     assert result.exit_code == 0
-    # 验证意图
-    # 注意：d1/valid.md, d2/valid.md, d3/valid.md 以及 d1/legacy_atom.md 都是 legacy 的
-    # 所以会发出多个警告。我们只验证特定的一个存在即可使用 assert_any_call
     mock_deps.warn.assert_any_call("linter.atom.legacy", atom_id="legacy-atom")
-    # 验证没有抛出错误
     mock_deps.lint_error.assert_not_called()
     mock_deps.success.assert_called_with("linter.success")
 
@@ -224,7 +221,7 @@ lookups:
   wrong-prefix-lookup:
     pillar: d1
     selectors: []
-""")
+""", encoding="utf-8")
     result = runner.invoke(app, ["lint"])
     assert result.exit_code != 0
     mock_deps.lint_error.assert_any_call(
@@ -234,17 +231,15 @@ lookups:
 
 def test_lint_d4_naming_violation_mismatch_pillar(setup_lint_environment, mock_deps):
     lib_path, _ = setup_lint_environment
-    # Add a D4 with mismatch directly in lib
     (lib_path / "d4" / "mismatch.yaml").write_text("""
 type: d4
 lookups:
   d1l-mismatch:
-    pillar: d3 # Mismatch with 'd1l-'
+    pillar: d3
     selectors: []
-""")
+""", encoding="utf-8")
     result = runner.invoke(app, ["lint"])
     assert result.exit_code != 0
-    # 修改断言：Linter 先检查前缀是否匹配 pillar。这里 pillar 是 d3，前缀应为 d3l-，但 key 是 d1l-mismatch，所以是无效前缀错误。
     mock_deps.lint_error.assert_any_call(
         "linter.lookup.invalid_prefix", key="d1l-mismatch", prefix="d3l-"
     )
@@ -252,14 +247,12 @@ lookups:
 
 def test_lint_missing_required_metadata(setup_lint_environment, mock_deps):
     lib_path, _ = setup_lint_environment
-    (lib_path / "d1" / "missing_id.md").write_text("---\ntype: d1\n---\nContent")
+    (lib_path / "d1" / "missing_id.md").write_text("---\ntype: d1\n---\nContent", encoding="utf-8")
     result = runner.invoke(app, ["lint"])
 
     assert result.exit_code != 0
-    # 验证意图：是否捕捉到了解析错误
     mock_deps.lint_error.assert_any_call("linter.atom.parse_error", path=ANY, error=ANY)
 
-    # 查找特定的调用来验证 error 参数内容
     found = False
     for call in mock_deps.lint_error.call_args_list:
         if call.args[
@@ -269,9 +262,7 @@ def test_lint_missing_required_metadata(setup_lint_environment, mock_deps):
         ):
             found = True
             break
-    assert found, (
-        "Did not find expected 'missing required metadata' error in mock calls"
-    )
+    assert found, "Did not find expected 'missing required metadata' error in mock calls"
 
 
 def test_lint_manifest_nonexistent_lookup(setup_lint_environment, mock_deps):
@@ -280,13 +271,12 @@ def test_lint_manifest_nonexistent_lookup(setup_lint_environment, mock_deps):
 name: Bad Manifest
 imports:
   - lookup: d1l-totally-fake
-""")
+""", encoding="utf-8")
     result = runner.invoke(app, ["lint"])
     assert result.exit_code != 0
-    # 修正断言：Linter 使用文件名 stem 作为 manifest 标识
     mock_deps.lint_error.assert_any_call(
         "linter.manifest.lookup_missing",
-        manifest="bad_manifest",  # stem of bad_manifest.yaml
+        manifest="bad_manifest",
         file="bad_manifest.yaml",
         key="d1l-totally-fake",
         index=0,
@@ -298,19 +288,17 @@ def test_lint_manifest_private_lookup_violation(setup_lint_environment, mock_dep
     (manifests_path / "private_violator.yaml").write_text("""
 name: Private Violator
 imports:
-  - lookup: alpha::d1l-private-alpha # This is private to pkg_alpha
-""")
+  - lookup: alpha::d1l-private-alpha
+""", encoding="utf-8")
     result = runner.invoke(app, ["lint"])
     assert result.exit_code != 0
 
-    # 修改断言：当 _resolve_lookup_by_key 主动抛出 BuildError 时，linter 会捕获并使用 access_denied_internal
     mock_deps.lint_error.assert_any_call(
         "linter.manifest.access_denied_internal",
-        manifest="private_violator",  # stem
+        manifest="private_violator",
         file="private_violator.yaml",
         error=ANY,
     )
-    # 验证错误消息内容
     found_error = False
     for call in mock_deps.lint_error.call_args_list:
         if call.args[0] == "linter.manifest.access_denied_internal":
@@ -328,7 +316,7 @@ def test_lint_manifest_invalid_yaml(setup_lint_environment, mock_deps):
     (manifests_path / "malformed_manifest.yaml").write_text("""
 name: Malformed Manifest
 imports: [unclosed_list
-""")
+""", encoding="utf-8")
     result = runner.invoke(app, ["lint"])
     assert result.exit_code != 0
     mock_deps.lint_error.assert_any_call(
@@ -348,7 +336,7 @@ name: Cross Package Public
 imports:
   - lookup: alpha::d1l-public-alpha
   - lookup: beta::d1l-public-beta
-""")
+""", encoding="utf-8")
     result = runner.invoke(app, ["lint"])
     assert result.exit_code == 0
     mock_deps.lint_error.assert_not_called()
@@ -360,10 +348,16 @@ def test_lint_manifest_no_manifests_configured(setup_lint_environment, mock_deps
     config_dir = lib_path.parent / "config"
     config_file = config_dir / "config.yaml"
     config_data = {
-        "library_paths": [str(lib_path)],
-        "manifest_paths": [],  # Empty manifest paths
+        "default_workspace": "lint_ws",
+        "workspaces": {
+            "lint_ws": {
+                "name": "Lint Workspace",
+                "libraries": [str(lib_path)],
+                "manifests": [],
+            }
+        },
     }
-    config_file.write_text(yaml.dump(config_data))
+    config_file.write_text(yaml.dump(config_data), encoding="utf-8")
 
     result = runner.invoke(app, ["lint"])
     assert result.exit_code == 0

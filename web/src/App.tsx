@@ -2,17 +2,20 @@ import { CommandPalette } from '@/components/CommandPalette';
 import { TabPane } from '@/components/layout/TabPane';
 import { CreateManifestModal } from '@/components/modals/CreateManifestModal';
 import { CreatePackageModal } from '@/components/modals/CreatePackageModal';
+import { CreateWorkspaceModal } from '@/components/modals/CreateWorkspaceModal';
 import { Button } from '@/components/ui/button';
 import { ManifestExplorer } from '@/features/explorer/ManifestExplorer';
 import { PackageExplorer, type PackageItem } from '@/features/explorer/PackageExplorer';
-import { useConfigStore } from '@/stores/config-store';
 import { type IdeTab, useIdeStore } from '@/stores/ide-store';
+import { useWorkspaceStore } from '@/stores/workspace-store';
 import {
   AlertCircle,
   AlertOctagon,
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
+  Check,
+  ChevronDown,
   Cpu,
   ExternalLink,
   FilePlus2,
@@ -37,14 +40,15 @@ export interface LintIssue {
 
 export function App() {
   const ideStore = useIdeStore();
-  const configStore = useConfigStore();
+  const wsStore = useWorkspaceStore();
+
   const [manifests, setManifests] = useState<
     Array<string | { name: string; workspace?: string; workspace_path?: string }>
   >([]);
   const [packages, setPackages] = useState<PackageItem[]>([]);
   const [status, setStatus] = useState<string>('检测中...');
 
-  // 新建资产的 Modal 状态控制
+  // 新建资产 Modal
   const [isCreatePkgOpen, setIsCreatePkgOpen] = useState(false);
   const [newPkgName, setNewPkgName] = useState('');
   const [newPkgWs, setNewPkgWs] = useState('');
@@ -52,6 +56,9 @@ export function App() {
   const [isCreateManOpen, setIsCreateManOpen] = useState(false);
   const [newManName, setNewManName] = useState('');
   const [newManWs, setNewManWs] = useState('');
+
+  const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
+  const [isWsDropdownOpen, setIsWsDropdownOpen] = useState(false);
 
   // 命令面板
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -75,7 +82,7 @@ export function App() {
   const handleSidebarPointerMove = useCallback(
     (e: PointerEvent) => {
       if (!isDraggingSidebar) return;
-      const newWidth = e.clientX - 48; // 48px 是左侧活动栏宽度
+      const newWidth = e.clientX - 48;
       if (newWidth >= 180 && newWidth <= 600) {
         setSidebarWidth(newWidth);
       }
@@ -98,7 +105,6 @@ export function App() {
     };
   }, [isDraggingSidebar, handleSidebarPointerMove, handleSidebarPointerUp]);
 
-  // 侧边栏子视图
   const [explorerTab, setExplorerTab] = useState<'manifests' | 'packages'>('manifests');
 
   const fetchAssets = useCallback(() => {
@@ -127,10 +133,16 @@ export function App() {
       .finally(() => setLintLoading(false));
   }, []);
 
-  const { fetchConfig } = configStore;
-
+  // 初始化加载工作区与资产
   useEffect(() => {
-    fetchConfig();
+    useWorkspaceStore
+      .getState()
+      .fetchWorkspaces()
+      .then(() => {
+        const activeId = useWorkspaceStore.getState().activeWorkspaceId || 'default';
+        useIdeStore.getState().setCurrentWorkspace(activeId);
+      });
+
     fetch('/api/health')
       .then((res) => res.json())
       .then((data) => setStatus(data.status === 'ok' ? '正常' : data.status))
@@ -152,41 +164,46 @@ export function App() {
         setIsCommandPaletteOpen((prev) => !prev);
       } else if (isMod && e.key.toLowerCase() === 't') {
         e.preventDefault();
-        handleCreateEmptyTab();
+        useIdeStore.getState().openTab(
+          {
+            id: `empty_${Date.now()}`,
+            type: 'empty',
+            title: '新标签页',
+            closable: true,
+          },
+          { newTab: true },
+        );
       } else if (isMod && e.key === '[') {
         e.preventDefault();
-        ideStore.goBack();
+        useIdeStore.getState().goBack();
       } else if (isMod && e.key === ']') {
         e.preventDefault();
-        ideStore.goForward();
+        useIdeStore.getState().goForward();
       } else if (e.altKey && e.key === 'ArrowLeft') {
         e.preventDefault();
-        ideStore.goBack();
+        useIdeStore.getState().goBack();
       } else if (e.altKey && e.key === 'ArrowRight') {
         e.preventDefault();
-        ideStore.goForward();
-      }
-    };
-
-    const handleMouseUp = (e: MouseEvent) => {
-      if (e.button === 3) {
-        e.preventDefault();
-        ideStore.goBack();
-      } else if (e.button === 4) {
-        e.preventDefault();
-        ideStore.goForward();
+        useIdeStore.getState().goForward();
       }
     };
 
     window.addEventListener('keydown', handleGlobalKeyDown);
-    window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
       eventSource.close();
       window.removeEventListener('keydown', handleGlobalKeyDown);
-      window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [fetchConfig, fetchAssets, fetchLintReport, ideStore.goBack, ideStore.goForward]);
+  }, [fetchAssets, fetchLintReport]);
+
+  // 当切换工作区时刷新数据
+  const handleSelectWorkspace = async (wsId: string) => {
+    setIsWsDropdownOpen(false);
+    await wsStore.switchWorkspace(wsId);
+    ideStore.setCurrentWorkspace(wsId);
+    fetchAssets();
+    fetchLintReport();
+  };
 
   const handleOpenManifestTab = (
     mName: string,
@@ -298,7 +315,8 @@ export function App() {
 
   const handleCreateNewManifest = () => {
     setNewManName(`未命名蓝图_${Date.now().toString().slice(-4)}`);
-    setNewManWs(configStore.config?.manifest_paths?.[0] || '');
+    const activeWs = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
+    setNewManWs(activeWs?.manifest_paths?.[0] || '');
     setIsCreateManOpen(true);
   };
 
@@ -333,7 +351,7 @@ export function App() {
 
   const handleDeleteManifest = async (mName: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm(`确定要删除清单 "${mName}" 吗？此操作不可逆。`)) return;
+    if (!window.confirm(`确定要在当前工作区删除清单 "${mName}" 吗？`)) return;
     try {
       const res = await fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
         method: 'DELETE',
@@ -366,9 +384,10 @@ export function App() {
 
   const handleCreatePackage = useCallback(() => {
     setNewPkgName('');
-    setNewPkgWs(configStore.config?.library_paths?.[0] || '');
+    const activeWs = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
+    setNewPkgWs(activeWs?.library_paths?.[0] || '');
     setIsCreatePkgOpen(true);
-  }, [configStore.config]);
+  }, [wsStore.workspaces, wsStore.activeWorkspaceId]);
 
   const submitCreatePackage = useCallback(() => {
     if (!newPkgName.trim()) return;
@@ -397,8 +416,7 @@ export function App() {
   const handleDeletePackage = useCallback(
     (pkgName: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!window.confirm(`确定要彻底删除组件包 "${pkgName}" 及其所有文件吗？此操作不可逆。`))
-        return;
+      if (!window.confirm(`确定要删除组件包 "${pkgName}" 吗？`)) return;
       fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
         method: 'DELETE',
       })
@@ -464,6 +482,8 @@ export function App() {
   const canGoBack = ideStore.historyIndex > 0;
   const canGoForward = ideStore.historyIndex < ideStore.navigationHistory.length - 1;
 
+  const currentWsObj = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
+
   return (
     <div className="flex h-screen flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans select-none">
       <div className="flex flex-1 overflow-hidden">
@@ -480,7 +500,7 @@ export function App() {
                 ? 'text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40'
                 : 'text-slate-400 hover:text-white'
             }`}
-            title="资源管理器"
+            title="资源视图"
           >
             <FolderTree className="h-5 w-5" />
           </button>
@@ -500,7 +520,7 @@ export function App() {
                 ? 'text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40'
                 : 'text-slate-400 hover:text-white'
             }`}
-            title="全局系统设置"
+            title="全局设置与工作区管理"
           >
             <Settings className="h-5 w-5" />
           </button>
@@ -516,20 +536,22 @@ export function App() {
               }}
               className="border-r border-slate-800 bg-slate-900/40 flex flex-col shrink-0 overflow-hidden"
             >
-              <div className="p-3 border-b border-slate-800/80 flex items-center justify-between">
-                <span className="text-xs font-bold font-mono tracking-wider text-slate-300">
-                  资源视图
+              {/* 侧边栏顶部操作条 */}
+              <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800/80 bg-slate-950/70">
+                <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
+                  资源管理器
                 </span>
                 <button
                   type="button"
                   onClick={ideStore.toggleSidebar}
-                  className="text-slate-400 hover:text-white p-0.5 cursor-pointer"
+                  className="text-slate-400 hover:text-white p-1 cursor-pointer"
                   title="折叠侧边栏"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
 
+              {/* 清单 / 组件包 切换选项卡 */}
               <div className="p-2 border-b border-slate-800/60 bg-slate-950/40">
                 <div className="flex rounded bg-slate-900 p-0.5 border border-slate-800 text-xs">
                   <button
@@ -599,7 +621,6 @@ export function App() {
                 )}
               </div>
             </aside>
-            {/* 拖动分割手柄 */}
             <div
               onPointerDown={handleSidebarPointerDown}
               className={`relative z-20 shrink-0 group flex items-center justify-center w-1.5 cursor-col-resize hover:bg-indigo-500/60 transition-colors ${
@@ -720,7 +741,7 @@ export function App() {
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1.5 font-bold text-indigo-400">
                     <AlertCircle className="h-3.5 w-3.5" />
-                    <span>问题与诊断 ({lintIssues.length})</span>
+                    <span>工作区合规诊断 ({lintIssues.length})</span>
                   </span>
                   <button
                     type="button"
@@ -744,7 +765,7 @@ export function App() {
                 {lintIssues.length === 0 ? (
                   <div className="flex items-center gap-2 text-emerald-400 py-4 justify-center">
                     <ShieldCheck className="h-4 w-4" />
-                    <span>所有知识库、Lookup 接口与 Manifest 清单均严格合规</span>
+                    <span>当前工作区下的知识库、Lookup 接口与 Manifest 清单均严格合规</span>
                   </div>
                 ) : (
                   lintIssues.map((issue) => {
@@ -785,9 +806,76 @@ export function App() {
       {/* 底部紧凑状态栏 */}
       <footer className="h-6 border-t border-slate-800 bg-slate-950 px-3 flex items-center justify-between text-[11px] font-mono text-slate-400 shrink-0 select-none z-20">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-slate-300">
-            <Cpu className="h-3.5 w-3.5 text-indigo-400" />
-            <span className="font-semibold text-slate-200">ACA Studio</span>
+          {/* 工作区切换下拉触发器 */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsWsDropdownOpen((prev) => !prev)}
+              className="flex items-center gap-1.5 text-slate-300 hover:text-white px-1.5 py-0.5 -mx-1.5 rounded hover:bg-slate-800/60 transition-colors cursor-pointer"
+              title="切换工作区"
+            >
+              <Cpu className="h-3.5 w-3.5 text-indigo-400" />
+              <span className="font-semibold text-slate-200">
+                {currentWsObj ? currentWsObj.name : 'ACA Studio'}
+              </span>
+              <ChevronDown className="h-3 w-3 text-slate-400" />
+            </button>
+
+            {isWsDropdownOpen && (
+              <>
+                <div
+                  role="presentation"
+                  className="fixed inset-0 z-40"
+                  onClick={() => setIsWsDropdownOpen(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setIsWsDropdownOpen(false);
+                  }}
+                />
+                <div className="absolute bottom-full left-0 mb-1.5 w-64 z-50 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden py-1 font-mono text-xs">
+                  <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-500 border-b border-slate-800/60">
+                    切换工作区 (Vaults)
+                  </div>
+                  <div className="max-h-56 overflow-y-auto p-1 space-y-0.5">
+                    {wsStore.workspaces.map((ws) => {
+                      const isActive = ws.id === wsStore.activeWorkspaceId;
+                      return (
+                        <button
+                          key={ws.id}
+                          type="button"
+                          onClick={() => handleSelectWorkspace(ws.id)}
+                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
+                            isActive
+                              ? 'bg-indigo-600/30 text-indigo-200 border border-indigo-500/40'
+                              : 'text-slate-300 hover:bg-slate-800/60'
+                          }`}
+                        >
+                          <div className="flex flex-col truncate flex-1 min-w-0">
+                            <span className="font-semibold text-slate-100 truncate">{ws.name}</span>
+                            <span className="text-[10px] text-slate-500 truncate">
+                              {ws.root || ws.id}
+                            </span>
+                          </div>
+                          {isActive && <Check className="h-3.5 w-3.5 text-indigo-400 ml-2" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="p-1 border-t border-slate-800/80">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsWsDropdownOpen(false);
+                        setIsCreateWorkspaceOpen(true);
+                      }}
+                      className="w-full flex items-center gap-1.5 px-2.5 py-1.5 text-indigo-300 hover:bg-indigo-950/40 rounded-lg text-left cursor-pointer transition-colors"
+                    >
+                      <Plus className="h-3.5 w-3.5 text-indigo-400" />
+                      <span>注册新工作区...</span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           <span className="text-slate-600">·</span>
           <span className="flex items-center gap-1.5">
@@ -858,7 +946,7 @@ export function App() {
         setNewPkgName={setNewPkgName}
         newPkgWs={newPkgWs}
         setNewPkgWs={setNewPkgWs}
-        libraryPaths={configStore.config?.library_paths}
+        libraryPaths={currentWsObj?.library_paths}
         onSubmit={submitCreatePackage}
       />
 
@@ -869,8 +957,17 @@ export function App() {
         setNewManName={setNewManName}
         newManWs={newManWs}
         setNewManWs={setNewManWs}
-        manifestPaths={configStore.config?.manifest_paths}
+        manifestPaths={currentWsObj?.manifest_paths}
         onSubmit={submitCreateManifest}
+      />
+
+      <CreateWorkspaceModal
+        isOpen={isCreateWorkspaceOpen}
+        onClose={() => setIsCreateWorkspaceOpen(false)}
+        onSubmit={async (params) => {
+          await wsStore.createWorkspace(params);
+          await handleSelectWorkspace(params.id);
+        }}
       />
     </div>
   );

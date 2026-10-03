@@ -1,6 +1,6 @@
 # aca_builder/tests/test_core_selection.py
 
-from aca_builder.core import select_atoms_by_query
+from aca_builder.domain.services import select_atoms_by_query
 
 # --- Mock Library Data ---
 LIBRARY = {

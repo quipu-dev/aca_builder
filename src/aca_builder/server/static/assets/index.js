@@ -71,14 +71,60 @@ const INITIAL_EMPTY_TAB = {
   title: "开始",
   closable: false
 };
+const createDefaultWorkspaceState = () => ({
+  tabs: [INITIAL_EMPTY_TAB],
+  activeTabId: INITIAL_EMPTY_TAB.id,
+  navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
+  historyIndex: 0,
+  tabSnapshots: {},
+  explorerExpanded: {}
+});
 const useIdeStore = create()(
   persist(
     (set, get) => ({
+      currentWorkspace: "default",
       tabs: [INITIAL_EMPTY_TAB],
       activeTabId: INITIAL_EMPTY_TAB.id,
       navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
       historyIndex: 0,
       tabSnapshots: {},
+      explorerExpanded: {},
+      workspaceStates: {},
+      setCurrentWorkspace: (wsId) => {
+        const {
+          currentWorkspace,
+          tabs,
+          activeTabId,
+          navigationHistory,
+          historyIndex,
+          tabSnapshots,
+          explorerExpanded,
+          workspaceStates
+        } = get();
+        if (currentWorkspace === wsId) return;
+        const updatedWorkspaces = {
+          ...workspaceStates,
+          [currentWorkspace]: {
+            tabs,
+            activeTabId,
+            navigationHistory,
+            historyIndex,
+            tabSnapshots,
+            explorerExpanded
+          }
+        };
+        const targetState = updatedWorkspaces[wsId] || createDefaultWorkspaceState();
+        set({
+          currentWorkspace: wsId,
+          tabs: targetState.tabs,
+          activeTabId: targetState.activeTabId,
+          navigationHistory: targetState.navigationHistory,
+          historyIndex: targetState.historyIndex,
+          tabSnapshots: targetState.tabSnapshots,
+          explorerExpanded: targetState.explorerExpanded,
+          workspaceStates: updatedWorkspaces
+        });
+      },
       saveSnapshot: (tabId, snapshot) => set((state) => ({
         tabSnapshots: {
           ...state.tabSnapshots,
@@ -105,7 +151,6 @@ const useIdeStore = create()(
       setActiveBottomTab: (tab) => set({ activeBottomTab: tab, bottomPanelOpen: true }),
       preferences: { defaultRightPanel: "graph" },
       updatePreferences: (prefs) => set((state) => ({ preferences: { ...state.preferences, ...prefs } })),
-      explorerExpanded: {},
       setExplorerExpanded: (path, expanded) => set((state) => ({
         explorerExpanded: { ...state.explorerExpanded, [path]: expanded }
       })),
@@ -214,22 +259,23 @@ const useIdeStore = create()(
           (t) => t.id === tabId ? {
             ...t,
             isDirty,
-            // 一旦发生编辑修改，自动固定标签页
             isPreview: isDirty ? false : t.isPreview
           } : t
         )
       }))
     }),
     {
-      name: "aca-studio-ide-v1",
+      name: "aca-studio-ide-vault-v2",
       partialize: (state) => ({
+        currentWorkspace: state.currentWorkspace,
         tabs: state.tabs,
         activeTabId: state.activeTabId,
         tabSnapshots: state.tabSnapshots,
         sidebarOpen: state.sidebarOpen,
         sidebarWidth: state.sidebarWidth,
         preferences: state.preferences,
-        explorerExpanded: state.explorerExpanded
+        explorerExpanded: state.explorerExpanded,
+        workspaceStates: state.workspaceStates
       })
     }
   )
@@ -3432,114 +3478,239 @@ function EmptyTab({
     ] })
   ] }) });
 }
-const useConfigStore = create((set) => ({
-  config: null,
+const useWorkspaceStore = create((set, get) => ({
+  workspaces: [],
+  activeWorkspaceId: "",
+  defaultWorkspaceId: "",
   loading: false,
-  fetchConfig: async () => {
+  fetchWorkspaces: async () => {
     set({ loading: true });
     try {
-      const res = await fetch("/api/system/config");
+      const res = await fetch("/api/workspaces");
+      if (!res.ok) throw new Error("获取工作区列表失败");
       const data = await res.json();
-      set({ config: data });
-    } catch (err) {
-      console.error("获取系统配置失败", err);
+      set({
+        workspaces: data.workspaces || [],
+        activeWorkspaceId: data.active_workspace || "",
+        defaultWorkspaceId: data.default_workspace || ""
+      });
+    } catch (e) {
+      console.error(e);
     } finally {
       set({ loading: false });
     }
   },
-  updateConfig: async (newConfig) => {
-    const res = await fetch("/api/system/config", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newConfig)
-    });
-    if (res.ok) {
-      set((state) => ({
-        config: state.config ? { ...state.config, ...newConfig } : newConfig
-      }));
-    } else {
-      throw new Error("更新配置失败");
+  switchWorkspace: async (workspaceId) => {
+    try {
+      const res = await fetch("/api/workspaces/active", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: workspaceId })
+      });
+      if (res.ok) {
+        set({ activeWorkspaceId: workspaceId });
+        await get().fetchWorkspaces();
+      }
+    } catch (e) {
+      console.error("切换工作区失败", e);
     }
+  },
+  createWorkspace: async (params) => {
+    const res = await fetch("/api/workspaces", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params)
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.detail || "创建工作区失败");
+    }
+    await get().fetchWorkspaces();
+  },
+  deleteWorkspace: async (workspaceId) => {
+    const res = await fetch(`/api/workspaces/${encodeURIComponent(workspaceId)}`, {
+      method: "DELETE"
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.detail || "删除工作区失败");
+    }
+    await get().fetchWorkspaces();
   }
 }));
 function SettingsTab() {
-  const { config, fetchConfig, updateConfig } = useConfigStore();
+  const wsStore = useWorkspaceStore();
+  const fetchWorkspaces = useWorkspaceStore((state) => state.fetchWorkspaces);
   const { preferences, updatePreferences } = useIdeStore();
+  const [activeWsId, setActiveWsId] = reactExports.useState("");
+  const [wsName, setWsName] = reactExports.useState("");
+  const [wsRoot, setWsRoot] = reactExports.useState("");
   const [libPaths, setLibPaths] = reactExports.useState("");
   const [manPaths, setManPaths] = reactExports.useState("");
   const [hookCommand, setHookCommand] = reactExports.useState("");
   const [saving, setSaving] = reactExports.useState(false);
   reactExports.useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
+    fetchWorkspaces();
+  }, [fetchWorkspaces]);
   reactExports.useEffect(() => {
-    var _a, _b;
-    if (config) {
-      setLibPaths(((_a = config.library_paths) == null ? void 0 : _a.join("\n")) || "");
-      setManPaths(((_b = config.manifest_paths) == null ? void 0 : _b.join("\n")) || "");
-      setHookCommand(config.post_process_hook || "");
+    const current = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
+    if (current) {
+      setActiveWsId(current.id);
+      setWsName(current.name);
+      setWsRoot(current.root || "");
+      setLibPaths(current.library_paths.join("\n"));
+      setManPaths(current.manifest_paths.join("\n"));
+      setHookCommand(current.post_process_hook || "");
     }
-  }, [config]);
-  const handleSaveConfig = async () => {
+  }, [wsStore.workspaces, wsStore.activeWorkspaceId]);
+  const handleSaveActiveWorkspace = async () => {
     setSaving(true);
     const newLibPaths = libPaths.split("\n").map((p) => p.trim()).filter(Boolean);
     const newManPaths = manPaths.split("\n").map((p) => p.trim()).filter(Boolean);
     try {
-      await updateConfig({
-        library_paths: newLibPaths,
-        manifest_paths: newManPaths,
-        post_process_hook: hookCommand.trim() || void 0
+      const res = await fetch("/api/system/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: wsName.trim(),
+          root: wsRoot.trim() || void 0,
+          library_paths: newLibPaths,
+          manifest_paths: newManPaths,
+          post_process_hook: hookCommand.trim() || void 0
+        })
       });
-      alert("系统配置已保存！可能会触发工作空间重载。");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "保存失败";
-      alert(msg);
+      if (res.ok) {
+        await wsStore.fetchWorkspaces();
+        alert("当前工作区设置已保存！");
+      } else {
+        alert("保存设置失败");
+      }
+    } catch (_err) {
+      alert("保存设置网络异常");
     } finally {
       setSaving(false);
     }
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-full flex-col bg-slate-950 text-slate-100 overflow-y-auto", children: [
+  const handleSetDefault = async (wsId) => {
+    try {
+      const res = await fetch("/api/workspaces/default", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: wsId })
+      });
+      if (res.ok) {
+        await wsStore.fetchWorkspaces();
+      }
+    } catch (_err) {
+      alert("设置默认工作区失败");
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-full flex-col bg-slate-950 text-slate-100 overflow-y-auto font-sans", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/60 sticky top-0 z-10", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(Settings, { className: "h-5 w-5 text-indigo-400" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-sm font-semibold", children: "系统设置" })
+        /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-sm font-semibold", children: "工作区设置与管理" })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { size: "sm", onClick: handleSaveConfig, disabled: saving, className: "h-8 text-xs", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Save, { className: "h-4 w-4 mr-1.5" }),
-        " 保存配置"
-      ] })
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        Button,
+        {
+          size: "sm",
+          onClick: handleSaveActiveWorkspace,
+          disabled: saving,
+          className: "h-8 text-xs",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Save, { className: "h-4 w-4 mr-1.5" }),
+            " 保存当前工作区"
+          ]
+        }
+      )
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-4xl p-6 space-y-8 font-sans", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-4xl p-6 space-y-8", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "space-y-4", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("h3", { className: "text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(SlidersVertical, { className: "h-4 w-4" }),
-          " IDE 偏好设置"
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-xl border border-slate-800 bg-slate-900/40 p-5 space-y-4 text-sm", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "font-medium", children: "蓝图编辑器默认伴生视图" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-xs text-slate-500 mt-1", children: "选择打开 Manifest 或 Lookup 编辑器时，右侧默认展开的视图。" })
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center justify-between", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("h3", { className: "text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 font-mono", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(FolderTree, { className: "h-4 w-4" }),
+          " 隔离工作区列表 (Vaults)"
+        ] }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-xl border border-slate-800 bg-slate-900/40 divide-y divide-slate-800/80", children: wsStore.workspaces.map((ws) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-4 flex items-center justify-between font-mono text-xs", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-bold text-slate-100", children: ws.name }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded", children: [
+                "ID: ",
+                ws.id
+              ] }),
+              ws.is_default && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-amber-400 bg-amber-950/60 border border-amber-800/80 px-1.5 py-0.2 rounded font-semibold", children: "默认" }),
+              ws.is_active && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/80 px-1.5 py-0.2 rounded font-semibold", children: "当前活动" })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[11px] text-slate-500", children: [
+              "根目录: ",
+              ws.root || "自定子路径"
+            ] })
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "select",
-            {
-              value: preferences.defaultRightPanel,
-              onChange: (e) => updatePreferences({ defaultRightPanel: e.target.value }),
-              className: "bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "graph", children: "依赖白板拓扑 (Graph)" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "prompt", children: "实时切片编译 (Prompt)" })
-              ]
-            }
-          )
-        ] }) })
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 font-sans", children: [
+            !ws.is_default && /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Button,
+              {
+                variant: "outline",
+                size: "sm",
+                onClick: () => handleSetDefault(ws.id),
+                className: "h-7 text-xs border-slate-700",
+                children: "设为默认"
+              }
+            ),
+            wsStore.workspaces.length > 1 && /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => {
+                  if (confirm(`确定要注销工作区 "${ws.name}" 吗？`)) {
+                    wsStore.deleteWorkspace(ws.id);
+                  }
+                },
+                className: "p-1.5 text-slate-500 hover:text-rose-400 transition-colors",
+                title: "删除此工作区",
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-4 w-4" })
+              }
+            )
+          ] })
+        ] }, ws.id)) })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "space-y-4", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("h3", { className: "text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(FolderTree, { className: "h-4 w-4" }),
-          " 多工作区配置 (config.yaml)"
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("h3", { className: "text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 font-mono", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(SlidersVertical, { className: "h-4 w-4" }),
+          " 当前工作区详细路径 (",
+          activeWsId,
+          ")"
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-xl border border-slate-800 bg-slate-900/40 p-5 space-y-6 text-sm", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-xl border border-slate-800 bg-slate-900/40 p-5 space-y-5 text-sm", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-4 font-mono text-xs", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "settings-ws-name", className: "text-slate-400 block mb-1", children: "工作区显示名称" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "input",
+                {
+                  id: "settings-ws-name",
+                  type: "text",
+                  value: wsName,
+                  onChange: (e) => setWsName(e.target.value),
+                  className: "w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "settings-ws-root", className: "text-slate-400 block mb-1", children: "根目录绝对路径 (Root)" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "input",
+                {
+                  id: "settings-ws-root",
+                  type: "text",
+                  value: wsRoot,
+                  onChange: (e) => setWsRoot(e.target.value),
+                  className: "w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
+                }
+              )
+            ] })
+          ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs(
               "label",
@@ -3548,20 +3719,18 @@ function SettingsTab() {
                 className: "font-medium block mb-1 flex items-center gap-2",
                 children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx(Database, { className: "h-4 w-4 text-indigo-400" }),
-                  " 知识库挂载点 (Library Paths)"
+                  " 知识库目录 (每行一个)"
                 ]
               }
             ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-xs text-slate-500 mb-2", children: "每一行填写一个绝对路径，首个路径将作为默认新建组件包的目标位置。" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               "textarea",
               {
                 id: "settings-lib-paths",
                 value: libPaths,
                 onChange: (e) => setLibPaths(e.target.value),
-                rows: 3,
-                className: "w-full font-mono bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 focus:outline-none focus:border-indigo-500",
-                placeholder: "/home/user/workspace/aca_library"
+                rows: 2,
+                className: "w-full font-mono text-xs bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 focus:outline-none focus:border-indigo-500"
               }
             )
           ] }),
@@ -3573,45 +3742,59 @@ function SettingsTab() {
                 className: "font-medium block mb-1 flex items-center gap-2",
                 children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx(Database, { className: "h-4 w-4 text-emerald-400" }),
-                  " 清单蓝图存放点 (Manifest Paths)"
+                  " 清单蓝图目录 (每行一个)"
                 ]
               }
             ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-xs text-slate-500 mb-2", children: "每一行填写一个绝对路径，定义了系统中智能体组装图谱的存放位置。" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               "textarea",
               {
                 id: "settings-man-paths",
                 value: manPaths,
                 onChange: (e) => setManPaths(e.target.value),
-                rows: 3,
-                className: "w-full font-mono bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 focus:outline-none focus:border-emerald-500",
-                placeholder: "/home/user/workspace/manifests"
+                rows: 2,
+                className: "w-full font-mono text-xs bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 focus:outline-none focus:border-emerald-500"
               }
             )
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "label",
-              {
-                htmlFor: "settings-hook-command",
-                className: "font-medium block mb-1 flex items-center gap-2",
-                children: "后处理钩子 (Post-Process Hook)"
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-xs text-slate-500 mb-2", children: "一段将被管道调用的 Shell 命令，编译生成的 Prompt 会通过 STDIN 传入。" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "settings-hook-cmd", className: "font-medium block mb-1", children: "后处理管道钩子 (Post-Process Hook)" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               "input",
               {
-                id: "settings-hook-command",
+                id: "settings-hook-cmd",
                 type: "text",
                 value: hookCommand,
                 onChange: (e) => setHookCommand(e.target.value),
-                className: "w-full font-mono bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 focus:outline-none focus:border-purple-500",
-                placeholder: "例如: pbcopy 或者 cat"
+                className: "w-full font-mono text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-purple-500",
+                placeholder: "例如: pbcopy 或 cat"
               }
             )
           ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "space-y-4", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("h3", { className: "text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 font-mono", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(SlidersVertical, { className: "h-4 w-4" }),
+          " 界面偏好"
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-xl border border-slate-800 bg-slate-900/40 p-5 text-sm flex items-center justify-between", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "font-medium", children: "蓝图伴生面板默认视图" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-xs text-slate-500 mt-1", children: "选择打开 Manifest 或 Lookup 编辑器时，右侧默认展开拓扑图还是实时切片 Prompt。" })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "select",
+            {
+              value: preferences.defaultRightPanel,
+              onChange: (e) => updatePreferences({ defaultRightPanel: e.target.value }),
+              className: "bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500 text-xs font-mono",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "graph", children: "白板拓扑图 (Graph)" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "prompt", children: "实时切片编译 (Prompt)" })
+              ]
+            }
+          )
         ] })
       ] })
     ] })
@@ -3777,6 +3960,76 @@ function CreatePackageModal({
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-2 flex justify-end gap-2", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "ghost", onClick: onClose, children: "取消" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: onSubmit, disabled: !newPkgName.trim(), children: "确定创建" })
+    ] })
+  ] }) });
+}
+function CreateWorkspaceModal({
+  isOpen,
+  onClose,
+  onSubmit
+}) {
+  const [wsId, setWsId] = reactExports.useState("");
+  const [wsName, setWsName] = reactExports.useState("");
+  const [wsRoot, setWsRoot] = reactExports.useState("");
+  const handleSubmit = () => {
+    if (!wsId.trim() || !wsRoot.trim()) return;
+    onSubmit({
+      id: wsId.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-"),
+      name: wsName.trim() || wsId.trim(),
+      root: wsRoot.trim()
+    });
+    setWsId("");
+    setWsName("");
+    setWsRoot("");
+    onClose();
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Modal, { isOpen, onClose, title: "注册新工作区 (Vault)", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4 text-xs font-mono", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-ws-id", className: "block text-slate-400 mb-1", children: "工作区标识符 (ID, 英文/数字)" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "input",
+        {
+          id: "modal-ws-id",
+          type: "text",
+          value: wsId,
+          onChange: (e) => setWsId(e.target.value),
+          className: "w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 font-mono",
+          placeholder: "例如: aca_en 或 agent_exp"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-ws-name", className: "block text-slate-400 mb-1", children: "显示名称 (Display Name)" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "input",
+        {
+          id: "modal-ws-name",
+          type: "text",
+          value: wsName,
+          onChange: (e) => setWsName(e.target.value),
+          className: "w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500",
+          placeholder: "例如: 英文公理库"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-ws-root", className: "block text-slate-400 mb-1", children: "根目录绝对路径 (Root Path)" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "input",
+        {
+          id: "modal-ws-root",
+          type: "text",
+          value: wsRoot,
+          onChange: (e) => setWsRoot(e.target.value),
+          className: "w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 font-mono",
+          placeholder: "例如: /home/user/Projects/aca_en"
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 mt-1 block", children: "系统将自动从该目录下推断 library/ 或 packages/ 以及 manifests/ 目录。" })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-2 flex justify-end gap-2 font-sans", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "ghost", onClick: onClose, children: "取消" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: handleSubmit, disabled: !wsId.trim() || !wsRoot.trim(), children: "注册工作区" })
     ] })
   ] }) });
 }
@@ -4203,9 +4456,8 @@ function PackageExplorer({
   }) });
 }
 function App() {
-  var _a, _b;
   const ideStore = useIdeStore();
-  const configStore = useConfigStore();
+  const wsStore = useWorkspaceStore();
   const [manifests, setManifests] = reactExports.useState([]);
   const [packages, setPackages] = reactExports.useState([]);
   const [status, setStatus] = reactExports.useState("检测中...");
@@ -4215,6 +4467,8 @@ function App() {
   const [isCreateManOpen, setIsCreateManOpen] = reactExports.useState(false);
   const [newManName, setNewManName] = reactExports.useState("");
   const [newManWs, setNewManWs] = reactExports.useState("");
+  const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = reactExports.useState(false);
+  const [isWsDropdownOpen, setIsWsDropdownOpen] = reactExports.useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = reactExports.useState(false);
   const [lintLoading, setLintLoading] = reactExports.useState(false);
   const [lintErrors, setLintErrors] = reactExports.useState(0);
@@ -4268,9 +4522,11 @@ function App() {
       setLintIssues(data.issues || []);
     }).catch(console.error).finally(() => setLintLoading(false));
   }, []);
-  const { fetchConfig } = configStore;
   reactExports.useEffect(() => {
-    fetchConfig();
+    useWorkspaceStore.getState().fetchWorkspaces().then(() => {
+      const activeId = useWorkspaceStore.getState().activeWorkspaceId || "default";
+      useIdeStore.getState().setCurrentWorkspace(activeId);
+    });
     fetch("/api/health").then((res) => res.json()).then((data) => setStatus(data.status === "ok" ? "正常" : data.status)).catch(() => setStatus("离线"));
     fetchAssets();
     fetchLintReport();
@@ -4286,38 +4542,42 @@ function App() {
         setIsCommandPaletteOpen((prev) => !prev);
       } else if (isMod && e.key.toLowerCase() === "t") {
         e.preventDefault();
-        handleCreateEmptyTab();
+        useIdeStore.getState().openTab(
+          {
+            id: `empty_${Date.now()}`,
+            type: "empty",
+            title: "新标签页",
+            closable: true
+          },
+          { newTab: true }
+        );
       } else if (isMod && e.key === "[") {
         e.preventDefault();
-        ideStore.goBack();
+        useIdeStore.getState().goBack();
       } else if (isMod && e.key === "]") {
         e.preventDefault();
-        ideStore.goForward();
+        useIdeStore.getState().goForward();
       } else if (e.altKey && e.key === "ArrowLeft") {
         e.preventDefault();
-        ideStore.goBack();
+        useIdeStore.getState().goBack();
       } else if (e.altKey && e.key === "ArrowRight") {
         e.preventDefault();
-        ideStore.goForward();
-      }
-    };
-    const handleMouseUp = (e) => {
-      if (e.button === 3) {
-        e.preventDefault();
-        ideStore.goBack();
-      } else if (e.button === 4) {
-        e.preventDefault();
-        ideStore.goForward();
+        useIdeStore.getState().goForward();
       }
     };
     window.addEventListener("keydown", handleGlobalKeyDown);
-    window.addEventListener("mouseup", handleMouseUp);
     return () => {
       eventSource.close();
       window.removeEventListener("keydown", handleGlobalKeyDown);
-      window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [fetchConfig, fetchAssets, fetchLintReport, ideStore.goBack, ideStore.goForward]);
+  }, [fetchAssets, fetchLintReport]);
+  const handleSelectWorkspace = async (wsId) => {
+    setIsWsDropdownOpen(false);
+    await wsStore.switchWorkspace(wsId);
+    ideStore.setCurrentWorkspace(wsId);
+    fetchAssets();
+    fetchLintReport();
+  };
   const handleOpenManifestTab = (mName, e, opts) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
     const isPreview = !newTab;
@@ -4396,8 +4656,8 @@ function App() {
     }
   };
   const handleCreateNewAtomDraft = () => {
-    var _a2;
-    const defaultPkg = ((_a2 = packages[0]) == null ? void 0 : _a2.name) || "";
+    var _a;
+    const defaultPkg = ((_a = packages[0]) == null ? void 0 : _a.name) || "";
     ideStore.openTab(
       {
         id: `atom:draft_${Date.now()}`,
@@ -4410,9 +4670,10 @@ function App() {
     );
   };
   const handleCreateNewManifest = () => {
-    var _a2, _b2;
+    var _a;
     setNewManName(`未命名蓝图_${Date.now().toString().slice(-4)}`);
-    setNewManWs(((_b2 = (_a2 = configStore.config) == null ? void 0 : _a2.manifest_paths) == null ? void 0 : _b2[0]) || "");
+    const activeWs = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
+    setNewManWs(((_a = activeWs == null ? void 0 : activeWs.manifest_paths) == null ? void 0 : _a[0]) || "");
     setIsCreateManOpen(true);
   };
   const submitCreateManifest = () => {
@@ -4444,7 +4705,7 @@ function App() {
   };
   const handleDeleteManifest = async (mName, e) => {
     e.stopPropagation();
-    if (!window.confirm(`确定要删除清单 "${mName}" 吗？此操作不可逆。`)) return;
+    if (!window.confirm(`确定要在当前工作区删除清单 "${mName}" 吗？`)) return;
     try {
       const res = await fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
         method: "DELETE"
@@ -4473,11 +4734,12 @@ function App() {
     [ideStore, fetchAssets, fetchLintReport]
   );
   const handleCreatePackage = reactExports.useCallback(() => {
-    var _a2, _b2;
+    var _a;
     setNewPkgName("");
-    setNewPkgWs(((_b2 = (_a2 = configStore.config) == null ? void 0 : _a2.library_paths) == null ? void 0 : _b2[0]) || "");
+    const activeWs = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
+    setNewPkgWs(((_a = activeWs == null ? void 0 : activeWs.library_paths) == null ? void 0 : _a[0]) || "");
     setIsCreatePkgOpen(true);
-  }, [configStore.config]);
+  }, [wsStore.workspaces, wsStore.activeWorkspaceId]);
   const submitCreatePackage = reactExports.useCallback(() => {
     if (!newPkgName.trim()) return;
     setIsCreatePkgOpen(false);
@@ -4501,8 +4763,7 @@ function App() {
   const handleDeletePackage = reactExports.useCallback(
     (pkgName, e) => {
       e.stopPropagation();
-      if (!window.confirm(`确定要彻底删除组件包 "${pkgName}" 及其所有文件吗？此操作不可逆。`))
-        return;
+      if (!window.confirm(`确定要删除组件包 "${pkgName}" 吗？`)) return;
       fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
         method: "DELETE"
       }).then(async (res) => {
@@ -4558,6 +4819,7 @@ function App() {
   const activeTab = ideStore.tabs.find((t) => t.id === ideStore.activeTabId);
   const canGoBack = ideStore.historyIndex > 0;
   const canGoForward = ideStore.historyIndex < ideStore.navigationHistory.length - 1;
+  const currentWsObj = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-screen flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans select-none", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-1 overflow-hidden", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-12 border-r border-slate-800 bg-slate-950 flex flex-col items-center py-3 space-y-4 shrink-0", children: [
@@ -4570,7 +4832,7 @@ function App() {
               ideStore.setActiveSidebarView("explorer");
             },
             className: `p-2 rounded-lg transition-colors cursor-pointer ${ideStore.sidebarOpen && ideStore.activeSidebarView === "explorer" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
-            title: "资源管理器",
+            title: "资源视图",
             children: /* @__PURE__ */ jsxRuntimeExports.jsx(FolderTree, { className: "h-5 w-5" })
           }
         ),
@@ -4587,7 +4849,7 @@ function App() {
               });
             },
             className: `mt-auto p-2 rounded-lg transition-colors cursor-pointer ${ideStore.activeTabId === "system:settings" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
-            title: "全局系统设置",
+            title: "全局设置与工作区管理",
             children: /* @__PURE__ */ jsxRuntimeExports.jsx(Settings, { className: "h-5 w-5" })
           }
         )
@@ -4602,14 +4864,14 @@ function App() {
             },
             className: "border-r border-slate-800 bg-slate-900/40 flex flex-col shrink-0 overflow-hidden",
             children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-3 border-b border-slate-800/80 flex items-center justify-between", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-bold font-mono tracking-wider text-slate-300", children: "资源视图" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-3 py-2 border-b border-slate-800/80 bg-slate-950/70", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-mono font-bold text-slate-400 uppercase tracking-wider", children: "资源管理器" }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx(
                   "button",
                   {
                     type: "button",
                     onClick: ideStore.toggleSidebar,
-                    className: "text-slate-400 hover:text-white p-0.5 cursor-pointer",
+                    className: "text-slate-400 hover:text-white p-1 cursor-pointer",
                     title: "折叠侧边栏",
                     children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3.5 w-3.5" })
                   }
@@ -4806,7 +5068,7 @@ function App() {
               /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1.5 font-bold text-indigo-400", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-3.5 w-3.5" }),
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
-                  "问题与诊断 (",
+                  "工作区合规诊断 (",
                   lintIssues.length,
                   ")"
                 ] })
@@ -4834,7 +5096,7 @@ function App() {
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-y-auto p-3 space-y-1.5 select-text", children: lintIssues.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 text-emerald-400 py-4 justify-center", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(ShieldCheck, { className: "h-4 w-4" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "所有知识库、Lookup 接口与 Manifest 清单均严格合规" })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "当前工作区下的知识库、Lookup 接口与 Manifest 清单均严格合规" })
           ] }) : lintIssues.map((issue) => {
             const isErr = issue.level === "错误";
             return /* @__PURE__ */ jsxRuntimeExports.jsxs(
@@ -4862,9 +5124,71 @@ function App() {
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("footer", { className: "h-6 border-t border-slate-800 bg-slate-950 px-3 flex items-center justify-between text-[11px] font-mono text-slate-400 shrink-0 select-none z-20", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 text-slate-300", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Cpu, { className: "h-3.5 w-3.5 text-indigo-400" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200", children: "ACA Studio" })
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => setIsWsDropdownOpen((prev) => !prev),
+              className: "flex items-center gap-1.5 text-slate-300 hover:text-white px-1.5 py-0.5 -mx-1.5 rounded hover:bg-slate-800/60 transition-colors cursor-pointer",
+              title: "切换工作区",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Cpu, { className: "h-3.5 w-3.5 text-indigo-400" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200", children: currentWsObj ? currentWsObj.name : "ACA Studio" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3 w-3 text-slate-400" })
+              ]
+            }
+          ),
+          isWsDropdownOpen && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "div",
+              {
+                role: "presentation",
+                className: "fixed inset-0 z-40",
+                onClick: () => setIsWsDropdownOpen(false),
+                onKeyDown: (e) => {
+                  if (e.key === "Escape") setIsWsDropdownOpen(false);
+                }
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "absolute bottom-full left-0 mb-1.5 w-64 z-50 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden py-1 font-mono text-xs", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "px-3 py-1.5 text-[10px] uppercase font-bold text-slate-500 border-b border-slate-800/60", children: "切换工作区 (Vaults)" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-h-56 overflow-y-auto p-1 space-y-0.5", children: wsStore.workspaces.map((ws) => {
+                const isActive = ws.id === wsStore.activeWorkspaceId;
+                return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => handleSelectWorkspace(ws.id),
+                    className: `w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${isActive ? "bg-indigo-600/30 text-indigo-200 border border-indigo-500/40" : "text-slate-300 hover:bg-slate-800/60"}`,
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col truncate flex-1 min-w-0", children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-100 truncate", children: ws.name }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 truncate", children: ws.root || ws.id })
+                      ] }),
+                      isActive && /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "h-3.5 w-3.5 text-indigo-400 ml-2" })
+                    ]
+                  },
+                  ws.id
+                );
+              }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-1 border-t border-slate-800/80", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => {
+                    setIsWsDropdownOpen(false);
+                    setIsCreateWorkspaceOpen(true);
+                  },
+                  className: "w-full flex items-center gap-1.5 px-2.5 py-1.5 text-indigo-300 hover:bg-indigo-950/40 rounded-lg text-left cursor-pointer transition-colors",
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5 text-indigo-400" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "注册新工作区..." })
+                  ]
+                }
+              ) })
+            ] })
+          ] })
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-600", children: "·" }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1.5", children: [
@@ -4931,7 +5255,7 @@ function App() {
         setNewPkgName,
         newPkgWs,
         setNewPkgWs,
-        libraryPaths: (_a = configStore.config) == null ? void 0 : _a.library_paths,
+        libraryPaths: currentWsObj == null ? void 0 : currentWsObj.library_paths,
         onSubmit: submitCreatePackage
       }
     ),
@@ -4944,8 +5268,19 @@ function App() {
         setNewManName,
         newManWs,
         setNewManWs,
-        manifestPaths: (_b = configStore.config) == null ? void 0 : _b.manifest_paths,
+        manifestPaths: currentWsObj == null ? void 0 : currentWsObj.manifest_paths,
         onSubmit: submitCreateManifest
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      CreateWorkspaceModal,
+      {
+        isOpen: isCreateWorkspaceOpen,
+        onClose: () => setIsCreateWorkspaceOpen(false),
+        onSubmit: async (params) => {
+          await wsStore.createWorkspace(params);
+          await handleSelectWorkspace(params.id);
+        }
       }
     )
   ] });

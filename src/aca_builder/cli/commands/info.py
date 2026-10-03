@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import typer
 
-from aca_builder import config
 from aca_builder.use_cases.inspector import InspectorService
 
 
@@ -13,13 +12,15 @@ def info(
     package: str | None = typer.Option(
         None, "--package", "-p", help="Display public interface for a specific package."
     ),
+    workspace: str | None = typer.Option(
+        None, "--workspace", "-w", help="Target workspace identifier"
+    ),
 ):
     """Display statistics about the ACA library, packages, or a specific package's interface."""
     from aca_builder.commands import _bootstrap
 
-    lib_repo, _, bus = _bootstrap()
-    app_config = config.load_config()
-    library_paths = config.get_library_paths(app_config)
+    lib_repo, _, bus, _ws_id, ws_cfg = _bootstrap(workspace)
+    library_paths = ws_cfg.library_paths
 
     inspector = InspectorService(bus, lib_repo)
     try:

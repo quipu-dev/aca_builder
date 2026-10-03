@@ -7,6 +7,7 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
+from aca_builder import config
 from aca_builder.infra.filesystem import FSLibraryRepository, FSManifestRepository
 from aca_builder.main import app
 
@@ -73,25 +74,35 @@ def setup_test_env(tmp_path: Path, monkeypatch):
     # Package A setup
     pkg_a_path = lib_path / "pkg_a"
     (pkg_a_path / "d4").mkdir(parents=True)
-    (pkg_a_path / "package.yaml").write_text(PKG_A_CONFIG)
-    (pkg_a_path / "d4/internal.yaml").write_text(PKG_A_INTERNAL_D4)
-    (pkg_a_path / "atom_core.md").write_text(ATOM_A_CORE)
-    (pkg_a_path / "atom_extra.md").write_text(ATOM_A_EXTRA)
+    (pkg_a_path / "package.yaml").write_text(PKG_A_CONFIG, encoding="utf-8")
+    (pkg_a_path / "d4/internal.yaml").write_text(PKG_A_INTERNAL_D4, encoding="utf-8")
+    (pkg_a_path / "atom_core.md").write_text(ATOM_A_CORE, encoding="utf-8")
+    (pkg_a_path / "atom_extra.md").write_text(ATOM_A_EXTRA, encoding="utf-8")
 
     # Package B setup (no exports)
     pkg_b_path = lib_path / "pkg_b"
     pkg_b_path.mkdir()
-    (pkg_b_path / "package.yaml").write_text(PKG_B_CONFIG)
-    (pkg_b_path / "atom_b.md").write_text(ATOM_B)
+    (pkg_b_path / "package.yaml").write_text(PKG_B_CONFIG, encoding="utf-8")
+    (pkg_b_path / "atom_b.md").write_text(ATOM_B, encoding="utf-8")
 
     # Config setup
     config_dir = tmp_path / "config"
     config_dir.mkdir()
     config_file = config_dir / "config.yaml"
-    config_data = {"library_paths": [str(lib_path)]}
-    config_file.write_text(yaml.dump(config_data))
+    config_data = {
+        "default_workspace": "default",
+        "workspaces": {
+            "default": {
+                "name": "Default",
+                "libraries": [str(lib_path)],
+                "manifests": [],
+            }
+        },
+    }
+    config_file.write_text(yaml.dump(config_data), encoding="utf-8")
 
     monkeypatch.setattr("aca_builder.config.CONFIG_PATH", config_file)
+    monkeypatch.setenv("ACA_CACHE_DB_PATH", str(tmp_path / "cache.db"))
     return lib_path
 
 
@@ -99,18 +110,18 @@ def setup_test_env(tmp_path: Path, monkeypatch):
 def mock_bus(monkeypatch):
     """Mocks the message bus to allow for call assertions."""
     bus = MagicMock()
-    # To format the "no description" message, the mock needs access to the real method
     from aca_builder.messages import MESSAGES
 
     bus._format.side_effect = lambda msg_id, **kwargs: MESSAGES.get(msg_id, "").format(
         **kwargs
     )
 
+    ws_id, ws_cfg = config.resolve_workspace()
     real_lib_repo = FSLibraryRepository()
     real_man_repo = FSManifestRepository()
     monkeypatch.setattr(
         "aca_builder.commands._bootstrap",
-        lambda: (real_lib_repo, real_man_repo, bus),
+        lambda ws=None: (real_lib_repo, real_man_repo, bus, ws_id, ws_cfg),
     )
     return bus
 
@@ -141,7 +152,7 @@ def test_info_package_not_found(setup_test_env, mock_bus):
     """Test `info --package` with a non-existent package."""
     result = runner.invoke(app, ["info", "--package", "non_existent_pkg"])
 
-    assert result.exit_code != 0  # Exits non-zero on not found
+    assert result.exit_code != 0
     mock_bus.warn.assert_called_once_with("info.pkg.not_found", name="non_existent_pkg")
 
 

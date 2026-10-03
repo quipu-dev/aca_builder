@@ -12,7 +12,7 @@ export type TabType =
   | 'settings';
 
 export interface IdeTab {
-  id: string; // 唯一键，例如 'atom:d1-profile', 'manifest:test_pkg/agent', 'lookup:pkg_a::d1l-api'
+  id: string;
   type: TabType;
   title: string;
   closable: boolean;
@@ -32,24 +32,33 @@ interface IdePreferences {
   defaultRightPanel: 'prompt' | 'graph';
 }
 
+export interface WorkspaceTabState {
+  tabs: IdeTab[];
+  activeTabId: string;
+  navigationHistory: HistoryEntry[];
+  historyIndex: number;
+  tabSnapshots: Record<string, unknown>;
+  explorerExpanded: Record<string, boolean>;
+}
+
 interface IdeState {
+  // 当前工作区下的直接映射字段
+  currentWorkspace: string;
+  setCurrentWorkspace: (wsId: string) => void;
+
   tabs: IdeTab[];
   activeTabId: string;
 
-  // 侧边栏宽度状态
   sidebarWidth: number;
   setSidebarWidth: (width: number) => void;
 
-  // 资源管理器文件夹折叠状态持久化
   explorerExpanded: Record<string, boolean>;
   setExplorerExpanded: (path: string, expanded: boolean) => void;
   toggleExplorerExpanded: (path: string) => void;
 
-  // 视口导航历史栈
   navigationHistory: HistoryEntry[];
   historyIndex: number;
 
-  // 视口状态外置快照池 (零 DOM 膨胀的状态持久化)
   tabSnapshots: Record<string, unknown>;
   saveSnapshot: (tabId: string, snapshot: unknown) => void;
   getSnapshot: <T = unknown>(tabId: string) => T | undefined;
@@ -82,6 +91,9 @@ interface IdeState {
 
   goBack: () => void;
   goForward: () => void;
+
+  // 跨工作区多状态快照持久池
+  workspaceStates: Record<string, WorkspaceTabState>;
 }
 
 const INITIAL_EMPTY_TAB: IdeTab = {
@@ -91,9 +103,19 @@ const INITIAL_EMPTY_TAB: IdeTab = {
   closable: false,
 };
 
+const createDefaultWorkspaceState = (): WorkspaceTabState => ({
+  tabs: [INITIAL_EMPTY_TAB],
+  activeTabId: INITIAL_EMPTY_TAB.id,
+  navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
+  historyIndex: 0,
+  tabSnapshots: {},
+  explorerExpanded: {},
+});
+
 export const useIdeStore = create<IdeState>()(
   persist(
     (set, get) => ({
+      currentWorkspace: 'default',
       tabs: [INITIAL_EMPTY_TAB],
       activeTabId: INITIAL_EMPTY_TAB.id,
 
@@ -101,6 +123,50 @@ export const useIdeStore = create<IdeState>()(
       historyIndex: 0,
 
       tabSnapshots: {},
+      explorerExpanded: {},
+      workspaceStates: {},
+
+      setCurrentWorkspace: (wsId: string) => {
+        const {
+          currentWorkspace,
+          tabs,
+          activeTabId,
+          navigationHistory,
+          historyIndex,
+          tabSnapshots,
+          explorerExpanded,
+          workspaceStates,
+        } = get();
+        if (currentWorkspace === wsId) return;
+
+        // 1. 保存当前工作区状态
+        const updatedWorkspaces = {
+          ...workspaceStates,
+          [currentWorkspace]: {
+            tabs,
+            activeTabId,
+            navigationHistory,
+            historyIndex,
+            tabSnapshots,
+            explorerExpanded,
+          },
+        };
+
+        // 2. 加载目标工作区状态（如无则新建）
+        const targetState = updatedWorkspaces[wsId] || createDefaultWorkspaceState();
+
+        set({
+          currentWorkspace: wsId,
+          tabs: targetState.tabs,
+          activeTabId: targetState.activeTabId,
+          navigationHistory: targetState.navigationHistory,
+          historyIndex: targetState.historyIndex,
+          tabSnapshots: targetState.tabSnapshots,
+          explorerExpanded: targetState.explorerExpanded,
+          workspaceStates: updatedWorkspaces,
+        });
+      },
+
       saveSnapshot: (tabId, snapshot) =>
         set((state) => ({
           tabSnapshots: {
@@ -135,7 +201,6 @@ export const useIdeStore = create<IdeState>()(
       updatePreferences: (prefs) =>
         set((state) => ({ preferences: { ...state.preferences, ...prefs } })),
 
-      explorerExpanded: {},
       setExplorerExpanded: (path, expanded) =>
         set((state) => ({
           explorerExpanded: { ...state.explorerExpanded, [path]: expanded },
@@ -164,7 +229,6 @@ export const useIdeStore = create<IdeState>()(
 
         const tabToOpen: IdeTab = { ...tab, isPreview };
 
-        // 历史栈压入逻辑：非后退/前进触发时更新历史
         if (!fromHistory) {
           const currentEntry = navigationHistory[historyIndex];
           if (!currentEntry || currentEntry.tab.id !== tabToOpen.id) {
@@ -177,10 +241,8 @@ export const useIdeStore = create<IdeState>()(
           }
         }
 
-        // 1. 若目标 Tab 已经打开
         const existingIndex = tabs.findIndex((t) => t.id === tabToOpen.id);
         if (existingIndex !== -1) {
-          // 如果是以非预览方式重新打开已经处于预览态的 tab，自动转为固定态
           if (!isPreview && tabs[existingIndex].isPreview) {
             const updated = [...tabs];
             updated[existingIndex] = { ...updated[existingIndex], isPreview: false };
@@ -191,9 +253,7 @@ export const useIdeStore = create<IdeState>()(
           return;
         }
 
-        // 2. 寻找是否有可以被就地替换的 preview 标签页 (且未被编辑)
         const previewIndex = tabs.findIndex((t) => t.isPreview && !t.isDirty);
-
         if (!newTab && isPreview && previewIndex !== -1) {
           const updatedTabs = [...tabs];
           updatedTabs[previewIndex] = tabToOpen;
@@ -204,7 +264,6 @@ export const useIdeStore = create<IdeState>()(
           return;
         }
 
-        // 3. 过滤掉未使用的初始空白欢迎页（若存在）
         const cleanTabs =
           tabs.length === 1 && tabs[0].type === 'empty' && !tabs[0].isDirty ? [] : tabs;
 
@@ -275,7 +334,6 @@ export const useIdeStore = create<IdeState>()(
               ? {
                   ...t,
                   isDirty,
-                  // 一旦发生编辑修改，自动固定标签页
                   isPreview: isDirty ? false : t.isPreview,
                 }
               : t,
@@ -283,8 +341,9 @@ export const useIdeStore = create<IdeState>()(
         })),
     }),
     {
-      name: 'aca-studio-ide-v1',
+      name: 'aca-studio-ide-vault-v2',
       partialize: (state) => ({
+        currentWorkspace: state.currentWorkspace,
         tabs: state.tabs,
         activeTabId: state.activeTabId,
         tabSnapshots: state.tabSnapshots,
@@ -292,6 +351,7 @@ export const useIdeStore = create<IdeState>()(
         sidebarWidth: state.sidebarWidth,
         preferences: state.preferences,
         explorerExpanded: state.explorerExpanded,
+        workspaceStates: state.workspaceStates,
       }),
     },
   ),
