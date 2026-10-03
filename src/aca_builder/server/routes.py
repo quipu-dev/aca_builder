@@ -153,7 +153,9 @@ def delete_workspace(workspace_id: str):
 
     del workspaces[workspace_id]
     if app_cfg.get("default_workspace") == workspace_id:
-        app_cfg["default_workspace"] = next(iter(workspaces.keys())) if workspaces else None
+        app_cfg["default_workspace"] = (
+            next(iter(workspaces.keys())) if workspaces else None
+        )
 
     config.save_config(app_cfg)
     if _active_workspace_id == workspace_id:
@@ -186,7 +188,9 @@ class UpdateWorkspaceConfigRequest(BaseModel):
 
 
 @router.get("/system/config")
-def get_current_workspace_config(x_aca_workspace: str | None = Header(None)) -> dict[str, Any]:
+def get_current_workspace_config(
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, Any]:
     """获取当前工作区的配置详情"""
     ws_id = get_current_workspace_id(x_aca_workspace)
     _, _, _, _, ws_cfg = _bootstrap(ws_id)
@@ -247,7 +251,7 @@ def list_manifests_endpoint(x_aca_workspace: str | None = Header(None)) -> list[
 def get_assets_overview(x_aca_workspace: str | None = Header(None)) -> dict[str, Any]:
     """获取当前活动工作区的独立资产结构：包、公开接口、内部查找与原子"""
     ws_id = get_current_workspace_id(x_aca_workspace)
-    lib_repo, man_repo, _, _, ws_cfg = _bootstrap(ws_id)
+    lib_repo, _man_repo, _, _, ws_cfg = _bootstrap(ws_id)
     library_paths = ws_cfg.library_paths
     manifest_paths = ws_cfg.manifest_paths
 
@@ -613,7 +617,7 @@ def _execute_hook(hook_command: str | None, prompt_text: str) -> str | None:
         if proc.returncode == 0:
             return proc.stdout
         return f"[Hook Execution Error: exit code {proc.returncode}]\n{proc.stderr}"
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return f"[Hook Execution Exception: {e}]"
 
 
@@ -637,7 +641,8 @@ def build_prompt(
         manifest_path = man_repo.find_manifest(req.manifest, manifest_paths)
         if not manifest_path:
             raise HTTPException(
-                status_code=404, detail=f"Manifest '{req.manifest}' not found in workspace '{ws_id}'"
+                status_code=404,
+                detail=f"Manifest '{req.manifest}' not found in workspace '{ws_id}'",
             )
 
     manifest = man_repo.load_manifest(manifest_path)
@@ -819,7 +824,7 @@ def get_manifest_detail(
         )
     try:
         return man_repo.load_manifest(m_path)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         raise HTTPException(status_code=500, detail=f"加载清单失败: {e}")
 
 
@@ -950,7 +955,7 @@ def evaluate_lookup_adhoc(
 
     try:
         atom_ids = evaluate_lookup(library, lookup_def, interfaces)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return {"error": str(e), "matched_atoms": [], "count": 0}
 
     matched_atoms = []
@@ -1006,7 +1011,7 @@ def compile_lookup_adhoc(
 
     try:
         matched_ids = evaluate_lookup(library, lookup_def, interfaces)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         raise HTTPException(status_code=400, detail=f"选择器演算异常: {e}")
 
     initial_map: dict[str, set[str]] = {}
@@ -1015,7 +1020,7 @@ def compile_lookup_adhoc(
 
     try:
         final_atom_map = resolve_dependencies(initial_map, library, interfaces)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         raise HTTPException(status_code=400, detail=f"依赖解析异常: {e}")
 
     prompt_text = serialize_prompt(final_atom_map, library)
@@ -1184,7 +1189,7 @@ def get_adhoc_lookup_graph(
     }
     try:
         direct_atom_ids = evaluate_lookup(library, lookup_def, interfaces)
-    except Exception:  # noqa: BLE001
+    except Exception:
         direct_atom_ids = set()
 
     for aid in direct_atom_ids:
@@ -1288,7 +1293,7 @@ def create_or_update_lookup(
 
         broadcast_change("LIBRARY_DIRTY")
         return {"status": "ok", "key": lookup_name, "package": req.package}
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         raise HTTPException(status_code=500, detail=f"保存 Lookup 失败: {e}")
 
 
@@ -1371,7 +1376,7 @@ def delete_lookup(
 
         broadcast_change("LIBRARY_DIRTY")
         return {"status": "ok", "deleted": lookup_key}
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         raise HTTPException(status_code=500, detail=f"删除 Lookup 失败: {e}")
 
 
@@ -1516,7 +1521,7 @@ def update_atom(
             if len(parts) >= 3 and parts[0].strip() == "":
                 try:
                     existing_meta = yaml.safe_load(parts[1]) or {}
-                except Exception:  # noqa: BLE001
+                except Exception:
                     existing_meta = atom.get("meta", {})
                 existing_content = parts[2].strip()
             else:
@@ -1712,7 +1717,7 @@ def open_in_obsidian(req: OpenObsidianRequest):
         else:
             subprocess.run(["xdg-open", obsidian_uri], check=False)
         return {"status": "ok", "uri": obsidian_uri}
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         raise HTTPException(status_code=500, detail=f"启动 Obsidian 失败: {e}")
 
 

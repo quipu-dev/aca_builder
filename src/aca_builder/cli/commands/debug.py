@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typer
 
 from aca_builder.domain.events import BuildError
@@ -28,6 +30,6 @@ def debug_lookup(
         raise typer.Exit(code=1)
     except typer.Exit:
         raise
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         bus.error("system.unexpected_error", error=str(e))
         raise typer.Exit(code=1)

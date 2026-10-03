@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import subprocess
 
 import typer
@@ -52,6 +54,6 @@ def build(
     except BuildError as e:
         bus.error("system.unexpected_error", error=str(e))
         raise typer.Exit(code=1)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         bus.error("system.unexpected_error", error=str(e))
         raise typer.Exit(code=1)

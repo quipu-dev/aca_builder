@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typer
 
 from aca_builder.domain.events import BuildError
@@ -27,6 +29,6 @@ def lint(
         if str(e) != "LINT_FAILED_SILENTLY":
             bus.error("system.unexpected_error", error=str(e))
         raise typer.Exit(code=1)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         bus.error("system.critical_lint_error", error=str(e))
         raise typer.Exit(code=1)

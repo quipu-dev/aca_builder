@@ -205,7 +205,7 @@ class LinterService:
                     error=str(e),
                 )  # Using msg_id
                 error_count += 1
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 self.bus.lint_error(
                     "linter.manifest.unexpected_error",
                     manifest=m_path.stem,

@@ -47,7 +47,9 @@ def _expand_path(p: str | Path, base_dir: Path) -> Path:
     return (base_dir / p_str).resolve()
 
 
-def get_workspaces(config_data: dict[str, Any] | None = None) -> dict[str, WorkspaceConfig]:
+def get_workspaces(
+    config_data: dict[str, Any] | None = None,
+) -> dict[str, WorkspaceConfig]:
     """Parses and returns all configured workspaces."""
     if config_data is None:
         config_data = load_config()

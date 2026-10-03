@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import typer
@@ -20,7 +22,7 @@ def list_workspaces():
 
     typer.secho("Registered Workspaces:", fg=typer.colors.CYAN, bold=True)
     for ws_id, ws in workspaces.items():
-        is_default = (ws_id == default_ws)
+        is_default = ws_id == default_ws
         star = "* " if is_default else "  "
         suffix = " (default)" if is_default else ""
         root_str = f" [root: {ws.root}]" if ws.root else ""
@@ -32,7 +34,7 @@ def list_workspaces():
 
 @workspace_app.command("set-default")
 def set_default_workspace(
-    name: str = typer.Argument(..., help="Workspace identifier to set as default")
+    name: str = typer.Argument(..., help="Workspace identifier to set as default"),
 ):
     """Set the default workspace."""
     cfg = config.load_config()
@@ -72,12 +74,14 @@ def add_workspace(
         cfg["default_workspace"] = name
 
     config.save_config(cfg)
-    typer.secho(f"Workspace '{name}' added successfully ({abs_root}).", fg=typer.colors.GREEN)
+    typer.secho(
+        f"Workspace '{name}' added successfully ({abs_root}).", fg=typer.colors.GREEN
+    )
 
 
 @workspace_app.command("remove")
 def remove_workspace(
-    name: str = typer.Argument(..., help="Workspace identifier to remove")
+    name: str = typer.Argument(..., help="Workspace identifier to remove"),
 ):
     """Remove a workspace from configuration."""
     cfg = config.load_config()

@@ -112,6 +112,7 @@ def setup_test_environment(tmp_path: Path, monkeypatch):
 def mock_deps(monkeypatch):
     mock_bus = MagicMock()
     from aca_builder import config
+
     ws_id, ws_cfg = config.resolve_workspace()
     real_lib_repo = FSLibraryRepository()
     real_man_repo = FSManifestRepository()

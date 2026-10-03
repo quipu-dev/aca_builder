@@ -31,6 +31,6 @@ def info(
             raise typer.Exit(code=1 if package else 0)
     except typer.Exit:
         raise
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         bus.error("system.unexpected_error", error=str(e))
         raise typer.Exit(code=1)

@@ -132,7 +132,9 @@ def setup_lint_environment(tmp_path: Path, monkeypatch):
     (pkg_alpha_path / "d4/lookups.yaml").write_text(PKG_ALPHA_D4, encoding="utf-8")
     (pkg_alpha_path / "d1").mkdir()
     (pkg_alpha_path / "d1/atom_alpha.md").write_text(ATOM_ALPHA, encoding="utf-8")
-    (pkg_alpha_path / "d1/atom_alpha_private.md").write_text(ATOM_ALPHA_PRIVATE, encoding="utf-8")
+    (pkg_alpha_path / "d1/atom_alpha_private.md").write_text(
+        ATOM_ALPHA_PRIVATE, encoding="utf-8"
+    )
 
     pkg_beta_path = lib_path / "pkg_beta"
     pkg_beta_path.mkdir()
@@ -215,13 +217,16 @@ Content
 
 def test_lint_d4_naming_violation_wrong_prefix(setup_lint_environment, mock_deps):
     lib_path, _ = setup_lint_environment
-    (lib_path / "d4" / "bad_name.yaml").write_text("""
+    (lib_path / "d4" / "bad_name.yaml").write_text(
+        """
 type: d4
 lookups:
   wrong-prefix-lookup:
     pillar: d1
     selectors: []
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
     result = runner.invoke(app, ["lint"])
     assert result.exit_code != 0
     mock_deps.lint_error.assert_any_call(
@@ -231,13 +236,16 @@ lookups:
 
 def test_lint_d4_naming_violation_mismatch_pillar(setup_lint_environment, mock_deps):
     lib_path, _ = setup_lint_environment
-    (lib_path / "d4" / "mismatch.yaml").write_text("""
+    (lib_path / "d4" / "mismatch.yaml").write_text(
+        """
 type: d4
 lookups:
   d1l-mismatch:
     pillar: d3
     selectors: []
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
     result = runner.invoke(app, ["lint"])
     assert result.exit_code != 0
     mock_deps.lint_error.assert_any_call(
@@ -247,7 +255,9 @@ lookups:
 
 def test_lint_missing_required_metadata(setup_lint_environment, mock_deps):
     lib_path, _ = setup_lint_environment
-    (lib_path / "d1" / "missing_id.md").write_text("---\ntype: d1\n---\nContent", encoding="utf-8")
+    (lib_path / "d1" / "missing_id.md").write_text(
+        "---\ntype: d1\n---\nContent", encoding="utf-8"
+    )
     result = runner.invoke(app, ["lint"])
 
     assert result.exit_code != 0
@@ -262,16 +272,21 @@ def test_lint_missing_required_metadata(setup_lint_environment, mock_deps):
         ):
             found = True
             break
-    assert found, "Did not find expected 'missing required metadata' error in mock calls"
+    assert found, (
+        "Did not find expected 'missing required metadata' error in mock calls"
+    )
 
 
 def test_lint_manifest_nonexistent_lookup(setup_lint_environment, mock_deps):
     _, manifests_path = setup_lint_environment
-    (manifests_path / "bad_manifest.yaml").write_text("""
+    (manifests_path / "bad_manifest.yaml").write_text(
+        """
 name: Bad Manifest
 imports:
   - lookup: d1l-totally-fake
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
     result = runner.invoke(app, ["lint"])
     assert result.exit_code != 0
     mock_deps.lint_error.assert_any_call(
@@ -285,11 +300,14 @@ imports:
 
 def test_lint_manifest_private_lookup_violation(setup_lint_environment, mock_deps):
     _, manifests_path = setup_lint_environment
-    (manifests_path / "private_violator.yaml").write_text("""
+    (manifests_path / "private_violator.yaml").write_text(
+        """
 name: Private Violator
 imports:
   - lookup: alpha::d1l-private-alpha
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
     result = runner.invoke(app, ["lint"])
     assert result.exit_code != 0
 
@@ -313,10 +331,13 @@ imports:
 
 def test_lint_manifest_invalid_yaml(setup_lint_environment, mock_deps):
     _, manifests_path = setup_lint_environment
-    (manifests_path / "malformed_manifest.yaml").write_text("""
+    (manifests_path / "malformed_manifest.yaml").write_text(
+        """
 name: Malformed Manifest
 imports: [unclosed_list
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
     result = runner.invoke(app, ["lint"])
     assert result.exit_code != 0
     mock_deps.lint_error.assert_any_call(
@@ -331,12 +352,15 @@ def test_lint_manifest_valid_cross_package_public_lookup(
     setup_lint_environment, mock_deps
 ):
     _, manifests_path = setup_lint_environment
-    (manifests_path / "cross_package_public.yaml").write_text("""
+    (manifests_path / "cross_package_public.yaml").write_text(
+        """
 name: Cross Package Public
 imports:
   - lookup: alpha::d1l-public-alpha
   - lookup: beta::d1l-public-beta
-""", encoding="utf-8")
+""",
+        encoding="utf-8",
+    )
     result = runner.invoke(app, ["lint"])
     assert result.exit_code == 0
     mock_deps.lint_error.assert_not_called()
