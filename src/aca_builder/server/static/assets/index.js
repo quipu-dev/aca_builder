@@ -284,7 +284,8 @@ function CommandPalette({
   isOpen,
   onClose,
   manifests,
-  packages
+  packages,
+  kernel
 }) {
   const openTab = useIdeStore((state) => state.openTab);
   const [query, setQuery] = reactExports.useState("");
@@ -292,6 +293,16 @@ function CommandPalette({
   const inputRef = reactExports.useRef(null);
   const allItems = reactExports.useMemo(() => {
     const list = [];
+    if (kernel) {
+      list.push({
+        id: "atom:kernel",
+        type: "atom",
+        title: "kernel.md (核心协议)",
+        subtitle: "ACA Runtime Protocol",
+        badge: "KERNEL",
+        atomId: "kernel"
+      });
+    }
     for (const item of manifests) {
       const mName = typeof item === "string" ? item : item.name;
       const mWs = typeof item === "string" ? void 0 : item.workspace;
@@ -337,7 +348,7 @@ function CommandPalette({
       }
     }
     return list;
-  }, [manifests, packages]);
+  }, [manifests, packages, kernel]);
   const filteredItems = reactExports.useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return allItems.slice(0, 50);
@@ -507,6 +518,7 @@ function AtomEditorTab({
   const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
   const getSnapshot = useIdeStore((state) => state.getSnapshot);
   const tabId = `atom:${atomId}`;
+  const isKernel = atomId === "kernel" || atomId === "draft:kernel";
   const isDraft = atomId.startsWith("draft:") || atomId === "new_atom";
   const draftInitialPkg = isDraft ? atomId.replace("draft:", "") : "";
   const [isReady, setIsReady] = reactExports.useState(false);
@@ -514,18 +526,20 @@ function AtomEditorTab({
   const [saving, setSaving] = reactExports.useState(false);
   const [saveSuccess, setSaveSuccess] = reactExports.useState(false);
   const [errorMsg, setErrorMsg] = reactExports.useState("");
-  const [currentId, setCurrentId] = reactExports.useState(isDraft ? "" : atomId);
-  const [draftSuffix, setDraftSuffix] = reactExports.useState("");
-  const [pkgName, setPkgName] = reactExports.useState(draftInitialPkg || ((_a = packages[0]) == null ? void 0 : _a.name) || "");
+  const [currentId, setCurrentId] = reactExports.useState(isDraft ? isKernel ? "kernel" : "" : atomId);
+  const [draftSuffix, setDraftSuffix] = reactExports.useState(isKernel ? "kernel" : "");
+  const [pkgName, setPkgName] = reactExports.useState(
+    isKernel ? "全局" : draftInitialPkg || ((_a = packages[0]) == null ? void 0 : _a.name) || ""
+  );
   const [sourceFile, setSourceFile] = reactExports.useState("");
-  const [atomType, setAtomType] = reactExports.useState("d3");
+  const [atomType, setAtomType] = reactExports.useState(isKernel ? "kernel" : "d3");
   const [priority, setPriority] = reactExports.useState(1);
   const [domainList, setDomainList] = reactExports.useState([]);
   const [domainInput, setDomainInput] = reactExports.useState("");
   const [usesList, setUsesList] = reactExports.useState([]);
   const [usesInput, setUsesInput] = reactExports.useState("");
   const [content, setContent] = reactExports.useState(
-    isDraft ? "# 新建原子组件\n\n在此输入具体的规则规范或程序技能..." : ""
+    isDraft ? isKernel ? "# ACA 运行时协议 v1.0\n\n## 1. 系统声明\n本文档定义了当前工作区的公理边界与核心执行契约。\n" : "# 新建原子组件\n\n在此输入具体的规则规范或程序技能..." : ""
   );
   const [isModified, setIsModified] = reactExports.useState(false);
   reactExports.useEffect(() => {
@@ -623,6 +637,44 @@ function AtomEditorTab({
     setSaving(true);
     setErrorMsg("");
     if (isDraft) {
+      if (isKernel) {
+        if (!content.trim()) {
+          setErrorMsg("Kernel 协议正文不可为空");
+          setSaving(false);
+          return;
+        }
+        try {
+          const res = await fetch("/api/atoms", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "kernel",
+              content
+            })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setSaveSuccess(true);
+            setIsModified(false);
+            setTabDirty(tabId, false);
+            onSaved == null ? void 0 : onSaved();
+            openTab({
+              id: "atom:kernel",
+              type: "atom",
+              title: "kernel",
+              closable: true,
+              atomId: "kernel"
+            });
+          } else {
+            setErrorMsg(data.detail || "创建 Kernel 失败");
+          }
+        } catch (_err) {
+          setErrorMsg("创建 Kernel 网络异常");
+        } finally {
+          setSaving(false);
+        }
+        return;
+      }
       const cleanSuffix = draftSuffix.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-");
       const generatedId = `${atomType}-${cleanSuffix}`;
       if (!pkgName || !cleanSuffix || !content.trim()) {
@@ -838,7 +890,7 @@ function AtomEditorTab({
             )
           ] })
         ] }),
-        isDraft && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-4 py-2.5 border-b border-slate-800 bg-indigo-950/20 grid grid-cols-3 gap-3 text-xs font-mono", children: [
+        isDraft && !isKernel && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-4 py-2.5 border-b border-slate-800 bg-indigo-950/20 grid grid-cols-3 gap-3 text-xs font-mono", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "atom-draft-pkg", className: "text-slate-400 block mb-1", children: "所属包" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -899,7 +951,7 @@ function AtomEditorTab({
             )
           ] })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-4 py-3 border-b border-slate-800/80 bg-slate-900/30 space-y-2.5 text-xs font-mono", children: [
+        !isKernel && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-4 py-3 border-b border-slate-800/80 bg-slate-900/30 space-y-2.5 text-xs font-mono", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-6", children: [
             atomType === "d3" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-400 flex items-center gap-1", children: [
@@ -4039,23 +4091,12 @@ function buildTree(items) {
   };
   for (const item of items) {
     const p = typeof item === "string" ? item : item.name;
-    const wsPath = typeof item === "string" ? "默认工作区" : item.workspace_path || item.workspace || "默认工作区";
-    let wsNode = root.children.get(wsPath);
-    if (!wsNode) {
-      wsNode = {
-        name: wsPath,
-        path: wsPath,
-        isFolder: true,
-        children: /* @__PURE__ */ new Map()
-      };
-      root.children.set(wsPath, wsNode);
-    }
     const parts = p.split("/").filter(Boolean);
-    let curr = wsNode;
+    let curr = root;
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       const isLeaf = i === parts.length - 1;
-      const subPath = `${wsPath}::${parts.slice(0, i + 1).join("/")}`;
+      const subPath = parts.slice(0, i + 1).join("/");
       let nextNode = curr.children.get(part);
       if (!nextNode) {
         nextNode = {
@@ -4199,267 +4240,272 @@ function ManifestExplorer({
 }
 function PackageExplorer({
   packages,
+  kernel,
   onSelectAtom,
   onOpenLookup,
+  onCreateKernel,
   onDeletePackage,
   onDeleteLookup,
   onDeleteAtom
 }) {
   const explorerExpanded = useIdeStore((state) => state.explorerExpanded);
   const toggleExplorerExpanded = useIdeStore((state) => state.toggleExplorerExpanded);
-  const workspaceGroups = reactExports.useMemo(() => {
-    var _a;
-    const map = /* @__PURE__ */ new Map();
-    for (const pkg of packages) {
-      const wsPath = pkg.workspace_path || pkg.workspace || "默认工作区";
-      if (!map.has(wsPath)) {
-        map.set(wsPath, []);
-      }
-      (_a = map.get(wsPath)) == null ? void 0 : _a.push(pkg);
-    }
-    return Array.from(map.entries()).map(([path, pkgs]) => ({
-      path,
-      name: path.split("/").pop() || path,
-      packages: pkgs
-    }));
-  }, [packages]);
-  if (packages.length === 0) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "py-6 text-center text-xs font-mono text-slate-500", children: "暂无组件包" });
-  }
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1", children: workspaceGroups.map((group) => {
-    const isFolderExp = explorerExpanded[group.path] === true;
-    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1 mb-2", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-amber-800/40 bg-amber-950/20 p-2 font-mono text-xs", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "kernel", className: "text-[9px] uppercase font-bold px-1.5 py-0", children: "KERNEL" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-amber-200 text-[11px]", children: "核心协议" })
+        ] }),
+        kernel && onDeleteAtom && /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            onClick: (e) => onDeleteAtom("kernel", e),
+            className: "p-0.5 text-slate-500 hover:text-rose-400 rounded transition-colors",
+            title: "删除 Kernel 核心协议",
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+          }
+        )
+      ] }),
+      kernel ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
         "button",
         {
           type: "button",
-          onClick: () => toggleExplorerExpanded(group.path),
-          className: "w-full flex items-center gap-1.5 py-1 px-1 rounded text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-colors group cursor-pointer text-left",
-          title: group.path,
+          onClick: (e) => onSelectAtom == null ? void 0 : onSelectAtom("kernel", e),
+          className: "w-full flex items-center justify-between px-2 py-1.5 rounded bg-slate-900/80 border border-amber-900/40 hover:border-amber-500/60 hover:text-amber-100 transition-colors text-slate-300 text-left cursor-pointer",
+          title: "点击打开编辑 Kernel 协议",
           children: [
-            isFolderExp ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3.5 w-3.5 text-slate-500 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5 text-slate-500 shrink-0" }),
-            isFolderExp ? /* @__PURE__ */ jsxRuntimeExports.jsx(FolderOpen, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Folder, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "span",
-              {
-                className: "font-semibold truncate text-[11px] text-slate-300",
-                title: group.path,
-                children: group.path
-              }
-            )
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate font-semibold", children: "kernel.md" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-amber-400/80", children: "已就绪" })
           ]
         }
-      ),
-      isFolderExp && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pl-3 space-y-1 border-l border-slate-800/60 ml-2", children: group.packages.map((pkg) => {
-        var _a;
-        const pkgKey = `pkg:${pkg.name}`;
-        const isExp = explorerExpanded[pkgKey] === true;
-        const exportsCount = Object.keys(pkg.exports || {}).length;
-        const internalCount = Object.keys(pkg.internal_lookups || {}).length;
-        const atomsCount = ((_a = pkg.atoms) == null ? void 0 : _a.length) || 0;
-        return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "div",
+      ) : /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5 pt-0.5", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[11px] text-amber-300/80", children: "当前工作区缺少 kernel.md 协议" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
           {
-            className: "rounded border border-slate-800/60 bg-slate-900/30 overflow-hidden",
+            type: "button",
+            onClick: onCreateKernel,
+            className: "w-full py-1 px-2 rounded bg-amber-600/30 hover:bg-amber-600/50 border border-amber-500/50 text-amber-200 text-[11px] flex items-center justify-center gap-1 font-semibold transition-colors cursor-pointer",
             children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between w-full px-3 py-2 text-left hover:bg-slate-800/40 text-xs font-mono transition-colors group", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: () => toggleExplorerExpanded(pkgKey),
-                    className: "flex items-center gap-2 flex-1 text-left cursor-pointer truncate",
-                    children: [
-                      isExp ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3.5 w-3.5 text-slate-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5 text-slate-400 shrink-0" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(Package, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200 truncate", children: pkg.name }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-slate-500 ml-auto shrink-0", children: [
-                        "(",
-                        atomsCount,
-                        ")"
-                      ] })
-                    ]
-                  }
-                ),
-                onDeletePackage && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: (e) => onDeletePackage(pkg.name, e),
-                    className: "opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-rose-400 transition-opacity rounded cursor-pointer shrink-0 ml-1",
-                    title: `删除组件包 ${pkg.name}`,
-                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3.5 w-3.5" })
-                  }
-                )
-              ] }),
-              isExp && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-3 pb-2.5 pt-1 space-y-2 border-t border-slate-800/40 bg-slate-950/40", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-emerald-400 flex items-center justify-between mb-1", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(Globe, { className: "h-3 w-3" }),
-                      " 公开导出接口"
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: () => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}`),
-                        className: "text-slate-400 hover:text-emerald-400 p-0.5 rounded cursor-pointer",
-                        title: "新建公开导出接口",
-                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
-                      }
-                    )
-                  ] }),
-                  exportsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.exports).map(([k, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                    "div",
-                    {
-                      className: "w-full text-left text-xs font-mono text-slate-300 hover:text-emerald-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer",
-                      children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                          "button",
-                          {
-                            type: "button",
-                            onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
-                            className: "flex-1 text-left truncate flex items-center gap-1 cursor-pointer",
-                            title: "点击打开",
-                            children: [
-                              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
-                              /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "outline", className: "text-[9px] px-1 py-0", children: def.pillar })
-                            ]
-                          }
-                        ),
-                        onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          "button",
-                          {
-                            type: "button",
-                            onClick: (e) => onDeleteLookup(k, e),
-                            className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
-                            title: "删除此公开接口",
-                            children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
-                          }
-                        )
-                      ]
-                    },
-                    k
-                  )) })
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-slate-400 flex items-center justify-between mb-1", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(Lock, { className: "h-3 w-3" }),
-                      " 内部私有查找"
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}`, e),
-                        className: "text-slate-400 hover:text-indigo-400 p-0.5 rounded cursor-pointer",
-                        title: "新建内部查找",
-                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
-                      }
-                    )
-                  ] }),
-                  internalCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.internal_lookups).map(([k, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                    "div",
-                    {
-                      className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer",
-                      children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                          "button",
-                          {
-                            type: "button",
-                            onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
-                            className: "flex-1 text-left truncate flex items-center gap-1 cursor-pointer",
-                            title: "点击打开",
-                            children: [
-                              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
-                              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] text-slate-600", children: def.pillar })
-                            ]
-                          }
-                        ),
-                        onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          "button",
-                          {
-                            type: "button",
-                            onClick: (e) => onDeleteLookup(k, e),
-                            className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
-                            title: "删除此内部查找",
-                            children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
-                          }
-                        )
-                      ]
-                    },
-                    k
-                  )) })
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-slate-400 flex items-center justify-between mb-1", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(FileCode, { className: "h-3 w-3" }),
-                      " 包含原子清单"
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: (e) => {
-                          e.stopPropagation();
-                          onSelectAtom == null ? void 0 : onSelectAtom(`draft:${pkg.name}`, e);
-                        },
-                        className: "text-slate-400 hover:text-indigo-400 p-0.5 rounded transition-colors cursor-pointer",
-                        title: "新建原子组件",
-                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
-                      }
-                    )
-                  ] }),
-                  atomsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: pkg.atoms.map((atom) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                    "div",
-                    {
-                      className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60 rounded px-1.5 py-1 truncate flex items-center justify-between transition-colors group cursor-pointer",
-                      children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                          "button",
-                          {
-                            type: "button",
-                            onClick: (e) => onSelectAtom == null ? void 0 : onSelectAtom(atom.id, e),
-                            className: "flex items-center gap-1.5 flex-1 min-w-0 text-left cursor-pointer",
-                            title: "点击打开原子",
-                            children: [
-                              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-indigo-400 shrink-0" }),
-                              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: atom.id })
-                            ]
-                          }
-                        ),
-                        onDeleteAtom && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          "button",
-                          {
-                            type: "button",
-                            onClick: (e) => onDeleteAtom(atom.id, e),
-                            className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
-                            title: "删除此原子组件",
-                            children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
-                          }
-                        )
-                      ]
-                    },
-                    atom.id
-                  )) })
-                ] })
-              ] })
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5" }),
+              " 初始化 Kernel"
             ]
-          },
-          pkg.name
-        );
-      }) })
-    ] }, group.path);
-  }) });
+          }
+        )
+      ] })
+    ] }),
+    packages.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "py-6 text-center text-xs font-mono text-slate-500", children: "暂无组件包" }) : packages.map((pkg) => {
+      var _a;
+      const pkgKey = `pkg:${pkg.name}`;
+      const isExp = explorerExpanded[pkgKey] === true;
+      const exportsCount = Object.keys(pkg.exports || {}).length;
+      const internalCount = Object.keys(pkg.internal_lookups || {}).length;
+      const atomsCount = ((_a = pkg.atoms) == null ? void 0 : _a.length) || 0;
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "div",
+        {
+          className: "rounded border border-slate-800/60 bg-slate-900/30 overflow-hidden",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between w-full px-3 py-2 text-left hover:bg-slate-800/40 text-xs font-mono transition-colors group", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => toggleExplorerExpanded(pkgKey),
+                  className: "flex items-center gap-2 flex-1 text-left cursor-pointer truncate",
+                  children: [
+                    isExp ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3.5 w-3.5 text-slate-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5 text-slate-400 shrink-0" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(Package, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200 truncate", children: pkg.name }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-slate-500 ml-auto shrink-0", children: [
+                      "(",
+                      atomsCount,
+                      ")"
+                    ] })
+                  ]
+                }
+              ),
+              onDeletePackage && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: (e) => onDeletePackage(pkg.name, e),
+                  className: "opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-rose-400 transition-opacity rounded cursor-pointer shrink-0 ml-1",
+                  title: `删除组件包 ${pkg.name}`,
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3.5 w-3.5" })
+                }
+              )
+            ] }),
+            isExp && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-3 pb-2.5 pt-1 space-y-2 border-t border-slate-800/40 bg-slate-950/40", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-emerald-400 flex items-center justify-between mb-1", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(Globe, { className: "h-3 w-3" }),
+                    " 公开导出接口"
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}`),
+                      className: "text-slate-400 hover:text-emerald-400 p-0.5 rounded cursor-pointer",
+                      title: "新建公开导出接口",
+                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
+                    }
+                  )
+                ] }),
+                exportsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.exports).map(([k, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "div",
+                  {
+                    className: "w-full text-left text-xs font-mono text-slate-300 hover:text-emerald-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer",
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        "button",
+                        {
+                          type: "button",
+                          onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
+                          className: "flex-1 text-left truncate flex items-center gap-1 cursor-pointer",
+                          title: "点击打开",
+                          children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "outline", className: "text-[9px] px-1 py-0", children: def.pillar })
+                          ]
+                        }
+                      ),
+                      onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "button",
+                        {
+                          type: "button",
+                          onClick: (e) => onDeleteLookup(k, e),
+                          className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
+                          title: "删除此公开接口",
+                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+                        }
+                      )
+                    ]
+                  },
+                  k
+                )) })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-slate-400 flex items-center justify-between mb-1", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(Lock, { className: "h-3 w-3" }),
+                    " 内部私有查找"
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}`, e),
+                      className: "text-slate-400 hover:text-indigo-400 p-0.5 rounded cursor-pointer",
+                      title: "新建内部查找",
+                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
+                    }
+                  )
+                ] }),
+                internalCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.internal_lookups).map(([k, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "div",
+                  {
+                    className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer",
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        "button",
+                        {
+                          type: "button",
+                          onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
+                          className: "flex-1 text-left truncate flex items-center gap-1 cursor-pointer",
+                          title: "点击打开",
+                          children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] text-slate-600", children: def.pillar })
+                          ]
+                        }
+                      ),
+                      onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "button",
+                        {
+                          type: "button",
+                          onClick: (e) => onDeleteLookup(k, e),
+                          className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
+                          title: "删除此内部查找",
+                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+                        }
+                      )
+                    ]
+                  },
+                  k
+                )) })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-slate-400 flex items-center justify-between mb-1", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(FileCode, { className: "h-3 w-3" }),
+                    " 包含原子清单"
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: (e) => {
+                        e.stopPropagation();
+                        onSelectAtom == null ? void 0 : onSelectAtom(`draft:${pkg.name}`, e);
+                      },
+                      className: "text-slate-400 hover:text-indigo-400 p-0.5 rounded transition-colors cursor-pointer",
+                      title: "新建原子组件",
+                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
+                    }
+                  )
+                ] }),
+                atomsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: pkg.atoms.map((atom) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "div",
+                  {
+                    className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60 rounded px-1.5 py-1 truncate flex items-center justify-between transition-colors group cursor-pointer",
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        "button",
+                        {
+                          type: "button",
+                          onClick: (e) => onSelectAtom == null ? void 0 : onSelectAtom(atom.id, e),
+                          className: "flex items-center gap-1.5 flex-1 min-w-0 text-left cursor-pointer",
+                          title: "点击打开原子",
+                          children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-indigo-400 shrink-0" }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: atom.id })
+                          ]
+                        }
+                      ),
+                      onDeleteAtom && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "button",
+                        {
+                          type: "button",
+                          onClick: (e) => onDeleteAtom(atom.id, e),
+                          className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
+                          title: "删除此原子组件",
+                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+                        }
+                      )
+                    ]
+                  },
+                  atom.id
+                )) })
+              ] })
+            ] })
+          ]
+        },
+        pkg.name
+      );
+    })
+  ] });
 }
 function App() {
   const ideStore = useIdeStore();
   const wsStore = useWorkspaceStore();
   const [manifests, setManifests] = reactExports.useState([]);
   const [packages, setPackages] = reactExports.useState([]);
+  const [kernel, setKernel] = reactExports.useState(null);
   const [status, setStatus] = reactExports.useState("检测中...");
   const [isCreatePkgOpen, setIsCreatePkgOpen] = reactExports.useState(false);
   const [newPkgName, setNewPkgName] = reactExports.useState("");
@@ -4509,9 +4555,11 @@ function App() {
     fetch("/api/assets").then((res) => res.json()).then((data) => {
       setManifests(data.manifests || []);
       setPackages(data.packages || []);
+      setKernel(data.kernel || null);
     }).catch(() => {
       setManifests([]);
       setPackages([]);
+      setKernel(null);
     });
   }, []);
   const fetchLintReport = reactExports.useCallback(() => {
@@ -4665,6 +4713,18 @@ function App() {
         title: "新建原子草稿",
         closable: true,
         atomId: `draft:${defaultPkg}`
+      },
+      { newTab: true }
+    );
+  };
+  const handleCreateKernelDraft = () => {
+    ideStore.openTab(
+      {
+        id: "atom:draft:kernel",
+        type: "atom",
+        title: "初始化 Kernel 协议",
+        closable: true,
+        atomId: "draft:kernel"
       },
       { newTab: true }
     );
@@ -4942,8 +5002,10 @@ function App() {
                 PackageExplorer,
                 {
                   packages,
+                  kernel,
                   onSelectAtom: (atomId, e) => handleOpenAtomTab(atomId, e),
                   onOpenLookup: (lKey, e) => handleOpenLookupTab(lKey, e),
+                  onCreateKernel: handleCreateKernelDraft,
                   onDeletePackage: handleDeletePackage,
                   onDeleteLookup: handleDeleteLookup,
                   onDeleteAtom: handleDeleteAtom
@@ -5243,7 +5305,8 @@ function App() {
         isOpen: isCommandPaletteOpen,
         onClose: () => setIsCommandPaletteOpen(false),
         manifests,
-        packages
+        packages,
+        kernel
       }
     ),
     /* @__PURE__ */ jsxRuntimeExports.jsx(
