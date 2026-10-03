@@ -1,4 +1,11 @@
 import {
+  type MatchedAtomItem,
+  compileLookupAdhoc,
+  evaluateLookupAdhoc,
+  useDeleteLookupMutation,
+  useSaveLookupMutation,
+} from '@/api/lookups';
+import {
   type ProfileSummary,
   type PromptChunk,
   PromptViewer,
@@ -28,16 +35,6 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-
-export interface MatchedAtom {
-  id: string;
-  type: string;
-  priority?: number;
-  package?: string;
-  source_file?: string;
-  domain: string[];
-  preview: string;
-}
 
 export interface SelectorRule {
   query?: {
@@ -71,7 +68,6 @@ export function LookupEditorTab({
   const initialPkg = isDraft ? draftParts[1] || '' : '';
   const initialPublic = isDraft ? !draftParts[2]?.startsWith('private') : true;
 
-  // 基础元信息与就绪守卫
   const [isReady, setIsReady] = useState(false);
   const [pkgName, setPkgName] = useState(initialPkg || packages[0]?.name || '');
   const [isPublic, setIsPublic] = useState(initialPublic);
@@ -79,39 +75,32 @@ export function LookupEditorTab({
   const [rawKeyName, setRawKeyName] = useState('');
   const [description, setDescription] = useState('');
 
-  // 选择器规则列表
   const [selectors, setSelectors] = useState<SelectorRule[]>([]);
   const [isModified, setIsModified] = useState(false);
 
-  // 获取 IDE 偏好设置
   const preferences = useIdeStore((state) => state.preferences);
-
-  // 右侧多维视口切换：'atoms' (命中原子) | 'graph' (白板拓扑) | 'prompt' (切片编译)
   const [rightView, setRightView] = useState<'atoms' | 'graph' | 'prompt'>(
     preferences?.defaultRightPanel === 'prompt' ? 'prompt' : 'graph',
   );
 
-  // 实时演算状态 (Atoms 模式)
-  const [matchedAtoms, setMatchedAtoms] = useState<MatchedAtom[]>([]);
+  const [matchedAtoms, setMatchedAtoms] = useState<MatchedAtomItem[]>([]);
   const [evaluating, setEvaluating] = useState(false);
   const [evalError, setEvalError] = useState('');
 
-  // 实时切片编译状态 (Prompt 模式)
   const [slicePrompt, setSlicePrompt] = useState<string>('');
   const [sliceChunks, setSliceChunks] = useState<PromptChunk[]>([]);
   const [sliceProfile, setProfile] = useState<ProfileSummary | null>(null);
-
-  // 保存状态
-  const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
 
-  // 新增选择器临时状态
   const [selectorMode, setSelectorMode] = useState<'id' | 'domain' | 'ref'>('id');
   const [queryIdInput, setQueryIdInput] = useState('');
   const [domainInput, setDomainInput] = useState('');
   const [refInput, setRefInput] = useState('');
 
-  // 提取系统中所有公开或内部 lookup 候选用于 ref 自动补全
+  const saveLookupMutation = useSaveLookupMutation();
+  const deleteLookupMutation = useDeleteLookupMutation();
+  const saving = saveLookupMutation.isPending;
+
   const candidateLookupRefs = packages.flatMap((pkg) => {
     const list: string[] = [];
     for (const key of Object.keys(pkg.exports || {})) {
@@ -132,8 +121,9 @@ export function LookupEditorTab({
     }
   };
 
-  // 1. 初始化优先水合已存在的 Lookup 快照
   useEffect(() => {
+    if (isReady) return;
+
     const snapshot = getSnapshot<{
       pkgName: string;
       isPublic: boolean;
@@ -161,6 +151,10 @@ export function LookupEditorTab({
 
     if (isDraft) {
       setIsReady(true);
+      return;
+    }
+
+    if (!packages || packages.length === 0) {
       return;
     }
 
@@ -198,9 +192,10 @@ export function LookupEditorTab({
         return;
       }
     }
-  }, [lookupKey, packages, isDraft, tabId, getSnapshot, setTabDirty]);
 
-  // 2. 持续向全局快照池同步 (必须就绪后才允许持久化)
+    setIsReady(true);
+  }, [lookupKey, packages, isDraft, tabId, getSnapshot, setTabDirty, isReady]);
+
   useEffect(() => {
     if (!isReady) return;
     saveSnapshot(tabId, {
@@ -227,7 +222,6 @@ export function LookupEditorTab({
     saveSnapshot,
   ]);
 
-  // 2. 实时演算核心：根据当前选中的视口按需防抖计算
   const runLiveDebug = useCallback(() => {
     if (selectors.length === 0) {
       setMatchedAtoms([]);
@@ -244,20 +238,12 @@ export function LookupEditorTab({
     const targetKey = `${pillar}l-${rawKeyName.trim() || 'adhoc'}`;
 
     if (rightView === 'prompt') {
-      fetch('/api/lookups/compile-adhoc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: targetKey,
-          selectors,
-          package: pkgName,
-          pillar,
-        }),
+      compileLookupAdhoc({
+        key: targetKey,
+        selectors: selectors as Array<Record<string, unknown>>,
+        package: pkgName,
+        pillar,
       })
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}: 编译切片失败`);
-          return res.json();
-        })
         .then((data) => {
           setSlicePrompt(data.prompt || '');
           setSliceChunks(data.chunks || []);
@@ -268,17 +254,11 @@ export function LookupEditorTab({
         })
         .finally(() => setEvaluating(false));
     } else {
-      // atoms 模式与 graph 模式通用原子命中计算
-      fetch('/api/lookups/evaluate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          selectors,
-          package: pkgName,
-          pillar,
-        }),
+      evaluateLookupAdhoc({
+        selectors: selectors as Array<Record<string, unknown>>,
+        package: pkgName,
+        pillar,
       })
-        .then((res) => res.json())
         .then((data) => {
           if (data.error) {
             setEvalError(data.error);
@@ -301,11 +281,9 @@ export function LookupEditorTab({
     return () => clearTimeout(timer);
   }, [runLiveDebug]);
 
-  // 当前包内的可选原子列表
   const currentPkgObj = packages.find((p) => p.name === pkgName);
   const currentPillarAtoms = (currentPkgObj?.atoms || []).filter((a) => a.type === pillar);
 
-  // 添加选择器
   const handleAddSelector = () => {
     if (selectorMode === 'id' && queryIdInput.trim()) {
       setSelectors([...selectors, { query: { id: queryIdInput.trim() } }]);
@@ -331,7 +309,6 @@ export function LookupEditorTab({
     markDirty();
   };
 
-  // 保存查找接口
   const handleSave = useCallback(async () => {
     const cleanSuffix = rawKeyName
       .trim()
@@ -341,50 +318,38 @@ export function LookupEditorTab({
 
     if (!cleanSuffix || selectors.length === 0) return;
 
-    setSaving(true);
     setSaveStatus('正在写入...');
     try {
-      const res = await fetch('/api/lookups', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          package: pkgName,
-          key: `${pillar}l-${cleanSuffix}`,
-          pillar,
-          is_public: isPublic,
-          description: description.trim(),
-          selectors,
-        }),
+      await saveLookupMutation.mutateAsync({
+        package: pkgName,
+        key: `${pillar}l-${cleanSuffix}`,
+        pillar,
+        is_public: isPublic,
+        description: description.trim(),
+        selectors: selectors as Array<Record<string, unknown>>,
       });
 
-      const data = await res.json();
-      if (res.ok) {
-        setSaveStatus('已保存');
-        setIsModified(false);
-        setTabDirty(tabId, false);
-        clearSnapshot(tabId);
-        onSaved?.();
+      setSaveStatus('已保存');
+      setIsModified(false);
+      setTabDirty(tabId, false);
+      clearSnapshot(tabId);
+      onSaved?.();
 
-        const fullTargetKey = isPublic
-          ? `${pkgName}::${pillar}l-${cleanSuffix}`
-          : `${pillar}l-${cleanSuffix}`;
-        if (isDraft) {
-          replaceTab(tabId, {
-            id: `lookup:${fullTargetKey}`,
-            type: 'lookup',
-            title: `${pillar}l-${cleanSuffix}`,
-            closable: true,
-            lookupKey: fullTargetKey,
-          });
-        }
-        setTimeout(() => setSaveStatus(''), 2500);
-      } else {
-        setSaveStatus(`保存失败: ${data.detail}`);
+      const fullTargetKey = isPublic
+        ? `${pkgName}::${pillar}l-${cleanSuffix}`
+        : `${pillar}l-${cleanSuffix}`;
+      if (isDraft) {
+        replaceTab(tabId, {
+          id: `lookup:${fullTargetKey}`,
+          type: 'lookup',
+          title: `${pillar}l-${cleanSuffix}`,
+          closable: true,
+          lookupKey: fullTargetKey,
+        });
       }
-    } catch (_err) {
-      setSaveStatus('保存请求异常');
-    } finally {
-      setSaving(false);
+      setTimeout(() => setSaveStatus(''), 2500);
+    } catch (err: unknown) {
+      setSaveStatus(`保存失败: ${err instanceof Error ? err.message : '异常'}`);
     }
   }, [
     rawKeyName,
@@ -399,6 +364,7 @@ export function LookupEditorTab({
     onSaved,
     isDraft,
     replaceTab,
+    saveLookupMutation,
   ]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -408,7 +374,6 @@ export function LookupEditorTab({
     }
   };
 
-  // 监听全局保存总线 (Ctrl+S / Cmd+S)
   useEffect(() => {
     const handleGlobalSave = () => {
       const activeTabId = useIdeStore.getState().activeTabId;
@@ -425,21 +390,11 @@ export function LookupEditorTab({
     if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？此操作将从包定义中移除。`)) {
       return;
     }
-    setSaving(true);
     try {
-      const res = await fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
-        method: 'DELETE',
-      });
-      if (res.ok) {
-        onDeleted?.();
-      } else {
-        const data = await res.json();
-        setSaveStatus(`删除失败: ${data.detail}`);
-      }
-    } catch (_err) {
-      setSaveStatus('删除请求网络异常');
-    } finally {
-      setSaving(false);
+      await deleteLookupMutation.mutateAsync(lookupKey);
+      onDeleted?.();
+    } catch (err: unknown) {
+      setSaveStatus(`删除失败: ${err instanceof Error ? err.message : '异常'}`);
     }
   };
 
@@ -450,7 +405,6 @@ export function LookupEditorTab({
       className="flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none font-mono"
       onKeyDown={handleKeyDown}
     >
-      {/* 顶部操作条 */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 text-xs shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
@@ -469,7 +423,7 @@ export function LookupEditorTab({
               variant="outline"
               size="sm"
               onClick={handleDelete}
-              disabled={saving}
+              disabled={deleteLookupMutation.isPending}
               className="h-7 text-xs flex items-center gap-1 px-2.5 text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700 cursor-pointer"
               title="删除此接口契约"
             >
@@ -489,7 +443,6 @@ export function LookupEditorTab({
         </div>
       </div>
 
-      {/* 核心工作区：双栏并排 (左侧 Query Builder | 右侧 Live Debug 演算) */}
       <div className="flex-1 overflow-hidden">
         <SplitPane
           direction="horizontal"
@@ -498,7 +451,6 @@ export function LookupEditorTab({
           minSecondarySize={320}
           primary={
             <div className="h-full flex flex-col p-4 space-y-4 overflow-y-auto">
-              {/* 基础配置表单 */}
               <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-3 text-xs">
                 <div className="flex items-center gap-2 text-indigo-400 font-semibold mb-1">
                   <Sparkles className="h-4 w-4" />
@@ -616,7 +568,6 @@ export function LookupEditorTab({
                 </div>
               </div>
 
-              {/* 可视化 Query Builder 规则配置 */}
               <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-3 text-xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
@@ -654,7 +605,6 @@ export function LookupEditorTab({
                   </div>
                 </div>
 
-                {/* 规则添加交互行 */}
                 <div className="flex gap-2">
                   {selectorMode === 'id' && (
                     <div className="flex-1 flex gap-2">
@@ -717,7 +667,6 @@ export function LookupEditorTab({
                   </Button>
                 </div>
 
-                {/* 现存选择器列表 */}
                 <div className="space-y-1.5 pt-2 border-t border-slate-800/60">
                   <div className="text-[11px] text-slate-400">
                     已配置规则 ({selectors.length} 项):
@@ -770,7 +719,6 @@ export function LookupEditorTab({
           }
           secondary={
             <div className="h-full flex flex-col bg-slate-900/30 overflow-hidden">
-              {/* 实时演算视口控制条 */}
               <div className="flex items-center justify-between px-3.5 py-2 border-b border-slate-800 bg-slate-950/70 shrink-0">
                 <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 p-0.5 rounded text-[11px]">
                   <button
@@ -824,7 +772,6 @@ export function LookupEditorTab({
                 </div>
               </div>
 
-              {/* 演算错误提示 */}
               {evalError && (
                 <div className="m-3 mb-0 rounded bg-rose-950/60 border border-rose-800/80 p-2.5 text-xs text-rose-300 flex items-center gap-1.5 shrink-0 font-sans">
                   <AlertCircle className="h-4 w-4 shrink-0" />
@@ -832,7 +779,6 @@ export function LookupEditorTab({
                 </div>
               )}
 
-              {/* 三重视图内容区分支 */}
               <div className="flex-1 overflow-hidden">
                 {rightView === 'atoms' && (
                   <div className="h-full overflow-y-auto p-4 space-y-2.5">
@@ -930,13 +876,13 @@ export function LookupEditorTab({
                           atomId,
                         });
                       }}
-                      onSelectLookup={(lookupKey) => {
+                      onSelectLookup={(lKey) => {
                         openTab({
-                          id: `lookup:${lookupKey}`,
+                          id: `lookup:${lKey}`,
                           type: 'lookup',
-                          title: lookupKey.split('::').pop() || lookupKey,
+                          title: lKey.split('::').pop() || lKey,
                           closable: true,
-                          lookupKey,
+                          lookupKey: lKey,
                         });
                       }}
                     />
@@ -958,13 +904,13 @@ export function LookupEditorTab({
                           atomId,
                         });
                       }}
-                      onOpenLookup={(lookupKey) => {
+                      onOpenLookup={(lKey) => {
                         openTab({
-                          id: `lookup:${lookupKey}`,
+                          id: `lookup:${lKey}`,
                           type: 'lookup',
-                          title: lookupKey.split('::').pop() || lookupKey,
+                          title: lKey.split('::').pop() || lKey,
                           closable: true,
-                          lookupKey,
+                          lookupKey: lKey,
                         });
                       }}
                       onReload={() => runLiveDebug()}

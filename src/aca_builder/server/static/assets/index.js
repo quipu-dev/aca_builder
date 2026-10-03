@@ -1,48 +1,5873 @@
-import { j as jsxRuntimeExports, c as create, p as persist, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, T as Trash2, d as Check, e as Save, D as Dna, f as Shield, F as FileText, i as Tag, k as ReactCodeMirror, l as CodeXml, W as WandSparkles, m as ChartColumn, n as ChevronUp, o as ChevronDown, q as Copy, X, P as PenLine, M as Markdown, H as Handle, s as TriangleAlert, u as useNodesState, t as useEdgesState, v as Cpu, w as CircleCheckBig, x as index, y as Background, z as BackgroundVariant, A as Controls, N as Network, G as Filter, I as Plus, J as Link2, K as Eye, O as RotateCcw, Q as EyeOff, U as SlidersVertical, V as FilePlus2, Y as MousePointerClick, Z as Settings, _ as FolderTree, $ as Database, a0 as ChevronRight, a1 as FolderOpen, a2 as Folder, a3 as Package, a4 as Globe, a5 as Lock, a6 as FileCode, a7 as ArrowLeft, a8 as ArrowRight, a9 as RefreshCw, aa as ShieldCheck, ab as OctagonAlert, ac as ReactDOM } from "./vendor-react.js";
-import { U as twMerge, W as clsx, X as remarkGfm } from "./vendor-others.js";
-import { m as markdown } from "./vendor-codemirror.js";
-import { P as Position } from "./vendor-xyflow.js";
+var __typeError = (msg) => {
+  throw TypeError(msg);
+};
+var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
+var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
+var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
+var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
+var __privateMethod = (obj, member, method) => (__accessCheck(obj, member, "access private method"), method);
+var __privateWrapper = (obj, member, setter, getter) => ({
+  set _(value) {
+    __privateSet(obj, member, value, setter);
+  },
+  get _() {
+    return __privateGet(obj, member, getter);
+  }
+});
+var _provider, _providerCalled, _a, _focused, _cleanup, _setup, _b, _online, _cleanup2, _setup2, _c, _gcTimeout, _d, _queryType, _initialState, _revertState, _cache, _client, _retryer, _defaultOptions, _abortSignalConsumed, _Query_instances, dispatch_fn, _e2, _client2, _currentQuery, _currentQueryInitialState, _currentResult, _currentResultState, _currentResultOptions, _selectError, _selectFn, _selectResult, _lastQueryWithDefinedData, _staleTimeoutId, _refetchIntervalId, _currentRefetchInterval, _trackedProps, _QueryObserver_instances, executeFetch_fn, shouldScheduleTimer_fn, updateStaleTimeout_fn, computeRefetchInterval_fn, updateRefetchInterval_fn, updateTimers_fn, clearStaleTimeout_fn, clearRefetchInterval_fn, updateQuery_fn, _f, _client3, _observers, _mutationCache, _retryer2, _Mutation_instances, dispatch_fn2, _g, _mutations, _scopes, _mutationId, _h, _client4, _currentResult2, _currentMutation, _mutateOptions, _MutationObserver_instances, updateResult_fn, notify_fn, _i, _queries, _j, _queryCache, _mutationCache2, _defaultOptions2, _queryDefaults, _mutationDefaults, _mountCount, _unsubscribeFocus, _unsubscribeOnline, _k;
+import { r as reactExports, j as jsxRuntimeExports, a as create$1, p as persist, R as React, b as reactDomExports, d as React$1, g as getDefaultExportFromCjs, e as ReactDOM } from "./vendor-react.js";
+import { R as ReactCodeMirror, m as markdown } from "./vendor-codemirror.js";
+import { H as Handle, P as Position, u as useNodesState, a as useEdgesState, i as index$1, B as Background, b as BackgroundVariant, C as Controls, d as dagre } from "./vendor-xyflow.js";
 (function polyfill() {
   const relList = document.createElement("link").relList;
   if (relList && relList.supports && relList.supports("modulepreload")) {
     return;
   }
-  for (const link of document.querySelectorAll('link[rel="modulepreload"]')) {
-    processPreload(link);
+  for (const link2 of document.querySelectorAll('link[rel="modulepreload"]')) {
+    processPreload(link2);
   }
   new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       if (mutation.type !== "childList") {
         continue;
       }
-      for (const node of mutation.addedNodes) {
-        if (node.tagName === "LINK" && node.rel === "modulepreload")
-          processPreload(node);
+      for (const node2 of mutation.addedNodes) {
+        if (node2.tagName === "LINK" && node2.rel === "modulepreload")
+          processPreload(node2);
       }
     }
   }).observe(document, { childList: true, subtree: true });
-  function getFetchOpts(link) {
+  function getFetchOpts(link2) {
     const fetchOpts = {};
-    if (link.integrity) fetchOpts.integrity = link.integrity;
-    if (link.referrerPolicy) fetchOpts.referrerPolicy = link.referrerPolicy;
-    if (link.crossOrigin === "use-credentials")
+    if (link2.integrity) fetchOpts.integrity = link2.integrity;
+    if (link2.referrerPolicy) fetchOpts.referrerPolicy = link2.referrerPolicy;
+    if (link2.crossOrigin === "use-credentials")
       fetchOpts.credentials = "include";
-    else if (link.crossOrigin === "anonymous") fetchOpts.credentials = "omit";
+    else if (link2.crossOrigin === "anonymous") fetchOpts.credentials = "omit";
     else fetchOpts.credentials = "same-origin";
     return fetchOpts;
   }
-  function processPreload(link) {
-    if (link.ep)
+  function processPreload(link2) {
+    if (link2.ep)
       return;
-    link.ep = true;
-    const fetchOpts = getFetchOpts(link);
-    fetch(link.href, fetchOpts);
+    link2.ep = true;
+    const fetchOpts = getFetchOpts(link2);
+    fetch(link2.href, fetchOpts);
   }
 })();
+const QueryClientContext = reactExports.createContext(void 0);
+const useQueryClient = (queryClient2) => {
+  const client = reactExports.useContext(QueryClientContext);
+  if (!client) throw new Error("No QueryClient set, use QueryClientProvider to set one");
+  return client;
+};
+const QueryClientProvider = ({ client, children }) => {
+  reactExports.useEffect(() => {
+    client.mount();
+    return () => {
+      client.unmount();
+    };
+  }, [client]);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(QueryClientContext.Provider, {
+    value: client,
+    children
+  });
+};
+const defaultTimeoutProvider = {
+  setTimeout: (callback, delay) => setTimeout(callback, delay),
+  clearTimeout: (timeoutId) => clearTimeout(timeoutId),
+  setInterval: (callback, delay) => setInterval(callback, delay),
+  clearInterval: (intervalId) => clearInterval(intervalId)
+};
+var TimeoutManager = (_a = class {
+  constructor() {
+    __privateAdd(this, _provider, defaultTimeoutProvider);
+    __privateAdd(this, _providerCalled, false);
+  }
+  /**
+  * `setTimeoutProvider` can be used to set a custom implementation of the
+  * `setTimeout`, `clearTimeout`, `setInterval`, `clearInterval` functions,
+  * called a `TimeoutProvider`.
+  *
+  * This may be useful if you notice event loop performance issues with
+  * thousands of queries. A custom TimeoutProvider could also support timer
+  * delays longer than the global `setTimeout` maximum delay value of about
+  * 24 days.
+  *
+  * It is important to call `setTimeoutProvider` before creating a
+  * QueryClient or queries, so that the same provider is used consistently
+  * for all timers in the application, since different TimeoutProviders
+  * cannot cancel each others' timers.
+  *
+  * @example
+  * ```ts
+  * import { timeoutManager, QueryClient } from '@tanstack/query-core'
+  * import { CustomTimeoutProvider } from './CustomTimeoutProvider'
+  *
+  * timeoutManager.setTimeoutProvider(new CustomTimeoutProvider())
+  *
+  * export const queryClient = new QueryClient()
+  * ```
+  */
+  setTimeoutProvider(provider) {
+    __privateSet(this, _provider, provider);
+  }
+  /**
+  * `setTimeout` schedules a callback to run after approximately `delay`
+  * milliseconds, like the global `setTimeout` function. The callback can be
+  * canceled with `clearTimeout`.
+  *
+  * It returns a timer ID, which may be a number or an object that can be
+  * coerced to a number via `Symbol.toPrimitive`.
+  *
+  * @example
+  * ```ts
+  * import { timeoutManager } from '@tanstack/query-core'
+  *
+  * const timeoutId = timeoutManager.setTimeout(
+  *   () => console.log('ran at:', new Date()),
+  *   1000,
+  * )
+  *
+  * const timeoutIdNumber: number = Number(timeoutId)
+  * ```
+  */
+  setTimeout(callback, delay) {
+    return __privateGet(this, _provider).setTimeout(callback, delay);
+  }
+  /**
+  * `clearTimeout` cancels a timeout callback scheduled with `setTimeout`,
+  * like the global `clearTimeout` function. It should be called with a
+  * timer ID returned by `setTimeout`.
+  *
+  * @example
+  * ```ts
+  * import { timeoutManager } from '@tanstack/query-core'
+  *
+  * const timeoutId = timeoutManager.setTimeout(
+  *   () => console.log('ran at:', new Date()),
+  *   1000,
+  * )
+  *
+  * timeoutManager.clearTimeout(timeoutId)
+  * ```
+  */
+  clearTimeout(timeoutId) {
+    __privateGet(this, _provider).clearTimeout(timeoutId);
+  }
+  /**
+  * `setInterval` schedules a callback to be called approximately every
+  * `delay` milliseconds, like the global `setInterval` function.
+  *
+  * Like `setTimeout`, it returns a timer ID, which may be a number or an
+  * object that can be coerced to a number via `Symbol.toPrimitive`.
+  *
+  * @example
+  * ```ts
+  * import { timeoutManager } from '@tanstack/query-core'
+  *
+  * const intervalId = timeoutManager.setInterval(
+  *   () => console.log('ran at:', new Date()),
+  *   1000,
+  * )
+  * ```
+  */
+  setInterval(callback, delay) {
+    return __privateGet(this, _provider).setInterval(callback, delay);
+  }
+  /**
+  * `clearInterval` can be used to cancel an interval, like the global
+  * `clearInterval` function. It should be called with an interval ID
+  * returned by `setInterval`.
+  *
+  * @example
+  * ```ts
+  * import { timeoutManager } from '@tanstack/query-core'
+  *
+  * const intervalId = timeoutManager.setInterval(
+  *   () => console.log('ran at:', new Date()),
+  *   1000,
+  * )
+  *
+  * timeoutManager.clearInterval(intervalId)
+  * ```
+  */
+  clearInterval(intervalId) {
+    __privateGet(this, _provider).clearInterval(intervalId);
+  }
+}, _provider = new WeakMap(), _providerCalled = new WeakMap(), _a);
+const timeoutManager = new TimeoutManager();
+function systemSetTimeoutZero(callback) {
+  setTimeout(callback, 0);
+}
+const isServer$1 = typeof window === "undefined" || "Deno" in globalThis;
+function noop() {
+}
+function functionalUpdate(updater, input) {
+  return typeof updater === "function" ? updater(input) : updater;
+}
+function isValidTimeout(value) {
+  return typeof value === "number" && value >= 0 && value !== Infinity;
+}
+function timeUntilStale(updatedAt, staleTime) {
+  return Math.max(updatedAt + (staleTime || 0) - Date.now(), 0);
+}
+function resolveQueryValue(value, query) {
+  return typeof value === "function" ? value(query) : value;
+}
+function matchQuery(filters, query) {
+  const { type = "all", exact, fetchStatus, predicate, queryKey, stale } = filters;
+  if (queryKey) {
+    if (exact) {
+      if (query.queryHash !== hashQueryKeyByOptions(queryKey, query.options)) return false;
+    } else if (!partialMatchKey(query.queryKey, queryKey)) return false;
+  }
+  if (type !== "all") {
+    const isActive = query.isActive();
+    if (type === "active" && !isActive) return false;
+    if (type === "inactive" && isActive) return false;
+  }
+  if (typeof stale === "boolean" && query.isStale() !== stale) return false;
+  if (fetchStatus && fetchStatus !== query.state.fetchStatus) return false;
+  if (predicate && !predicate(query)) return false;
+  return true;
+}
+function matchMutation(filters, mutation) {
+  const { exact, status, predicate, mutationKey } = filters;
+  if (mutationKey) {
+    if (!mutation.options.mutationKey) return false;
+    if (exact) {
+      if (hashKey(mutation.options.mutationKey) !== hashKey(mutationKey)) return false;
+    } else if (!partialMatchKey(mutation.options.mutationKey, mutationKey)) return false;
+  }
+  if (status && mutation.state.status !== status) return false;
+  if (predicate && !predicate(mutation)) return false;
+  return true;
+}
+function hashQueryKeyByOptions(queryKey, options) {
+  return ((options == null ? void 0 : options.queryKeyHashFn) || hashKey)(queryKey);
+}
+function hashKey(queryKey) {
+  return JSON.stringify(queryKey, (_, val) => isPlainObject$1(val) ? Object.keys(val).sort().reduce((result, key) => {
+    result[key] = val[key];
+    return result;
+  }, {}) : val);
+}
+function partialMatchKey(a, b) {
+  if (a === b) return true;
+  if (typeof a !== typeof b) return false;
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    if (Array.isArray(a) && Array.isArray(b)) {
+      if (b.length > a.length) return false;
+      for (let i = 0; i < b.length; i++) if (!partialMatchKey(a[i], b[i])) return false;
+      return true;
+    }
+    const bKeys = Object.keys(b);
+    for (const key of bKeys) if (!partialMatchKey(a[key], b[key])) return false;
+    return true;
+  }
+  return false;
+}
+const hasOwn = Object.prototype.hasOwnProperty;
+function replaceEqualDeep(a, b, depth = 0) {
+  if (a === b) return a;
+  if (depth > 500) return b;
+  const array = isPlainArray(a) && isPlainArray(b);
+  if (!array && !(isPlainObject$1(a) && isPlainObject$1(b))) return b;
+  const aSize = (array ? a : Object.keys(a)).length;
+  const bItems = array ? b : Object.keys(b);
+  const bSize = bItems.length;
+  const copy = array ? new Array(bSize) : {};
+  let equalItems = 0;
+  for (let i = 0; i < bSize; i++) {
+    const key = array ? i : bItems[i];
+    const aItem = a[key];
+    const bItem = b[key];
+    if (aItem === bItem) {
+      copy[key] = aItem;
+      if (array ? i < aSize : hasOwn.call(a, key)) equalItems++;
+      continue;
+    }
+    if (aItem === null || bItem === null || typeof aItem !== "object" || typeof bItem !== "object") {
+      copy[key] = bItem;
+      continue;
+    }
+    const v = replaceEqualDeep(aItem, bItem, depth + 1);
+    copy[key] = v;
+    if (v === aItem) equalItems++;
+  }
+  return aSize === bSize && equalItems === aSize ? a : copy;
+}
+function shallowEqualObjects(a, b) {
+  if (!b || Object.keys(a).length !== Object.keys(b).length) return false;
+  for (const key in a) if (a[key] !== b[key]) return false;
+  return true;
+}
+function isPlainArray(value) {
+  return Array.isArray(value) && value.length === Object.keys(value).length;
+}
+function isPlainObject$1(o) {
+  if (!hasObjectPrototype(o)) return false;
+  const objectPrototype = Object.getPrototypeOf(o);
+  const ctor = objectPrototype == null ? void 0 : objectPrototype.constructor;
+  if (ctor === void 0) return true;
+  if (typeof ctor !== "function") return false;
+  const prot = ctor.prototype;
+  if (!hasObjectPrototype(prot)) return false;
+  if (!prot.hasOwnProperty("isPrototypeOf")) return false;
+  if (objectPrototype !== Object.prototype) return false;
+  return true;
+}
+function hasObjectPrototype(o) {
+  return Object.prototype.toString.call(o) === "[object Object]";
+}
+function sleep(timeout) {
+  return new Promise((resolve) => {
+    timeoutManager.setTimeout(resolve, timeout);
+  });
+}
+function replaceData(prevData, data, options) {
+  if (typeof options.structuralSharing === "function") return options.structuralSharing(prevData, data);
+  else if (options.structuralSharing !== false) {
+    return replaceEqualDeep(prevData, data);
+  }
+  return data;
+}
+function addToEnd(items, item, max = 0) {
+  const newItems = [...items, item];
+  return max && newItems.length > max ? newItems.slice(1) : newItems;
+}
+function addToStart(items, item, max = 0) {
+  const newItems = [item, ...items];
+  return max && newItems.length > max ? newItems.slice(0, -1) : newItems;
+}
+const skipToken = Symbol();
+function ensureQueryFn(options, fetchOptions) {
+  if (!options.queryFn && (fetchOptions == null ? void 0 : fetchOptions.initialPromise)) return () => fetchOptions.initialPromise;
+  if (!options.queryFn || options.queryFn === skipToken) return () => Promise.reject(/* @__PURE__ */ new Error(`Missing queryFn: '${options.queryHash}'`));
+  return options.queryFn;
+}
+function shouldThrowError(throwOnError, params) {
+  if (typeof throwOnError === "function") return throwOnError(...params);
+  return !!throwOnError;
+}
+function addConsumeAwareSignal(object, getSignal, onCancelled) {
+  let consumed = false;
+  let signal;
+  Object.defineProperty(object, "signal", {
+    enumerable: true,
+    get: () => {
+      signal ?? (signal = getSignal());
+      if (consumed) return signal;
+      consumed = true;
+      if (signal.aborted) onCancelled();
+      else signal.addEventListener("abort", onCancelled, { once: true });
+      return signal;
+    }
+  });
+  return object;
+}
+let isServerFn = () => isServer$1;
+const isServer = () => isServerFn();
+var Subscribable = class {
+  constructor() {
+    this.listeners = /* @__PURE__ */ new Set();
+    this.subscribe = this.subscribe.bind(this);
+  }
+  /**
+  * Registers a listener to be called on every update this object notifies about. Returns a function
+  * that removes the listener again — call it to stop listening. The base class never drops a listener
+  * on its own, though some subclasses clear all of theirs in `destroy()`.
+  * @param listener - Called on each update, with whatever the subclass passes to its subscribers.
+  * @example
+  * ```ts
+  * const unsubscribe = subscribable.subscribe(() => {
+  *   // react to the update
+  * })
+  *
+  * unsubscribe()
+  * ```
+  */
+  subscribe(listener) {
+    this.listeners.add(listener);
+    this.onSubscribe();
+    return () => {
+      this.listeners.delete(listener);
+      this.onUnsubscribe();
+    };
+  }
+  /**
+  * Returns `true` while at least one listener is registered, `false` once they have all unsubscribed.
+  */
+  hasListeners() {
+    return this.listeners.size > 0;
+  }
+  onSubscribe() {
+  }
+  onUnsubscribe() {
+  }
+};
+var FocusManager = (_b = class extends Subscribable {
+  constructor() {
+    super();
+    __privateAdd(this, _focused);
+    __privateAdd(this, _cleanup);
+    __privateAdd(this, _setup);
+    __privateSet(this, _setup, (onFocus) => {
+      if (typeof window !== "undefined" && window.addEventListener) {
+        const listener = () => onFocus();
+        window.addEventListener("visibilitychange", listener, false);
+        return () => {
+          window.removeEventListener("visibilitychange", listener);
+        };
+      }
+    });
+  }
+  onSubscribe() {
+    if (!__privateGet(this, _cleanup)) this.setEventListener(__privateGet(this, _setup));
+  }
+  onUnsubscribe() {
+    var _a2;
+    if (!this.hasListeners()) {
+      (_a2 = __privateGet(this, _cleanup)) == null ? void 0 : _a2.call(this);
+      __privateSet(this, _cleanup, void 0);
+    }
+  }
+  /**
+  * `setEventListener` can be used to set a custom event listener that will
+  * be used to determine the focus state. The provided `setup` function
+  * receives a `setFocused` callback: call it with a `boolean` to manually
+  * set the focus state, or with no arguments to re-evaluate the current
+  * focus state and notify subscribers.
+  *
+  * @example
+  * ```ts
+  * import { focusManager } from '@tanstack/query-core'
+  *
+  * focusManager.setEventListener((handleFocus) => {
+  *   const listener = () => handleFocus()
+  *   // Listen to visibilitychange
+  *   if (typeof window !== 'undefined' && window.addEventListener) {
+  *     window.addEventListener('visibilitychange', listener, false)
+  *   }
+  *
+  *   return () => {
+  *     // Be sure to unsubscribe if a new handler is set
+  *     window.removeEventListener('visibilitychange', listener)
+  *   }
+  * })
+  * ```
+  */
+  setEventListener(setup) {
+    var _a2;
+    __privateSet(this, _setup, setup);
+    (_a2 = __privateGet(this, _cleanup)) == null ? void 0 : _a2.call(this);
+    __privateSet(this, _cleanup, setup((focused) => {
+      if (typeof focused === "boolean") this.setFocused(focused);
+      else this.onFocus();
+    }));
+  }
+  /**
+  * `setFocused` can be used to manually set the focus state. Set `undefined`
+  * to fall back to the default focus check.
+  *
+  * @example
+  * ```ts
+  * import { focusManager } from '@tanstack/query-core'
+  *
+  * // Set focused
+  * focusManager.setFocused(true)
+  *
+  * // Set unfocused
+  * focusManager.setFocused(false)
+  *
+  * // Fallback to the default focus check
+  * focusManager.setFocused(undefined)
+  * ```
+  */
+  setFocused(focused) {
+    if (__privateGet(this, _focused) !== focused) {
+      __privateSet(this, _focused, focused);
+      this.onFocus();
+    }
+  }
+  /**
+  * `onFocus` notifies all subscribed listeners with the current focus state.
+  */
+  onFocus() {
+    const isFocused = this.isFocused();
+    this.listeners.forEach((listener) => {
+      listener(isFocused);
+    });
+  }
+  /**
+  * `isFocused` can be used to get the current focus state.
+  */
+  isFocused() {
+    var _a2;
+    if (typeof __privateGet(this, _focused) === "boolean") return __privateGet(this, _focused);
+    return ((_a2 = globalThis.document) == null ? void 0 : _a2.visibilityState) !== "hidden";
+  }
+}, _focused = new WeakMap(), _cleanup = new WeakMap(), _setup = new WeakMap(), _b);
+const focusManager = new FocusManager();
+const defaultScheduler = systemSetTimeoutZero;
+function createNotifyManager() {
+  let queue = [];
+  let transactions = 0;
+  let notifyFn = (callback) => {
+    callback();
+  };
+  let batchNotifyFn = (callback) => {
+    callback();
+  };
+  let scheduleFn = defaultScheduler;
+  const schedule = (callback) => {
+    if (transactions) queue.push(callback);
+    else scheduleFn(() => {
+      notifyFn(callback);
+    });
+  };
+  const flush = () => {
+    const originalQueue = queue;
+    queue = [];
+    if (originalQueue.length) scheduleFn(() => {
+      batchNotifyFn(() => {
+        originalQueue.forEach((callback) => {
+          notifyFn(callback);
+        });
+      });
+    });
+  };
+  return {
+    /**
+    * Batches all updates scheduled inside the passed callback.
+    * This is mainly used internally to optimize query client updating.
+    * Batches can be nested; the queue is only flushed once the outermost `batch` call finishes.
+    * The return value of `callback` is passed through.
+    */
+    batch: (callback) => {
+      let result;
+      transactions++;
+      try {
+        result = callback();
+      } finally {
+        transactions--;
+        if (!transactions) flush();
+      }
+      return result;
+    },
+    /**
+    * All calls to the wrapped function will be batched.
+    */
+    batchCalls: (callback) => {
+      return (...args) => {
+        schedule(() => {
+          callback(...args);
+        });
+      };
+    },
+    /**
+    * Schedules a function to be run on the next batch.
+    * By default, the batch is run with a `setTimeout`, but this can be configured via `setScheduler`.
+    */
+    schedule,
+    /**
+    * Use this method to set a custom notify function.
+    * This can be used to for example wrap notifications with `React.act` while running tests.
+    */
+    setNotifyFunction: (fn) => {
+      notifyFn = fn;
+    },
+    /**
+    * Use this method to set a custom function to batch notifications together into a single tick.
+    * Framework adapters use this to plug in their own batching primitive, so that a single query
+    * update only triggers one re-render instead of one per subscriber.
+    *
+    * @example
+    * ```ts
+    * import { notifyManager } from '@tanstack/query-core'
+    * import { batch } from 'solid-js'
+    *
+    * notifyManager.setBatchNotifyFunction(batch)
+    * ```
+    */
+    setBatchNotifyFunction: (fn) => {
+      batchNotifyFn = fn;
+    },
+    /**
+    * Configures a custom callback that schedules when the next batch runs.
+    * The default behavior is `setTimeout(callback, 0)`.
+    *
+    * @example
+    * ```ts
+    * import { notifyManager } from '@tanstack/query-core'
+    *
+    * // Schedule batches in the next microtask
+    * notifyManager.setScheduler(queueMicrotask)
+    *
+    * // Schedule batches before the next frame is rendered
+    * notifyManager.setScheduler(requestAnimationFrame)
+    *
+    * // Schedule batches some time in the future
+    * notifyManager.setScheduler((cb) => setTimeout(cb, 10))
+    * ```
+    */
+    setScheduler: (fn) => {
+      scheduleFn = fn;
+    }
+  };
+}
+const notifyManager = createNotifyManager();
+var OnlineManager = (_c = class extends Subscribable {
+  constructor() {
+    super();
+    __privateAdd(this, _online, true);
+    __privateAdd(this, _cleanup2);
+    __privateAdd(this, _setup2);
+    __privateSet(this, _setup2, (onOnline) => {
+      if (typeof window !== "undefined" && window.addEventListener) {
+        const onlineListener = () => onOnline(true);
+        const offlineListener = () => onOnline(false);
+        window.addEventListener("online", onlineListener, false);
+        window.addEventListener("offline", offlineListener, false);
+        return () => {
+          window.removeEventListener("online", onlineListener);
+          window.removeEventListener("offline", offlineListener);
+        };
+      }
+    });
+  }
+  onSubscribe() {
+    if (!__privateGet(this, _cleanup2)) this.setEventListener(__privateGet(this, _setup2));
+  }
+  onUnsubscribe() {
+    var _a2;
+    if (!this.hasListeners()) {
+      (_a2 = __privateGet(this, _cleanup2)) == null ? void 0 : _a2.call(this);
+      __privateSet(this, _cleanup2, void 0);
+    }
+  }
+  /**
+  * `setEventListener` can be used to set a custom event listener that will
+  * be used to determine the online state. The provided `setup` function
+  * receives a `setOnline` callback that should be called with a `boolean`
+  * whenever the online state changes.
+  *
+  * @example
+  * ```ts
+  * import NetInfo from '@react-native-community/netinfo'
+  * import { onlineManager } from '@tanstack/query-core'
+  *
+  * onlineManager.setEventListener((setOnline) => {
+  *   return NetInfo.addEventListener((state) => {
+  *     setOnline(!!state.isConnected)
+  *   })
+  * })
+  * ```
+  */
+  setEventListener(setup) {
+    var _a2;
+    __privateSet(this, _setup2, setup);
+    (_a2 = __privateGet(this, _cleanup2)) == null ? void 0 : _a2.call(this);
+    __privateSet(this, _cleanup2, setup(this.setOnline.bind(this)));
+  }
+  /**
+  * `setOnline` can be used to manually set the online state.
+  *
+  * @example
+  * ```ts
+  * import { onlineManager } from '@tanstack/query-core'
+  *
+  * // Set to online
+  * onlineManager.setOnline(true)
+  *
+  * // Set to offline
+  * onlineManager.setOnline(false)
+  * ```
+  */
+  setOnline(online) {
+    if (__privateGet(this, _online) !== online) {
+      __privateSet(this, _online, online);
+      this.listeners.forEach((listener) => {
+        listener(online);
+      });
+    }
+  }
+  /**
+  * `isOnline` can be used to get the current online state.
+  */
+  isOnline() {
+    return __privateGet(this, _online);
+  }
+}, _online = new WeakMap(), _cleanup2 = new WeakMap(), _setup2 = new WeakMap(), _c);
+const onlineManager = new OnlineManager();
+function defaultRetryDelay(failureCount) {
+  return Math.min(1e3 * 2 ** failureCount, 3e4);
+}
+function canFetch(networkMode) {
+  return (networkMode ?? "online") === "online" ? onlineManager.isOnline() : true;
+}
+var CancelledError = class extends Error {
+  constructor(options) {
+    super("CancelledError");
+    this.revert = options == null ? void 0 : options.revert;
+    this.silent = options == null ? void 0 : options.silent;
+  }
+};
+function createRetryer(config) {
+  let isRetryCancelled = false;
+  let failureCount = 0;
+  let continueFn;
+  let status = "pending";
+  let promiseResolve;
+  let promiseReject;
+  const promise = new Promise((resolve2, reject2) => {
+    promiseResolve = resolve2;
+    promiseReject = reject2;
+  });
+  promise.catch(noop);
+  const isResolved = () => status !== "pending";
+  const cancel = (cancelOptions) => {
+    var _a2;
+    if (!isResolved()) {
+      const error = new CancelledError(cancelOptions);
+      reject(error);
+      (_a2 = config.onCancel) == null ? void 0 : _a2.call(config, error);
+    }
+  };
+  const cancelRetry = () => {
+    isRetryCancelled = true;
+  };
+  const continueRetry = () => {
+    isRetryCancelled = false;
+  };
+  const canContinue = () => focusManager.isFocused() && (config.networkMode === "always" || onlineManager.isOnline()) && config.canRun();
+  const canStart = () => canFetch(config.networkMode) && config.canRun();
+  const resolve = (value) => {
+    if (!isResolved()) {
+      continueFn == null ? void 0 : continueFn();
+      status = "resolved";
+      promiseResolve(value);
+    }
+  };
+  const reject = (value) => {
+    if (!isResolved()) {
+      continueFn == null ? void 0 : continueFn();
+      status = "rejected";
+      promiseReject(value);
+    }
+  };
+  const pause = () => {
+    return new Promise((continueResolve) => {
+      var _a2;
+      continueFn = (value) => {
+        if (isResolved() || canContinue()) continueResolve(value);
+      };
+      (_a2 = config.onPause) == null ? void 0 : _a2.call(config);
+    }).then(() => {
+      var _a2;
+      continueFn = void 0;
+      if (!isResolved()) (_a2 = config.onContinue) == null ? void 0 : _a2.call(config);
+    });
+  };
+  const run = () => {
+    if (isResolved()) return;
+    let promiseOrValue;
+    const initialPromise = failureCount === 0 ? config.initialPromise : void 0;
+    try {
+      promiseOrValue = initialPromise ?? config.fn();
+    } catch (error) {
+      promiseOrValue = Promise.reject(error);
+    }
+    Promise.resolve(promiseOrValue).then(resolve).catch((error) => {
+      var _a2;
+      if (isResolved()) return;
+      const retry = config.retry ?? (isServer() ? 0 : 3);
+      const retryDelay = config.retryDelay ?? defaultRetryDelay;
+      const delay = typeof retryDelay === "function" ? retryDelay(failureCount, error) : retryDelay;
+      const shouldRetry = retry === true || typeof retry === "number" && failureCount < retry || typeof retry === "function" && retry(failureCount, error);
+      if (isRetryCancelled || !shouldRetry) {
+        reject(error);
+        return;
+      }
+      failureCount++;
+      (_a2 = config.onFail) == null ? void 0 : _a2.call(config, failureCount, error);
+      sleep(delay).then(() => {
+        return canContinue() ? void 0 : pause();
+      }).then(() => {
+        if (isRetryCancelled) reject(error);
+        else run();
+      });
+    });
+  };
+  return {
+    promise,
+    status: () => status,
+    cancel,
+    continue: () => {
+      continueFn == null ? void 0 : continueFn();
+      return promise;
+    },
+    cancelRetry,
+    continueRetry,
+    canStart,
+    start: () => {
+      if (canStart()) run();
+      else pause().then(run);
+      return promise;
+    }
+  };
+}
+var Removable = (_d = class {
+  constructor() {
+    __privateAdd(this, _gcTimeout);
+  }
+  /**
+  * Clears the pending garbage collection timeout, so the entry is no longer scheduled for removal.
+  * A subclass may override this to release what it holds on to as well — `Query` also cancels any
+  * in-flight fetch.
+  */
+  destroy() {
+    this.clearGcTimeout();
+  }
+  scheduleGc() {
+    this.clearGcTimeout();
+    if (isValidTimeout(this.gcTime)) __privateSet(this, _gcTimeout, timeoutManager.setTimeout(() => {
+      this.optionalRemove();
+    }, this.gcTime));
+  }
+  updateGcTime(newGcTime) {
+    this.gcTime = Math.max(this.gcTime || 0, newGcTime ?? (isServer() ? Infinity : 3e5));
+  }
+  clearGcTimeout() {
+    if (__privateGet(this, _gcTimeout) !== void 0) {
+      timeoutManager.clearTimeout(__privateGet(this, _gcTimeout));
+      __privateSet(this, _gcTimeout, void 0);
+    }
+  }
+}, _gcTimeout = new WeakMap(), _d);
+function infiniteQueryBehavior(pages) {
+  return { onFetch: (context, query) => {
+    var _a2, _b2, _c2, _d2, _e3;
+    const options = context.options;
+    const direction = (_c2 = (_b2 = (_a2 = context.fetchOptions) == null ? void 0 : _a2.meta) == null ? void 0 : _b2.fetchMore) == null ? void 0 : _c2.direction;
+    const oldPages = ((_d2 = context.state.data) == null ? void 0 : _d2.pages) || [];
+    const oldPageParams = ((_e3 = context.state.data) == null ? void 0 : _e3.pageParams) || [];
+    let result = {
+      pages: [],
+      pageParams: []
+    };
+    let currentPage = 0;
+    const fetchFn = async () => {
+      let cancelled = false;
+      const addSignalProperty = (object) => {
+        addConsumeAwareSignal(object, () => context.signal, () => cancelled = true);
+      };
+      const queryFn = ensureQueryFn(context.options, context.fetchOptions);
+      const fetchPage = async (data, param, previous2) => {
+        if (cancelled) return Promise.reject(context.signal.reason);
+        if (param == null && data.pages.length) return Promise.resolve(data);
+        const createQueryFnContext = () => {
+          const queryFnContext2 = {
+            client: context.client,
+            queryKey: context.queryKey,
+            pageParam: param,
+            direction: previous2 ? "backward" : "forward",
+            meta: context.options.meta
+          };
+          addSignalProperty(queryFnContext2);
+          return queryFnContext2;
+        };
+        const queryFnContext = createQueryFnContext();
+        const page = await queryFn(queryFnContext);
+        const { maxPages } = context.options;
+        const addTo = previous2 ? addToStart : addToEnd;
+        return {
+          pages: addTo(data.pages, page, maxPages),
+          pageParams: addTo(data.pageParams, param, maxPages)
+        };
+      };
+      if (direction && oldPages.length) {
+        const previous2 = direction === "backward";
+        const pageParamFn = previous2 ? getPreviousPageParam : getNextPageParam;
+        const oldData = {
+          pages: oldPages,
+          pageParams: oldPageParams
+        };
+        result = await fetchPage(oldData, pageParamFn(options, oldData), previous2);
+      } else {
+        const remainingPages = pages ?? oldPages.length;
+        do {
+          const param = currentPage === 0 ? oldPageParams[0] ?? options.initialPageParam : getNextPageParam(options, result);
+          if (currentPage > 0 && param == null) break;
+          result = await fetchPage(result, param);
+          currentPage++;
+        } while (currentPage < remainingPages);
+      }
+      return result;
+    };
+    if (context.options.persister) context.fetchFn = () => {
+      var _a3, _b3;
+      return (_b3 = (_a3 = context.options).persister) == null ? void 0 : _b3.call(_a3, fetchFn, {
+        client: context.client,
+        queryKey: context.queryKey,
+        meta: context.options.meta,
+        signal: context.signal
+      }, query);
+    };
+    else context.fetchFn = fetchFn;
+  } };
+}
+function getNextPageParam(options, { pages, pageParams }) {
+  const lastIndex = pages.length - 1;
+  return pages.length > 0 ? options.getNextPageParam(pages[lastIndex], pages, pageParams[lastIndex], pageParams) : void 0;
+}
+function getPreviousPageParam(options, { pages, pageParams }) {
+  var _a2;
+  return pages.length > 0 ? (_a2 = options.getPreviousPageParam) == null ? void 0 : _a2.call(options, pages[0], pages, pageParams[0], pageParams) : void 0;
+}
+var Query = (_e2 = class extends Removable {
+  constructor(config) {
+    super();
+    __privateAdd(this, _Query_instances);
+    __privateAdd(this, _queryType);
+    __privateAdd(this, _initialState);
+    __privateAdd(this, _revertState);
+    __privateAdd(this, _cache);
+    __privateAdd(this, _client);
+    __privateAdd(this, _retryer);
+    __privateAdd(this, _defaultOptions);
+    __privateAdd(this, _abortSignalConsumed);
+    __privateSet(this, _abortSignalConsumed, false);
+    __privateSet(this, _defaultOptions, config.defaultOptions);
+    this.setOptions(config.options);
+    this.observers = [];
+    __privateSet(this, _client, config.client);
+    __privateSet(this, _cache, __privateGet(this, _client).getQueryCache());
+    this.queryKey = config.queryKey;
+    this.queryHash = config.queryHash;
+    __privateSet(this, _initialState, getDefaultState$1(this.options));
+    this.state = config.state ?? __privateGet(this, _initialState);
+    this.scheduleGc();
+  }
+  /**
+  * The `meta` object passed in the query's options, if any.
+  */
+  get meta() {
+    return this.options.meta;
+  }
+  /** @internal */
+  get queryType() {
+    return __privateGet(this, _queryType);
+  }
+  /**
+  * The promise for the currently in-flight fetch, if the query is fetching.
+  * `undefined` when the query is not fetching.
+  */
+  get promise() {
+    var _a2;
+    return (_a2 = __privateGet(this, _retryer)) == null ? void 0 : _a2.promise;
+  }
+  /** @internal */
+  setOptions(options) {
+    this.options = {
+      ...__privateGet(this, _defaultOptions),
+      ...options
+    };
+    if (options == null ? void 0 : options._type) __privateSet(this, _queryType, options._type);
+    this.updateGcTime(this.options.gcTime);
+    if (this.state && this.state.data === void 0) {
+      const defaultState = getDefaultState$1(this.options);
+      if (defaultState.data !== void 0) {
+        this.setState(successState(defaultState.data, defaultState.dataUpdatedAt));
+        __privateSet(this, _initialState, defaultState);
+      }
+    }
+  }
+  optionalRemove() {
+    if (!this.observers.length && this.state.fetchStatus === "idle") __privateGet(this, _cache).remove(this);
+  }
+  /** @internal */
+  setData(newData, options) {
+    const data = replaceData(this.state.data, newData, this.options);
+    __privateMethod(this, _Query_instances, dispatch_fn).call(this, {
+      data,
+      type: "success",
+      dataUpdatedAt: options == null ? void 0 : options.updatedAt,
+      manual: options == null ? void 0 : options.manual
+    });
+    return data;
+  }
+  /**
+  * Merges the given partial state directly into this query's state, notifying observers. Used
+  * by persistence and broadcast plugins to restore a state snapshot, and by devtools to let a
+  * user manually trigger a loading/error state or edit the cached data.
+  */
+  setState(state) {
+    __privateMethod(this, _Query_instances, dispatch_fn).call(this, {
+      type: "setState",
+      state
+    });
+  }
+  /**
+  * Cancels the query's currently in-flight fetch, if any.
+  * - Returns a promise that resolves once the cancellation has settled.
+  * - If no fetch is in progress, resolves immediately.
+  *
+  * @example
+  * ```ts
+  * await query.cancel()
+  * ```
+  */
+  cancel(options) {
+    var _a2, _b2;
+    const promise = (_a2 = __privateGet(this, _retryer)) == null ? void 0 : _a2.promise;
+    (_b2 = __privateGet(this, _retryer)) == null ? void 0 : _b2.cancel(options);
+    return promise ? promise.then(noop).catch(noop) : Promise.resolve();
+  }
+  /**
+  * Clears the query's garbage collection timeout and silently cancels any
+  * in-flight fetch. Called by `QueryCache` when the query is removed from
+  * the cache.
+  *
+  * @see {@link Query#cancel}
+  */
+  destroy() {
+    super.destroy();
+    this.cancel({ silent: true });
+  }
+  /** @internal */
+  get resetState() {
+    return __privateGet(this, _initialState);
+  }
+  /**
+  * Resets the query back to its initial state (the state it had when it was
+  * first created, e.g. any `initialData`), destroying it first to cancel any
+  * in-flight fetch.
+  */
+  reset() {
+    this.destroy();
+    this.setState(this.resetState);
+  }
+  /**
+  * Returns `true` if the query has at least one observer for which `enabled`
+  * does not resolve to `false`.
+  */
+  isActive() {
+    return this.observers.some((observer) => resolveQueryValue(observer.options.enabled, this) !== false);
+  }
+  /**
+  * Returns `true` if the query is disabled, meaning it will not fetch
+  * automatically.
+  * - If the query has observers, it is disabled when none of them are active
+  *   (see `isActive`).
+  * - If the query has no observers, it is disabled when its `queryFn` is
+  *   `skipToken` or it has never been fetched.
+  */
+  isDisabled() {
+    if (this.getObserversCount() > 0) return !this.isActive();
+    return this.options.queryFn === skipToken || !this.isFetched();
+  }
+  /**
+  * Returns `true` if the query has been fetched, i.e. it has resolved with
+  * either data or an error at least once.
+  */
+  isFetched() {
+    return this.state.dataUpdateCount + this.state.errorUpdateCount > 0;
+  }
+  /**
+  * Returns `true` if the query has at least one observer configured with
+  * `staleTime: 'static'`, meaning it is treated as never stale.
+  */
+  isStatic() {
+    if (this.getObserversCount() > 0) return this.observers.some((observer) => resolveQueryValue(observer.options.staleTime, this) === "static");
+    return false;
+  }
+  /**
+  * Returns `true` if the query is stale.
+  * - If the query has observers, defers to whether any observer's current
+  *   result reports `isStale` (which accounts for each observer's own
+  *   `staleTime` and `enabled` state).
+  * - If the query has no observers, it is considered stale when it has no
+  *   data or has been invalidated.
+  *
+  * @see {@link Query#isStaleByTime}
+  * @example
+  * ```ts
+  * if (query.isStale()) {
+  *   // refetch or otherwise treat the cached data as outdated
+  * }
+  * ```
+  */
+  isStale() {
+    if (this.getObserversCount() > 0) return this.observers.some((observer) => observer.getCurrentResult().isStale);
+    return this.state.data === void 0 || this.state.isInvalidated;
+  }
+  /**
+  * Returns `true` if the query's data is stale relative to the given
+  * `staleTime` (defaults to `0`).
+  * - A query with no data is always stale.
+  * - `staleTime: 'static'` is never stale.
+  * - An invalidated query is always stale.
+  * - Otherwise, staleness is based on elapsed time since `dataUpdatedAt`.
+  *
+  * @see {@link Query#isStale}
+  * @example
+  * ```ts
+  * const isStale = query.isStaleByTime(1000 * 60)
+  * ```
+  */
+  isStaleByTime(staleTime = 0) {
+    if (this.state.data === void 0) return true;
+    if (staleTime === "static") return false;
+    if (this.state.isInvalidated) return true;
+    return !timeUntilStale(this.state.dataUpdatedAt, staleTime);
+  }
+  /** @internal */
+  onFocus() {
+    var _a2, _b2;
+    (_a2 = this.observers.find((x) => x.shouldFetchOnWindowFocus())) == null ? void 0 : _a2.refetch({ cancelRefetch: false });
+    (_b2 = __privateGet(this, _retryer)) == null ? void 0 : _b2.continue();
+  }
+  /** @internal */
+  onOnline() {
+    var _a2, _b2;
+    (_a2 = this.observers.find((x) => x.shouldFetchOnReconnect())) == null ? void 0 : _a2.refetch({ cancelRefetch: false });
+    (_b2 = __privateGet(this, _retryer)) == null ? void 0 : _b2.continue();
+  }
+  /** @internal */
+  addObserver(observer) {
+    if (!this.observers.includes(observer)) {
+      this.observers.push(observer);
+      this.clearGcTimeout();
+      __privateGet(this, _cache).notify({
+        type: "observerAdded",
+        query: this,
+        observer
+      });
+    }
+  }
+  /** @internal */
+  removeObserver(observer) {
+    const index2 = this.observers.indexOf(observer);
+    if (index2 !== -1) {
+      this.observers.splice(index2, 1);
+      if (!this.observers.length) {
+        if (__privateGet(this, _retryer)) {
+          if (__privateGet(this, _abortSignalConsumed) || this.state.fetchStatus === "paused" && this.state.status === "pending") __privateGet(this, _retryer).cancel({ revert: true });
+          else __privateGet(this, _retryer).cancelRetry();
+        }
+        this.scheduleGc();
+      }
+      __privateGet(this, _cache).notify({
+        type: "observerRemoved",
+        query: this,
+        observer
+      });
+    }
+  }
+  /**
+  * Returns the number of observers currently subscribed to this query.
+  *
+  * @example
+  * ```ts
+  * if (query.getObserversCount() === 0) {
+  *   // no component is currently watching this query
+  * }
+  * ```
+  */
+  getObserversCount() {
+    return this.observers.length;
+  }
+  /**
+  * Marks the query as invalidated, unless it is already invalidated. This
+  * updates `state.isInvalidated` and notifies observers, but does not by
+  * itself trigger a refetch.
+  *
+  * @example
+  * ```ts
+  * query.invalidate()
+  * ```
+  */
+  invalidate() {
+    if (!this.state.isInvalidated) __privateMethod(this, _Query_instances, dispatch_fn).call(this, { type: "invalidate" });
+  }
+  /**
+  * Fetches the query, i.e. runs its `queryFn` (through any configured
+  * retryer/behavior) and updates the query's state with the result.
+  * - If a fetch is already in flight, returns its promise instead of
+  *   starting a new one, unless `fetchOptions.cancelRefetch` is set and the
+  *   query already has data, in which case the current fetch is silently
+  *   cancelled first.
+  * - If `options` is passed, it replaces the query's current options
+  *   before fetching.
+  */
+  async fetch(options, fetchOptions) {
+    var _a2, _b2, _c2, _d2, _e3, _f2, _g2, _h2, _i2, _j2, _k2, _l;
+    if (this.state.fetchStatus !== "idle" && ((_a2 = __privateGet(this, _retryer)) == null ? void 0 : _a2.status()) !== "rejected") {
+      if (this.state.data !== void 0 && (fetchOptions == null ? void 0 : fetchOptions.cancelRefetch)) this.cancel({ silent: true });
+      else if (__privateGet(this, _retryer)) {
+        __privateGet(this, _retryer).continueRetry();
+        return __privateGet(this, _retryer).promise;
+      }
+    }
+    if (options) this.setOptions(options);
+    if (!this.options.queryFn) {
+      const observer = this.observers.find((x) => x.options.queryFn);
+      if (observer) this.setOptions(observer.options);
+    }
+    const abortController = new AbortController();
+    const addSignalProperty = (object) => {
+      Object.defineProperty(object, "signal", {
+        enumerable: true,
+        get: () => {
+          __privateSet(this, _abortSignalConsumed, true);
+          return abortController.signal;
+        }
+      });
+    };
+    const fetchFn = () => {
+      const queryFn = ensureQueryFn(this.options, fetchOptions);
+      const createQueryFnContext = () => {
+        const queryFnContext2 = {
+          client: __privateGet(this, _client),
+          queryKey: this.queryKey,
+          meta: this.meta
+        };
+        addSignalProperty(queryFnContext2);
+        return queryFnContext2;
+      };
+      const queryFnContext = createQueryFnContext();
+      __privateSet(this, _abortSignalConsumed, false);
+      if (this.options.persister) return this.options.persister(queryFn, queryFnContext, this);
+      return queryFn(queryFnContext);
+    };
+    const createFetchContext = () => {
+      const context2 = {
+        fetchOptions,
+        options: this.options,
+        queryKey: this.queryKey,
+        client: __privateGet(this, _client),
+        state: this.state,
+        fetchFn
+      };
+      addSignalProperty(context2);
+      return context2;
+    };
+    const context = createFetchContext();
+    (_b2 = __privateGet(this, _queryType) === "infinite" ? infiniteQueryBehavior(this.options.pages) : this.options.behavior) == null ? void 0 : _b2.onFetch(context, this);
+    __privateSet(this, _revertState, this.state);
+    if (this.state.fetchStatus === "idle" || this.state.fetchMeta !== ((_c2 = context.fetchOptions) == null ? void 0 : _c2.meta)) __privateMethod(this, _Query_instances, dispatch_fn).call(this, {
+      type: "fetch",
+      meta: (_d2 = context.fetchOptions) == null ? void 0 : _d2.meta
+    });
+    const retryer = __privateSet(this, _retryer, createRetryer({
+      initialPromise: fetchOptions == null ? void 0 : fetchOptions.initialPromise,
+      fn: context.fetchFn,
+      onCancel: (error) => {
+        if (error instanceof CancelledError && error.revert) this.setState({
+          ...__privateGet(this, _revertState),
+          fetchStatus: "idle"
+        });
+        abortController.abort();
+      },
+      onFail: (failureCount, error) => {
+        __privateMethod(this, _Query_instances, dispatch_fn).call(this, {
+          type: "failed",
+          failureCount,
+          error
+        });
+      },
+      onPause: () => {
+        __privateMethod(this, _Query_instances, dispatch_fn).call(this, { type: "pause" });
+      },
+      onContinue: () => {
+        __privateMethod(this, _Query_instances, dispatch_fn).call(this, { type: "continue" });
+      },
+      retry: context.options.retry,
+      retryDelay: context.options.retryDelay,
+      networkMode: context.options.networkMode,
+      canRun: () => true
+    }));
+    try {
+      const data = await retryer.start();
+      if (data === void 0) {
+        if (false) ;
+        throw new Error(`${this.queryHash} data is undefined`);
+      }
+      this.setData(data);
+      (_f2 = (_e3 = __privateGet(this, _cache).config).onSuccess) == null ? void 0 : _f2.call(_e3, data, this);
+      (_h2 = (_g2 = __privateGet(this, _cache).config).onSettled) == null ? void 0 : _h2.call(_g2, data, this.state.error, this);
+      return data;
+    } catch (error) {
+      if (error instanceof CancelledError) {
+        if (error.silent) return __privateGet(this, _retryer).promise;
+        else if (error.revert) {
+          if (this.state.data === void 0) throw error;
+          return this.state.data;
+        }
+      }
+      __privateMethod(this, _Query_instances, dispatch_fn).call(this, {
+        type: "error",
+        error
+      });
+      (_j2 = (_i2 = __privateGet(this, _cache).config).onError) == null ? void 0 : _j2.call(_i2, error, this);
+      (_l = (_k2 = __privateGet(this, _cache).config).onSettled) == null ? void 0 : _l.call(_k2, this.state.data, error, this);
+      throw error;
+    } finally {
+      if (__privateGet(this, _retryer) === retryer) __privateSet(this, _retryer, void 0);
+      this.scheduleGc();
+    }
+  }
+}, _queryType = new WeakMap(), _initialState = new WeakMap(), _revertState = new WeakMap(), _cache = new WeakMap(), _client = new WeakMap(), _retryer = new WeakMap(), _defaultOptions = new WeakMap(), _abortSignalConsumed = new WeakMap(), _Query_instances = new WeakSet(), dispatch_fn = function(action) {
+  const reducer = (state) => {
+    switch (action.type) {
+      case "failed":
+        return {
+          ...state,
+          fetchFailureCount: action.failureCount,
+          fetchFailureReason: action.error
+        };
+      case "pause":
+        return {
+          ...state,
+          fetchStatus: "paused"
+        };
+      case "continue":
+        return {
+          ...state,
+          fetchStatus: "fetching"
+        };
+      case "fetch":
+        return {
+          ...state,
+          ...fetchState(state.data, this.options),
+          fetchMeta: action.meta ?? null
+        };
+      case "success":
+        const newState = {
+          ...state,
+          ...successState(action.data, action.dataUpdatedAt),
+          dataUpdateCount: state.dataUpdateCount + 1,
+          ...!action.manual && {
+            fetchStatus: "idle",
+            fetchFailureCount: 0,
+            fetchFailureReason: null
+          }
+        };
+        __privateSet(this, _revertState, action.manual ? newState : void 0);
+        return newState;
+      case "error":
+        const error = action.error;
+        return {
+          ...state,
+          error,
+          errorUpdateCount: state.errorUpdateCount + 1,
+          errorUpdatedAt: Date.now(),
+          fetchFailureCount: state.fetchFailureCount + 1,
+          fetchFailureReason: error,
+          fetchStatus: "idle",
+          status: "error",
+          isInvalidated: true
+        };
+      case "invalidate":
+        return {
+          ...state,
+          isInvalidated: true
+        };
+      case "setState":
+        return {
+          ...state,
+          ...action.state
+        };
+    }
+  };
+  this.state = reducer(this.state);
+  notifyManager.batch(() => {
+    this.observers.slice().forEach((observer) => {
+      observer.onQueryUpdate();
+    });
+    __privateGet(this, _cache).notify({
+      query: this,
+      type: "updated",
+      action
+    });
+  });
+}, _e2);
+function fetchState(data, options) {
+  return {
+    fetchFailureCount: 0,
+    fetchFailureReason: null,
+    fetchStatus: canFetch(options.networkMode) ? "fetching" : "paused",
+    ...data === void 0 && {
+      error: null,
+      status: "pending"
+    }
+  };
+}
+function successState(data, dataUpdatedAt) {
+  return {
+    data,
+    dataUpdatedAt: dataUpdatedAt ?? Date.now(),
+    error: null,
+    isInvalidated: false,
+    status: "success"
+  };
+}
+function getDefaultState$1(options) {
+  const data = typeof options.initialData === "function" ? options.initialData() : options.initialData;
+  const hasData = data !== void 0;
+  const initialDataUpdatedAt = hasData ? typeof options.initialDataUpdatedAt === "function" ? options.initialDataUpdatedAt() : options.initialDataUpdatedAt : 0;
+  return {
+    data,
+    dataUpdateCount: 0,
+    dataUpdatedAt: hasData ? initialDataUpdatedAt ?? Date.now() : 0,
+    error: null,
+    errorUpdateCount: 0,
+    errorUpdatedAt: 0,
+    fetchFailureCount: 0,
+    fetchFailureReason: null,
+    fetchMeta: null,
+    isInvalidated: false,
+    status: hasData ? "success" : "pending",
+    fetchStatus: "idle"
+  };
+}
+var QueryObserver = (_f = class extends Subscribable {
+  constructor(client, options) {
+    super();
+    __privateAdd(this, _QueryObserver_instances);
+    __privateAdd(this, _client2);
+    __privateAdd(this, _currentQuery);
+    __privateAdd(this, _currentQueryInitialState);
+    __privateAdd(this, _currentResult);
+    __privateAdd(this, _currentResultState);
+    __privateAdd(this, _currentResultOptions);
+    __privateAdd(this, _selectError);
+    __privateAdd(this, _selectFn);
+    __privateAdd(this, _selectResult);
+    __privateAdd(this, _lastQueryWithDefinedData);
+    __privateAdd(this, _staleTimeoutId);
+    __privateAdd(this, _refetchIntervalId);
+    __privateAdd(this, _currentRefetchInterval);
+    __privateAdd(this, _trackedProps, /* @__PURE__ */ new Set());
+    this.options = options;
+    __privateSet(this, _client2, client);
+    __privateSet(this, _selectError, null);
+    this.bindMethods();
+    this.setOptions(options);
+  }
+  bindMethods() {
+    this.refetch = this.refetch.bind(this);
+  }
+  onSubscribe() {
+    if (this.listeners.size === 1) {
+      __privateGet(this, _currentQuery).addObserver(this);
+      if (shouldFetchOnMount(__privateGet(this, _currentQuery), this.options)) __privateMethod(this, _QueryObserver_instances, executeFetch_fn).call(this);
+      else this.updateResult();
+      __privateMethod(this, _QueryObserver_instances, updateTimers_fn).call(this);
+    }
+  }
+  onUnsubscribe() {
+    if (!this.hasListeners()) this.destroy();
+  }
+  /**
+  * Returns whether the observed query is currently stale and configured
+  * (via the `refetchOnReconnect` option) to refetch when the network
+  * reconnects.
+  */
+  shouldFetchOnReconnect() {
+    return shouldFetchOn(__privateGet(this, _currentQuery), this.options, this.options.refetchOnReconnect);
+  }
+  /**
+  * Returns whether the observed query is currently stale and configured
+  * (via the `refetchOnWindowFocus` option) to refetch when the window
+  * regains focus.
+  */
+  shouldFetchOnWindowFocus() {
+    return shouldFetchOn(__privateGet(this, _currentQuery), this.options, this.options.refetchOnWindowFocus);
+  }
+  /**
+  * Stops observing the current query: clears all listeners, cancels the
+  * stale and refetch-interval timers, and removes this observer from the
+  * query it was observing.
+  */
+  destroy() {
+    this.listeners = /* @__PURE__ */ new Set();
+    __privateMethod(this, _QueryObserver_instances, clearStaleTimeout_fn).call(this);
+    __privateMethod(this, _QueryObserver_instances, clearRefetchInterval_fn).call(this);
+    __privateGet(this, _currentQuery).removeObserver(this);
+  }
+  /**
+  * Updates the observer's options. This will re-resolve the query being
+  * observed (switching to a different query if the `queryKey` changed),
+  * trigger a fetch if the new options require one and the observer has
+  * subscribers, recompute the current result, and reschedule the stale and
+  * refetch-interval timers as needed.
+  *
+  * @example
+  * ```ts
+  * observer.setOptions({ queryKey: ['posts', 1], queryFn: () => fetchPost(1) })
+  * // later: switch to a different query, reusing the same observer
+  * observer.setOptions({ queryKey: ['posts', 2], queryFn: () => fetchPost(2) })
+  * ```
+  */
+  setOptions(options) {
+    const prevOptions = this.options;
+    const prevQuery = __privateGet(this, _currentQuery);
+    this.options = __privateGet(this, _client2).defaultQueryOptions(options);
+    if (this.options.enabled !== void 0 && typeof this.options.enabled !== "boolean" && typeof this.options.enabled !== "function" && typeof resolveQueryValue(this.options.enabled, __privateGet(this, _currentQuery)) !== "boolean") throw new Error("Expected enabled to be a boolean or a callback that returns a boolean");
+    __privateMethod(this, _QueryObserver_instances, updateQuery_fn).call(this);
+    __privateGet(this, _currentQuery).setOptions(this.options);
+    if (prevOptions._defaulted && !shallowEqualObjects(this.options, prevOptions)) __privateGet(this, _client2).getQueryCache().notify({
+      type: "observerOptionsUpdated",
+      query: __privateGet(this, _currentQuery),
+      observer: this
+    });
+    const mounted = this.hasListeners();
+    if (mounted && shouldFetchOptionally(__privateGet(this, _currentQuery), prevQuery, this.options, prevOptions)) __privateMethod(this, _QueryObserver_instances, executeFetch_fn).call(this);
+    this.updateResult();
+    if (mounted && (__privateGet(this, _currentQuery) !== prevQuery || resolveQueryValue(this.options.enabled, __privateGet(this, _currentQuery)) !== resolveQueryValue(prevOptions.enabled, __privateGet(this, _currentQuery)) || resolveQueryValue(this.options.staleTime, __privateGet(this, _currentQuery)) !== resolveQueryValue(prevOptions.staleTime, __privateGet(this, _currentQuery)))) __privateMethod(this, _QueryObserver_instances, updateStaleTimeout_fn).call(this);
+    const nextRefetchInterval = __privateMethod(this, _QueryObserver_instances, computeRefetchInterval_fn).call(this);
+    if (mounted && (__privateGet(this, _currentQuery) !== prevQuery || resolveQueryValue(this.options.enabled, __privateGet(this, _currentQuery)) !== resolveQueryValue(prevOptions.enabled, __privateGet(this, _currentQuery)) || nextRefetchInterval !== __privateGet(this, _currentRefetchInterval))) __privateMethod(this, _QueryObserver_instances, updateRefetchInterval_fn).call(this, nextRefetchInterval);
+  }
+  /**
+  * Computes the result the observer would produce for the given (already-defaulted) options
+  * right now, building the underlying `Query` if it doesn't exist yet, without waiting for a
+  * subscription callback. Called by framework adapters on every render (e.g. `useQuery`) so the
+  * returned value is available synchronously, ahead of `setOptions` triggering an actual fetch.
+  */
+  getOptimisticResult(options) {
+    const query = __privateGet(this, _client2).getQueryCache().build(__privateGet(this, _client2), options);
+    const result = this.createResult(query, options);
+    if (!shallowEqualObjects(this.getCurrentResult(), result)) {
+      __privateSet(this, _currentResult, result);
+      __privateSet(this, _currentResultOptions, this.options);
+      __privateSet(this, _currentResultState, __privateGet(this, _currentQuery).state);
+    }
+    return result;
+  }
+  /**
+  * Returns the most recently computed `QueryObserverResult` for the
+  * observed query. This is a point-in-time read; to be notified of updates
+  * as they happen, subscribe to the observer instead (its inherited
+  * `subscribe` method).
+  *
+  * @example
+  * ```ts
+  * const result = observer.getCurrentResult()
+  * console.log(result.status, result.data)
+  * ```
+  */
+  getCurrentResult() {
+    return __privateGet(this, _currentResult);
+  }
+  /**
+  * Wraps a `QueryObserverResult` in a `Proxy` that records which properties are read, via
+  * {@link QueryObserver#trackProp} (and an optional `onPropTracked` callback). Used by framework
+  * adapters when `notifyOnChangeProps` is not set, to implement its default "only re-render on
+  * properties you actually read" behavior.
+  */
+  trackResult(result, onPropTracked) {
+    return new Proxy(result, { get: (target, key) => {
+      this.trackProp(key);
+      onPropTracked == null ? void 0 : onPropTracked(key);
+      return Reflect.get(target, key);
+    } });
+  }
+  /**
+  * Records that the given `QueryObserverResult` property was read, so a subsequent update only
+  * notifies this observer if a tracked property actually changed. Normally called indirectly via
+  * {@link QueryObserver#trackResult}'s proxy; exposed directly for adapters that track property
+  * access themselves (e.g. through their own reactivity system) instead of via the proxy.
+  */
+  trackProp(key) {
+    __privateGet(this, _trackedProps).add(key);
+  }
+  /**
+  * Returns the `Query` instance this observer is currently observing.
+  */
+  getCurrentQuery() {
+    return __privateGet(this, _currentQuery);
+  }
+  /**
+  * Refetches the observed query and returns a promise that resolves with
+  * the resulting `QueryObserverResult`.
+  *
+  * @example
+  * ```ts
+  * const result = await observer.refetch({ cancelRefetch: false })
+  * console.log(result.data)
+  * ```
+  */
+  refetch({ ...options } = {}) {
+    return this.fetch({ ...options });
+  }
+  /**
+  * Fetches a query defined by the given options without affecting this
+  * observer's own tracked query or result, and returns a promise that
+  * resolves with the `QueryObserverResult` for that fetch. This is useful
+  * for prefetching data that another observer (e.g. a query about to be
+  * navigated to) will need, ahead of time.
+  *
+  * @example
+  * ```ts
+  * const result = await observer.fetchOptimistic({
+  *   queryKey: ['posts', 2],
+  *   queryFn: () => fetchPost(2),
+  * })
+  * console.log(result.data)
+  * ```
+  */
+  fetchOptimistic(options) {
+    const defaultedOptions = __privateGet(this, _client2).defaultQueryOptions(options);
+    const query = __privateGet(this, _client2).getQueryCache().build(__privateGet(this, _client2), defaultedOptions);
+    let unsubscribe = () => {
+    };
+    let resolveEarly;
+    const cachePromise = new Promise((resolve) => {
+      resolveEarly = resolve;
+      unsubscribe = __privateGet(this, _client2).getQueryCache().subscribe((event) => {
+        if (event.type === "updated" && event.query.queryHash === query.queryHash && query.state.data !== void 0) {
+          unsubscribe();
+          resolve(this.createResult(query, defaultedOptions));
+        }
+      });
+    });
+    return Promise.race([query.fetch().then(() => {
+      const result = this.createResult(query, defaultedOptions);
+      resolveEarly == null ? void 0 : resolveEarly(result);
+      return result;
+    }).finally(() => {
+      unsubscribe();
+    }), cachePromise]);
+  }
+  fetch(fetchOptions) {
+    return __privateMethod(this, _QueryObserver_instances, executeFetch_fn).call(this, {
+      ...fetchOptions,
+      cancelRefetch: fetchOptions.cancelRefetch ?? true
+    }).then(() => {
+      this.updateResult();
+      return __privateGet(this, _currentResult);
+    });
+  }
+  createResult(query, options) {
+    var _a2;
+    const prevQuery = __privateGet(this, _currentQuery);
+    const prevOptions = this.options;
+    const prevResult = __privateGet(this, _currentResult);
+    const prevResultState = __privateGet(this, _currentResultState);
+    const prevResultOptions = __privateGet(this, _currentResultOptions);
+    const queryInitialState = query !== prevQuery ? query.state : __privateGet(this, _currentQueryInitialState);
+    const { state } = query;
+    let newState = { ...state };
+    let isPlaceholderData = false;
+    let data;
+    if (options._optimisticResults) {
+      const mounted = this.hasListeners();
+      const fetchOnMount = !mounted && shouldFetchOnMount(query, options);
+      const fetchOptionally = mounted && shouldFetchOptionally(query, prevQuery, options, prevOptions);
+      if (fetchOnMount || fetchOptionally) newState = {
+        ...newState,
+        ...fetchState(state.data, query.options)
+      };
+      if (options._optimisticResults === "isRestoring") newState.fetchStatus = "idle";
+    }
+    let { error, errorUpdatedAt, status } = newState;
+    data = newState.data;
+    let skipSelect = false;
+    if (options.placeholderData !== void 0 && data === void 0 && status === "pending") {
+      let placeholderData;
+      if ((prevResult == null ? void 0 : prevResult.isPlaceholderData) && options.placeholderData === (prevResultOptions == null ? void 0 : prevResultOptions.placeholderData)) {
+        placeholderData = prevResult.data;
+        skipSelect = true;
+      } else placeholderData = typeof options.placeholderData === "function" ? options.placeholderData((_a2 = __privateGet(this, _lastQueryWithDefinedData)) == null ? void 0 : _a2.state.data, __privateGet(this, _lastQueryWithDefinedData)) : options.placeholderData;
+      if (placeholderData !== void 0) {
+        status = "success";
+        data = replaceData(prevResult == null ? void 0 : prevResult.data, placeholderData, options);
+        isPlaceholderData = true;
+      }
+    }
+    if (options.select && data !== void 0 && !skipSelect) {
+      if (prevResult && data === (prevResultState == null ? void 0 : prevResultState.data) && options.select === __privateGet(this, _selectFn)) data = __privateGet(this, _selectResult);
+      else try {
+        __privateSet(this, _selectFn, options.select);
+        data = options.select(data);
+        data = replaceData(prevResult == null ? void 0 : prevResult.data, data, options);
+        __privateSet(this, _selectResult, data);
+        __privateSet(this, _selectError, null);
+      } catch (selectError) {
+        __privateSet(this, _selectError, selectError);
+      }
+    } else if (data === void 0) __privateSet(this, _selectError, null);
+    if (__privateGet(this, _selectError)) {
+      error = __privateGet(this, _selectError);
+      data = __privateGet(this, _selectResult);
+      errorUpdatedAt = Date.now();
+      status = "error";
+      isPlaceholderData = false;
+    }
+    const isFetching = newState.fetchStatus === "fetching";
+    const isPending = status === "pending";
+    const isError = status === "error";
+    const isLoading = isPending && isFetching;
+    const hasData = data !== void 0;
+    return {
+      status,
+      fetchStatus: newState.fetchStatus,
+      isPending,
+      isSuccess: status === "success",
+      isError,
+      isInitialLoading: isLoading,
+      isLoading,
+      data,
+      dataUpdatedAt: newState.dataUpdatedAt,
+      error,
+      errorUpdatedAt,
+      failureCount: newState.fetchFailureCount,
+      failureReason: newState.fetchFailureReason,
+      errorUpdateCount: newState.errorUpdateCount,
+      isFetched: query.isFetched(),
+      isFetchedAfterMount: newState.dataUpdateCount > queryInitialState.dataUpdateCount || newState.errorUpdateCount > queryInitialState.errorUpdateCount,
+      isFetching,
+      isRefetching: isFetching && !isPending,
+      isLoadingError: isError && !hasData,
+      isPaused: newState.fetchStatus === "paused",
+      isPlaceholderData,
+      isRefetchError: isError && hasData,
+      isStale: isStale(query, options),
+      refetch: this.refetch,
+      isEnabled: resolveQueryValue(options.enabled, query) !== false
+    };
+  }
+  /**
+  * Recomputes and stores the current result from the current query/options, notifying listeners
+  * if it changed. Framework adapters call this right after subscribing to make sure no query
+  * update was missed in the gap between creating the observer and subscribing to it.
+  */
+  updateResult() {
+    const prevResult = __privateGet(this, _currentResult);
+    const nextResult = this.createResult(__privateGet(this, _currentQuery), this.options);
+    __privateSet(this, _currentResultState, __privateGet(this, _currentQuery).state);
+    __privateSet(this, _currentResultOptions, this.options);
+    if (__privateGet(this, _currentResultState).data !== void 0) __privateSet(this, _lastQueryWithDefinedData, __privateGet(this, _currentQuery));
+    if (shallowEqualObjects(nextResult, prevResult)) return;
+    __privateSet(this, _currentResult, nextResult);
+    const shouldNotifyListeners = () => {
+      if (!prevResult) return true;
+      const { notifyOnChangeProps } = this.options;
+      const notifyOnChangePropsValue = typeof notifyOnChangeProps === "function" ? notifyOnChangeProps() : notifyOnChangeProps;
+      if (notifyOnChangePropsValue === "all" || !notifyOnChangePropsValue && !__privateGet(this, _trackedProps).size) return true;
+      const includedProps = new Set(notifyOnChangePropsValue ?? __privateGet(this, _trackedProps));
+      if (this.options.throwOnError) includedProps.add("error");
+      return Object.keys(__privateGet(this, _currentResult)).some((key) => {
+        const typedKey = key;
+        return __privateGet(this, _currentResult)[typedKey] !== prevResult[typedKey] && includedProps.has(typedKey);
+      });
+    };
+    const notifyListeners = shouldNotifyListeners();
+    notifyManager.batch(() => {
+      if (notifyListeners) this.listeners.forEach((listener) => {
+        listener(__privateGet(this, _currentResult));
+      });
+      __privateGet(this, _client2).getQueryCache().notify({
+        query: __privateGet(this, _currentQuery),
+        type: "observerResultsUpdated"
+      });
+    });
+  }
+  /** @internal */
+  onQueryUpdate() {
+    this.updateResult();
+    if (this.hasListeners()) __privateMethod(this, _QueryObserver_instances, updateTimers_fn).call(this);
+  }
+}, _client2 = new WeakMap(), _currentQuery = new WeakMap(), _currentQueryInitialState = new WeakMap(), _currentResult = new WeakMap(), _currentResultState = new WeakMap(), _currentResultOptions = new WeakMap(), _selectError = new WeakMap(), _selectFn = new WeakMap(), _selectResult = new WeakMap(), _lastQueryWithDefinedData = new WeakMap(), _staleTimeoutId = new WeakMap(), _refetchIntervalId = new WeakMap(), _currentRefetchInterval = new WeakMap(), _trackedProps = new WeakMap(), _QueryObserver_instances = new WeakSet(), executeFetch_fn = function(fetchOptions) {
+  __privateMethod(this, _QueryObserver_instances, updateQuery_fn).call(this);
+  let promise = __privateGet(this, _currentQuery).fetch(this.options, fetchOptions);
+  if (!(fetchOptions == null ? void 0 : fetchOptions.throwOnError)) promise = promise.catch(noop);
+  return promise;
+}, shouldScheduleTimer_fn = function(timeout) {
+  return !isServer() && resolveQueryValue(this.options.enabled, __privateGet(this, _currentQuery)) !== false && isValidTimeout(timeout);
+}, updateStaleTimeout_fn = function() {
+  __privateMethod(this, _QueryObserver_instances, clearStaleTimeout_fn).call(this);
+  const staleTime = resolveQueryValue(this.options.staleTime, __privateGet(this, _currentQuery));
+  if (__privateGet(this, _currentResult).isStale || !__privateMethod(this, _QueryObserver_instances, shouldScheduleTimer_fn).call(this, staleTime)) return;
+  const timeout = timeUntilStale(__privateGet(this, _currentResult).dataUpdatedAt, staleTime) + 1;
+  __privateSet(this, _staleTimeoutId, timeoutManager.setTimeout(() => {
+    if (!__privateGet(this, _currentResult).isStale) this.updateResult();
+  }, timeout));
+}, computeRefetchInterval_fn = function() {
+  return resolveQueryValue(this.options.refetchInterval, __privateGet(this, _currentQuery)) ?? false;
+}, updateRefetchInterval_fn = function(nextInterval) {
+  __privateMethod(this, _QueryObserver_instances, clearRefetchInterval_fn).call(this);
+  __privateSet(this, _currentRefetchInterval, nextInterval);
+  if (__privateGet(this, _currentRefetchInterval) === 0 || !__privateMethod(this, _QueryObserver_instances, shouldScheduleTimer_fn).call(this, __privateGet(this, _currentRefetchInterval))) return;
+  __privateSet(this, _refetchIntervalId, timeoutManager.setInterval(() => {
+    if (this.options.refetchIntervalInBackground || focusManager.isFocused()) __privateMethod(this, _QueryObserver_instances, executeFetch_fn).call(this);
+  }, __privateGet(this, _currentRefetchInterval)));
+}, updateTimers_fn = function() {
+  __privateMethod(this, _QueryObserver_instances, updateStaleTimeout_fn).call(this);
+  __privateMethod(this, _QueryObserver_instances, updateRefetchInterval_fn).call(this, __privateMethod(this, _QueryObserver_instances, computeRefetchInterval_fn).call(this));
+}, clearStaleTimeout_fn = function() {
+  if (__privateGet(this, _staleTimeoutId) !== void 0) {
+    timeoutManager.clearTimeout(__privateGet(this, _staleTimeoutId));
+    __privateSet(this, _staleTimeoutId, void 0);
+  }
+}, clearRefetchInterval_fn = function() {
+  if (__privateGet(this, _refetchIntervalId) !== void 0) {
+    timeoutManager.clearInterval(__privateGet(this, _refetchIntervalId));
+    __privateSet(this, _refetchIntervalId, void 0);
+  }
+}, updateQuery_fn = function() {
+  const query = __privateGet(this, _client2).getQueryCache().build(__privateGet(this, _client2), this.options);
+  if (query === __privateGet(this, _currentQuery)) return;
+  const prevQuery = __privateGet(this, _currentQuery);
+  __privateSet(this, _currentQuery, query);
+  __privateSet(this, _currentQueryInitialState, query.state);
+  if (this.hasListeners()) {
+    prevQuery == null ? void 0 : prevQuery.removeObserver(this);
+    query.addObserver(this);
+  }
+}, _f);
+function shouldLoadOnMount(query, options) {
+  return resolveQueryValue(options.enabled, query) !== false && query.state.data === void 0 && !(query.state.status === "error" && resolveQueryValue(options.retryOnMount, query) === false);
+}
+function shouldFetchOnMount(query, options) {
+  return shouldLoadOnMount(query, options) || query.state.data !== void 0 && shouldFetchOn(query, options, options.refetchOnMount);
+}
+function shouldFetchOn(query, options, field) {
+  if (resolveQueryValue(options.enabled, query) !== false && resolveQueryValue(options.staleTime, query) !== "static") {
+    const value = resolveQueryValue(field, query);
+    return value === "always" || value !== false && isStale(query, options);
+  }
+  return false;
+}
+function shouldFetchOptionally(query, prevQuery, options, prevOptions) {
+  return (query !== prevQuery || resolveQueryValue(prevOptions.enabled, query) === false) && (!options.suspense || query.state.status !== "error") && isStale(query, options);
+}
+function isStale(query, options) {
+  return resolveQueryValue(options.enabled, query) !== false && query.isStaleByTime(resolveQueryValue(options.staleTime, query));
+}
+var Mutation = (_g = class extends Removable {
+  constructor(config) {
+    super();
+    __privateAdd(this, _Mutation_instances);
+    __privateAdd(this, _client3);
+    __privateAdd(this, _observers);
+    __privateAdd(this, _mutationCache);
+    __privateAdd(this, _retryer2);
+    __privateSet(this, _client3, config.client);
+    this.mutationId = config.mutationId;
+    __privateSet(this, _mutationCache, config.mutationCache);
+    __privateSet(this, _observers, []);
+    this.state = config.state || getDefaultState();
+    this.setOptions(config.options);
+    this.scheduleGc();
+  }
+  /** @internal */
+  setOptions(options) {
+    this.options = options;
+    this.updateGcTime(this.options.gcTime);
+  }
+  /**
+  * The `meta` object passed in the mutation's options, if any.
+  */
+  get meta() {
+    return this.options.meta;
+  }
+  /** @internal */
+  addObserver(observer) {
+    if (!__privateGet(this, _observers).includes(observer)) {
+      __privateGet(this, _observers).push(observer);
+      this.clearGcTimeout();
+      __privateGet(this, _mutationCache).notify({
+        type: "observerAdded",
+        mutation: this,
+        observer
+      });
+    }
+  }
+  /** @internal */
+  removeObserver(observer) {
+    __privateSet(this, _observers, __privateGet(this, _observers).filter((x) => x !== observer));
+    this.scheduleGc();
+    __privateGet(this, _mutationCache).notify({
+      type: "observerRemoved",
+      mutation: this,
+      observer
+    });
+  }
+  optionalRemove() {
+    if (!__privateGet(this, _observers).length) {
+      if (this.state.status === "pending") this.scheduleGc();
+      else __privateGet(this, _mutationCache).remove(this);
+    }
+  }
+  /**
+  * Resumes a mutation that is currently paused or was restored from a
+  * dehydrated, still-`pending` state.
+  *
+  * - If this mutation has an active retryer (it paused mid-attempt, e.g. due
+  *   to the network mode or scope-based queuing), its retryer is resumed.
+  * - Otherwise, if the mutation's status is still `pending` (e.g. it was
+  *   dehydrated while an attempt was in flight and never got a retryer in
+  *   this instance), `execute` is called again with the last known variables.
+  * - Otherwise the mutation has already settled and this resolves immediately
+  *   without running anything again.
+  *
+  * @example
+  * ```ts
+  * // typically driven by reconnect handling, e.g. queryClient.resumePausedMutations()
+  * const mutation = mutationCache.find({ mutationKey: ['addPost'] })
+  * await mutation?.continue()
+  * ```
+  *
+  * @see {@link Mutation#execute}
+  */
+  continue() {
+    var _a2;
+    return ((_a2 = __privateGet(this, _retryer2)) == null ? void 0 : _a2.continue()) ?? (this.state.status === "pending" ? this.execute(this.state.variables) : Promise.resolve());
+  }
+  /**
+  * Runs the mutation function for the given variables through a retryer, and
+  * drives the mutation's state and lifecycle callbacks through to settlement.
+  *
+  * If this mutation's state is already `pending` when `execute` is called
+  * (i.e. it was restored, still in-flight, from a dehydrated state), the
+  * `onMutate` step is skipped and a `continue` action is dispatched to
+  * unpause it; otherwise a `pending` action is dispatched first, then the
+  * mutation cache's `onMutate` and the mutation's own `onMutate` option are
+  * awaited in that order, and the resulting context is stored.
+  *
+  * The mutation function is then run (subject to `retry`/`retryDelay`/
+  * `networkMode`, and to the mutation cache's scope-based serialization).
+  * On success, the cache's `onSuccess`/`onSettled` callbacks run before the
+  * mutation's own `onSuccess`/`onSettled` options, a `success` action is
+  * dispatched, and the resolved data is returned. On failure, the same
+  * cache-then-option ordering is used for `onError`/`onSettled`, but each of
+  * those four callbacks is individually caught so that a throwing callback
+  * cannot mask the original error; an `error` action is then dispatched and
+  * the original error is re-thrown.
+  *
+  * @example
+  * ```ts
+  * // Called internally by `MutationObserver.mutate` and `Mutation.continue` —
+  * // applications normally trigger mutations through those, not this method.
+  * const data = await mutation.execute(variables)
+  * ```
+  *
+  * @see {@link Mutation#continue}
+  */
+  async execute(variables) {
+    var _a2, _b2, _c2, _d2, _e3, _f2, _g2, _h2, _i2, _j2, _k2, _l, _m, _n, _o, _p, _q, _r;
+    const onContinue = () => {
+      __privateMethod(this, _Mutation_instances, dispatch_fn2).call(this, { type: "continue" });
+    };
+    const mutationFnContext = {
+      client: __privateGet(this, _client3),
+      meta: this.options.meta,
+      mutationKey: this.options.mutationKey
+    };
+    const retryer = __privateSet(this, _retryer2, createRetryer({
+      fn: () => {
+        if (!this.options.mutationFn) return Promise.reject(/* @__PURE__ */ new Error("No mutationFn found"));
+        return this.options.mutationFn(variables, mutationFnContext);
+      },
+      onFail: (failureCount, error) => {
+        __privateMethod(this, _Mutation_instances, dispatch_fn2).call(this, {
+          type: "failed",
+          failureCount,
+          error
+        });
+      },
+      onPause: () => {
+        __privateMethod(this, _Mutation_instances, dispatch_fn2).call(this, { type: "pause" });
+      },
+      onContinue,
+      retry: this.options.retry ?? 0,
+      retryDelay: this.options.retryDelay,
+      networkMode: this.options.networkMode,
+      canRun: () => __privateGet(this, _mutationCache).canRun(this)
+    }));
+    const restored = this.state.status === "pending";
+    const isPaused = !retryer.canStart();
+    try {
+      if (restored) onContinue();
+      else {
+        __privateMethod(this, _Mutation_instances, dispatch_fn2).call(this, {
+          type: "pending",
+          variables,
+          isPaused
+        });
+        if (__privateGet(this, _mutationCache).config.onMutate) await __privateGet(this, _mutationCache).config.onMutate(variables, this, mutationFnContext);
+        const context = await ((_b2 = (_a2 = this.options).onMutate) == null ? void 0 : _b2.call(_a2, variables, mutationFnContext));
+        if (context !== this.state.context) __privateMethod(this, _Mutation_instances, dispatch_fn2).call(this, {
+          type: "pending",
+          context,
+          variables,
+          isPaused
+        });
+      }
+      const data = await retryer.start();
+      await ((_d2 = (_c2 = __privateGet(this, _mutationCache).config).onSuccess) == null ? void 0 : _d2.call(_c2, data, variables, this.state.context, this, mutationFnContext));
+      await ((_f2 = (_e3 = this.options).onSuccess) == null ? void 0 : _f2.call(_e3, data, variables, this.state.context, mutationFnContext));
+      await ((_h2 = (_g2 = __privateGet(this, _mutationCache).config).onSettled) == null ? void 0 : _h2.call(_g2, data, null, this.state.variables, this.state.context, this, mutationFnContext));
+      await ((_j2 = (_i2 = this.options).onSettled) == null ? void 0 : _j2.call(_i2, data, null, variables, this.state.context, mutationFnContext));
+      __privateMethod(this, _Mutation_instances, dispatch_fn2).call(this, {
+        type: "success",
+        data
+      });
+      return data;
+    } catch (error) {
+      try {
+        await ((_l = (_k2 = __privateGet(this, _mutationCache).config).onError) == null ? void 0 : _l.call(_k2, error, variables, this.state.context, this, mutationFnContext));
+      } catch (e) {
+        Promise.reject(e);
+      }
+      try {
+        await ((_n = (_m = this.options).onError) == null ? void 0 : _n.call(_m, error, variables, this.state.context, mutationFnContext));
+      } catch (e) {
+        Promise.reject(e);
+      }
+      try {
+        await ((_p = (_o = __privateGet(this, _mutationCache).config).onSettled) == null ? void 0 : _p.call(_o, void 0, error, this.state.variables, this.state.context, this, mutationFnContext));
+      } catch (e) {
+        Promise.reject(e);
+      }
+      try {
+        await ((_r = (_q = this.options).onSettled) == null ? void 0 : _r.call(_q, void 0, error, variables, this.state.context, mutationFnContext));
+      } catch (e) {
+        Promise.reject(e);
+      }
+      __privateMethod(this, _Mutation_instances, dispatch_fn2).call(this, {
+        type: "error",
+        error
+      });
+      throw error;
+    } finally {
+      if (__privateGet(this, _retryer2) === retryer) __privateSet(this, _retryer2, void 0);
+      __privateGet(this, _mutationCache).runNext(this);
+    }
+  }
+}, _client3 = new WeakMap(), _observers = new WeakMap(), _mutationCache = new WeakMap(), _retryer2 = new WeakMap(), _Mutation_instances = new WeakSet(), dispatch_fn2 = function(action) {
+  const reducer = (state) => {
+    switch (action.type) {
+      case "failed":
+        return {
+          ...state,
+          failureCount: action.failureCount,
+          failureReason: action.error
+        };
+      case "pause":
+        return {
+          ...state,
+          isPaused: true
+        };
+      case "continue":
+        return {
+          ...state,
+          isPaused: false
+        };
+      case "pending":
+        return {
+          ...state,
+          context: action.context,
+          data: void 0,
+          failureCount: 0,
+          failureReason: null,
+          error: null,
+          isPaused: action.isPaused,
+          status: "pending",
+          variables: action.variables,
+          submittedAt: Date.now()
+        };
+      case "success":
+        return {
+          ...state,
+          data: action.data,
+          failureCount: 0,
+          failureReason: null,
+          error: null,
+          status: "success",
+          isPaused: false
+        };
+      case "error":
+        return {
+          ...state,
+          data: void 0,
+          error: action.error,
+          failureCount: state.failureCount + 1,
+          failureReason: action.error,
+          isPaused: false,
+          status: "error"
+        };
+    }
+  };
+  this.state = reducer(this.state);
+  notifyManager.batch(() => {
+    __privateGet(this, _observers).forEach((observer) => {
+      observer.onMutationUpdate(action);
+    });
+    __privateGet(this, _mutationCache).notify({
+      mutation: this,
+      type: "updated",
+      action
+    });
+  });
+}, _g);
+function getDefaultState() {
+  return {
+    context: void 0,
+    data: void 0,
+    error: null,
+    failureCount: 0,
+    failureReason: null,
+    isPaused: false,
+    status: "idle",
+    variables: void 0,
+    submittedAt: 0
+  };
+}
+var MutationCache = (_h = class extends Subscribable {
+  constructor(config = {}) {
+    super();
+    __privateAdd(this, _mutations);
+    __privateAdd(this, _scopes);
+    __privateAdd(this, _mutationId);
+    this.config = config;
+    __privateSet(this, _mutations, /* @__PURE__ */ new Set());
+    __privateSet(this, _scopes, /* @__PURE__ */ new Map());
+    __privateSet(this, _mutationId, 0);
+  }
+  /** @internal */
+  build(client, options, state) {
+    const mutation = new Mutation({
+      client,
+      mutationCache: this,
+      mutationId: ++__privateWrapper(this, _mutationId)._,
+      options: client.defaultMutationOptions(options),
+      state
+    });
+    this.add(mutation);
+    return mutation;
+  }
+  /** @internal */
+  add(mutation) {
+    __privateGet(this, _mutations).add(mutation);
+    const scope = scopeFor(mutation);
+    if (typeof scope === "string") {
+      const scopedMutations = __privateGet(this, _scopes).get(scope);
+      if (scopedMutations) scopedMutations.push(mutation);
+      else __privateGet(this, _scopes).set(scope, [mutation]);
+    }
+    this.notify({
+      type: "added",
+      mutation
+    });
+  }
+  /** @internal */
+  remove(mutation) {
+    if (__privateGet(this, _mutations).delete(mutation)) {
+      const scope = scopeFor(mutation);
+      if (typeof scope === "string") {
+        const scopedMutations = __privateGet(this, _scopes).get(scope);
+        if (scopedMutations) {
+          if (scopedMutations.length > 1) {
+            const index2 = scopedMutations.indexOf(mutation);
+            if (index2 !== -1) scopedMutations.splice(index2, 1);
+          } else if (scopedMutations[0] === mutation) __privateGet(this, _scopes).delete(scope);
+        }
+      }
+    }
+    this.notify({
+      type: "removed",
+      mutation
+    });
+  }
+  /** @internal */
+  canRun(mutation) {
+    var _a2;
+    const scope = scopeFor(mutation);
+    if (typeof scope === "string") {
+      const firstPendingMutation = (_a2 = __privateGet(this, _scopes).get(scope)) == null ? void 0 : _a2.find((m2) => m2.state.status === "pending");
+      return !firstPendingMutation || firstPendingMutation === mutation;
+    } else return true;
+  }
+  /** @internal */
+  runNext(mutation) {
+    var _a2, _b2;
+    const scope = scopeFor(mutation);
+    if (typeof scope === "string") return ((_b2 = (_a2 = __privateGet(this, _scopes).get(scope)) == null ? void 0 : _a2.find((m2) => m2 !== mutation && m2.state.isPaused)) == null ? void 0 : _b2.continue()) ?? Promise.resolve();
+    else return Promise.resolve();
+  }
+  /**
+  * Removes all mutations from the cache.
+  *
+  * @example
+  * ```ts
+  * const mutationCache = queryClient.getMutationCache()
+  *
+  * mutationCache.clear()
+  * ```
+  */
+  clear() {
+    notifyManager.batch(() => {
+      __privateGet(this, _mutations).forEach((mutation) => {
+        this.notify({
+          type: "removed",
+          mutation
+        });
+      });
+      __privateGet(this, _mutations).clear();
+      __privateGet(this, _scopes).clear();
+    });
+  }
+  /**
+  * Returns all mutations within the cache.
+  *
+  * This is not typically needed for most applications, but can come in handy when needing more
+  * information about a mutation in rare scenarios.
+  *
+  * @example
+  * ```ts
+  * const mutationCache = queryClient.getMutationCache()
+  *
+  * const mutations = mutationCache.getAll()
+  * ```
+  */
+  getAll() {
+    return Array.from(__privateGet(this, _mutations));
+  }
+  /**
+  * A slightly more advanced method that can be used to get an existing mutation instance from
+  * the cache. If the mutation does not exist, `undefined` is returned.
+  *
+  * This is not typically needed for most applications, but can come in handy when needing more
+  * information about a mutation in rare scenarios.
+  *
+  * @see {@link MutationCache#findAll}
+  * @example
+  * ```ts
+  * const mutationCache = queryClient.getMutationCache()
+  *
+  * const mutation = mutationCache.find({ mutationKey: ['addPost'] })
+  * ```
+  */
+  find(filters) {
+    const defaultedFilters = {
+      exact: true,
+      ...filters
+    };
+    return this.getAll().find((mutation) => matchMutation(defaultedFilters, mutation));
+  }
+  /**
+  * An even more advanced method that can be used to get existing mutation instances from the
+  * cache that match the given filters. If no mutations match, an empty array is returned.
+  *
+  * This is not typically needed for most applications, but can come in handy when needing more
+  * information about mutations in rare scenarios.
+  *
+  * @see {@link MutationCache#find}
+  * @example
+  * ```ts
+  * const mutationCache = queryClient.getMutationCache()
+  *
+  * const mutations = mutationCache.findAll({ mutationKey: ['addPost'] })
+  * ```
+  */
+  findAll(filters = {}) {
+    return this.getAll().filter((mutation) => matchMutation(filters, mutation));
+  }
+  /** @internal */
+  notify(event) {
+    notifyManager.batch(() => {
+      this.listeners.forEach((listener) => {
+        listener(event);
+      });
+    });
+  }
+  /** @internal */
+  resumePausedMutations() {
+    const pausedMutations = this.getAll().filter((x) => x.state.isPaused);
+    return notifyManager.batch(() => Promise.all(pausedMutations.map((mutation) => mutation.continue().catch(noop))));
+  }
+}, _mutations = new WeakMap(), _scopes = new WeakMap(), _mutationId = new WeakMap(), _h);
+function scopeFor(mutation) {
+  var _a2;
+  return (_a2 = mutation.options.scope) == null ? void 0 : _a2.id;
+}
+var MutationObserver$1 = (_i = class extends Subscribable {
+  constructor(client, options) {
+    super();
+    __privateAdd(this, _MutationObserver_instances);
+    __privateAdd(this, _client4);
+    __privateAdd(this, _currentResult2);
+    __privateAdd(this, _currentMutation);
+    __privateAdd(this, _mutateOptions);
+    __privateSet(this, _client4, client);
+    this.setOptions(options);
+    this.bindMethods();
+    __privateMethod(this, _MutationObserver_instances, updateResult_fn).call(this);
+  }
+  bindMethods() {
+    this.mutate = this.mutate.bind(this);
+    this.reset = this.reset.bind(this);
+  }
+  /**
+  * Updates the observer's options.
+  *
+  * If the new `mutationKey` differs from the previous one (and both were
+  * defined), the observer is reset, detaching it from the mutation it was
+  * observing. Otherwise, if the currently observed mutation is still
+  * `pending`, its options are updated in place as well.
+  *
+  * @example
+  * ```ts
+  * observer.setOptions({
+  *   mutationFn: (variables: { title: string }) => addPost(variables),
+  *   onSuccess: (data) => console.log(data),
+  * })
+  * ```
+  */
+  setOptions(options) {
+    var _a2;
+    const prevOptions = this.options;
+    this.options = __privateGet(this, _client4).defaultMutationOptions(options);
+    if (!shallowEqualObjects(this.options, prevOptions)) __privateGet(this, _client4).getMutationCache().notify({
+      type: "observerOptionsUpdated",
+      mutation: __privateGet(this, _currentMutation),
+      observer: this
+    });
+    if ((prevOptions == null ? void 0 : prevOptions.mutationKey) && this.options.mutationKey && hashKey(prevOptions.mutationKey) !== hashKey(this.options.mutationKey)) this.reset();
+    else if (((_a2 = __privateGet(this, _currentMutation)) == null ? void 0 : _a2.state.status) === "pending") __privateGet(this, _currentMutation).setOptions(this.options);
+  }
+  onSubscribe() {
+    if (this.listeners.size === 1 && __privateGet(this, _currentMutation)) {
+      __privateGet(this, _currentMutation).addObserver(this);
+      __privateMethod(this, _MutationObserver_instances, updateResult_fn).call(this);
+    }
+  }
+  onUnsubscribe() {
+    var _a2;
+    if (!this.hasListeners()) (_a2 = __privateGet(this, _currentMutation)) == null ? void 0 : _a2.removeObserver(this);
+  }
+  /** @internal */
+  onMutationUpdate(action) {
+    __privateMethod(this, _MutationObserver_instances, updateResult_fn).call(this);
+    __privateMethod(this, _MutationObserver_instances, notify_fn).call(this, action);
+  }
+  /**
+  * Returns the observer's current result, derived from the observed
+  * mutation's state (or the default, `idle` state if no mutation has been
+  * built yet, e.g. before the first `mutate()` call or after `reset()`).
+  */
+  getCurrentResult() {
+    return __privateGet(this, _currentResult2);
+  }
+  /**
+  * Detaches the observer from the mutation it is currently observing (if
+  * any) and resets the observed result back to its default, `idle` state.
+  *
+  * This does not cancel an in-flight mutation; the mutation itself keeps
+  * running to completion and its own callbacks still fire, but this
+  * observer stops reflecting its state and a subsequent `mutate()` call
+  * will build a brand new mutation.
+  *
+  * @example
+  * ```ts
+  * observer.reset()
+  * ```
+  *
+  * @see {@link MutationObserver#mutate}
+  */
+  reset() {
+    var _a2;
+    (_a2 = __privateGet(this, _currentMutation)) == null ? void 0 : _a2.removeObserver(this);
+    __privateSet(this, _currentMutation, void 0);
+    __privateMethod(this, _MutationObserver_instances, updateResult_fn).call(this);
+    __privateMethod(this, _MutationObserver_instances, notify_fn).call(this);
+  }
+  /**
+  * Builds a new `Mutation` in the `MutationCache` using the observer's
+  * current options, detaches this observer from any previously observed
+  * mutation, attaches it to the new one, and executes it with the given
+  * variables.
+  *
+  * The optional per-call `options` (`onSuccess`/`onError`/`onSettled`) are
+  * invoked once the mutation settles, in addition to any callbacks defined
+  * on the observer's own options.
+  *
+  * @example
+  * ```ts
+  * await observer.mutate(
+  *   { title: 'New post' },
+  *   { onSuccess: (data) => console.log(data) },
+  * )
+  * ```
+  */
+  mutate(variables, options) {
+    var _a2;
+    __privateSet(this, _mutateOptions, options);
+    (_a2 = __privateGet(this, _currentMutation)) == null ? void 0 : _a2.removeObserver(this);
+    __privateSet(this, _currentMutation, __privateGet(this, _client4).getMutationCache().build(__privateGet(this, _client4), this.options));
+    __privateGet(this, _currentMutation).addObserver(this);
+    return __privateGet(this, _currentMutation).execute(variables);
+  }
+}, _client4 = new WeakMap(), _currentResult2 = new WeakMap(), _currentMutation = new WeakMap(), _mutateOptions = new WeakMap(), _MutationObserver_instances = new WeakSet(), updateResult_fn = function() {
+  var _a2;
+  const state = ((_a2 = __privateGet(this, _currentMutation)) == null ? void 0 : _a2.state) ?? getDefaultState();
+  __privateSet(this, _currentResult2, {
+    ...state,
+    isPending: state.status === "pending",
+    isSuccess: state.status === "success",
+    isError: state.status === "error",
+    isIdle: state.status === "idle",
+    mutate: this.mutate,
+    reset: this.reset
+  });
+}, notify_fn = function(action) {
+  notifyManager.batch(() => {
+    var _a2, _b2, _c2, _d2, _e3, _f2, _g2, _h2;
+    if (__privateGet(this, _mutateOptions) && this.hasListeners()) {
+      const variables = __privateGet(this, _currentResult2).variables;
+      const onMutateResult = __privateGet(this, _currentResult2).context;
+      const context = {
+        client: __privateGet(this, _client4),
+        meta: this.options.meta,
+        mutationKey: this.options.mutationKey
+      };
+      if ((action == null ? void 0 : action.type) === "success") {
+        try {
+          (_b2 = (_a2 = __privateGet(this, _mutateOptions)).onSuccess) == null ? void 0 : _b2.call(_a2, action.data, variables, onMutateResult, context);
+        } catch (e) {
+          Promise.reject(e);
+        }
+        try {
+          (_d2 = (_c2 = __privateGet(this, _mutateOptions)).onSettled) == null ? void 0 : _d2.call(_c2, action.data, null, variables, onMutateResult, context);
+        } catch (e) {
+          Promise.reject(e);
+        }
+      } else if ((action == null ? void 0 : action.type) === "error") {
+        try {
+          (_f2 = (_e3 = __privateGet(this, _mutateOptions)).onError) == null ? void 0 : _f2.call(_e3, action.error, variables, onMutateResult, context);
+        } catch (e) {
+          Promise.reject(e);
+        }
+        try {
+          (_h2 = (_g2 = __privateGet(this, _mutateOptions)).onSettled) == null ? void 0 : _h2.call(_g2, void 0, action.error, variables, onMutateResult, context);
+        } catch (e) {
+          Promise.reject(e);
+        }
+      }
+    }
+    this.listeners.forEach((listener) => {
+      listener(__privateGet(this, _currentResult2));
+    });
+  });
+}, _i);
+var QueryCache = (_j = class extends Subscribable {
+  constructor(config = {}) {
+    super();
+    __privateAdd(this, _queries);
+    this.config = config;
+    __privateSet(this, _queries, /* @__PURE__ */ new Map());
+  }
+  /**
+  * Returns the existing `Query` instance for the given options' `queryKey`/`queryHash`, or
+  * builds and adds a new one to the cache if none exists yet. Used by framework adapters and
+  * plugins (e.g. broadcast/persistence) that need to get-or-create a `Query` directly, bypassing
+  * the reactive `QueryObserver` machinery.
+  *
+  * @example
+  * ```ts
+  * const queryCache = queryClient.getQueryCache()
+  *
+  * const query = queryCache.build(queryClient, {
+  *   queryKey: ['posts'],
+  *   queryFn: fetchPosts,
+  * })
+  * ```
+  */
+  build(client, options, state) {
+    const queryKey = options.queryKey;
+    const queryHash = options.queryHash ?? hashQueryKeyByOptions(queryKey, options);
+    let query = this.get(queryHash);
+    if (!query) {
+      query = new Query({
+        client,
+        queryKey,
+        queryHash,
+        options: client.defaultQueryOptions(options),
+        state,
+        defaultOptions: client.getQueryDefaults(queryKey)
+      });
+      this.add(query);
+    }
+    return query;
+  }
+  /** @internal */
+  add(query) {
+    if (!__privateGet(this, _queries).has(query.queryHash)) {
+      __privateGet(this, _queries).set(query.queryHash, query);
+      this.notify({
+        type: "added",
+        query
+      });
+    }
+  }
+  /**
+  * Destroys the given `Query` and removes it from the cache, notifying subscribers with a
+  * `'removed'` event. A no-op if the query is no longer the one currently stored under its hash
+  * (e.g. it was already replaced). Used by plugins (e.g. the broadcast client) that mirror
+  * removals across `QueryCache` instances.
+  *
+  * @example
+  * ```ts
+  * const queryCache = queryClient.getQueryCache()
+  * const query = queryCache.find({ queryKey: ['posts'] })
+  *
+  * if (query) {
+  *   queryCache.remove(query)
+  * }
+  * ```
+  */
+  remove(query) {
+    if (__privateGet(this, _queries).get(query.queryHash) === query) {
+      query.destroy();
+      __privateGet(this, _queries).delete(query.queryHash);
+      this.notify({
+        type: "removed",
+        query
+      });
+    }
+  }
+  /**
+  * Removes all queries from the cache.
+  *
+  * @example
+  * ```ts
+  * const queryCache = queryClient.getQueryCache()
+  *
+  * queryCache.clear()
+  * ```
+  */
+  clear() {
+    notifyManager.batch(() => {
+      this.getAll().forEach((query) => {
+        this.remove(query);
+      });
+    });
+  }
+  /**
+  * Returns the `Query` instance stored under the given `queryHash`, or `undefined` if none
+  * exists. Unlike {@link QueryCache#find}, this looks up by the already-computed hash rather
+  * than by `QueryFilters`. Used by plugins (e.g. broadcast/hydration) that already have a hash
+  * to look up directly.
+  *
+  * @example
+  * ```ts
+  * const queryCache = queryClient.getQueryCache()
+  * const queryHash = hashKey(['posts'])
+  *
+  * const query = queryCache.get(queryHash)
+  * ```
+  */
+  get(queryHash) {
+    return __privateGet(this, _queries).get(queryHash);
+  }
+  /**
+  * Returns all queries within the cache.
+  *
+  * @example
+  * ```ts
+  * const queryCache = queryClient.getQueryCache()
+  *
+  * const queries = queryCache.getAll()
+  * ```
+  */
+  getAll() {
+    return [...__privateGet(this, _queries).values()];
+  }
+  /**
+  * A slightly more advanced method that can be used to get an existing query instance from the
+  * cache. This instance not only contains all the state for the query, but all of the instances,
+  * and underlying guts of the query as well. If the query does not exist, `undefined` is
+  * returned.
+  *
+  * This is not typically needed for most applications, but can come in handy when needing more
+  * information about a query in rare scenarios (e.g. looking at `query.state.dataUpdatedAt` to
+  * decide whether a query is fresh enough to be used as an initial value).
+  *
+  * @see {@link QueryCache#findAll}
+  * @example
+  * ```ts
+  * const queryCache = queryClient.getQueryCache()
+  *
+  * const query = queryCache.find({ queryKey: ['posts'] })
+  * ```
+  */
+  find(filters) {
+    const defaultedFilters = {
+      exact: true,
+      ...filters
+    };
+    return this.getAll().find((query) => matchQuery(defaultedFilters, query));
+  }
+  /**
+  * An even more advanced method that can be used to get existing query instances from the cache
+  * that partially match a query key. If no queries match, an empty array is returned.
+  *
+  * This is not typically needed for most applications, but can come in handy when needing more
+  * information about queries in rare scenarios.
+  *
+  * @see {@link QueryCache#find}
+  * @example
+  * ```ts
+  * const queryCache = queryClient.getQueryCache()
+  *
+  * const queries = queryCache.findAll({ queryKey: ['posts'] })
+  * ```
+  */
+  findAll(filters = {}) {
+    const queries = this.getAll();
+    return Object.keys(filters).length > 0 ? queries.filter((query) => matchQuery(filters, query)) : queries;
+  }
+  /** @internal */
+  notify(event) {
+    notifyManager.batch(() => {
+      this.listeners.forEach((listener) => {
+        listener(event);
+      });
+    });
+  }
+  /** @internal */
+  onFocus() {
+    notifyManager.batch(() => {
+      this.getAll().forEach((query) => {
+        query.onFocus();
+      });
+    });
+  }
+  /** @internal */
+  onOnline() {
+    notifyManager.batch(() => {
+      this.getAll().forEach((query) => {
+        query.onOnline();
+      });
+    });
+  }
+}, _queries = new WeakMap(), _j);
+var QueryClient = (_k = class {
+  constructor(config = {}) {
+    __privateAdd(this, _queryCache);
+    __privateAdd(this, _mutationCache2);
+    __privateAdd(this, _defaultOptions2);
+    __privateAdd(this, _queryDefaults);
+    __privateAdd(this, _mutationDefaults);
+    __privateAdd(this, _mountCount);
+    __privateAdd(this, _unsubscribeFocus);
+    __privateAdd(this, _unsubscribeOnline);
+    __privateSet(this, _queryCache, config.queryCache || new QueryCache());
+    __privateSet(this, _mutationCache2, config.mutationCache || new MutationCache());
+    __privateSet(this, _defaultOptions2, config.defaultOptions || {});
+    __privateSet(this, _queryDefaults, /* @__PURE__ */ new Map());
+    __privateSet(this, _mutationDefaults, /* @__PURE__ */ new Map());
+    __privateSet(this, _mountCount, 0);
+  }
+  /**
+  * Called by a framework adapter's `QueryClientProvider`-equivalent when it mounts, to start
+  * listening for focus/online events and resume paused mutations. Ref-counted via an internal
+  * mount count, so nested or multiple providers sharing the same `QueryClient` don't tear down
+  * the shared listeners until the last one unmounts.
+  */
+  mount() {
+    __privateWrapper(this, _mountCount)._++;
+    if (__privateGet(this, _mountCount) !== 1) return;
+    __privateSet(this, _unsubscribeFocus, focusManager.subscribe(async (focused) => {
+      if (focused) {
+        await this.resumePausedMutations();
+        __privateGet(this, _queryCache).onFocus();
+      }
+    }));
+    __privateSet(this, _unsubscribeOnline, onlineManager.subscribe(async (online) => {
+      if (online) {
+        await this.resumePausedMutations();
+        __privateGet(this, _queryCache).onOnline();
+      }
+    }));
+  }
+  /**
+  * The inverse of {@link QueryClient#mount} — called by a framework adapter's
+  * `QueryClientProvider`-equivalent when it unmounts. Only tears down the focus/online
+  * listeners once the mount count returns to `0`.
+  */
+  unmount() {
+    var _a2, _b2;
+    __privateWrapper(this, _mountCount)._--;
+    if (__privateGet(this, _mountCount) !== 0) return;
+    (_a2 = __privateGet(this, _unsubscribeFocus)) == null ? void 0 : _a2.call(this);
+    __privateSet(this, _unsubscribeFocus, void 0);
+    (_b2 = __privateGet(this, _unsubscribeOnline)) == null ? void 0 : _b2.call(this);
+    __privateSet(this, _unsubscribeOnline, void 0);
+  }
+  /**
+  * Returns the number of queries in the cache that are currently fetching, optionally
+  * matching a set of filters. This includes background-fetching, loading new pages, and
+  * loading more infinite query results.
+  *
+  * @example
+  * ```ts
+  * if (queryClient.isFetching()) {
+  *   console.log('At least one query is fetching!')
+  * }
+  * ```
+  */
+  isFetching(filters) {
+    return __privateGet(this, _queryCache).findAll({
+      ...filters,
+      fetchStatus: "fetching"
+    }).length;
+  }
+  /**
+  * Returns the number of mutations in the cache that are currently pending, optionally
+  * matching a set of filters.
+  *
+  * @example
+  * ```ts
+  * if (queryClient.isMutating()) {
+  *   console.log('At least one mutation is pending!')
+  * }
+  * ```
+  */
+  isMutating(filters) {
+    return __privateGet(this, _mutationCache2).findAll({
+      ...filters,
+      status: "pending"
+    }).length;
+  }
+  /**
+  * Imperative (non-reactive) way to retrieve data for a QueryKey.
+  * Should only be used in callbacks or functions where reading the latest data is necessary, e.g. for optimistic updates.
+  *
+  * Hint: Do not use this function inside a component, because it won't receive updates.
+  * Use `useQuery` to create a `QueryObserver` that subscribes to changes.
+  *
+  * @returns The cached data for the query, or `undefined` if no query with this key has been observed yet.
+  * @see {@link QueryClient#getQueriesData}
+  */
+  getQueryData(queryKey) {
+    var _a2;
+    const options = this.defaultQueryOptions({ queryKey });
+    return (_a2 = __privateGet(this, _queryCache).get(options.queryHash)) == null ? void 0 : _a2.state.data;
+  }
+  /**
+  * @deprecated Use queryClient.query({ ...options, staleTime: 'static' }) instead. This method will be removed in the next major version.
+  */
+  ensureQueryData(options) {
+    const defaultedOptions = this.defaultQueryOptions(options);
+    const query = __privateGet(this, _queryCache).build(this, defaultedOptions);
+    const cachedData = query.state.data;
+    if (cachedData === void 0) return this.fetchQuery(options);
+    if (options.revalidateIfStale && query.isStaleByTime(resolveQueryValue(defaultedOptions.staleTime, query))) this.prefetchQuery(defaultedOptions);
+    return Promise.resolve(cachedData);
+  }
+  /**
+  * Imperative (non-reactive) way to retrieve the cached data of multiple queries at once.
+  * Only queries matching the given filters are returned; if none match, an empty array is
+  * returned.
+  *
+  * Because the matched queries can hold data of different shapes (e.g. a broad filter can match
+  * queries with unrelated data types), the `TQueryFnData` generic defaults to `unknown` rather
+  * than being inferred. Passing a more specific type is a convenience for call sites that know
+  * every matched query holds the same shape — it is not checked against the actual cache
+  * contents.
+  *
+  * @returns An array of query key and data pairs. The data is `undefined` for a query with no cached data.
+  * @see {@link QueryClient#getQueryData}
+  * @example
+  * ```ts
+  * const data = queryClient.getQueriesData({ queryKey: ['posts'] })
+  * ```
+  */
+  getQueriesData(filters) {
+    return __privateGet(this, _queryCache).findAll(filters).map(({ queryKey, state }) => {
+      return [queryKey, state.data];
+    });
+  }
+  /**
+  * Synchronous way to immediately update a query's cached data. If the updater (or the value
+  * passed) resolves to `undefined`, the cache is left untouched and no query is created;
+  * otherwise, if the query does not exist yet, it will be created. To update multiple queries
+  * at once by partially matching query keys, use {@link QueryClient#setQueriesData} instead.
+  *
+  * Updates must be performed immutably: do not mutate `oldData`, or data previously retrieved
+  * via {@link QueryClient#getQueryData}, in place.
+  *
+  * @param queryKey - The query key to set data for.
+  * @param updater - Either the new data, or a function that receives the current data (which
+  * may be `undefined`) and returns the new data.
+  * @param options - Set `updatedAt` to override the timestamp the written data is recorded with.
+  * @returns The data that was written, or `undefined` if the updater returned `undefined` — in that case
+  * the write is skipped and the cache is left unchanged.
+  *
+  * @example
+  * ```ts
+  * queryClient.setQueryData(['posts'], newPosts)
+  *
+  * // Or, using an updater function that receives the current data:
+  * queryClient.setQueryData(['posts'], (oldPosts) => [...oldPosts, newPost])
+  * ```
+  */
+  setQueryData(queryKey, updater, options) {
+    var _a2;
+    const defaultedOptions = this.defaultQueryOptions({ queryKey });
+    const prevData = (_a2 = __privateGet(this, _queryCache).get(defaultedOptions.queryHash)) == null ? void 0 : _a2.state.data;
+    const data = functionalUpdate(updater, prevData);
+    if (data === void 0) return;
+    return __privateGet(this, _queryCache).build(this, defaultedOptions).setData(data, {
+      ...options,
+      manual: true
+    });
+  }
+  /**
+  * Synchronous way to immediately update the cached data of multiple queries at once, using
+  * filters or partial query key matching. Only queries that already exist and match the given
+  * filters are updated; no new cache entries are created. Internally this calls
+  * {@link QueryClient#setQueryData} for each matching query.
+  *
+  * @returns One `[queryKey, data]` tuple per matched query, in the same shape and with the same
+  * `undefined` case as {@link QueryClient#setQueryData}.
+  * @example
+  * ```ts
+  * queryClient.setQueriesData({ queryKey: ['posts'] }, (oldPosts) =>
+  *   oldPosts ? oldPosts.filter((post) => post.id !== deletedId) : oldPosts,
+  * )
+  * ```
+  */
+  setQueriesData(filters, updater, options) {
+    return notifyManager.batch(() => __privateGet(this, _queryCache).findAll(filters).map(({ queryKey }) => [queryKey, this.setQueryData(queryKey, updater, options)]));
+  }
+  /**
+  * Imperative (non-reactive) way to retrieve an existing query's state. If the query does not
+  * exist, `undefined` is returned.
+  *
+  * @example
+  * ```ts
+  * const state = queryClient.getQueryState(['posts'])
+  * console.log(state?.dataUpdatedAt)
+  * ```
+  */
+  getQueryState(queryKey) {
+    var _a2;
+    const options = this.defaultQueryOptions({ queryKey });
+    return (_a2 = __privateGet(this, _queryCache).get(options.queryHash)) == null ? void 0 : _a2.state;
+  }
+  /**
+  * Removes queries from the cache that match the given filters. Unlike
+  * {@link QueryClient#invalidateQueries} or {@link QueryClient#refetchQueries}, this removes
+  * matching queries from the cache instead of refetching them. Without filters, every query in
+  * the cache is removed.
+  *
+  * @example
+  * ```ts
+  * queryClient.removeQueries({ queryKey: ['posts'], exact: true })
+  * ```
+  */
+  removeQueries(filters) {
+    const queryCache = __privateGet(this, _queryCache);
+    notifyManager.batch(() => {
+      queryCache.findAll(filters).forEach((query) => {
+        queryCache.remove(query);
+      });
+    });
+  }
+  /**
+  * Resets queries matching the given filters back to their initial state (e.g. any
+  * `initialData`), notifying subscribers rather than removing them. Active queries among the
+  * matched set are then refetched, and the returned promise resolves once that refetch settles.
+  *
+  * @example
+  * ```ts
+  * await queryClient.resetQueries({ queryKey: ['posts'], exact: true })
+  * ```
+  */
+  resetQueries(filters, options) {
+    const queryCache = __privateGet(this, _queryCache);
+    return notifyManager.batch(() => {
+      const matched = queryCache.findAll(filters);
+      const queriesToRefetch = new Set(matched);
+      matched.forEach((query) => {
+        query.reset();
+      });
+      return this.refetchQueries({
+        type: "active",
+        predicate: (query) => queriesToRefetch.has(query)
+      }, options);
+    });
+  }
+  /**
+  * Cancels outgoing fetches for queries matching the given filters. Most useful when performing
+  * optimistic updates, since any outgoing refetch that resolves afterwards would otherwise
+  * overwrite the optimistic update. By default (`revert: true`), a cancelled query's data is
+  * reverted to its state before the outgoing fetch started.
+  *
+  * The returned promise never rejects, even if individual cancellations fail.
+  *
+  * @example
+  * ```ts
+  * await queryClient.cancelQueries({ queryKey: ['posts'], exact: true })
+  * ```
+  */
+  cancelQueries(filters, cancelOptions = {}) {
+    const defaultedCancelOptions = {
+      revert: true,
+      ...cancelOptions
+    };
+    const promises = notifyManager.batch(() => __privateGet(this, _queryCache).findAll(filters).map((query) => query.cancel(defaultedCancelOptions)));
+    return Promise.all(promises).then(noop).catch(noop);
+  }
+  /**
+  * Marks queries matching the given filters as invalidated. Unlike
+  * {@link QueryClient#removeQueries}, invalidated queries stay in the cache.
+  *
+  * Unless `filters.refetchType` is `'none'`, matching queries are then refetched via
+  * {@link QueryClient#refetchQueries}, using `filters.refetchType` if set, otherwise
+  * `filters.type`, otherwise `'active'`.
+  *
+  * @example
+  * ```ts
+  * await queryClient.invalidateQueries({ queryKey: ['posts'], refetchType: 'active' })
+  * ```
+  */
+  invalidateQueries(filters, options = {}) {
+    return notifyManager.batch(() => {
+      __privateGet(this, _queryCache).findAll(filters).forEach((query) => {
+        query.invalidate();
+      });
+      if ((filters == null ? void 0 : filters.refetchType) === "none") return Promise.resolve();
+      return this.refetchQueries({
+        ...filters,
+        type: (filters == null ? void 0 : filters.refetchType) ?? (filters == null ? void 0 : filters.type) ?? "active"
+      }, options);
+    });
+  }
+  /**
+  * Refetches queries matching the given filters, regardless of whether they are stale. Without
+  * filters, every query in the cache is refetched. Queries that are disabled, or static (only
+  * have observers with a static `staleTime`), are never refetched.
+  *
+  * By default (`cancelRefetch: true`), a currently running fetch is cancelled before the new
+  * one starts. The returned promise resolves once all matching queries have settled; it does
+  * not reject on individual query failures unless `throwOnError` is set.
+  *
+  * @example
+  * ```ts
+  * // refetch all active queries partially matching a query key:
+  * await queryClient.refetchQueries({ queryKey: ['posts'], type: 'active' })
+  * ```
+  */
+  refetchQueries(filters, options = {}) {
+    const fetchOptions = {
+      ...options,
+      cancelRefetch: options.cancelRefetch ?? true
+    };
+    const promises = notifyManager.batch(() => __privateGet(this, _queryCache).findAll(filters).filter((query) => !query.isDisabled() && !query.isStatic()).map((query) => {
+      let promise = query.fetch(void 0, fetchOptions);
+      if (!fetchOptions.throwOnError) promise = promise.catch(noop);
+      return query.state.fetchStatus === "paused" ? Promise.resolve() : promise;
+    }));
+    return Promise.all(promises).then(noop);
+  }
+  /**
+  * Asynchronous method to fetch and cache a query, resolving with the data or throwing with
+  * the error.
+  *
+  * If the query already exists in the cache and its data is not stale (per the given
+  * `staleTime`), the cached data is returned without fetching. Otherwise, the query is fetched
+  * and the promise resolves once the fetch settles. If a `select` function is provided, it is
+  * applied to the data in both cases (cached or freshly fetched) before it is returned.
+  *
+  * Unlike a reactive observer, retries are disabled by default here (`retry: false`) unless
+  * explicitly configured, since there is no component to catch a thrown error and retry through
+  * re-render.
+  *
+  * The accepted options are `QueryObserverOptions` minus the fields that only make sense for a
+  * reactive observer — `enabled`, `refetchInterval`, `refetchIntervalInBackground`,
+  * `refetchOnWindowFocus`, `refetchOnReconnect`, `refetchOnMount`, `retryOnMount`,
+  * `notifyOnChangeProps`, `throwOnError`, `suspense`, and `placeholderData` are not part of this
+  * method's options.
+  *
+  * This method replaces the deprecated `fetchQuery`, and — combined with
+  * `{ staleTime: 'static' }` — the deprecated `ensureQueryData`.
+  *
+  * @example
+  * ```ts
+  * try {
+  *   const data = await queryClient.query({ queryKey, queryFn, staleTime: 10000 })
+  * } catch (error) {
+  *   console.log(error)
+  * }
+  * ```
+  */
+  async query(options) {
+    const defaultedOptions = this.defaultQueryOptions(options);
+    if (defaultedOptions.retry === void 0) defaultedOptions.retry = false;
+    const query = __privateGet(this, _queryCache).build(this, defaultedOptions);
+    const queryData = query.isStaleByTime(resolveQueryValue(defaultedOptions.staleTime, query)) ? await query.fetch(defaultedOptions) : query.state.data;
+    const select = defaultedOptions.select;
+    if (select) return select(queryData);
+    return queryData;
+  }
+  /**
+  * @deprecated Use queryClient.query(options) instead. This method will be removed in the next major version.
+  */
+  fetchQuery(options) {
+    const defaultedOptions = this.defaultQueryOptions(options);
+    if (defaultedOptions.retry === void 0) defaultedOptions.retry = false;
+    const query = __privateGet(this, _queryCache).build(this, defaultedOptions);
+    return query.isStaleByTime(resolveQueryValue(defaultedOptions.staleTime, query)) ? query.fetch(defaultedOptions) : Promise.resolve(query.state.data);
+  }
+  /**
+  * @deprecated Use queryClient.query(options) instead. You can swallow errors with `.catch(noop)`. This method will be removed in the next major version.
+  */
+  prefetchQuery(options) {
+    return this.fetchQuery(options).then(noop).catch(noop);
+  }
+  /**
+  * Asynchronous method to fetch and cache an infinite query, resolving with an
+  * {@link InfiniteData} object or throwing with the error.
+  *
+  * Behaves like {@link QueryClient#query}, accepting the same options (minus
+  * `initialPageParam`), plus the required `initialPageParam`, and an optional `pages` /
+  * `getNextPageParam` pair used to refetch a fixed number of pages from the start.
+  *
+  * This method replaces the deprecated `fetchInfiniteQuery`, and — combined with
+  * `{ staleTime: 'static' }` — the deprecated `ensureInfiniteQueryData`.
+  *
+  * @example
+  * ```ts
+  * try {
+  *   const data = await queryClient.infiniteQuery({ queryKey, queryFn, initialPageParam: 0 })
+  *   console.log(data.pages)
+  * } catch (error) {
+  *   console.log(error)
+  * }
+  * ```
+  */
+  infiniteQuery(options) {
+    options._type = "infinite";
+    return this.query(options);
+  }
+  /**
+  * @deprecated Use queryClient.infiniteQuery(options) instead. This method will be removed in the next major version.
+  */
+  fetchInfiniteQuery(options) {
+    options._type = "infinite";
+    return this.fetchQuery(options);
+  }
+  /**
+  * @deprecated Use queryClient.infiniteQuery(options) instead. You can swallow errors with `.catch(noop)`. This method will be removed in the next major version.
+  */
+  prefetchInfiniteQuery(options) {
+    return this.fetchInfiniteQuery(options).then(noop).catch(noop);
+  }
+  /**
+  * @deprecated Use queryClient.infiniteQuery({ ...options, staleTime: 'static' }) instead. This method will be removed in the next major version.
+  */
+  ensureInfiniteQueryData(options) {
+    options._type = "infinite";
+    return this.ensureQueryData(options);
+  }
+  /**
+  * Resumes mutations that were paused because there was no network connection. Does nothing
+  * (resolving immediately) if the client is currently offline.
+  *
+  * @example
+  * ```ts
+  * import { QueryClient } from '@tanstack/query-core'
+  *
+  * const queryClient = new QueryClient()
+  * await queryClient.resumePausedMutations()
+  * ```
+  */
+  resumePausedMutations() {
+    if (onlineManager.isOnline()) return __privateGet(this, _mutationCache2).resumePausedMutations();
+    return Promise.resolve();
+  }
+  /**
+  * Returns the query cache this client is connected to.
+  *
+  * @example
+  * ```ts
+  * import { QueryClient } from '@tanstack/query-core'
+  *
+  * const queryClient = new QueryClient()
+  * const queryCache = queryClient.getQueryCache()
+  * const queries = queryCache.findAll({ queryKey: ['posts'] })
+  * ```
+  */
+  getQueryCache() {
+    return __privateGet(this, _queryCache);
+  }
+  /**
+  * Returns the mutation cache this client is connected to.
+  *
+  * @example
+  * ```ts
+  * import { QueryClient } from '@tanstack/query-core'
+  *
+  * const queryClient = new QueryClient()
+  * const mutationCache = queryClient.getMutationCache()
+  * const mutations = mutationCache.findAll({ status: 'pending' })
+  * ```
+  */
+  getMutationCache() {
+    return __privateGet(this, _mutationCache2);
+  }
+  /**
+  * Returns the default options that were set when creating the client, or via
+  * {@link QueryClient#setDefaultOptions}.
+  *
+  * @example
+  * ```ts
+  * import { QueryClient } from '@tanstack/query-core'
+  *
+  * const queryClient = new QueryClient()
+  * const defaultOptions = queryClient.getDefaultOptions()
+  * ```
+  */
+  getDefaultOptions() {
+    return __privateGet(this, _defaultOptions2);
+  }
+  /**
+  * Dynamically sets the default options for this client, overwriting any previously defined
+  * default options.
+  *
+  * @see {@link QueryClient#getDefaultOptions}
+  * @example
+  * ```ts
+  * import { QueryClient } from '@tanstack/query-core'
+  *
+  * const queryClient = new QueryClient()
+  * queryClient.setDefaultOptions({
+  *   queries: {
+  *     staleTime: Infinity,
+  *   },
+  * })
+  * ```
+  */
+  setDefaultOptions(options) {
+    __privateSet(this, _defaultOptions2, options);
+  }
+  /**
+  * Sets default options for queries whose query key partially matches the given `queryKey`.
+  *
+  * If several registered query defaults match a given query key, they are merged together in
+  * registration order by {@link QueryClient#getQueryDefaults}, so register defaults from the
+  * most generic key to the least generic one — more specific defaults should be registered
+  * after more generic ones so they take precedence.
+  *
+  * @example
+  * ```ts
+  * queryClient.setQueryDefaults(['posts'], { queryFn: fetchPosts })
+  *
+  * await queryClient.query({ queryKey: ['posts'] })
+  * ```
+  */
+  setQueryDefaults(queryKey, options) {
+    __privateGet(this, _queryDefaults).set(hashKey(queryKey), {
+      queryKey,
+      defaultOptions: options
+    });
+  }
+  /**
+  * Returns the default options registered for queries whose query key partially matches the
+  * given `queryKey`, via {@link QueryClient#setQueryDefaults}. If multiple registered defaults
+  * match, they are merged together in registration order.
+  *
+  * @example
+  * ```ts
+  * const defaultOptions = queryClient.getQueryDefaults(['posts'])
+  * ```
+  */
+  getQueryDefaults(queryKey) {
+    const defaults = [...__privateGet(this, _queryDefaults).values()];
+    const result = {};
+    defaults.forEach((queryDefault) => {
+      if (partialMatchKey(queryKey, queryDefault.queryKey)) Object.assign(result, queryDefault.defaultOptions);
+    });
+    return result;
+  }
+  /**
+  * Sets default options for mutations whose mutation key partially matches the given
+  * `mutationKey`. As with {@link QueryClient#setQueryDefaults}, the order of registration
+  * matters when several registered defaults match the same mutation key.
+  *
+  * @see {@link QueryClient#getMutationDefaults}
+  * @example
+  * ```ts
+  * queryClient.setMutationDefaults(['addPost'], { mutationFn: addPost })
+  * ```
+  */
+  setMutationDefaults(mutationKey, options) {
+    __privateGet(this, _mutationDefaults).set(hashKey(mutationKey), {
+      mutationKey,
+      defaultOptions: options
+    });
+  }
+  /**
+  * Returns the default options registered for mutations whose mutation key partially matches
+  * the given `mutationKey`, via {@link QueryClient#setMutationDefaults}. If multiple registered
+  * defaults match, they are merged together in registration order.
+  *
+  * @example
+  * ```ts
+  * const defaultOptions = queryClient.getMutationDefaults(['addPost'])
+  * ```
+  */
+  getMutationDefaults(mutationKey) {
+    const defaults = [...__privateGet(this, _mutationDefaults).values()];
+    const result = {};
+    defaults.forEach((queryDefault) => {
+      if (partialMatchKey(mutationKey, queryDefault.mutationKey)) Object.assign(result, queryDefault.defaultOptions);
+    });
+    return result;
+  }
+  /**
+  * Called by framework adapters (e.g. inside `useQuery`) to resolve the options passed by the
+  * caller into their final, defaulted form: merging `queryClient.setQueryDefaults` for the
+  * given `queryKey`, then the client's own `defaultOptions.queries`, then the caller's options
+  * on top. A no-op if the options are already defaulted (`_defaulted: true`).
+  */
+  defaultQueryOptions(options) {
+    if (options._defaulted) return options;
+    const defaultedOptions = {
+      ...__privateGet(this, _defaultOptions2).queries,
+      ...this.getQueryDefaults(options.queryKey),
+      ...options,
+      _defaulted: true
+    };
+    if (!defaultedOptions.queryHash) defaultedOptions.queryHash = hashQueryKeyByOptions(defaultedOptions.queryKey, defaultedOptions);
+    if (defaultedOptions.refetchOnReconnect === void 0) defaultedOptions.refetchOnReconnect = defaultedOptions.networkMode !== "always";
+    if (defaultedOptions.throwOnError === void 0) defaultedOptions.throwOnError = !!defaultedOptions.suspense;
+    if (!defaultedOptions.networkMode && defaultedOptions.persister) defaultedOptions.networkMode = "offlineFirst";
+    if (defaultedOptions.queryFn === skipToken) defaultedOptions.enabled = false;
+    return defaultedOptions;
+  }
+  /**
+  * The mutation counterpart of {@link QueryClient#defaultQueryOptions}. Called by framework
+  * adapters (e.g. inside `useMutation`) to merge `queryClient.setMutationDefaults` for the
+  * given `mutationKey`, then the client's `defaultOptions.mutations`, then the caller's options
+  * on top. A no-op if the options are already defaulted (`_defaulted: true`).
+  */
+  defaultMutationOptions(options) {
+    if (options == null ? void 0 : options._defaulted) return options;
+    return {
+      ...__privateGet(this, _defaultOptions2).mutations,
+      ...(options == null ? void 0 : options.mutationKey) && this.getMutationDefaults(options.mutationKey),
+      ...options,
+      _defaulted: true
+    };
+  }
+  /**
+  * Clears both the query cache and the mutation cache this client is connected to.
+  *
+  * @example
+  * ```ts
+  * import { QueryClient } from '@tanstack/query-core'
+  *
+  * const queryClient = new QueryClient()
+  * queryClient.clear()
+  * ```
+  */
+  clear() {
+    __privateGet(this, _queryCache).clear();
+    __privateGet(this, _mutationCache2).clear();
+  }
+}, _queryCache = new WeakMap(), _mutationCache2 = new WeakMap(), _defaultOptions2 = new WeakMap(), _queryDefaults = new WeakMap(), _mutationDefaults = new WeakMap(), _mountCount = new WeakMap(), _unsubscribeFocus = new WeakMap(), _unsubscribeOnline = new WeakMap(), _k);
+const IsRestoringContext = reactExports.createContext(false);
+const useIsRestoring = () => reactExports.useContext(IsRestoringContext);
+IsRestoringContext.Provider;
+function createValue() {
+  let isReset = false;
+  return {
+    /**
+    * Clears the reset state, so queries know not to try again until the boundary is reset again.
+    */
+    clearReset: () => {
+      isReset = false;
+    },
+    /**
+    * Resets any query errors within the boundary, so queries know they can try again.
+    */
+    reset: () => {
+      isReset = true;
+    },
+    /**
+    * Returns whether the boundary has been reset and not yet cleared.
+    */
+    isReset: () => {
+      return isReset;
+    }
+  };
+}
+const QueryErrorResetBoundaryContext = reactExports.createContext(createValue());
+const useQueryErrorResetBoundary = () => reactExports.useContext(QueryErrorResetBoundaryContext);
+const ensurePreventErrorBoundaryRetry = (options, errorResetBoundary, query) => {
+  const throwOnError = (query == null ? void 0 : query.state.error) && typeof options.throwOnError === "function" ? shouldThrowError(options.throwOnError, [query.state.error, query]) : options.throwOnError;
+  if (options.suspense || throwOnError) {
+    if (!errorResetBoundary.isReset()) options.retryOnMount = false;
+  }
+};
+const useClearResetErrorBoundary = (errorResetBoundary) => {
+  reactExports.useEffect(() => {
+    errorResetBoundary.clearReset();
+  }, [errorResetBoundary]);
+};
+const getHasError = ({ result, errorResetBoundary, throwOnError, query, suspense }) => {
+  return result.isError && !errorResetBoundary.isReset() && !result.isFetching && query && (suspense && result.data === void 0 || shouldThrowError(throwOnError, [result.error, query]));
+};
+const ensureSuspenseTimers = (defaultedOptions) => {
+  if (defaultedOptions.suspense) {
+    const MIN_SUSPENSE_TIME_MS = 1e3;
+    const clamp = (value) => value === "static" ? value : Math.max(value ?? MIN_SUSPENSE_TIME_MS, MIN_SUSPENSE_TIME_MS);
+    const originalStaleTime = defaultedOptions.staleTime;
+    defaultedOptions.staleTime = typeof originalStaleTime === "function" ? (...args) => clamp(originalStaleTime(...args)) : clamp(originalStaleTime);
+    if (typeof defaultedOptions.gcTime === "number") defaultedOptions.gcTime = Math.max(defaultedOptions.gcTime, MIN_SUSPENSE_TIME_MS);
+  }
+};
+const shouldSuspend = (defaultedOptions, result) => (defaultedOptions == null ? void 0 : defaultedOptions.suspense) && result.isPending;
+const fetchOptimistic = (defaultedOptions, observer, errorResetBoundary) => observer.fetchOptimistic(defaultedOptions).catch(() => {
+  errorResetBoundary.clearReset();
+});
+function useBaseQuery(options, Observer, queryClient2) {
+  const isRestoring = useIsRestoring();
+  const errorResetBoundary = useQueryErrorResetBoundary();
+  const client = useQueryClient();
+  const defaultedOptions = client.defaultQueryOptions(options);
+  const query = client.getQueryCache().get(defaultedOptions.queryHash);
+  const subscribed = options.subscribed !== false;
+  defaultedOptions._optimisticResults = isRestoring ? "isRestoring" : subscribed ? "optimistic" : void 0;
+  ensureSuspenseTimers(defaultedOptions);
+  ensurePreventErrorBoundaryRetry(defaultedOptions, errorResetBoundary, query);
+  useClearResetErrorBoundary(errorResetBoundary);
+  const [observer] = reactExports.useState(() => new Observer(client, defaultedOptions));
+  const result = observer.getOptimisticResult(defaultedOptions);
+  const shouldSubscribe = !isRestoring && subscribed;
+  reactExports.useSyncExternalStore(reactExports.useCallback((onStoreChange) => {
+    const unsubscribe = shouldSubscribe ? observer.subscribe(notifyManager.batchCalls(onStoreChange)) : noop;
+    observer.updateResult();
+    return unsubscribe;
+  }, [observer, shouldSubscribe]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
+  reactExports.useEffect(() => {
+    observer.setOptions(defaultedOptions);
+  }, [defaultedOptions, observer]);
+  if (shouldSuspend(defaultedOptions, result)) throw fetchOptimistic(defaultedOptions, observer, errorResetBoundary);
+  if (getHasError({
+    result,
+    errorResetBoundary,
+    throwOnError: defaultedOptions.throwOnError,
+    query,
+    suspense: defaultedOptions.suspense
+  })) throw result.error;
+  return !defaultedOptions.notifyOnChangeProps ? observer.trackResult(result) : result;
+}
+function useQuery(options, queryClient2) {
+  return useBaseQuery(options, QueryObserver);
+}
+function useMutation(options, queryClient2) {
+  const client = useQueryClient();
+  const [observer] = reactExports.useState(() => new MutationObserver$1(client, options));
+  reactExports.useEffect(() => {
+    observer.setOptions(options);
+  }, [observer, options]);
+  const result = reactExports.useSyncExternalStore(reactExports.useCallback((onStoreChange) => observer.subscribe(notifyManager.batchCalls(onStoreChange)), [observer]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
+  const mutate = reactExports.useCallback((...args) => {
+    observer.mutate(args[0], args[1]).catch(noop);
+  }, [observer]);
+  if (result.error && shouldThrowError(observer.options.throwOnError, [result.error])) throw result.error;
+  return {
+    ...result,
+    mutate,
+    mutateAsync: result.mutate
+  };
+}
+function r(e) {
+  var t, f, n = "";
+  if ("string" == typeof e || "number" == typeof e) n += e;
+  else if ("object" == typeof e) if (Array.isArray(e)) {
+    var o = e.length;
+    for (t = 0; t < o; t++) e[t] && (f = r(e[t])) && (n && (n += " "), n += f);
+  } else for (f in e) e[f] && (n && (n += " "), n += f);
+  return n;
+}
+function clsx() {
+  for (var e, t, f = 0, n = "", o = arguments.length; f < o; f++) (e = arguments[f]) && (t = r(e)) && (n && (n += " "), n += t);
+  return n;
+}
+const CLASS_PART_SEPARATOR = "-";
+const createClassGroupUtils = (config) => {
+  const classMap = createClassMap(config);
+  const {
+    conflictingClassGroups,
+    conflictingClassGroupModifiers
+  } = config;
+  const getClassGroupId = (className) => {
+    const classParts = className.split(CLASS_PART_SEPARATOR);
+    if (classParts[0] === "" && classParts.length !== 1) {
+      classParts.shift();
+    }
+    return getGroupRecursive(classParts, classMap) || getGroupIdForArbitraryProperty(className);
+  };
+  const getConflictingClassGroupIds = (classGroupId, hasPostfixModifier) => {
+    const conflicts = conflictingClassGroups[classGroupId] || [];
+    if (hasPostfixModifier && conflictingClassGroupModifiers[classGroupId]) {
+      return [...conflicts, ...conflictingClassGroupModifiers[classGroupId]];
+    }
+    return conflicts;
+  };
+  return {
+    getClassGroupId,
+    getConflictingClassGroupIds
+  };
+};
+const getGroupRecursive = (classParts, classPartObject) => {
+  var _a2;
+  if (classParts.length === 0) {
+    return classPartObject.classGroupId;
+  }
+  const currentClassPart = classParts[0];
+  const nextClassPartObject = classPartObject.nextPart.get(currentClassPart);
+  const classGroupFromNextClassPart = nextClassPartObject ? getGroupRecursive(classParts.slice(1), nextClassPartObject) : void 0;
+  if (classGroupFromNextClassPart) {
+    return classGroupFromNextClassPart;
+  }
+  if (classPartObject.validators.length === 0) {
+    return void 0;
+  }
+  const classRest = classParts.join(CLASS_PART_SEPARATOR);
+  return (_a2 = classPartObject.validators.find(({
+    validator
+  }) => validator(classRest))) == null ? void 0 : _a2.classGroupId;
+};
+const arbitraryPropertyRegex = /^\[(.+)\]$/;
+const getGroupIdForArbitraryProperty = (className) => {
+  if (arbitraryPropertyRegex.test(className)) {
+    const arbitraryPropertyClassName = arbitraryPropertyRegex.exec(className)[1];
+    const property = arbitraryPropertyClassName == null ? void 0 : arbitraryPropertyClassName.substring(0, arbitraryPropertyClassName.indexOf(":"));
+    if (property) {
+      return "arbitrary.." + property;
+    }
+  }
+};
+const createClassMap = (config) => {
+  const {
+    theme,
+    prefix
+  } = config;
+  const classMap = {
+    nextPart: /* @__PURE__ */ new Map(),
+    validators: []
+  };
+  const prefixedClassGroupEntries = getPrefixedClassGroupEntries(Object.entries(config.classGroups), prefix);
+  prefixedClassGroupEntries.forEach(([classGroupId, classGroup]) => {
+    processClassesRecursively(classGroup, classMap, classGroupId, theme);
+  });
+  return classMap;
+};
+const processClassesRecursively = (classGroup, classPartObject, classGroupId, theme) => {
+  classGroup.forEach((classDefinition) => {
+    if (typeof classDefinition === "string") {
+      const classPartObjectToEdit = classDefinition === "" ? classPartObject : getPart(classPartObject, classDefinition);
+      classPartObjectToEdit.classGroupId = classGroupId;
+      return;
+    }
+    if (typeof classDefinition === "function") {
+      if (isThemeGetter(classDefinition)) {
+        processClassesRecursively(classDefinition(theme), classPartObject, classGroupId, theme);
+        return;
+      }
+      classPartObject.validators.push({
+        validator: classDefinition,
+        classGroupId
+      });
+      return;
+    }
+    Object.entries(classDefinition).forEach(([key, classGroup2]) => {
+      processClassesRecursively(classGroup2, getPart(classPartObject, key), classGroupId, theme);
+    });
+  });
+};
+const getPart = (classPartObject, path2) => {
+  let currentClassPartObject = classPartObject;
+  path2.split(CLASS_PART_SEPARATOR).forEach((pathPart) => {
+    if (!currentClassPartObject.nextPart.has(pathPart)) {
+      currentClassPartObject.nextPart.set(pathPart, {
+        nextPart: /* @__PURE__ */ new Map(),
+        validators: []
+      });
+    }
+    currentClassPartObject = currentClassPartObject.nextPart.get(pathPart);
+  });
+  return currentClassPartObject;
+};
+const isThemeGetter = (func) => func.isThemeGetter;
+const getPrefixedClassGroupEntries = (classGroupEntries, prefix) => {
+  if (!prefix) {
+    return classGroupEntries;
+  }
+  return classGroupEntries.map(([classGroupId, classGroup]) => {
+    const prefixedClassGroup = classGroup.map((classDefinition) => {
+      if (typeof classDefinition === "string") {
+        return prefix + classDefinition;
+      }
+      if (typeof classDefinition === "object") {
+        return Object.fromEntries(Object.entries(classDefinition).map(([key, value]) => [prefix + key, value]));
+      }
+      return classDefinition;
+    });
+    return [classGroupId, prefixedClassGroup];
+  });
+};
+const createLruCache = (maxCacheSize) => {
+  if (maxCacheSize < 1) {
+    return {
+      get: () => void 0,
+      set: () => {
+      }
+    };
+  }
+  let cacheSize = 0;
+  let cache = /* @__PURE__ */ new Map();
+  let previousCache = /* @__PURE__ */ new Map();
+  const update = (key, value) => {
+    cache.set(key, value);
+    cacheSize++;
+    if (cacheSize > maxCacheSize) {
+      cacheSize = 0;
+      previousCache = cache;
+      cache = /* @__PURE__ */ new Map();
+    }
+  };
+  return {
+    get(key) {
+      let value = cache.get(key);
+      if (value !== void 0) {
+        return value;
+      }
+      if ((value = previousCache.get(key)) !== void 0) {
+        update(key, value);
+        return value;
+      }
+    },
+    set(key, value) {
+      if (cache.has(key)) {
+        cache.set(key, value);
+      } else {
+        update(key, value);
+      }
+    }
+  };
+};
+const IMPORTANT_MODIFIER = "!";
+const createParseClassName = (config) => {
+  const {
+    separator,
+    experimentalParseClassName
+  } = config;
+  const isSeparatorSingleCharacter = separator.length === 1;
+  const firstSeparatorCharacter = separator[0];
+  const separatorLength = separator.length;
+  const parseClassName = (className) => {
+    const modifiers = [];
+    let bracketDepth = 0;
+    let modifierStart = 0;
+    let postfixModifierPosition;
+    for (let index2 = 0; index2 < className.length; index2++) {
+      let currentCharacter = className[index2];
+      if (bracketDepth === 0) {
+        if (currentCharacter === firstSeparatorCharacter && (isSeparatorSingleCharacter || className.slice(index2, index2 + separatorLength) === separator)) {
+          modifiers.push(className.slice(modifierStart, index2));
+          modifierStart = index2 + separatorLength;
+          continue;
+        }
+        if (currentCharacter === "/") {
+          postfixModifierPosition = index2;
+          continue;
+        }
+      }
+      if (currentCharacter === "[") {
+        bracketDepth++;
+      } else if (currentCharacter === "]") {
+        bracketDepth--;
+      }
+    }
+    const baseClassNameWithImportantModifier = modifiers.length === 0 ? className : className.substring(modifierStart);
+    const hasImportantModifier = baseClassNameWithImportantModifier.startsWith(IMPORTANT_MODIFIER);
+    const baseClassName = hasImportantModifier ? baseClassNameWithImportantModifier.substring(1) : baseClassNameWithImportantModifier;
+    const maybePostfixModifierPosition = postfixModifierPosition && postfixModifierPosition > modifierStart ? postfixModifierPosition - modifierStart : void 0;
+    return {
+      modifiers,
+      hasImportantModifier,
+      baseClassName,
+      maybePostfixModifierPosition
+    };
+  };
+  if (experimentalParseClassName) {
+    return (className) => experimentalParseClassName({
+      className,
+      parseClassName
+    });
+  }
+  return parseClassName;
+};
+const sortModifiers = (modifiers) => {
+  if (modifiers.length <= 1) {
+    return modifiers;
+  }
+  const sortedModifiers = [];
+  let unsortedModifiers = [];
+  modifiers.forEach((modifier) => {
+    const isArbitraryVariant = modifier[0] === "[";
+    if (isArbitraryVariant) {
+      sortedModifiers.push(...unsortedModifiers.sort(), modifier);
+      unsortedModifiers = [];
+    } else {
+      unsortedModifiers.push(modifier);
+    }
+  });
+  sortedModifiers.push(...unsortedModifiers.sort());
+  return sortedModifiers;
+};
+const createConfigUtils = (config) => ({
+  cache: createLruCache(config.cacheSize),
+  parseClassName: createParseClassName(config),
+  ...createClassGroupUtils(config)
+});
+const SPLIT_CLASSES_REGEX = /\s+/;
+const mergeClassList = (classList, configUtils) => {
+  const {
+    parseClassName,
+    getClassGroupId,
+    getConflictingClassGroupIds
+  } = configUtils;
+  const classGroupsInConflict = [];
+  const classNames = classList.trim().split(SPLIT_CLASSES_REGEX);
+  let result = "";
+  for (let index2 = classNames.length - 1; index2 >= 0; index2 -= 1) {
+    const originalClassName = classNames[index2];
+    const {
+      modifiers,
+      hasImportantModifier,
+      baseClassName,
+      maybePostfixModifierPosition
+    } = parseClassName(originalClassName);
+    let hasPostfixModifier = Boolean(maybePostfixModifierPosition);
+    let classGroupId = getClassGroupId(hasPostfixModifier ? baseClassName.substring(0, maybePostfixModifierPosition) : baseClassName);
+    if (!classGroupId) {
+      if (!hasPostfixModifier) {
+        result = originalClassName + (result.length > 0 ? " " + result : result);
+        continue;
+      }
+      classGroupId = getClassGroupId(baseClassName);
+      if (!classGroupId) {
+        result = originalClassName + (result.length > 0 ? " " + result : result);
+        continue;
+      }
+      hasPostfixModifier = false;
+    }
+    const variantModifier = sortModifiers(modifiers).join(":");
+    const modifierId = hasImportantModifier ? variantModifier + IMPORTANT_MODIFIER : variantModifier;
+    const classId = modifierId + classGroupId;
+    if (classGroupsInConflict.includes(classId)) {
+      continue;
+    }
+    classGroupsInConflict.push(classId);
+    const conflictGroups = getConflictingClassGroupIds(classGroupId, hasPostfixModifier);
+    for (let i = 0; i < conflictGroups.length; ++i) {
+      const group = conflictGroups[i];
+      classGroupsInConflict.push(modifierId + group);
+    }
+    result = originalClassName + (result.length > 0 ? " " + result : result);
+  }
+  return result;
+};
+function twJoin() {
+  let index2 = 0;
+  let argument;
+  let resolvedValue;
+  let string2 = "";
+  while (index2 < arguments.length) {
+    if (argument = arguments[index2++]) {
+      if (resolvedValue = toValue(argument)) {
+        string2 && (string2 += " ");
+        string2 += resolvedValue;
+      }
+    }
+  }
+  return string2;
+}
+const toValue = (mix) => {
+  if (typeof mix === "string") {
+    return mix;
+  }
+  let resolvedValue;
+  let string2 = "";
+  for (let k2 = 0; k2 < mix.length; k2++) {
+    if (mix[k2]) {
+      if (resolvedValue = toValue(mix[k2])) {
+        string2 && (string2 += " ");
+        string2 += resolvedValue;
+      }
+    }
+  }
+  return string2;
+};
+function createTailwindMerge(createConfigFirst, ...createConfigRest) {
+  let configUtils;
+  let cacheGet;
+  let cacheSet;
+  let functionToCall = initTailwindMerge;
+  function initTailwindMerge(classList) {
+    const config = createConfigRest.reduce((previousConfig, createConfigCurrent) => createConfigCurrent(previousConfig), createConfigFirst());
+    configUtils = createConfigUtils(config);
+    cacheGet = configUtils.cache.get;
+    cacheSet = configUtils.cache.set;
+    functionToCall = tailwindMerge;
+    return tailwindMerge(classList);
+  }
+  function tailwindMerge(classList) {
+    const cachedResult = cacheGet(classList);
+    if (cachedResult) {
+      return cachedResult;
+    }
+    const result = mergeClassList(classList, configUtils);
+    cacheSet(classList, result);
+    return result;
+  }
+  return function callTailwindMerge() {
+    return functionToCall(twJoin.apply(null, arguments));
+  };
+}
+const fromTheme = (key) => {
+  const themeGetter = (theme) => theme[key] || [];
+  themeGetter.isThemeGetter = true;
+  return themeGetter;
+};
+const arbitraryValueRegex = /^\[(?:([a-z-]+):)?(.+)\]$/i;
+const fractionRegex = /^\d+\/\d+$/;
+const stringLengths = /* @__PURE__ */ new Set(["px", "full", "screen"]);
+const tshirtUnitRegex = /^(\d+(\.\d+)?)?(xs|sm|md|lg|xl)$/;
+const lengthUnitRegex = /\d+(%|px|r?em|[sdl]?v([hwib]|min|max)|pt|pc|in|cm|mm|cap|ch|ex|r?lh|cq(w|h|i|b|min|max))|\b(calc|min|max|clamp)\(.+\)|^0$/;
+const colorFunctionRegex = /^(rgba?|hsla?|hwb|(ok)?(lab|lch)|color-mix)\(.+\)$/;
+const shadowRegex = /^(inset_)?-?((\d+)?\.?(\d+)[a-z]+|0)_-?((\d+)?\.?(\d+)[a-z]+|0)/;
+const imageRegex = /^(url|image|image-set|cross-fade|element|(repeating-)?(linear|radial|conic)-gradient)\(.+\)$/;
+const isLength = (value) => isNumber(value) || stringLengths.has(value) || fractionRegex.test(value);
+const isArbitraryLength = (value) => getIsArbitraryValue(value, "length", isLengthOnly);
+const isNumber = (value) => Boolean(value) && !Number.isNaN(Number(value));
+const isArbitraryNumber = (value) => getIsArbitraryValue(value, "number", isNumber);
+const isInteger = (value) => Boolean(value) && Number.isInteger(Number(value));
+const isPercent = (value) => value.endsWith("%") && isNumber(value.slice(0, -1));
+const isArbitraryValue = (value) => arbitraryValueRegex.test(value);
+const isTshirtSize = (value) => tshirtUnitRegex.test(value);
+const sizeLabels = /* @__PURE__ */ new Set(["length", "size", "percentage"]);
+const isArbitrarySize = (value) => getIsArbitraryValue(value, sizeLabels, isNever);
+const isArbitraryPosition = (value) => getIsArbitraryValue(value, "position", isNever);
+const imageLabels = /* @__PURE__ */ new Set(["image", "url"]);
+const isArbitraryImage = (value) => getIsArbitraryValue(value, imageLabels, isImage);
+const isArbitraryShadow = (value) => getIsArbitraryValue(value, "", isShadow);
+const isAny = () => true;
+const getIsArbitraryValue = (value, label, testValue) => {
+  const result = arbitraryValueRegex.exec(value);
+  if (result) {
+    if (result[1]) {
+      return typeof label === "string" ? result[1] === label : label.has(result[1]);
+    }
+    return testValue(result[2]);
+  }
+  return false;
+};
+const isLengthOnly = (value) => (
+  // `colorFunctionRegex` check is necessary because color functions can have percentages in them which which would be incorrectly classified as lengths.
+  // For example, `hsl(0 0% 0%)` would be classified as a length without this check.
+  // I could also use lookbehind assertion in `lengthUnitRegex` but that isn't supported widely enough.
+  lengthUnitRegex.test(value) && !colorFunctionRegex.test(value)
+);
+const isNever = () => false;
+const isShadow = (value) => shadowRegex.test(value);
+const isImage = (value) => imageRegex.test(value);
+const getDefaultConfig = () => {
+  const colors = fromTheme("colors");
+  const spacing = fromTheme("spacing");
+  const blur = fromTheme("blur");
+  const brightness = fromTheme("brightness");
+  const borderColor = fromTheme("borderColor");
+  const borderRadius = fromTheme("borderRadius");
+  const borderSpacing = fromTheme("borderSpacing");
+  const borderWidth = fromTheme("borderWidth");
+  const contrast = fromTheme("contrast");
+  const grayscale = fromTheme("grayscale");
+  const hueRotate = fromTheme("hueRotate");
+  const invert = fromTheme("invert");
+  const gap = fromTheme("gap");
+  const gradientColorStops = fromTheme("gradientColorStops");
+  const gradientColorStopPositions = fromTheme("gradientColorStopPositions");
+  const inset = fromTheme("inset");
+  const margin = fromTheme("margin");
+  const opacity = fromTheme("opacity");
+  const padding = fromTheme("padding");
+  const saturate = fromTheme("saturate");
+  const scale = fromTheme("scale");
+  const sepia = fromTheme("sepia");
+  const skew = fromTheme("skew");
+  const space2 = fromTheme("space");
+  const translate = fromTheme("translate");
+  const getOverscroll = () => ["auto", "contain", "none"];
+  const getOverflow = () => ["auto", "hidden", "clip", "visible", "scroll"];
+  const getSpacingWithAutoAndArbitrary = () => ["auto", isArbitraryValue, spacing];
+  const getSpacingWithArbitrary = () => [isArbitraryValue, spacing];
+  const getLengthWithEmptyAndArbitrary = () => ["", isLength, isArbitraryLength];
+  const getNumberWithAutoAndArbitrary = () => ["auto", isNumber, isArbitraryValue];
+  const getPositions = () => ["bottom", "center", "left", "left-bottom", "left-top", "right", "right-bottom", "right-top", "top"];
+  const getLineStyles = () => ["solid", "dashed", "dotted", "double", "none"];
+  const getBlendModes = () => ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn", "hard-light", "soft-light", "difference", "exclusion", "hue", "saturation", "color", "luminosity"];
+  const getAlign = () => ["start", "end", "center", "between", "around", "evenly", "stretch"];
+  const getZeroAndEmpty = () => ["", "0", isArbitraryValue];
+  const getBreaks = () => ["auto", "avoid", "all", "avoid-page", "page", "left", "right", "column"];
+  const getNumberAndArbitrary = () => [isNumber, isArbitraryValue];
+  return {
+    cacheSize: 500,
+    separator: ":",
+    theme: {
+      colors: [isAny],
+      spacing: [isLength, isArbitraryLength],
+      blur: ["none", "", isTshirtSize, isArbitraryValue],
+      brightness: getNumberAndArbitrary(),
+      borderColor: [colors],
+      borderRadius: ["none", "", "full", isTshirtSize, isArbitraryValue],
+      borderSpacing: getSpacingWithArbitrary(),
+      borderWidth: getLengthWithEmptyAndArbitrary(),
+      contrast: getNumberAndArbitrary(),
+      grayscale: getZeroAndEmpty(),
+      hueRotate: getNumberAndArbitrary(),
+      invert: getZeroAndEmpty(),
+      gap: getSpacingWithArbitrary(),
+      gradientColorStops: [colors],
+      gradientColorStopPositions: [isPercent, isArbitraryLength],
+      inset: getSpacingWithAutoAndArbitrary(),
+      margin: getSpacingWithAutoAndArbitrary(),
+      opacity: getNumberAndArbitrary(),
+      padding: getSpacingWithArbitrary(),
+      saturate: getNumberAndArbitrary(),
+      scale: getNumberAndArbitrary(),
+      sepia: getZeroAndEmpty(),
+      skew: getNumberAndArbitrary(),
+      space: getSpacingWithArbitrary(),
+      translate: getSpacingWithArbitrary()
+    },
+    classGroups: {
+      // Layout
+      /**
+       * Aspect Ratio
+       * @see https://tailwindcss.com/docs/aspect-ratio
+       */
+      aspect: [{
+        aspect: ["auto", "square", "video", isArbitraryValue]
+      }],
+      /**
+       * Container
+       * @see https://tailwindcss.com/docs/container
+       */
+      container: ["container"],
+      /**
+       * Columns
+       * @see https://tailwindcss.com/docs/columns
+       */
+      columns: [{
+        columns: [isTshirtSize]
+      }],
+      /**
+       * Break After
+       * @see https://tailwindcss.com/docs/break-after
+       */
+      "break-after": [{
+        "break-after": getBreaks()
+      }],
+      /**
+       * Break Before
+       * @see https://tailwindcss.com/docs/break-before
+       */
+      "break-before": [{
+        "break-before": getBreaks()
+      }],
+      /**
+       * Break Inside
+       * @see https://tailwindcss.com/docs/break-inside
+       */
+      "break-inside": [{
+        "break-inside": ["auto", "avoid", "avoid-page", "avoid-column"]
+      }],
+      /**
+       * Box Decoration Break
+       * @see https://tailwindcss.com/docs/box-decoration-break
+       */
+      "box-decoration": [{
+        "box-decoration": ["slice", "clone"]
+      }],
+      /**
+       * Box Sizing
+       * @see https://tailwindcss.com/docs/box-sizing
+       */
+      box: [{
+        box: ["border", "content"]
+      }],
+      /**
+       * Display
+       * @see https://tailwindcss.com/docs/display
+       */
+      display: ["block", "inline-block", "inline", "flex", "inline-flex", "table", "inline-table", "table-caption", "table-cell", "table-column", "table-column-group", "table-footer-group", "table-header-group", "table-row-group", "table-row", "flow-root", "grid", "inline-grid", "contents", "list-item", "hidden"],
+      /**
+       * Floats
+       * @see https://tailwindcss.com/docs/float
+       */
+      float: [{
+        float: ["right", "left", "none", "start", "end"]
+      }],
+      /**
+       * Clear
+       * @see https://tailwindcss.com/docs/clear
+       */
+      clear: [{
+        clear: ["left", "right", "both", "none", "start", "end"]
+      }],
+      /**
+       * Isolation
+       * @see https://tailwindcss.com/docs/isolation
+       */
+      isolation: ["isolate", "isolation-auto"],
+      /**
+       * Object Fit
+       * @see https://tailwindcss.com/docs/object-fit
+       */
+      "object-fit": [{
+        object: ["contain", "cover", "fill", "none", "scale-down"]
+      }],
+      /**
+       * Object Position
+       * @see https://tailwindcss.com/docs/object-position
+       */
+      "object-position": [{
+        object: [...getPositions(), isArbitraryValue]
+      }],
+      /**
+       * Overflow
+       * @see https://tailwindcss.com/docs/overflow
+       */
+      overflow: [{
+        overflow: getOverflow()
+      }],
+      /**
+       * Overflow X
+       * @see https://tailwindcss.com/docs/overflow
+       */
+      "overflow-x": [{
+        "overflow-x": getOverflow()
+      }],
+      /**
+       * Overflow Y
+       * @see https://tailwindcss.com/docs/overflow
+       */
+      "overflow-y": [{
+        "overflow-y": getOverflow()
+      }],
+      /**
+       * Overscroll Behavior
+       * @see https://tailwindcss.com/docs/overscroll-behavior
+       */
+      overscroll: [{
+        overscroll: getOverscroll()
+      }],
+      /**
+       * Overscroll Behavior X
+       * @see https://tailwindcss.com/docs/overscroll-behavior
+       */
+      "overscroll-x": [{
+        "overscroll-x": getOverscroll()
+      }],
+      /**
+       * Overscroll Behavior Y
+       * @see https://tailwindcss.com/docs/overscroll-behavior
+       */
+      "overscroll-y": [{
+        "overscroll-y": getOverscroll()
+      }],
+      /**
+       * Position
+       * @see https://tailwindcss.com/docs/position
+       */
+      position: ["static", "fixed", "absolute", "relative", "sticky"],
+      /**
+       * Top / Right / Bottom / Left
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      inset: [{
+        inset: [inset]
+      }],
+      /**
+       * Right / Left
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      "inset-x": [{
+        "inset-x": [inset]
+      }],
+      /**
+       * Top / Bottom
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      "inset-y": [{
+        "inset-y": [inset]
+      }],
+      /**
+       * Start
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      start: [{
+        start: [inset]
+      }],
+      /**
+       * End
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      end: [{
+        end: [inset]
+      }],
+      /**
+       * Top
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      top: [{
+        top: [inset]
+      }],
+      /**
+       * Right
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      right: [{
+        right: [inset]
+      }],
+      /**
+       * Bottom
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      bottom: [{
+        bottom: [inset]
+      }],
+      /**
+       * Left
+       * @see https://tailwindcss.com/docs/top-right-bottom-left
+       */
+      left: [{
+        left: [inset]
+      }],
+      /**
+       * Visibility
+       * @see https://tailwindcss.com/docs/visibility
+       */
+      visibility: ["visible", "invisible", "collapse"],
+      /**
+       * Z-Index
+       * @see https://tailwindcss.com/docs/z-index
+       */
+      z: [{
+        z: ["auto", isInteger, isArbitraryValue]
+      }],
+      // Flexbox and Grid
+      /**
+       * Flex Basis
+       * @see https://tailwindcss.com/docs/flex-basis
+       */
+      basis: [{
+        basis: getSpacingWithAutoAndArbitrary()
+      }],
+      /**
+       * Flex Direction
+       * @see https://tailwindcss.com/docs/flex-direction
+       */
+      "flex-direction": [{
+        flex: ["row", "row-reverse", "col", "col-reverse"]
+      }],
+      /**
+       * Flex Wrap
+       * @see https://tailwindcss.com/docs/flex-wrap
+       */
+      "flex-wrap": [{
+        flex: ["wrap", "wrap-reverse", "nowrap"]
+      }],
+      /**
+       * Flex
+       * @see https://tailwindcss.com/docs/flex
+       */
+      flex: [{
+        flex: ["1", "auto", "initial", "none", isArbitraryValue]
+      }],
+      /**
+       * Flex Grow
+       * @see https://tailwindcss.com/docs/flex-grow
+       */
+      grow: [{
+        grow: getZeroAndEmpty()
+      }],
+      /**
+       * Flex Shrink
+       * @see https://tailwindcss.com/docs/flex-shrink
+       */
+      shrink: [{
+        shrink: getZeroAndEmpty()
+      }],
+      /**
+       * Order
+       * @see https://tailwindcss.com/docs/order
+       */
+      order: [{
+        order: ["first", "last", "none", isInteger, isArbitraryValue]
+      }],
+      /**
+       * Grid Template Columns
+       * @see https://tailwindcss.com/docs/grid-template-columns
+       */
+      "grid-cols": [{
+        "grid-cols": [isAny]
+      }],
+      /**
+       * Grid Column Start / End
+       * @see https://tailwindcss.com/docs/grid-column
+       */
+      "col-start-end": [{
+        col: ["auto", {
+          span: ["full", isInteger, isArbitraryValue]
+        }, isArbitraryValue]
+      }],
+      /**
+       * Grid Column Start
+       * @see https://tailwindcss.com/docs/grid-column
+       */
+      "col-start": [{
+        "col-start": getNumberWithAutoAndArbitrary()
+      }],
+      /**
+       * Grid Column End
+       * @see https://tailwindcss.com/docs/grid-column
+       */
+      "col-end": [{
+        "col-end": getNumberWithAutoAndArbitrary()
+      }],
+      /**
+       * Grid Template Rows
+       * @see https://tailwindcss.com/docs/grid-template-rows
+       */
+      "grid-rows": [{
+        "grid-rows": [isAny]
+      }],
+      /**
+       * Grid Row Start / End
+       * @see https://tailwindcss.com/docs/grid-row
+       */
+      "row-start-end": [{
+        row: ["auto", {
+          span: [isInteger, isArbitraryValue]
+        }, isArbitraryValue]
+      }],
+      /**
+       * Grid Row Start
+       * @see https://tailwindcss.com/docs/grid-row
+       */
+      "row-start": [{
+        "row-start": getNumberWithAutoAndArbitrary()
+      }],
+      /**
+       * Grid Row End
+       * @see https://tailwindcss.com/docs/grid-row
+       */
+      "row-end": [{
+        "row-end": getNumberWithAutoAndArbitrary()
+      }],
+      /**
+       * Grid Auto Flow
+       * @see https://tailwindcss.com/docs/grid-auto-flow
+       */
+      "grid-flow": [{
+        "grid-flow": ["row", "col", "dense", "row-dense", "col-dense"]
+      }],
+      /**
+       * Grid Auto Columns
+       * @see https://tailwindcss.com/docs/grid-auto-columns
+       */
+      "auto-cols": [{
+        "auto-cols": ["auto", "min", "max", "fr", isArbitraryValue]
+      }],
+      /**
+       * Grid Auto Rows
+       * @see https://tailwindcss.com/docs/grid-auto-rows
+       */
+      "auto-rows": [{
+        "auto-rows": ["auto", "min", "max", "fr", isArbitraryValue]
+      }],
+      /**
+       * Gap
+       * @see https://tailwindcss.com/docs/gap
+       */
+      gap: [{
+        gap: [gap]
+      }],
+      /**
+       * Gap X
+       * @see https://tailwindcss.com/docs/gap
+       */
+      "gap-x": [{
+        "gap-x": [gap]
+      }],
+      /**
+       * Gap Y
+       * @see https://tailwindcss.com/docs/gap
+       */
+      "gap-y": [{
+        "gap-y": [gap]
+      }],
+      /**
+       * Justify Content
+       * @see https://tailwindcss.com/docs/justify-content
+       */
+      "justify-content": [{
+        justify: ["normal", ...getAlign()]
+      }],
+      /**
+       * Justify Items
+       * @see https://tailwindcss.com/docs/justify-items
+       */
+      "justify-items": [{
+        "justify-items": ["start", "end", "center", "stretch"]
+      }],
+      /**
+       * Justify Self
+       * @see https://tailwindcss.com/docs/justify-self
+       */
+      "justify-self": [{
+        "justify-self": ["auto", "start", "end", "center", "stretch"]
+      }],
+      /**
+       * Align Content
+       * @see https://tailwindcss.com/docs/align-content
+       */
+      "align-content": [{
+        content: ["normal", ...getAlign(), "baseline"]
+      }],
+      /**
+       * Align Items
+       * @see https://tailwindcss.com/docs/align-items
+       */
+      "align-items": [{
+        items: ["start", "end", "center", "baseline", "stretch"]
+      }],
+      /**
+       * Align Self
+       * @see https://tailwindcss.com/docs/align-self
+       */
+      "align-self": [{
+        self: ["auto", "start", "end", "center", "stretch", "baseline"]
+      }],
+      /**
+       * Place Content
+       * @see https://tailwindcss.com/docs/place-content
+       */
+      "place-content": [{
+        "place-content": [...getAlign(), "baseline"]
+      }],
+      /**
+       * Place Items
+       * @see https://tailwindcss.com/docs/place-items
+       */
+      "place-items": [{
+        "place-items": ["start", "end", "center", "baseline", "stretch"]
+      }],
+      /**
+       * Place Self
+       * @see https://tailwindcss.com/docs/place-self
+       */
+      "place-self": [{
+        "place-self": ["auto", "start", "end", "center", "stretch"]
+      }],
+      // Spacing
+      /**
+       * Padding
+       * @see https://tailwindcss.com/docs/padding
+       */
+      p: [{
+        p: [padding]
+      }],
+      /**
+       * Padding X
+       * @see https://tailwindcss.com/docs/padding
+       */
+      px: [{
+        px: [padding]
+      }],
+      /**
+       * Padding Y
+       * @see https://tailwindcss.com/docs/padding
+       */
+      py: [{
+        py: [padding]
+      }],
+      /**
+       * Padding Start
+       * @see https://tailwindcss.com/docs/padding
+       */
+      ps: [{
+        ps: [padding]
+      }],
+      /**
+       * Padding End
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pe: [{
+        pe: [padding]
+      }],
+      /**
+       * Padding Top
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pt: [{
+        pt: [padding]
+      }],
+      /**
+       * Padding Right
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pr: [{
+        pr: [padding]
+      }],
+      /**
+       * Padding Bottom
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pb: [{
+        pb: [padding]
+      }],
+      /**
+       * Padding Left
+       * @see https://tailwindcss.com/docs/padding
+       */
+      pl: [{
+        pl: [padding]
+      }],
+      /**
+       * Margin
+       * @see https://tailwindcss.com/docs/margin
+       */
+      m: [{
+        m: [margin]
+      }],
+      /**
+       * Margin X
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mx: [{
+        mx: [margin]
+      }],
+      /**
+       * Margin Y
+       * @see https://tailwindcss.com/docs/margin
+       */
+      my: [{
+        my: [margin]
+      }],
+      /**
+       * Margin Start
+       * @see https://tailwindcss.com/docs/margin
+       */
+      ms: [{
+        ms: [margin]
+      }],
+      /**
+       * Margin End
+       * @see https://tailwindcss.com/docs/margin
+       */
+      me: [{
+        me: [margin]
+      }],
+      /**
+       * Margin Top
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mt: [{
+        mt: [margin]
+      }],
+      /**
+       * Margin Right
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mr: [{
+        mr: [margin]
+      }],
+      /**
+       * Margin Bottom
+       * @see https://tailwindcss.com/docs/margin
+       */
+      mb: [{
+        mb: [margin]
+      }],
+      /**
+       * Margin Left
+       * @see https://tailwindcss.com/docs/margin
+       */
+      ml: [{
+        ml: [margin]
+      }],
+      /**
+       * Space Between X
+       * @see https://tailwindcss.com/docs/space
+       */
+      "space-x": [{
+        "space-x": [space2]
+      }],
+      /**
+       * Space Between X Reverse
+       * @see https://tailwindcss.com/docs/space
+       */
+      "space-x-reverse": ["space-x-reverse"],
+      /**
+       * Space Between Y
+       * @see https://tailwindcss.com/docs/space
+       */
+      "space-y": [{
+        "space-y": [space2]
+      }],
+      /**
+       * Space Between Y Reverse
+       * @see https://tailwindcss.com/docs/space
+       */
+      "space-y-reverse": ["space-y-reverse"],
+      // Sizing
+      /**
+       * Width
+       * @see https://tailwindcss.com/docs/width
+       */
+      w: [{
+        w: ["auto", "min", "max", "fit", "svw", "lvw", "dvw", isArbitraryValue, spacing]
+      }],
+      /**
+       * Min-Width
+       * @see https://tailwindcss.com/docs/min-width
+       */
+      "min-w": [{
+        "min-w": [isArbitraryValue, spacing, "min", "max", "fit"]
+      }],
+      /**
+       * Max-Width
+       * @see https://tailwindcss.com/docs/max-width
+       */
+      "max-w": [{
+        "max-w": [isArbitraryValue, spacing, "none", "full", "min", "max", "fit", "prose", {
+          screen: [isTshirtSize]
+        }, isTshirtSize]
+      }],
+      /**
+       * Height
+       * @see https://tailwindcss.com/docs/height
+       */
+      h: [{
+        h: [isArbitraryValue, spacing, "auto", "min", "max", "fit", "svh", "lvh", "dvh"]
+      }],
+      /**
+       * Min-Height
+       * @see https://tailwindcss.com/docs/min-height
+       */
+      "min-h": [{
+        "min-h": [isArbitraryValue, spacing, "min", "max", "fit", "svh", "lvh", "dvh"]
+      }],
+      /**
+       * Max-Height
+       * @see https://tailwindcss.com/docs/max-height
+       */
+      "max-h": [{
+        "max-h": [isArbitraryValue, spacing, "min", "max", "fit", "svh", "lvh", "dvh"]
+      }],
+      /**
+       * Size
+       * @see https://tailwindcss.com/docs/size
+       */
+      size: [{
+        size: [isArbitraryValue, spacing, "auto", "min", "max", "fit"]
+      }],
+      // Typography
+      /**
+       * Font Size
+       * @see https://tailwindcss.com/docs/font-size
+       */
+      "font-size": [{
+        text: ["base", isTshirtSize, isArbitraryLength]
+      }],
+      /**
+       * Font Smoothing
+       * @see https://tailwindcss.com/docs/font-smoothing
+       */
+      "font-smoothing": ["antialiased", "subpixel-antialiased"],
+      /**
+       * Font Style
+       * @see https://tailwindcss.com/docs/font-style
+       */
+      "font-style": ["italic", "not-italic"],
+      /**
+       * Font Weight
+       * @see https://tailwindcss.com/docs/font-weight
+       */
+      "font-weight": [{
+        font: ["thin", "extralight", "light", "normal", "medium", "semibold", "bold", "extrabold", "black", isArbitraryNumber]
+      }],
+      /**
+       * Font Family
+       * @see https://tailwindcss.com/docs/font-family
+       */
+      "font-family": [{
+        font: [isAny]
+      }],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-normal": ["normal-nums"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-ordinal": ["ordinal"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-slashed-zero": ["slashed-zero"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-figure": ["lining-nums", "oldstyle-nums"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-spacing": ["proportional-nums", "tabular-nums"],
+      /**
+       * Font Variant Numeric
+       * @see https://tailwindcss.com/docs/font-variant-numeric
+       */
+      "fvn-fraction": ["diagonal-fractions", "stacked-fractions"],
+      /**
+       * Letter Spacing
+       * @see https://tailwindcss.com/docs/letter-spacing
+       */
+      tracking: [{
+        tracking: ["tighter", "tight", "normal", "wide", "wider", "widest", isArbitraryValue]
+      }],
+      /**
+       * Line Clamp
+       * @see https://tailwindcss.com/docs/line-clamp
+       */
+      "line-clamp": [{
+        "line-clamp": ["none", isNumber, isArbitraryNumber]
+      }],
+      /**
+       * Line Height
+       * @see https://tailwindcss.com/docs/line-height
+       */
+      leading: [{
+        leading: ["none", "tight", "snug", "normal", "relaxed", "loose", isLength, isArbitraryValue]
+      }],
+      /**
+       * List Style Image
+       * @see https://tailwindcss.com/docs/list-style-image
+       */
+      "list-image": [{
+        "list-image": ["none", isArbitraryValue]
+      }],
+      /**
+       * List Style Type
+       * @see https://tailwindcss.com/docs/list-style-type
+       */
+      "list-style-type": [{
+        list: ["none", "disc", "decimal", isArbitraryValue]
+      }],
+      /**
+       * List Style Position
+       * @see https://tailwindcss.com/docs/list-style-position
+       */
+      "list-style-position": [{
+        list: ["inside", "outside"]
+      }],
+      /**
+       * Placeholder Color
+       * @deprecated since Tailwind CSS v3.0.0
+       * @see https://tailwindcss.com/docs/placeholder-color
+       */
+      "placeholder-color": [{
+        placeholder: [colors]
+      }],
+      /**
+       * Placeholder Opacity
+       * @see https://tailwindcss.com/docs/placeholder-opacity
+       */
+      "placeholder-opacity": [{
+        "placeholder-opacity": [opacity]
+      }],
+      /**
+       * Text Alignment
+       * @see https://tailwindcss.com/docs/text-align
+       */
+      "text-alignment": [{
+        text: ["left", "center", "right", "justify", "start", "end"]
+      }],
+      /**
+       * Text Color
+       * @see https://tailwindcss.com/docs/text-color
+       */
+      "text-color": [{
+        text: [colors]
+      }],
+      /**
+       * Text Opacity
+       * @see https://tailwindcss.com/docs/text-opacity
+       */
+      "text-opacity": [{
+        "text-opacity": [opacity]
+      }],
+      /**
+       * Text Decoration
+       * @see https://tailwindcss.com/docs/text-decoration
+       */
+      "text-decoration": ["underline", "overline", "line-through", "no-underline"],
+      /**
+       * Text Decoration Style
+       * @see https://tailwindcss.com/docs/text-decoration-style
+       */
+      "text-decoration-style": [{
+        decoration: [...getLineStyles(), "wavy"]
+      }],
+      /**
+       * Text Decoration Thickness
+       * @see https://tailwindcss.com/docs/text-decoration-thickness
+       */
+      "text-decoration-thickness": [{
+        decoration: ["auto", "from-font", isLength, isArbitraryLength]
+      }],
+      /**
+       * Text Underline Offset
+       * @see https://tailwindcss.com/docs/text-underline-offset
+       */
+      "underline-offset": [{
+        "underline-offset": ["auto", isLength, isArbitraryValue]
+      }],
+      /**
+       * Text Decoration Color
+       * @see https://tailwindcss.com/docs/text-decoration-color
+       */
+      "text-decoration-color": [{
+        decoration: [colors]
+      }],
+      /**
+       * Text Transform
+       * @see https://tailwindcss.com/docs/text-transform
+       */
+      "text-transform": ["uppercase", "lowercase", "capitalize", "normal-case"],
+      /**
+       * Text Overflow
+       * @see https://tailwindcss.com/docs/text-overflow
+       */
+      "text-overflow": ["truncate", "text-ellipsis", "text-clip"],
+      /**
+       * Text Wrap
+       * @see https://tailwindcss.com/docs/text-wrap
+       */
+      "text-wrap": [{
+        text: ["wrap", "nowrap", "balance", "pretty"]
+      }],
+      /**
+       * Text Indent
+       * @see https://tailwindcss.com/docs/text-indent
+       */
+      indent: [{
+        indent: getSpacingWithArbitrary()
+      }],
+      /**
+       * Vertical Alignment
+       * @see https://tailwindcss.com/docs/vertical-align
+       */
+      "vertical-align": [{
+        align: ["baseline", "top", "middle", "bottom", "text-top", "text-bottom", "sub", "super", isArbitraryValue]
+      }],
+      /**
+       * Whitespace
+       * @see https://tailwindcss.com/docs/whitespace
+       */
+      whitespace: [{
+        whitespace: ["normal", "nowrap", "pre", "pre-line", "pre-wrap", "break-spaces"]
+      }],
+      /**
+       * Word Break
+       * @see https://tailwindcss.com/docs/word-break
+       */
+      break: [{
+        break: ["normal", "words", "all", "keep"]
+      }],
+      /**
+       * Hyphens
+       * @see https://tailwindcss.com/docs/hyphens
+       */
+      hyphens: [{
+        hyphens: ["none", "manual", "auto"]
+      }],
+      /**
+       * Content
+       * @see https://tailwindcss.com/docs/content
+       */
+      content: [{
+        content: ["none", isArbitraryValue]
+      }],
+      // Backgrounds
+      /**
+       * Background Attachment
+       * @see https://tailwindcss.com/docs/background-attachment
+       */
+      "bg-attachment": [{
+        bg: ["fixed", "local", "scroll"]
+      }],
+      /**
+       * Background Clip
+       * @see https://tailwindcss.com/docs/background-clip
+       */
+      "bg-clip": [{
+        "bg-clip": ["border", "padding", "content", "text"]
+      }],
+      /**
+       * Background Opacity
+       * @deprecated since Tailwind CSS v3.0.0
+       * @see https://tailwindcss.com/docs/background-opacity
+       */
+      "bg-opacity": [{
+        "bg-opacity": [opacity]
+      }],
+      /**
+       * Background Origin
+       * @see https://tailwindcss.com/docs/background-origin
+       */
+      "bg-origin": [{
+        "bg-origin": ["border", "padding", "content"]
+      }],
+      /**
+       * Background Position
+       * @see https://tailwindcss.com/docs/background-position
+       */
+      "bg-position": [{
+        bg: [...getPositions(), isArbitraryPosition]
+      }],
+      /**
+       * Background Repeat
+       * @see https://tailwindcss.com/docs/background-repeat
+       */
+      "bg-repeat": [{
+        bg: ["no-repeat", {
+          repeat: ["", "x", "y", "round", "space"]
+        }]
+      }],
+      /**
+       * Background Size
+       * @see https://tailwindcss.com/docs/background-size
+       */
+      "bg-size": [{
+        bg: ["auto", "cover", "contain", isArbitrarySize]
+      }],
+      /**
+       * Background Image
+       * @see https://tailwindcss.com/docs/background-image
+       */
+      "bg-image": [{
+        bg: ["none", {
+          "gradient-to": ["t", "tr", "r", "br", "b", "bl", "l", "tl"]
+        }, isArbitraryImage]
+      }],
+      /**
+       * Background Color
+       * @see https://tailwindcss.com/docs/background-color
+       */
+      "bg-color": [{
+        bg: [colors]
+      }],
+      /**
+       * Gradient Color Stops From Position
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-from-pos": [{
+        from: [gradientColorStopPositions]
+      }],
+      /**
+       * Gradient Color Stops Via Position
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-via-pos": [{
+        via: [gradientColorStopPositions]
+      }],
+      /**
+       * Gradient Color Stops To Position
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-to-pos": [{
+        to: [gradientColorStopPositions]
+      }],
+      /**
+       * Gradient Color Stops From
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-from": [{
+        from: [gradientColorStops]
+      }],
+      /**
+       * Gradient Color Stops Via
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-via": [{
+        via: [gradientColorStops]
+      }],
+      /**
+       * Gradient Color Stops To
+       * @see https://tailwindcss.com/docs/gradient-color-stops
+       */
+      "gradient-to": [{
+        to: [gradientColorStops]
+      }],
+      // Borders
+      /**
+       * Border Radius
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      rounded: [{
+        rounded: [borderRadius]
+      }],
+      /**
+       * Border Radius Start
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-s": [{
+        "rounded-s": [borderRadius]
+      }],
+      /**
+       * Border Radius End
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-e": [{
+        "rounded-e": [borderRadius]
+      }],
+      /**
+       * Border Radius Top
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-t": [{
+        "rounded-t": [borderRadius]
+      }],
+      /**
+       * Border Radius Right
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-r": [{
+        "rounded-r": [borderRadius]
+      }],
+      /**
+       * Border Radius Bottom
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-b": [{
+        "rounded-b": [borderRadius]
+      }],
+      /**
+       * Border Radius Left
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-l": [{
+        "rounded-l": [borderRadius]
+      }],
+      /**
+       * Border Radius Start Start
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-ss": [{
+        "rounded-ss": [borderRadius]
+      }],
+      /**
+       * Border Radius Start End
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-se": [{
+        "rounded-se": [borderRadius]
+      }],
+      /**
+       * Border Radius End End
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-ee": [{
+        "rounded-ee": [borderRadius]
+      }],
+      /**
+       * Border Radius End Start
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-es": [{
+        "rounded-es": [borderRadius]
+      }],
+      /**
+       * Border Radius Top Left
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-tl": [{
+        "rounded-tl": [borderRadius]
+      }],
+      /**
+       * Border Radius Top Right
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-tr": [{
+        "rounded-tr": [borderRadius]
+      }],
+      /**
+       * Border Radius Bottom Right
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-br": [{
+        "rounded-br": [borderRadius]
+      }],
+      /**
+       * Border Radius Bottom Left
+       * @see https://tailwindcss.com/docs/border-radius
+       */
+      "rounded-bl": [{
+        "rounded-bl": [borderRadius]
+      }],
+      /**
+       * Border Width
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w": [{
+        border: [borderWidth]
+      }],
+      /**
+       * Border Width X
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-x": [{
+        "border-x": [borderWidth]
+      }],
+      /**
+       * Border Width Y
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-y": [{
+        "border-y": [borderWidth]
+      }],
+      /**
+       * Border Width Start
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-s": [{
+        "border-s": [borderWidth]
+      }],
+      /**
+       * Border Width End
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-e": [{
+        "border-e": [borderWidth]
+      }],
+      /**
+       * Border Width Top
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-t": [{
+        "border-t": [borderWidth]
+      }],
+      /**
+       * Border Width Right
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-r": [{
+        "border-r": [borderWidth]
+      }],
+      /**
+       * Border Width Bottom
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-b": [{
+        "border-b": [borderWidth]
+      }],
+      /**
+       * Border Width Left
+       * @see https://tailwindcss.com/docs/border-width
+       */
+      "border-w-l": [{
+        "border-l": [borderWidth]
+      }],
+      /**
+       * Border Opacity
+       * @see https://tailwindcss.com/docs/border-opacity
+       */
+      "border-opacity": [{
+        "border-opacity": [opacity]
+      }],
+      /**
+       * Border Style
+       * @see https://tailwindcss.com/docs/border-style
+       */
+      "border-style": [{
+        border: [...getLineStyles(), "hidden"]
+      }],
+      /**
+       * Divide Width X
+       * @see https://tailwindcss.com/docs/divide-width
+       */
+      "divide-x": [{
+        "divide-x": [borderWidth]
+      }],
+      /**
+       * Divide Width X Reverse
+       * @see https://tailwindcss.com/docs/divide-width
+       */
+      "divide-x-reverse": ["divide-x-reverse"],
+      /**
+       * Divide Width Y
+       * @see https://tailwindcss.com/docs/divide-width
+       */
+      "divide-y": [{
+        "divide-y": [borderWidth]
+      }],
+      /**
+       * Divide Width Y Reverse
+       * @see https://tailwindcss.com/docs/divide-width
+       */
+      "divide-y-reverse": ["divide-y-reverse"],
+      /**
+       * Divide Opacity
+       * @see https://tailwindcss.com/docs/divide-opacity
+       */
+      "divide-opacity": [{
+        "divide-opacity": [opacity]
+      }],
+      /**
+       * Divide Style
+       * @see https://tailwindcss.com/docs/divide-style
+       */
+      "divide-style": [{
+        divide: getLineStyles()
+      }],
+      /**
+       * Border Color
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color": [{
+        border: [borderColor]
+      }],
+      /**
+       * Border Color X
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-x": [{
+        "border-x": [borderColor]
+      }],
+      /**
+       * Border Color Y
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-y": [{
+        "border-y": [borderColor]
+      }],
+      /**
+       * Border Color S
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-s": [{
+        "border-s": [borderColor]
+      }],
+      /**
+       * Border Color E
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-e": [{
+        "border-e": [borderColor]
+      }],
+      /**
+       * Border Color Top
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-t": [{
+        "border-t": [borderColor]
+      }],
+      /**
+       * Border Color Right
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-r": [{
+        "border-r": [borderColor]
+      }],
+      /**
+       * Border Color Bottom
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-b": [{
+        "border-b": [borderColor]
+      }],
+      /**
+       * Border Color Left
+       * @see https://tailwindcss.com/docs/border-color
+       */
+      "border-color-l": [{
+        "border-l": [borderColor]
+      }],
+      /**
+       * Divide Color
+       * @see https://tailwindcss.com/docs/divide-color
+       */
+      "divide-color": [{
+        divide: [borderColor]
+      }],
+      /**
+       * Outline Style
+       * @see https://tailwindcss.com/docs/outline-style
+       */
+      "outline-style": [{
+        outline: ["", ...getLineStyles()]
+      }],
+      /**
+       * Outline Offset
+       * @see https://tailwindcss.com/docs/outline-offset
+       */
+      "outline-offset": [{
+        "outline-offset": [isLength, isArbitraryValue]
+      }],
+      /**
+       * Outline Width
+       * @see https://tailwindcss.com/docs/outline-width
+       */
+      "outline-w": [{
+        outline: [isLength, isArbitraryLength]
+      }],
+      /**
+       * Outline Color
+       * @see https://tailwindcss.com/docs/outline-color
+       */
+      "outline-color": [{
+        outline: [colors]
+      }],
+      /**
+       * Ring Width
+       * @see https://tailwindcss.com/docs/ring-width
+       */
+      "ring-w": [{
+        ring: getLengthWithEmptyAndArbitrary()
+      }],
+      /**
+       * Ring Width Inset
+       * @see https://tailwindcss.com/docs/ring-width
+       */
+      "ring-w-inset": ["ring-inset"],
+      /**
+       * Ring Color
+       * @see https://tailwindcss.com/docs/ring-color
+       */
+      "ring-color": [{
+        ring: [colors]
+      }],
+      /**
+       * Ring Opacity
+       * @see https://tailwindcss.com/docs/ring-opacity
+       */
+      "ring-opacity": [{
+        "ring-opacity": [opacity]
+      }],
+      /**
+       * Ring Offset Width
+       * @see https://tailwindcss.com/docs/ring-offset-width
+       */
+      "ring-offset-w": [{
+        "ring-offset": [isLength, isArbitraryLength]
+      }],
+      /**
+       * Ring Offset Color
+       * @see https://tailwindcss.com/docs/ring-offset-color
+       */
+      "ring-offset-color": [{
+        "ring-offset": [colors]
+      }],
+      // Effects
+      /**
+       * Box Shadow
+       * @see https://tailwindcss.com/docs/box-shadow
+       */
+      shadow: [{
+        shadow: ["", "inner", "none", isTshirtSize, isArbitraryShadow]
+      }],
+      /**
+       * Box Shadow Color
+       * @see https://tailwindcss.com/docs/box-shadow-color
+       */
+      "shadow-color": [{
+        shadow: [isAny]
+      }],
+      /**
+       * Opacity
+       * @see https://tailwindcss.com/docs/opacity
+       */
+      opacity: [{
+        opacity: [opacity]
+      }],
+      /**
+       * Mix Blend Mode
+       * @see https://tailwindcss.com/docs/mix-blend-mode
+       */
+      "mix-blend": [{
+        "mix-blend": [...getBlendModes(), "plus-lighter", "plus-darker"]
+      }],
+      /**
+       * Background Blend Mode
+       * @see https://tailwindcss.com/docs/background-blend-mode
+       */
+      "bg-blend": [{
+        "bg-blend": getBlendModes()
+      }],
+      // Filters
+      /**
+       * Filter
+       * @deprecated since Tailwind CSS v3.0.0
+       * @see https://tailwindcss.com/docs/filter
+       */
+      filter: [{
+        filter: ["", "none"]
+      }],
+      /**
+       * Blur
+       * @see https://tailwindcss.com/docs/blur
+       */
+      blur: [{
+        blur: [blur]
+      }],
+      /**
+       * Brightness
+       * @see https://tailwindcss.com/docs/brightness
+       */
+      brightness: [{
+        brightness: [brightness]
+      }],
+      /**
+       * Contrast
+       * @see https://tailwindcss.com/docs/contrast
+       */
+      contrast: [{
+        contrast: [contrast]
+      }],
+      /**
+       * Drop Shadow
+       * @see https://tailwindcss.com/docs/drop-shadow
+       */
+      "drop-shadow": [{
+        "drop-shadow": ["", "none", isTshirtSize, isArbitraryValue]
+      }],
+      /**
+       * Grayscale
+       * @see https://tailwindcss.com/docs/grayscale
+       */
+      grayscale: [{
+        grayscale: [grayscale]
+      }],
+      /**
+       * Hue Rotate
+       * @see https://tailwindcss.com/docs/hue-rotate
+       */
+      "hue-rotate": [{
+        "hue-rotate": [hueRotate]
+      }],
+      /**
+       * Invert
+       * @see https://tailwindcss.com/docs/invert
+       */
+      invert: [{
+        invert: [invert]
+      }],
+      /**
+       * Saturate
+       * @see https://tailwindcss.com/docs/saturate
+       */
+      saturate: [{
+        saturate: [saturate]
+      }],
+      /**
+       * Sepia
+       * @see https://tailwindcss.com/docs/sepia
+       */
+      sepia: [{
+        sepia: [sepia]
+      }],
+      /**
+       * Backdrop Filter
+       * @deprecated since Tailwind CSS v3.0.0
+       * @see https://tailwindcss.com/docs/backdrop-filter
+       */
+      "backdrop-filter": [{
+        "backdrop-filter": ["", "none"]
+      }],
+      /**
+       * Backdrop Blur
+       * @see https://tailwindcss.com/docs/backdrop-blur
+       */
+      "backdrop-blur": [{
+        "backdrop-blur": [blur]
+      }],
+      /**
+       * Backdrop Brightness
+       * @see https://tailwindcss.com/docs/backdrop-brightness
+       */
+      "backdrop-brightness": [{
+        "backdrop-brightness": [brightness]
+      }],
+      /**
+       * Backdrop Contrast
+       * @see https://tailwindcss.com/docs/backdrop-contrast
+       */
+      "backdrop-contrast": [{
+        "backdrop-contrast": [contrast]
+      }],
+      /**
+       * Backdrop Grayscale
+       * @see https://tailwindcss.com/docs/backdrop-grayscale
+       */
+      "backdrop-grayscale": [{
+        "backdrop-grayscale": [grayscale]
+      }],
+      /**
+       * Backdrop Hue Rotate
+       * @see https://tailwindcss.com/docs/backdrop-hue-rotate
+       */
+      "backdrop-hue-rotate": [{
+        "backdrop-hue-rotate": [hueRotate]
+      }],
+      /**
+       * Backdrop Invert
+       * @see https://tailwindcss.com/docs/backdrop-invert
+       */
+      "backdrop-invert": [{
+        "backdrop-invert": [invert]
+      }],
+      /**
+       * Backdrop Opacity
+       * @see https://tailwindcss.com/docs/backdrop-opacity
+       */
+      "backdrop-opacity": [{
+        "backdrop-opacity": [opacity]
+      }],
+      /**
+       * Backdrop Saturate
+       * @see https://tailwindcss.com/docs/backdrop-saturate
+       */
+      "backdrop-saturate": [{
+        "backdrop-saturate": [saturate]
+      }],
+      /**
+       * Backdrop Sepia
+       * @see https://tailwindcss.com/docs/backdrop-sepia
+       */
+      "backdrop-sepia": [{
+        "backdrop-sepia": [sepia]
+      }],
+      // Tables
+      /**
+       * Border Collapse
+       * @see https://tailwindcss.com/docs/border-collapse
+       */
+      "border-collapse": [{
+        border: ["collapse", "separate"]
+      }],
+      /**
+       * Border Spacing
+       * @see https://tailwindcss.com/docs/border-spacing
+       */
+      "border-spacing": [{
+        "border-spacing": [borderSpacing]
+      }],
+      /**
+       * Border Spacing X
+       * @see https://tailwindcss.com/docs/border-spacing
+       */
+      "border-spacing-x": [{
+        "border-spacing-x": [borderSpacing]
+      }],
+      /**
+       * Border Spacing Y
+       * @see https://tailwindcss.com/docs/border-spacing
+       */
+      "border-spacing-y": [{
+        "border-spacing-y": [borderSpacing]
+      }],
+      /**
+       * Table Layout
+       * @see https://tailwindcss.com/docs/table-layout
+       */
+      "table-layout": [{
+        table: ["auto", "fixed"]
+      }],
+      /**
+       * Caption Side
+       * @see https://tailwindcss.com/docs/caption-side
+       */
+      caption: [{
+        caption: ["top", "bottom"]
+      }],
+      // Transitions and Animation
+      /**
+       * Tranisition Property
+       * @see https://tailwindcss.com/docs/transition-property
+       */
+      transition: [{
+        transition: ["none", "all", "", "colors", "opacity", "shadow", "transform", isArbitraryValue]
+      }],
+      /**
+       * Transition Duration
+       * @see https://tailwindcss.com/docs/transition-duration
+       */
+      duration: [{
+        duration: getNumberAndArbitrary()
+      }],
+      /**
+       * Transition Timing Function
+       * @see https://tailwindcss.com/docs/transition-timing-function
+       */
+      ease: [{
+        ease: ["linear", "in", "out", "in-out", isArbitraryValue]
+      }],
+      /**
+       * Transition Delay
+       * @see https://tailwindcss.com/docs/transition-delay
+       */
+      delay: [{
+        delay: getNumberAndArbitrary()
+      }],
+      /**
+       * Animation
+       * @see https://tailwindcss.com/docs/animation
+       */
+      animate: [{
+        animate: ["none", "spin", "ping", "pulse", "bounce", isArbitraryValue]
+      }],
+      // Transforms
+      /**
+       * Transform
+       * @see https://tailwindcss.com/docs/transform
+       */
+      transform: [{
+        transform: ["", "gpu", "none"]
+      }],
+      /**
+       * Scale
+       * @see https://tailwindcss.com/docs/scale
+       */
+      scale: [{
+        scale: [scale]
+      }],
+      /**
+       * Scale X
+       * @see https://tailwindcss.com/docs/scale
+       */
+      "scale-x": [{
+        "scale-x": [scale]
+      }],
+      /**
+       * Scale Y
+       * @see https://tailwindcss.com/docs/scale
+       */
+      "scale-y": [{
+        "scale-y": [scale]
+      }],
+      /**
+       * Rotate
+       * @see https://tailwindcss.com/docs/rotate
+       */
+      rotate: [{
+        rotate: [isInteger, isArbitraryValue]
+      }],
+      /**
+       * Translate X
+       * @see https://tailwindcss.com/docs/translate
+       */
+      "translate-x": [{
+        "translate-x": [translate]
+      }],
+      /**
+       * Translate Y
+       * @see https://tailwindcss.com/docs/translate
+       */
+      "translate-y": [{
+        "translate-y": [translate]
+      }],
+      /**
+       * Skew X
+       * @see https://tailwindcss.com/docs/skew
+       */
+      "skew-x": [{
+        "skew-x": [skew]
+      }],
+      /**
+       * Skew Y
+       * @see https://tailwindcss.com/docs/skew
+       */
+      "skew-y": [{
+        "skew-y": [skew]
+      }],
+      /**
+       * Transform Origin
+       * @see https://tailwindcss.com/docs/transform-origin
+       */
+      "transform-origin": [{
+        origin: ["center", "top", "top-right", "right", "bottom-right", "bottom", "bottom-left", "left", "top-left", isArbitraryValue]
+      }],
+      // Interactivity
+      /**
+       * Accent Color
+       * @see https://tailwindcss.com/docs/accent-color
+       */
+      accent: [{
+        accent: ["auto", colors]
+      }],
+      /**
+       * Appearance
+       * @see https://tailwindcss.com/docs/appearance
+       */
+      appearance: [{
+        appearance: ["none", "auto"]
+      }],
+      /**
+       * Cursor
+       * @see https://tailwindcss.com/docs/cursor
+       */
+      cursor: [{
+        cursor: ["auto", "default", "pointer", "wait", "text", "move", "help", "not-allowed", "none", "context-menu", "progress", "cell", "crosshair", "vertical-text", "alias", "copy", "no-drop", "grab", "grabbing", "all-scroll", "col-resize", "row-resize", "n-resize", "e-resize", "s-resize", "w-resize", "ne-resize", "nw-resize", "se-resize", "sw-resize", "ew-resize", "ns-resize", "nesw-resize", "nwse-resize", "zoom-in", "zoom-out", isArbitraryValue]
+      }],
+      /**
+       * Caret Color
+       * @see https://tailwindcss.com/docs/just-in-time-mode#caret-color-utilities
+       */
+      "caret-color": [{
+        caret: [colors]
+      }],
+      /**
+       * Pointer Events
+       * @see https://tailwindcss.com/docs/pointer-events
+       */
+      "pointer-events": [{
+        "pointer-events": ["none", "auto"]
+      }],
+      /**
+       * Resize
+       * @see https://tailwindcss.com/docs/resize
+       */
+      resize: [{
+        resize: ["none", "y", "x", ""]
+      }],
+      /**
+       * Scroll Behavior
+       * @see https://tailwindcss.com/docs/scroll-behavior
+       */
+      "scroll-behavior": [{
+        scroll: ["auto", "smooth"]
+      }],
+      /**
+       * Scroll Margin
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-m": [{
+        "scroll-m": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin X
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mx": [{
+        "scroll-mx": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Y
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-my": [{
+        "scroll-my": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Start
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-ms": [{
+        "scroll-ms": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin End
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-me": [{
+        "scroll-me": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Top
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mt": [{
+        "scroll-mt": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Right
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mr": [{
+        "scroll-mr": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Bottom
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-mb": [{
+        "scroll-mb": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Margin Left
+       * @see https://tailwindcss.com/docs/scroll-margin
+       */
+      "scroll-ml": [{
+        "scroll-ml": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-p": [{
+        "scroll-p": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding X
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-px": [{
+        "scroll-px": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Y
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-py": [{
+        "scroll-py": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Start
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-ps": [{
+        "scroll-ps": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding End
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pe": [{
+        "scroll-pe": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Top
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pt": [{
+        "scroll-pt": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Right
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pr": [{
+        "scroll-pr": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Bottom
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pb": [{
+        "scroll-pb": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Padding Left
+       * @see https://tailwindcss.com/docs/scroll-padding
+       */
+      "scroll-pl": [{
+        "scroll-pl": getSpacingWithArbitrary()
+      }],
+      /**
+       * Scroll Snap Align
+       * @see https://tailwindcss.com/docs/scroll-snap-align
+       */
+      "snap-align": [{
+        snap: ["start", "end", "center", "align-none"]
+      }],
+      /**
+       * Scroll Snap Stop
+       * @see https://tailwindcss.com/docs/scroll-snap-stop
+       */
+      "snap-stop": [{
+        snap: ["normal", "always"]
+      }],
+      /**
+       * Scroll Snap Type
+       * @see https://tailwindcss.com/docs/scroll-snap-type
+       */
+      "snap-type": [{
+        snap: ["none", "x", "y", "both"]
+      }],
+      /**
+       * Scroll Snap Type Strictness
+       * @see https://tailwindcss.com/docs/scroll-snap-type
+       */
+      "snap-strictness": [{
+        snap: ["mandatory", "proximity"]
+      }],
+      /**
+       * Touch Action
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      touch: [{
+        touch: ["auto", "none", "manipulation"]
+      }],
+      /**
+       * Touch Action X
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      "touch-x": [{
+        "touch-pan": ["x", "left", "right"]
+      }],
+      /**
+       * Touch Action Y
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      "touch-y": [{
+        "touch-pan": ["y", "up", "down"]
+      }],
+      /**
+       * Touch Action Pinch Zoom
+       * @see https://tailwindcss.com/docs/touch-action
+       */
+      "touch-pz": ["touch-pinch-zoom"],
+      /**
+       * User Select
+       * @see https://tailwindcss.com/docs/user-select
+       */
+      select: [{
+        select: ["none", "text", "all", "auto"]
+      }],
+      /**
+       * Will Change
+       * @see https://tailwindcss.com/docs/will-change
+       */
+      "will-change": [{
+        "will-change": ["auto", "scroll", "contents", "transform", isArbitraryValue]
+      }],
+      // SVG
+      /**
+       * Fill
+       * @see https://tailwindcss.com/docs/fill
+       */
+      fill: [{
+        fill: [colors, "none"]
+      }],
+      /**
+       * Stroke Width
+       * @see https://tailwindcss.com/docs/stroke-width
+       */
+      "stroke-w": [{
+        stroke: [isLength, isArbitraryLength, isArbitraryNumber]
+      }],
+      /**
+       * Stroke
+       * @see https://tailwindcss.com/docs/stroke
+       */
+      stroke: [{
+        stroke: [colors, "none"]
+      }],
+      // Accessibility
+      /**
+       * Screen Readers
+       * @see https://tailwindcss.com/docs/screen-readers
+       */
+      sr: ["sr-only", "not-sr-only"],
+      /**
+       * Forced Color Adjust
+       * @see https://tailwindcss.com/docs/forced-color-adjust
+       */
+      "forced-color-adjust": [{
+        "forced-color-adjust": ["auto", "none"]
+      }]
+    },
+    conflictingClassGroups: {
+      overflow: ["overflow-x", "overflow-y"],
+      overscroll: ["overscroll-x", "overscroll-y"],
+      inset: ["inset-x", "inset-y", "start", "end", "top", "right", "bottom", "left"],
+      "inset-x": ["right", "left"],
+      "inset-y": ["top", "bottom"],
+      flex: ["basis", "grow", "shrink"],
+      gap: ["gap-x", "gap-y"],
+      p: ["px", "py", "ps", "pe", "pt", "pr", "pb", "pl"],
+      px: ["pr", "pl"],
+      py: ["pt", "pb"],
+      m: ["mx", "my", "ms", "me", "mt", "mr", "mb", "ml"],
+      mx: ["mr", "ml"],
+      my: ["mt", "mb"],
+      size: ["w", "h"],
+      "font-size": ["leading"],
+      "fvn-normal": ["fvn-ordinal", "fvn-slashed-zero", "fvn-figure", "fvn-spacing", "fvn-fraction"],
+      "fvn-ordinal": ["fvn-normal"],
+      "fvn-slashed-zero": ["fvn-normal"],
+      "fvn-figure": ["fvn-normal"],
+      "fvn-spacing": ["fvn-normal"],
+      "fvn-fraction": ["fvn-normal"],
+      "line-clamp": ["display", "overflow"],
+      rounded: ["rounded-s", "rounded-e", "rounded-t", "rounded-r", "rounded-b", "rounded-l", "rounded-ss", "rounded-se", "rounded-ee", "rounded-es", "rounded-tl", "rounded-tr", "rounded-br", "rounded-bl"],
+      "rounded-s": ["rounded-ss", "rounded-es"],
+      "rounded-e": ["rounded-se", "rounded-ee"],
+      "rounded-t": ["rounded-tl", "rounded-tr"],
+      "rounded-r": ["rounded-tr", "rounded-br"],
+      "rounded-b": ["rounded-br", "rounded-bl"],
+      "rounded-l": ["rounded-tl", "rounded-bl"],
+      "border-spacing": ["border-spacing-x", "border-spacing-y"],
+      "border-w": ["border-w-s", "border-w-e", "border-w-t", "border-w-r", "border-w-b", "border-w-l"],
+      "border-w-x": ["border-w-r", "border-w-l"],
+      "border-w-y": ["border-w-t", "border-w-b"],
+      "border-color": ["border-color-s", "border-color-e", "border-color-t", "border-color-r", "border-color-b", "border-color-l"],
+      "border-color-x": ["border-color-r", "border-color-l"],
+      "border-color-y": ["border-color-t", "border-color-b"],
+      "scroll-m": ["scroll-mx", "scroll-my", "scroll-ms", "scroll-me", "scroll-mt", "scroll-mr", "scroll-mb", "scroll-ml"],
+      "scroll-mx": ["scroll-mr", "scroll-ml"],
+      "scroll-my": ["scroll-mt", "scroll-mb"],
+      "scroll-p": ["scroll-px", "scroll-py", "scroll-ps", "scroll-pe", "scroll-pt", "scroll-pr", "scroll-pb", "scroll-pl"],
+      "scroll-px": ["scroll-pr", "scroll-pl"],
+      "scroll-py": ["scroll-pt", "scroll-pb"],
+      touch: ["touch-x", "touch-y", "touch-pz"],
+      "touch-x": ["touch"],
+      "touch-y": ["touch"],
+      "touch-pz": ["touch"]
+    },
+    conflictingClassGroupModifiers: {
+      "font-size": ["leading"]
+    }
+  };
+};
+const twMerge = /* @__PURE__ */ createTailwindMerge(getDefaultConfig);
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
-function Badge({ className, variant = "default", ...props }) {
+function Badge({ className, variant = "default", ...props2 }) {
   const variantStyles = {
     default: "bg-indigo-600/30 text-indigo-300 border-indigo-500/40",
     secondary: "bg-slate-800 text-slate-300 border-slate-700",
@@ -61,7 +5886,7 @@ function Badge({ className, variant = "default", ...props }) {
         variantStyles[variant],
         className
       ),
-      ...props
+      ...props2
     }
   );
 }
@@ -79,7 +5904,7 @@ const createDefaultWorkspaceState = () => ({
   tabSnapshots: {},
   explorerExpanded: {}
 });
-const useIdeStore = create()(
+const useIdeStore = create$1()(
   persist(
     (set, get) => ({
       currentWorkspace: "default",
@@ -148,16 +5973,16 @@ const useIdeStore = create()(
       setActiveSidebarView: (view) => set({ activeSidebarView: view, sidebarOpen: true }),
       setBottomPanelOpen: (open) => set({ bottomPanelOpen: open }),
       toggleBottomPanel: () => set((state) => ({ bottomPanelOpen: !state.bottomPanelOpen })),
-      setActiveBottomTab: (tab) => set({ activeBottomTab: tab, bottomPanelOpen: true }),
+      setActiveBottomTab: (tab2) => set({ activeBottomTab: tab2, bottomPanelOpen: true }),
       preferences: { defaultRightPanel: "graph" },
       updatePreferences: (prefs) => set((state) => ({ preferences: { ...state.preferences, ...prefs } })),
-      setExplorerExpanded: (path, expanded) => set((state) => ({
-        explorerExpanded: { ...state.explorerExpanded, [path]: expanded }
+      setExplorerExpanded: (path2, expanded) => set((state) => ({
+        explorerExpanded: { ...state.explorerExpanded, [path2]: expanded }
       })),
-      toggleExplorerExpanded: (path) => set((state) => ({
+      toggleExplorerExpanded: (path2) => set((state) => ({
         explorerExpanded: {
           ...state.explorerExpanded,
-          [path]: !state.explorerExpanded[path]
+          [path2]: !state.explorerExpanded[path2]
         }
       })),
       pinTab: (tabId) => set((state) => ({
@@ -181,12 +6006,12 @@ const useIdeStore = create()(
           navigationHistory: updatedHistory
         });
       },
-      openTab: (tab, options = false) => {
+      openTab: (tab2, options = false) => {
         const { tabs, navigationHistory, historyIndex } = get();
         const newTab = typeof options === "boolean" ? options : !!(options == null ? void 0 : options.newTab);
         const fromHistory = typeof options === "object" && !!(options == null ? void 0 : options.fromHistory);
-        const isPreview = typeof options === "object" && (options == null ? void 0 : options.isPreview) !== void 0 ? options.isPreview : tab.isPreview ?? false;
-        const tabToOpen = { ...tab, isPreview };
+        const isPreview = typeof options === "object" && (options == null ? void 0 : options.isPreview) !== void 0 ? options.isPreview : tab2.isPreview ?? false;
+        const tabToOpen = { ...tab2, isPreview };
         if (!fromHistory) {
           const currentEntry = navigationHistory[historyIndex];
           if (!currentEntry || currentEntry.tab.id !== tabToOpen.id) {
@@ -242,7 +6067,7 @@ const useIdeStore = create()(
         get().openTab(targetTab, { fromHistory: true });
       },
       closeTab: (tabId) => {
-        var _a;
+        var _a2;
         const { tabs, activeTabId } = get();
         const target = tabs.find((t) => t.id === tabId);
         if (!target || !target.closable) return;
@@ -264,7 +6089,7 @@ const useIdeStore = create()(
         if (activeTabId === tabId) {
           const closedIndex = tabs.findIndex((t) => t.id === tabId);
           const nextTab = remaining[Math.max(0, closedIndex - 1)];
-          nextActiveId = nextTab ? nextTab.id : ((_a = remaining[0]) == null ? void 0 : _a.id) ?? "";
+          nextActiveId = nextTab ? nextTab.id : ((_a2 = remaining[0]) == null ? void 0 : _a2.id) ?? "";
         }
         set({
           tabs: remaining,
@@ -298,10 +6123,3369 @@ const useIdeStore = create()(
     }
   )
 );
-const ideStore = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-  __proto__: null,
-  useIdeStore
-}, Symbol.toStringTag, { value: "Module" }));
+var U = 1, Y$1 = 0.9, H = 0.8, J = 0.17, p = 0.1, u = 0.999, $ = 0.9999;
+var k$1 = 0.99, m = /[\\\/_+.#"@\[\(\{&]/, B$1 = /[\\\/_+.#"@\[\(\{&]/g, K$1 = /[\s-]/, X$1 = /[\s-]/g;
+function G(_, C, h, P2, A, f, O) {
+  if (f === C.length) return A === _.length ? U : k$1;
+  var T2 = `${A},${f}`;
+  if (O[T2] !== void 0) return O[T2];
+  for (var L2 = P2.charAt(f), c = h.indexOf(L2, A), S = 0, E, N2, R, M; c >= 0; ) E = G(_, C, h, P2, c + 1, f + 1, O), E > S && (c === A ? E *= U : m.test(_.charAt(c - 1)) ? (E *= H, R = _.slice(A, c - 1).match(B$1), R && A > 0 && (E *= Math.pow(u, R.length))) : K$1.test(_.charAt(c - 1)) ? (E *= Y$1, M = _.slice(A, c - 1).match(X$1), M && A > 0 && (E *= Math.pow(u, M.length))) : (E *= J, A > 0 && (E *= Math.pow(u, c - A))), _.charAt(c) !== C.charAt(f) && (E *= $)), (E < p && h.charAt(c - 1) === P2.charAt(f + 1) || P2.charAt(f + 1) === P2.charAt(f) && h.charAt(c - 1) !== P2.charAt(f)) && (N2 = G(_, C, h, P2, c + 1, f + 2, O), N2 * p > E && (E = N2 * p)), E > S && (S = E), c = h.indexOf(L2, c + 1);
+  return O[T2] = S, S;
+}
+function D(_) {
+  return _.toLowerCase().replace(X$1, " ");
+}
+function W(_, C, h) {
+  return _ = h && h.length > 0 ? `${_ + " " + h.join(" ")}` : _, G(_, C, D(_), D(C), 0, 0, {});
+}
+var __defProp$e = Object.defineProperty;
+var __name$e = (target, value) => __defProp$e(target, "name", { value, configurable: true });
+var canUseDOM = !!(typeof window !== "undefined" && window.document && window.document.createElement);
+function composeEventHandlers(originalEventHandler, ourEventHandler, { checkForDefaultPrevented = true } = {}) {
+  return /* @__PURE__ */ __name$e(function handleEvent(event) {
+    originalEventHandler == null ? void 0 : originalEventHandler(event);
+    if (checkForDefaultPrevented === false || !event || !event.defaultPrevented) {
+      return ourEventHandler == null ? void 0 : ourEventHandler(event);
+    }
+  }, "handleEvent");
+}
+__name$e(composeEventHandlers, "composeEventHandlers");
+function getOwnerWindow(element2) {
+  var _a2;
+  if (!canUseDOM) {
+    throw new Error("Cannot access window outside of the DOM");
+  }
+  return ((_a2 = element2 == null ? void 0 : element2.ownerDocument) == null ? void 0 : _a2.defaultView) ?? window;
+}
+__name$e(getOwnerWindow, "getOwnerWindow");
+function getOwnerDocument(element2) {
+  if (!canUseDOM) {
+    throw new Error("Cannot access document outside of the DOM");
+  }
+  return (element2 == null ? void 0 : element2.ownerDocument) ?? document;
+}
+__name$e(getOwnerDocument, "getOwnerDocument");
+function getActiveElement(node2, activeDescendant = false) {
+  const { activeElement } = getOwnerDocument(node2);
+  if (!(activeElement == null ? void 0 : activeElement.nodeName)) {
+    return null;
+  }
+  if (isFrame(activeElement) && activeElement.contentDocument) {
+    return getActiveElement(activeElement.contentDocument.body, activeDescendant);
+  }
+  if (activeDescendant) {
+    const id = activeElement.getAttribute("aria-activedescendant");
+    if (id) {
+      const element2 = getOwnerDocument(activeElement).getElementById(id);
+      if (element2) {
+        return element2;
+      }
+    }
+  }
+  return activeElement;
+}
+__name$e(getActiveElement, "getActiveElement");
+function isFrame(element2) {
+  return element2.tagName === "IFRAME";
+}
+__name$e(isFrame, "isFrame");
+var __defProp$d = Object.defineProperty;
+var __name$d = (target, value) => __defProp$d(target, "name", { value, configurable: true });
+function setRef$1(ref, value) {
+  if (typeof ref === "function") {
+    return ref(value);
+  } else if (ref !== null && ref !== void 0) {
+    ref.current = value;
+  }
+}
+__name$d(setRef$1, "setRef");
+function composeRefs(...refs) {
+  return (node2) => {
+    let hasCleanup = false;
+    const cleanups = refs.map((ref) => {
+      const cleanup = setRef$1(ref, node2);
+      if (!hasCleanup && typeof cleanup == "function") {
+        hasCleanup = true;
+      }
+      return cleanup;
+    });
+    if (hasCleanup) {
+      return () => {
+        for (let i = 0; i < cleanups.length; i++) {
+          const cleanup = cleanups[i];
+          if (typeof cleanup == "function") {
+            cleanup();
+          } else {
+            setRef$1(refs[i], null);
+          }
+        }
+      };
+    }
+  };
+}
+__name$d(composeRefs, "composeRefs");
+function useComposedRefs(...refs) {
+  return reactExports.useCallback(composeRefs(...refs), refs);
+}
+__name$d(useComposedRefs, "useComposedRefs");
+var __defProp$c = Object.defineProperty;
+var __name$c = (target, value) => __defProp$c(target, "name", { value, configurable: true });
+// @__NO_SIDE_EFFECTS__
+function createContext2(rootComponentName, defaultContext) {
+  const Context = reactExports.createContext(defaultContext);
+  Context.displayName = rootComponentName + "Context";
+  const Provider = /* @__PURE__ */ __name$c((props2) => {
+    const { children, ...context } = props2;
+    const value = reactExports.useMemo(() => context, Object.values(context));
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Context.Provider, { value, children });
+  }, "Provider");
+  Provider.displayName = rootComponentName + "Provider";
+  function useContext2(consumerName, options = {}) {
+    const { optional = false } = options;
+    const context = reactExports.useContext(Context);
+    if (context) return context;
+    if (defaultContext !== void 0) return defaultContext;
+    if (optional) return void 0;
+    throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
+  }
+  __name$c(useContext2, "useContext");
+  return [Provider, useContext2];
+}
+__name$c(createContext2, "createContext");
+// @__NO_SIDE_EFFECTS__
+function createContextScope(scopeName, createContextScopeDeps = []) {
+  let defaultContexts = [];
+  function createContext3(rootComponentName, defaultContext) {
+    const BaseContext = reactExports.createContext(defaultContext);
+    BaseContext.displayName = rootComponentName + "Context";
+    const index2 = defaultContexts.length;
+    defaultContexts = [...defaultContexts, defaultContext];
+    const Provider = /* @__PURE__ */ __name$c((props2) => {
+      var _a2;
+      const { scope, children, ...context } = props2;
+      const Context = ((_a2 = scope == null ? void 0 : scope[scopeName]) == null ? void 0 : _a2[index2]) || BaseContext;
+      const value = reactExports.useMemo(() => context, Object.values(context));
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(Context.Provider, { value, children });
+    }, "Provider");
+    Provider.displayName = rootComponentName + "Provider";
+    function useContext2(consumerName, scope, options = {}) {
+      var _a2;
+      const { optional = false } = options;
+      const Context = ((_a2 = scope == null ? void 0 : scope[scopeName]) == null ? void 0 : _a2[index2]) || BaseContext;
+      const context = reactExports.useContext(Context);
+      if (context) return context;
+      if (defaultContext !== void 0) return defaultContext;
+      if (optional) return void 0;
+      throw new Error(`\`${consumerName}\` must be used within \`${rootComponentName}\``);
+    }
+    __name$c(useContext2, "useContext");
+    return [Provider, useContext2];
+  }
+  __name$c(createContext3, "createContext");
+  const createScope = /* @__PURE__ */ __name$c(() => {
+    const scopeContexts = defaultContexts.map((defaultContext) => {
+      return reactExports.createContext(defaultContext);
+    });
+    return /* @__PURE__ */ __name$c(function useScope(scope) {
+      const contexts = (scope == null ? void 0 : scope[scopeName]) || scopeContexts;
+      return reactExports.useMemo(
+        () => ({ [`__scope${scopeName}`]: { ...scope, [scopeName]: contexts } }),
+        [scope, contexts]
+      );
+    }, "useScope");
+  }, "createScope");
+  createScope.scopeName = scopeName;
+  return [createContext3, composeContextScopes(createScope, ...createContextScopeDeps)];
+}
+__name$c(createContextScope, "createContextScope");
+function composeContextScopes(...scopes) {
+  const baseScope = scopes[0];
+  if (scopes.length === 1) return baseScope;
+  const createScope = /* @__PURE__ */ __name$c(() => {
+    const scopeHooks = scopes.map((createScope2) => ({
+      useScope: createScope2(),
+      scopeName: createScope2.scopeName
+    }));
+    return /* @__PURE__ */ __name$c(function useComposedScopes(overrideScopes) {
+      const nextScopes = scopeHooks.reduce((nextScopes2, { useScope, scopeName }) => {
+        const scopeProps = useScope(overrideScopes);
+        const currentScope = scopeProps[`__scope${scopeName}`];
+        return { ...nextScopes2, ...currentScope };
+      }, {});
+      return reactExports.useMemo(() => ({ [`__scope${baseScope.scopeName}`]: nextScopes }), [nextScopes]);
+    }, "useComposedScopes");
+  }, "createScope");
+  createScope.scopeName = baseScope.scopeName;
+  return createScope;
+}
+__name$c(composeContextScopes, "composeContextScopes");
+var useLayoutEffect2 = (globalThis == null ? void 0 : globalThis.document) ? reactExports.useLayoutEffect : () => {
+};
+var __defProp$b = Object.defineProperty;
+var __name$b = (target, value) => __defProp$b(target, "name", { value, configurable: true });
+var useReactId = React[" useId ".trim().toString()] || (() => void 0);
+var count$1 = 0;
+function useId$1(deterministicId) {
+  const [id, setId] = reactExports.useState(useReactId());
+  useLayoutEffect2(() => {
+    if (!deterministicId) setId((reactId) => reactId ?? String(count$1++));
+  }, [deterministicId]);
+  return deterministicId || (id ? `radix-${id}` : "");
+}
+__name$b(useId$1, "useId");
+var __defProp$a = Object.defineProperty;
+var __name$a = (target, value) => __defProp$a(target, "name", { value, configurable: true });
+var useReactEffectEvent = React[" useEffectEvent ".trim().toString()];
+var useReactInsertionEffect = React[" useInsertionEffect ".trim().toString()];
+function useEffectEvent(callback) {
+  if (typeof useReactEffectEvent === "function") {
+    return useReactEffectEvent(callback);
+  }
+  const ref = reactExports.useRef(() => {
+    throw new Error("Cannot call an event handler while rendering.");
+  });
+  if (typeof useReactInsertionEffect === "function") {
+    useReactInsertionEffect(() => {
+      ref.current = callback;
+    });
+  } else {
+    useLayoutEffect2(() => {
+      ref.current = callback;
+    });
+  }
+  return reactExports.useMemo(() => ((...args) => {
+    var _a2;
+    return (_a2 = ref.current) == null ? void 0 : _a2.call(ref, ...args);
+  }), []);
+}
+__name$a(useEffectEvent, "useEffectEvent");
+var __defProp$9 = Object.defineProperty;
+var __name$9 = (target, value) => __defProp$9(target, "name", { value, configurable: true });
+var useInsertionEffect = React[" useInsertionEffect ".trim().toString()] || useLayoutEffect2;
+function useControllableState({
+  prop,
+  defaultProp,
+  onChange = /* @__PURE__ */ __name$9(() => {
+  }, "onChange"),
+  caller
+}) {
+  const [uncontrolledProp, setUncontrolledProp, onChangeRef] = useUncontrolledState({
+    defaultProp,
+    onChange
+  });
+  const isControlled = prop !== void 0;
+  const value = isControlled ? prop : uncontrolledProp;
+  const setValue = reactExports.useCallback(
+    (nextValue) => {
+      var _a2;
+      if (isControlled) {
+        const value2 = isFunction(nextValue) ? nextValue(prop) : nextValue;
+        if (value2 !== prop) {
+          (_a2 = onChangeRef.current) == null ? void 0 : _a2.call(onChangeRef, value2);
+        }
+      } else {
+        setUncontrolledProp(nextValue);
+      }
+    },
+    [isControlled, prop, setUncontrolledProp, onChangeRef]
+  );
+  return [value, setValue];
+}
+__name$9(useControllableState, "useControllableState");
+function useUncontrolledState({
+  defaultProp,
+  onChange
+}) {
+  const [value, setValue] = reactExports.useState(defaultProp);
+  const prevValueRef = reactExports.useRef(value);
+  const onChangeRef = reactExports.useRef(onChange);
+  useInsertionEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+  reactExports.useEffect(() => {
+    var _a2;
+    if (prevValueRef.current !== value) {
+      (_a2 = onChangeRef.current) == null ? void 0 : _a2.call(onChangeRef, value);
+      prevValueRef.current = value;
+    }
+  }, [value, prevValueRef]);
+  return [value, setValue, onChangeRef];
+}
+__name$9(useUncontrolledState, "useUncontrolledState");
+function isFunction(value) {
+  return typeof value === "function";
+}
+__name$9(isFunction, "isFunction");
+var SYNC_STATE = Symbol("RADIX:SYNC_STATE");
+function useControllableStateReducer(reducer, userArgs, initialArg, init) {
+  const { prop: controlledState, defaultProp, onChange: onChangeProp, caller } = userArgs;
+  const isControlled = controlledState !== void 0;
+  const onChange = useEffectEvent(onChangeProp);
+  const args = [{ ...initialArg, state: defaultProp }];
+  if (init) {
+    args.push(init);
+  }
+  const [internalState, dispatch] = reactExports.useReducer(
+    (state2, action) => {
+      if (action.type === SYNC_STATE) {
+        return { ...state2, state: action.state };
+      }
+      const next = reducer(state2, action);
+      if (isControlled && !Object.is(next.state, state2.state)) {
+        onChange(next.state);
+      }
+      return next;
+    },
+    ...args
+  );
+  const uncontrolledState = internalState.state;
+  const prevValueRef = reactExports.useRef(uncontrolledState);
+  reactExports.useEffect(() => {
+    if (prevValueRef.current !== uncontrolledState) {
+      prevValueRef.current = uncontrolledState;
+      if (!isControlled) {
+        onChange(uncontrolledState);
+      }
+    }
+  }, [uncontrolledState, prevValueRef, isControlled]);
+  const state = reactExports.useMemo(() => {
+    const isControlled2 = controlledState !== void 0;
+    if (isControlled2) {
+      return { ...internalState, state: controlledState };
+    }
+    return internalState;
+  }, [internalState, controlledState]);
+  reactExports.useEffect(() => {
+    if (isControlled && !Object.is(controlledState, internalState.state)) {
+      dispatch({ type: SYNC_STATE, state: controlledState });
+    }
+  }, [controlledState, internalState.state, isControlled]);
+  return [state, dispatch];
+}
+__name$9(useControllableStateReducer, "useControllableStateReducer");
+var __defProp$8 = Object.defineProperty;
+var __name$8 = (target, value) => __defProp$8(target, "name", { value, configurable: true });
+// @__NO_SIDE_EFFECTS__
+function createSlot(ownerName) {
+  const Slot2 = reactExports.forwardRef((props2, forwardedRef) => {
+    let { children, ...slotProps } = props2;
+    let slottableElement = null;
+    let hasSlottable = false;
+    const newChildren = [];
+    if (isLazyComponent(children) && typeof use === "function") {
+      children = use(children._payload);
+    }
+    reactExports.Children.forEach(children, (maybeSlottable) => {
+      var _a2;
+      if (isSlottable(maybeSlottable)) {
+        hasSlottable = true;
+        const slottable = maybeSlottable;
+        let child = "child" in slottable.props ? slottable.props.child : slottable.props.children;
+        if (isLazyComponent(child) && typeof use === "function") {
+          child = use(child._payload);
+        }
+        slottableElement = getSlottableElementFromSlottable(slottable, child);
+        newChildren.push((_a2 = slottableElement == null ? void 0 : slottableElement.props) == null ? void 0 : _a2.children);
+      } else {
+        newChildren.push(maybeSlottable);
+      }
+    });
+    if (slottableElement) {
+      slottableElement = reactExports.cloneElement(slottableElement, void 0, newChildren);
+    } else if (
+      // A `Slottable` was found but it didn't resolve to a single element (e.g.
+      // it wrapped multiple elements, text, or a render-prop `child` that
+      // wasn't an element). Don't fall back to treating the `Slottable` wrapper
+      // itself as the slot target — throw a descriptive error below instead.
+      !hasSlottable && reactExports.Children.count(children) === 1 && reactExports.isValidElement(children)
+    ) {
+      slottableElement = children;
+    }
+    const slottableElementRef = slottableElement ? getElementRef$1(slottableElement) : void 0;
+    const composedRef = useComposedRefs(forwardedRef, slottableElementRef);
+    if (!slottableElement) {
+      if (children || children === 0) {
+        throw new Error(
+          hasSlottable ? createSlottableError(ownerName) : createSlotError(ownerName)
+        );
+      }
+      return children;
+    }
+    const mergedProps = mergeProps(slotProps, slottableElement.props ?? {});
+    if (slottableElement.type !== reactExports.Fragment) {
+      mergedProps.ref = forwardedRef ? composedRef : slottableElementRef;
+    }
+    return reactExports.cloneElement(slottableElement, mergedProps);
+  });
+  Slot2.displayName = `${ownerName}.Slot`;
+  return Slot2;
+}
+__name$8(createSlot, "createSlot");
+var SLOTTABLE_IDENTIFIER = Symbol.for("radix.slottable");
+// @__NO_SIDE_EFFECTS__
+function createSlottable(ownerName) {
+  const Slottable2 = /* @__PURE__ */ __name$8((props2) => "child" in props2 ? props2.children(props2.child) : props2.children, "Slottable");
+  Slottable2.displayName = `${ownerName}.Slottable`;
+  Slottable2.__radixId = SLOTTABLE_IDENTIFIER;
+  return Slottable2;
+}
+__name$8(createSlottable, "createSlottable");
+var getSlottableElementFromSlottable = /* @__PURE__ */ __name$8((slottable, child) => {
+  if ("child" in slottable.props) {
+    const child2 = slottable.props.child;
+    if (!reactExports.isValidElement(child2)) return null;
+    return reactExports.cloneElement(child2, void 0, slottable.props.children(child2.props.children));
+  }
+  return reactExports.isValidElement(child) ? child : null;
+}, "getSlottableElementFromSlottable");
+function mergeProps(slotProps, childProps) {
+  const overrideProps = { ...childProps };
+  for (const propName in childProps) {
+    const slotPropValue = slotProps[propName];
+    const childPropValue = childProps[propName];
+    const isHandler = /^on[A-Z]/.test(propName);
+    if (isHandler) {
+      if (slotPropValue && childPropValue) {
+        overrideProps[propName] = (...args) => {
+          const result = childPropValue(...args);
+          slotPropValue(...args);
+          return result;
+        };
+      } else if (slotPropValue) {
+        overrideProps[propName] = slotPropValue;
+      }
+    } else if (propName === "style") {
+      overrideProps[propName] = { ...slotPropValue, ...childPropValue };
+    } else if (propName === "className") {
+      overrideProps[propName] = [slotPropValue, childPropValue].filter(Boolean).join(" ");
+    }
+  }
+  return { ...slotProps, ...overrideProps };
+}
+__name$8(mergeProps, "mergeProps");
+function getElementRef$1(element2) {
+  var _a2, _b2;
+  let getter = (_a2 = Object.getOwnPropertyDescriptor(element2.props, "ref")) == null ? void 0 : _a2.get;
+  let mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+  if (mayWarn) {
+    return element2.ref;
+  }
+  getter = (_b2 = Object.getOwnPropertyDescriptor(element2, "ref")) == null ? void 0 : _b2.get;
+  mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+  if (mayWarn) {
+    return element2.props.ref;
+  }
+  return element2.props.ref || element2.ref;
+}
+__name$8(getElementRef$1, "getElementRef");
+function isSlottable(child) {
+  return reactExports.isValidElement(child) && typeof child.type === "function" && "__radixId" in child.type && child.type.__radixId === SLOTTABLE_IDENTIFIER;
+}
+__name$8(isSlottable, "isSlottable");
+var REACT_LAZY_TYPE = Symbol.for("react.lazy");
+function isLazyComponent(element2) {
+  return element2 != null && typeof element2 === "object" && "$$typeof" in element2 && element2.$$typeof === REACT_LAZY_TYPE && "_payload" in element2 && isPromiseLike(element2._payload);
+}
+__name$8(isLazyComponent, "isLazyComponent");
+function isPromiseLike(value) {
+  return typeof value === "object" && value !== null && "then" in value;
+}
+__name$8(isPromiseLike, "isPromiseLike");
+var createSlotError = /* @__PURE__ */ __name$8((ownerName) => {
+  return `${ownerName} failed to slot onto its children. Expected a single React element child or \`Slottable\`.`;
+}, "createSlotError");
+var createSlottableError = /* @__PURE__ */ __name$8((ownerName) => {
+  return `${ownerName} failed to slot onto its \`Slottable\`. Expected \`Slottable\` to receive a single React element child.`;
+}, "createSlottableError");
+var use = React[" use ".trim().toString()];
+var __defProp$7 = Object.defineProperty;
+var __name$7 = (target, value) => __defProp$7(target, "name", { value, configurable: true });
+var NODES = [
+  "a",
+  "button",
+  "div",
+  "form",
+  "h2",
+  "h3",
+  "img",
+  "input",
+  "label",
+  "li",
+  "nav",
+  "ol",
+  "p",
+  "select",
+  "span",
+  "svg",
+  "ul"
+];
+var Primitive = NODES.reduce((primitive, node2) => {
+  const Slot2 = /* @__PURE__ */ createSlot(`Primitive.${node2}`);
+  const Node2 = reactExports.forwardRef((props2, forwardedRef) => {
+    const { asChild, ...primitiveProps } = props2;
+    const Comp = asChild ? Slot2 : node2;
+    if (typeof window !== "undefined") {
+      window[Symbol.for("radix-ui")] = true;
+    }
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Comp, { ...primitiveProps, ref: forwardedRef });
+  });
+  Node2.displayName = `Primitive.${node2}`;
+  return { ...primitive, [node2]: Node2 };
+}, {});
+function dispatchDiscreteCustomEvent(target, event) {
+  if (target) reactDomExports.flushSync(() => target.dispatchEvent(event));
+}
+__name$7(dispatchDiscreteCustomEvent, "dispatchDiscreteCustomEvent");
+var __defProp$6 = Object.defineProperty;
+var __name$6 = (target, value) => __defProp$6(target, "name", { value, configurable: true });
+function useCallbackRef$1(callback) {
+  const callbackRef = reactExports.useRef(callback);
+  reactExports.useEffect(() => {
+    callbackRef.current = callback;
+  });
+  return reactExports.useMemo(() => ((...args) => {
+    var _a2;
+    return (_a2 = callbackRef.current) == null ? void 0 : _a2.call(callbackRef, ...args);
+  }), []);
+}
+__name$6(useCallbackRef$1, "useCallbackRef");
+var __defProp$5 = Object.defineProperty;
+var __name$5 = (target, value) => __defProp$5(target, "name", { value, configurable: true });
+var CONTEXT_UPDATE = "dismissableLayer.update";
+var POINTER_DOWN_OUTSIDE = "dismissableLayer.pointerDownOutside";
+var FOCUS_OUTSIDE = "dismissableLayer.focusOutside";
+var originalBodyPointerEvents;
+var DismissableLayerContext = reactExports.createContext({
+  layers: /* @__PURE__ */ new Set(),
+  layersWithOutsidePointerEventsDisabled: /* @__PURE__ */ new Set(),
+  branches: /* @__PURE__ */ new Set(),
+  // Outside elements that belong to a layer's own dismiss affordance (eg, a
+  // dialog overlay). Pressing them should dismiss the layer regardless of
+  // whether or not they stop propagation.
+  //
+  // See https://github.com/radix-ui/primitives/issues/3346
+  dismissableSurfaces: /* @__PURE__ */ new Set()
+});
+var DismissableLayer = /* @__PURE__ */ reactExports.forwardRef(
+  // blank line to reduce diff noise
+  /* @__PURE__ */ __name$5(function DismissableLayer2(props2, forwardedRef) {
+    const {
+      disableOutsidePointerEvents = false,
+      deferPointerDownOutside = false,
+      onEscapeKeyDown,
+      onPointerDownOutside,
+      onFocusOutside,
+      onInteractOutside,
+      onDismiss,
+      ...layerProps
+    } = props2;
+    const context = reactExports.useContext(DismissableLayerContext);
+    const [node2, setNode] = reactExports.useState(null);
+    const ownerDocument = (node2 == null ? void 0 : node2.ownerDocument) ?? (globalThis == null ? void 0 : globalThis.document);
+    const [, force] = reactExports.useState({});
+    const composedRefs = useComposedRefs(forwardedRef, setNode);
+    const layers = Array.from(context.layers);
+    const [highestLayerWithOutsidePointerEventsDisabled] = [
+      ...context.layersWithOutsidePointerEventsDisabled
+    ].slice(-1);
+    const highestLayerWithOutsidePointerEventsDisabledIndex = highestLayerWithOutsidePointerEventsDisabled ? layers.indexOf(highestLayerWithOutsidePointerEventsDisabled) : -1;
+    const index2 = node2 ? layers.indexOf(node2) : -1;
+    const isBodyPointerEventsDisabled = context.layersWithOutsidePointerEventsDisabled.size > 0;
+    const isPointerEventsEnabled = index2 >= highestLayerWithOutsidePointerEventsDisabledIndex;
+    const isDeferredPointerDownOutsideRef = reactExports.useRef(false);
+    const pointerDownOutside = usePointerDownOutside(
+      (event) => {
+        onPointerDownOutside == null ? void 0 : onPointerDownOutside(event);
+        onInteractOutside == null ? void 0 : onInteractOutside(event);
+        if (!event.defaultPrevented) onDismiss == null ? void 0 : onDismiss();
+      },
+      {
+        ownerDocument,
+        deferPointerDownOutside,
+        isDeferredPointerDownOutsideRef,
+        dismissableSurfaces: context.dismissableSurfaces,
+        shouldHandlePointerDownOutside: reactExports.useCallback(
+          (target) => {
+            if (!(target instanceof Node)) {
+              return false;
+            }
+            const isPointerDownOnBranch = [...context.branches].some(
+              (branch) => branch.contains(target)
+            );
+            return isPointerEventsEnabled && !isPointerDownOnBranch;
+          },
+          [context.branches, isPointerEventsEnabled]
+        )
+      }
+    );
+    const focusOutside = useFocusOutside((event) => {
+      if (deferPointerDownOutside && isDeferredPointerDownOutsideRef.current) {
+        return;
+      }
+      const target = event.target;
+      const isFocusInBranch = [...context.branches].some((branch) => branch.contains(target));
+      if (isFocusInBranch) return;
+      onFocusOutside == null ? void 0 : onFocusOutside(event);
+      onInteractOutside == null ? void 0 : onInteractOutside(event);
+      if (!event.defaultPrevented) onDismiss == null ? void 0 : onDismiss();
+    }, ownerDocument);
+    const isHighestLayer = node2 ? index2 === layers.length - 1 : false;
+    const handleKeyDown = useCallbackRef$1((event) => {
+      if (event.key !== "Escape") {
+        return;
+      }
+      onEscapeKeyDown == null ? void 0 : onEscapeKeyDown(event);
+      if (!event.defaultPrevented && onDismiss) {
+        event.preventDefault();
+        onDismiss();
+      }
+    });
+    reactExports.useEffect(() => {
+      if (!isHighestLayer) {
+        return;
+      }
+      ownerDocument.addEventListener("keydown", handleKeyDown, { capture: true });
+      return () => ownerDocument.removeEventListener("keydown", handleKeyDown, { capture: true });
+    }, [ownerDocument, isHighestLayer, handleKeyDown]);
+    reactExports.useEffect(() => {
+      if (!node2) return;
+      if (disableOutsidePointerEvents) {
+        if (context.layersWithOutsidePointerEventsDisabled.size === 0) {
+          originalBodyPointerEvents = ownerDocument.body.style.pointerEvents;
+          ownerDocument.body.style.pointerEvents = "none";
+        }
+        context.layersWithOutsidePointerEventsDisabled.add(node2);
+      }
+      context.layers.add(node2);
+      dispatchUpdate();
+      return () => {
+        if (disableOutsidePointerEvents) {
+          context.layersWithOutsidePointerEventsDisabled.delete(node2);
+          if (context.layersWithOutsidePointerEventsDisabled.size === 0) {
+            ownerDocument.body.style.pointerEvents = originalBodyPointerEvents;
+          }
+        }
+      };
+    }, [node2, ownerDocument, disableOutsidePointerEvents, context]);
+    reactExports.useEffect(() => {
+      return () => {
+        if (!node2) return;
+        context.layers.delete(node2);
+        context.layersWithOutsidePointerEventsDisabled.delete(node2);
+        dispatchUpdate();
+      };
+    }, [node2, context]);
+    reactExports.useEffect(() => {
+      const handleUpdate = /* @__PURE__ */ __name$5(() => force({}), "handleUpdate");
+      document.addEventListener(CONTEXT_UPDATE, handleUpdate);
+      return () => document.removeEventListener(CONTEXT_UPDATE, handleUpdate);
+    }, []);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Primitive.div,
+      {
+        ...layerProps,
+        ref: composedRefs,
+        style: {
+          pointerEvents: isBodyPointerEventsDisabled ? isPointerEventsEnabled ? "auto" : "none" : void 0,
+          ...props2.style
+        },
+        onFocusCapture: composeEventHandlers(props2.onFocusCapture, focusOutside.onFocusCapture),
+        onBlurCapture: composeEventHandlers(props2.onBlurCapture, focusOutside.onBlurCapture),
+        onPointerDownCapture: composeEventHandlers(
+          props2.onPointerDownCapture,
+          pointerDownOutside.onPointerDownCapture
+        )
+      }
+    );
+  }, "DismissableLayer")
+);
+function useDismissableLayerSurface() {
+  const context = reactExports.useContext(DismissableLayerContext);
+  const [node2, setNode] = reactExports.useState(null);
+  reactExports.useEffect(() => {
+    if (!node2) {
+      return;
+    }
+    context.dismissableSurfaces.add(node2);
+    return () => {
+      context.dismissableSurfaces.delete(node2);
+    };
+  }, [node2, context.dismissableSurfaces]);
+  return setNode;
+}
+__name$5(useDismissableLayerSurface, "useDismissableLayerSurface");
+var IS_TRUE = /* @__PURE__ */ __name$5(() => true, "IS_TRUE");
+function usePointerDownOutside(onPointerDownOutside, args) {
+  const {
+    ownerDocument = globalThis == null ? void 0 : globalThis.document,
+    deferPointerDownOutside = false,
+    isDeferredPointerDownOutsideRef,
+    dismissableSurfaces,
+    shouldHandlePointerDownOutside = IS_TRUE
+  } = args;
+  const handlePointerDownOutside = useCallbackRef$1(onPointerDownOutside);
+  const isPointerInsideReactTreeRef = reactExports.useRef(false);
+  const isPointerDownOutsideRef = reactExports.useRef(false);
+  const interceptedOutsideInteractionEventsRef = reactExports.useRef(/* @__PURE__ */ new Map());
+  const handleClickRef = reactExports.useRef(() => {
+  });
+  reactExports.useEffect(() => {
+    function resetOutsideInteraction() {
+      isPointerDownOutsideRef.current = false;
+      isDeferredPointerDownOutsideRef.current = false;
+      interceptedOutsideInteractionEventsRef.current.clear();
+    }
+    __name$5(resetOutsideInteraction, "resetOutsideInteraction");
+    function isOutsideInteractionIntercepted() {
+      return Array.from(interceptedOutsideInteractionEventsRef.current.values()).some(Boolean);
+    }
+    __name$5(isOutsideInteractionIntercepted, "isOutsideInteractionIntercepted");
+    function handleInteractionCapture(event) {
+      if (!isPointerDownOutsideRef.current) {
+        return;
+      }
+      const target = event.target;
+      const isDismissableSurface = target instanceof Node && [...dismissableSurfaces].some((surface) => surface.contains(target));
+      if (!isDismissableSurface) {
+        interceptedOutsideInteractionEventsRef.current.set(event.type, true);
+      }
+      if (event.type === "click") {
+        window.setTimeout(() => {
+          if (isPointerDownOutsideRef.current) {
+            handleClickRef.current();
+          }
+        }, 0);
+      }
+    }
+    __name$5(handleInteractionCapture, "handleInteractionCapture");
+    function handleInteractionBubble(event) {
+      if (isPointerDownOutsideRef.current) {
+        interceptedOutsideInteractionEventsRef.current.set(event.type, false);
+      }
+    }
+    __name$5(handleInteractionBubble, "handleInteractionBubble");
+    const handlePointerDown2 = /* @__PURE__ */ __name$5((event) => {
+      if (event.target && !isPointerInsideReactTreeRef.current) {
+        let handleAndDispatchPointerDownOutsideEvent2 = function() {
+          ownerDocument.removeEventListener("click", handleClickRef.current);
+          const wasOutsideInteractionIntercepted = isOutsideInteractionIntercepted();
+          resetOutsideInteraction();
+          if (!wasOutsideInteractionIntercepted) {
+            handleAndDispatchCustomEvent(
+              POINTER_DOWN_OUTSIDE,
+              handlePointerDownOutside,
+              eventDetail,
+              { discrete: true }
+            );
+          }
+        };
+        __name$5(handleAndDispatchPointerDownOutsideEvent2, "handleAndDispatchPointerDownOutsideEvent");
+        if (!shouldHandlePointerDownOutside(event.target)) {
+          ownerDocument.removeEventListener("click", handleClickRef.current);
+          resetOutsideInteraction();
+          isPointerInsideReactTreeRef.current = false;
+          return;
+        }
+        const eventDetail = { originalEvent: event };
+        isPointerDownOutsideRef.current = true;
+        isDeferredPointerDownOutsideRef.current = deferPointerDownOutside && event.button === 0;
+        interceptedOutsideInteractionEventsRef.current.clear();
+        if (!deferPointerDownOutside || event.button !== 0) {
+          handleAndDispatchPointerDownOutsideEvent2();
+        } else {
+          ownerDocument.removeEventListener("click", handleClickRef.current);
+          handleClickRef.current = handleAndDispatchPointerDownOutsideEvent2;
+          ownerDocument.addEventListener("click", handleClickRef.current, { once: true });
+        }
+      } else {
+        ownerDocument.removeEventListener("click", handleClickRef.current);
+        resetOutsideInteraction();
+      }
+      isPointerInsideReactTreeRef.current = false;
+    }, "handlePointerDown");
+    const outsideInteractionEvents = [
+      "pointerup",
+      "mousedown",
+      "mouseup",
+      "touchstart",
+      "touchend",
+      "click"
+    ];
+    for (const eventName of outsideInteractionEvents) {
+      ownerDocument.addEventListener(eventName, handleInteractionCapture, true);
+      ownerDocument.addEventListener(eventName, handleInteractionBubble);
+    }
+    const timerId = window.setTimeout(() => {
+      ownerDocument.addEventListener("pointerdown", handlePointerDown2);
+    }, 0);
+    return () => {
+      window.clearTimeout(timerId);
+      ownerDocument.removeEventListener("pointerdown", handlePointerDown2);
+      ownerDocument.removeEventListener("click", handleClickRef.current);
+      for (const eventName of outsideInteractionEvents) {
+        ownerDocument.removeEventListener(eventName, handleInteractionCapture, true);
+        ownerDocument.removeEventListener(eventName, handleInteractionBubble);
+      }
+    };
+  }, [
+    ownerDocument,
+    handlePointerDownOutside,
+    deferPointerDownOutside,
+    isDeferredPointerDownOutsideRef,
+    dismissableSurfaces,
+    shouldHandlePointerDownOutside
+  ]);
+  return {
+    // ensures we check React component tree (not just DOM tree)
+    onPointerDownCapture: /* @__PURE__ */ __name$5(() => isPointerInsideReactTreeRef.current = true, "onPointerDownCapture")
+  };
+}
+__name$5(usePointerDownOutside, "usePointerDownOutside");
+function useFocusOutside(onFocusOutside, ownerDocument = globalThis == null ? void 0 : globalThis.document) {
+  const handleFocusOutside = useCallbackRef$1(onFocusOutside);
+  const isFocusInsideReactTreeRef = reactExports.useRef(false);
+  reactExports.useEffect(() => {
+    const handleFocus = /* @__PURE__ */ __name$5((event) => {
+      if (event.target && !isFocusInsideReactTreeRef.current) {
+        const eventDetail = { originalEvent: event };
+        handleAndDispatchCustomEvent(FOCUS_OUTSIDE, handleFocusOutside, eventDetail, {
+          discrete: false
+        });
+      }
+    }, "handleFocus");
+    ownerDocument.addEventListener("focusin", handleFocus);
+    return () => ownerDocument.removeEventListener("focusin", handleFocus);
+  }, [ownerDocument, handleFocusOutside]);
+  return {
+    onFocusCapture: /* @__PURE__ */ __name$5(() => isFocusInsideReactTreeRef.current = true, "onFocusCapture"),
+    onBlurCapture: /* @__PURE__ */ __name$5(() => isFocusInsideReactTreeRef.current = false, "onBlurCapture")
+  };
+}
+__name$5(useFocusOutside, "useFocusOutside");
+function dispatchUpdate() {
+  const event = new CustomEvent(CONTEXT_UPDATE);
+  document.dispatchEvent(event);
+}
+__name$5(dispatchUpdate, "dispatchUpdate");
+function handleAndDispatchCustomEvent(name2, handler, detail, { discrete }) {
+  const target = detail.originalEvent.target;
+  const event = new CustomEvent(name2, { bubbles: false, cancelable: true, detail });
+  if (handler) target.addEventListener(name2, handler, { once: true });
+  if (discrete) {
+    dispatchDiscreteCustomEvent(target, event);
+  } else {
+    target.dispatchEvent(event);
+  }
+}
+__name$5(handleAndDispatchCustomEvent, "handleAndDispatchCustomEvent");
+var __defProp$4 = Object.defineProperty;
+var __name$4 = (target, value) => __defProp$4(target, "name", { value, configurable: true });
+var AUTOFOCUS_ON_MOUNT = "focusScope.autoFocusOnMount";
+var AUTOFOCUS_ON_UNMOUNT = "focusScope.autoFocusOnUnmount";
+var EVENT_OPTIONS = { bubbles: false, cancelable: true };
+var FocusScope = /* @__PURE__ */ reactExports.forwardRef(
+  /* @__PURE__ */ __name$4(function FocusScope2(props2, forwardedRef) {
+    const {
+      loop = false,
+      trapped = false,
+      onMountAutoFocus: onMountAutoFocusProp,
+      onUnmountAutoFocus: onUnmountAutoFocusProp,
+      ...scopeProps
+    } = props2;
+    const [container, setContainer] = reactExports.useState(null);
+    const onMountAutoFocus = useCallbackRef$1(onMountAutoFocusProp);
+    const onUnmountAutoFocus = useCallbackRef$1(onUnmountAutoFocusProp);
+    const lastFocusedElementRef = reactExports.useRef(null);
+    const composedRefs = useComposedRefs(forwardedRef, setContainer);
+    const focusScope = reactExports.useRef({
+      paused: false,
+      pause() {
+        this.paused = true;
+      },
+      resume() {
+        this.paused = false;
+      }
+    }).current;
+    reactExports.useEffect(() => {
+      if (trapped) {
+        let handleFocusIn2 = function(event) {
+          if (focusScope.paused || !container) return;
+          const target = event.target;
+          if (container.contains(target)) {
+            lastFocusedElementRef.current = target;
+          } else {
+            focus(lastFocusedElementRef.current, { select: true });
+          }
+        }, handleFocusOut2 = function(event) {
+          if (focusScope.paused || !container) return;
+          const relatedTarget = event.relatedTarget;
+          if (relatedTarget === null) return;
+          if (!container.contains(relatedTarget)) {
+            focus(lastFocusedElementRef.current, { select: true });
+          }
+        }, handleMutations2 = function(mutations) {
+          const focusedElement = document.activeElement;
+          if (focusedElement !== document.body) return;
+          for (const mutation of mutations) {
+            if (mutation.removedNodes.length > 0) focus(container);
+          }
+        };
+        __name$4(handleFocusIn2, "handleFocusIn");
+        __name$4(handleFocusOut2, "handleFocusOut");
+        __name$4(handleMutations2, "handleMutations");
+        document.addEventListener("focusin", handleFocusIn2);
+        document.addEventListener("focusout", handleFocusOut2);
+        const mutationObserver = new MutationObserver(handleMutations2);
+        if (container) mutationObserver.observe(container, { childList: true, subtree: true });
+        return () => {
+          document.removeEventListener("focusin", handleFocusIn2);
+          document.removeEventListener("focusout", handleFocusOut2);
+          mutationObserver.disconnect();
+        };
+      }
+    }, [trapped, container, focusScope.paused]);
+    reactExports.useEffect(() => {
+      if (container) {
+        focusScopesStack.add(focusScope);
+        const previouslyFocusedElement = document.activeElement;
+        const hasFocusedCandidate = container.contains(previouslyFocusedElement);
+        if (!hasFocusedCandidate) {
+          const mountEvent = new CustomEvent(AUTOFOCUS_ON_MOUNT, EVENT_OPTIONS);
+          container.addEventListener(AUTOFOCUS_ON_MOUNT, onMountAutoFocus);
+          container.dispatchEvent(mountEvent);
+          if (!mountEvent.defaultPrevented) {
+            focusFirst(removeLinks(getTabbableCandidates(container)), { select: true });
+            if (document.activeElement === previouslyFocusedElement) {
+              focus(container);
+            }
+          }
+        }
+        return () => {
+          container.removeEventListener(AUTOFOCUS_ON_MOUNT, onMountAutoFocus);
+          setTimeout(() => {
+            const unmountEvent = new CustomEvent(AUTOFOCUS_ON_UNMOUNT, EVENT_OPTIONS);
+            container.addEventListener(AUTOFOCUS_ON_UNMOUNT, onUnmountAutoFocus);
+            container.dispatchEvent(unmountEvent);
+            if (!unmountEvent.defaultPrevented) {
+              focus(previouslyFocusedElement ?? document.body, { select: true });
+            }
+            container.removeEventListener(AUTOFOCUS_ON_UNMOUNT, onUnmountAutoFocus);
+            focusScopesStack.remove(focusScope);
+          }, 0);
+        };
+      }
+    }, [container, onMountAutoFocus, onUnmountAutoFocus, focusScope]);
+    const handleKeyDown = reactExports.useCallback(
+      (event) => {
+        if (!loop && !trapped) return;
+        if (focusScope.paused) return;
+        const isTabKey = event.key === "Tab" && !event.altKey && !event.ctrlKey && !event.metaKey;
+        const focusedElement = document.activeElement;
+        if (isTabKey && focusedElement) {
+          const container2 = event.currentTarget;
+          const [first, last] = getTabbableEdges(container2);
+          const hasTabbableElementsInside = first && last;
+          if (!hasTabbableElementsInside) {
+            if (focusedElement === container2) event.preventDefault();
+          } else {
+            if (!event.shiftKey && focusedElement === last) {
+              event.preventDefault();
+              if (loop) focus(first, { select: true });
+            } else if (event.shiftKey && focusedElement === first) {
+              event.preventDefault();
+              if (loop) focus(last, { select: true });
+            }
+          }
+        }
+      },
+      [loop, trapped, focusScope.paused]
+    );
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Primitive.div, { tabIndex: -1, ...scopeProps, ref: composedRefs, onKeyDown: handleKeyDown });
+  }, "FocusScope")
+);
+function focusFirst(candidates, { select = false } = {}) {
+  const previouslyFocusedElement = document.activeElement;
+  for (const candidate of candidates) {
+    focus(candidate, { select });
+    if (document.activeElement !== previouslyFocusedElement) return;
+  }
+}
+__name$4(focusFirst, "focusFirst");
+function getTabbableEdges(container) {
+  const candidates = getTabbableCandidates(container);
+  const first = findVisible(candidates, container);
+  const last = findVisible(candidates.reverse(), container);
+  return [first, last];
+}
+__name$4(getTabbableEdges, "getTabbableEdges");
+function getTabbableCandidates(container) {
+  const nodes = [];
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, {
+    acceptNode: /* @__PURE__ */ __name$4((node2) => {
+      const isHiddenInput = node2.tagName === "INPUT" && node2.type === "hidden";
+      if (node2.disabled || node2.hidden || isHiddenInput) return NodeFilter.FILTER_SKIP;
+      return node2.tabIndex >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+    }, "acceptNode")
+  });
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  return nodes;
+}
+__name$4(getTabbableCandidates, "getTabbableCandidates");
+function findVisible(elements, container) {
+  const canUseCheckVisibility = typeof container.checkVisibility === "function" && container.checkVisibility({ checkVisibilityCSS: true });
+  for (const element2 of elements) {
+    const hidden = canUseCheckVisibility ? !element2.checkVisibility({ checkVisibilityCSS: true }) : isHidden(element2, { upTo: container });
+    if (!hidden) {
+      return element2;
+    }
+  }
+}
+__name$4(findVisible, "findVisible");
+function isHidden(node2, { upTo }) {
+  if (getComputedStyle(node2).visibility === "hidden") return true;
+  while (node2) {
+    if (upTo !== void 0 && node2 === upTo) return false;
+    if (getComputedStyle(node2).display === "none") return true;
+    node2 = node2.parentElement;
+  }
+  return false;
+}
+__name$4(isHidden, "isHidden");
+function isSelectableInput(element2) {
+  return element2 instanceof HTMLInputElement && "select" in element2;
+}
+__name$4(isSelectableInput, "isSelectableInput");
+function focus(element2, { select = false } = {}) {
+  if (element2 && element2.focus) {
+    const previouslyFocusedElement = document.activeElement;
+    element2.focus({ preventScroll: true });
+    if (element2 !== previouslyFocusedElement && isSelectableInput(element2) && select)
+      element2.select();
+  }
+}
+__name$4(focus, "focus");
+var focusScopesStack = createFocusScopesStack();
+function createFocusScopesStack() {
+  let stack = [];
+  return {
+    add(focusScope) {
+      const activeFocusScope = stack[0];
+      if (focusScope !== activeFocusScope) {
+        activeFocusScope == null ? void 0 : activeFocusScope.pause();
+      }
+      stack = arrayRemove(stack, focusScope);
+      stack.unshift(focusScope);
+    },
+    remove(focusScope) {
+      var _a2;
+      stack = arrayRemove(stack, focusScope);
+      (_a2 = stack[0]) == null ? void 0 : _a2.resume();
+    }
+  };
+}
+__name$4(createFocusScopesStack, "createFocusScopesStack");
+function arrayRemove(array, item) {
+  const updatedArray = [...array];
+  const index2 = updatedArray.indexOf(item);
+  if (index2 !== -1) {
+    updatedArray.splice(index2, 1);
+  }
+  return updatedArray;
+}
+__name$4(arrayRemove, "arrayRemove");
+function removeLinks(items) {
+  return items.filter((item) => item.tagName !== "A");
+}
+__name$4(removeLinks, "removeLinks");
+var __defProp$3 = Object.defineProperty;
+var __name$3 = (target, value) => __defProp$3(target, "name", { value, configurable: true });
+var Portal = /* @__PURE__ */ reactExports.forwardRef(
+  /* @__PURE__ */ __name$3(function Portal2(props2, forwardedRef) {
+    var _a2;
+    const { container: containerProp, ...portalProps } = props2;
+    const [mounted, setMounted] = reactExports.useState(false);
+    useLayoutEffect2(() => setMounted(true), []);
+    const container = containerProp || mounted && ((_a2 = globalThis == null ? void 0 : globalThis.document) == null ? void 0 : _a2.body);
+    return container ? reactDomExports.createPortal(/* @__PURE__ */ jsxRuntimeExports.jsx(Primitive.div, { ...portalProps, ref: forwardedRef }), container) : null;
+  }, "Portal")
+);
+var __defProp$2 = Object.defineProperty;
+var __name$2 = (target, value) => __defProp$2(target, "name", { value, configurable: true });
+function useStateMachine(initialState, machine) {
+  return reactExports.useReducer((state, event) => {
+    const nextState = machine[state][event];
+    return nextState ?? state;
+  }, initialState);
+}
+__name$2(useStateMachine, "useStateMachine");
+var Presence = /* @__PURE__ */ __name$2((props2) => {
+  const { present, children } = props2;
+  const presence = usePresence(present);
+  const child = typeof children === "function" ? children({ present: presence.isPresent }) : reactExports.Children.only(children);
+  const ref = useStableComposedRefs(presence.ref, getElementRef(child));
+  const forceMount = typeof children === "function";
+  return forceMount || presence.isPresent ? reactExports.cloneElement(child, { ref }) : null;
+}, "Presence");
+function usePresence(present) {
+  const [node2, setNode] = reactExports.useState();
+  const stylesRef = reactExports.useRef(null);
+  const prevPresentRef = reactExports.useRef(present);
+  const prevAnimationNameRef = reactExports.useRef("none");
+  const mountAnimationNameRef = reactExports.useRef(void 0);
+  const initialState = present ? "mounted" : "unmounted";
+  const [state, send] = useStateMachine(initialState, {
+    mounted: {
+      UNMOUNT: "unmounted",
+      ANIMATION_OUT: "unmountSuspended"
+    },
+    unmountSuspended: {
+      MOUNT: "mounted",
+      ANIMATION_END: "unmounted"
+    },
+    unmounted: {
+      MOUNT: "mounted"
+    }
+  });
+  reactExports.useEffect(() => {
+    if (state === "mounted") {
+      prevAnimationNameRef.current = mountAnimationNameRef.current ?? getAnimationName(stylesRef.current);
+      mountAnimationNameRef.current = void 0;
+    } else {
+      prevAnimationNameRef.current = "none";
+    }
+  }, [state]);
+  useLayoutEffect2(() => {
+    const styles = stylesRef.current;
+    const wasPresent = prevPresentRef.current;
+    const hasPresentChanged = wasPresent !== present;
+    if (hasPresentChanged) {
+      const prevAnimationName = prevAnimationNameRef.current;
+      const currentAnimationName = getAnimationName(styles);
+      if (present) {
+        mountAnimationNameRef.current = currentAnimationName;
+        send("MOUNT");
+      } else if (currentAnimationName === "none" || (styles == null ? void 0 : styles.display) === "none") {
+        send("UNMOUNT");
+      } else {
+        const isAnimating = prevAnimationName !== currentAnimationName;
+        if (wasPresent && isAnimating) {
+          send("ANIMATION_OUT");
+        } else {
+          send("UNMOUNT");
+        }
+      }
+      prevPresentRef.current = present;
+    }
+  }, [present, send]);
+  useLayoutEffect2(() => {
+    if (node2) {
+      let timeoutId;
+      const ownerWindow = node2.ownerDocument.defaultView ?? window;
+      const handleAnimationEnd = /* @__PURE__ */ __name$2((event) => {
+        const currentAnimationName = getAnimationName(stylesRef.current);
+        const isCurrentAnimation = currentAnimationName.includes(CSS.escape(event.animationName));
+        if (event.target === node2 && isCurrentAnimation) {
+          send("ANIMATION_END");
+          if (!prevPresentRef.current) {
+            const currentFillMode = node2.style.animationFillMode;
+            node2.style.animationFillMode = "forwards";
+            timeoutId = ownerWindow.setTimeout(() => {
+              if (node2.style.animationFillMode === "forwards") {
+                node2.style.animationFillMode = currentFillMode;
+              }
+            });
+          }
+        }
+      }, "handleAnimationEnd");
+      const handleAnimationStart = /* @__PURE__ */ __name$2((event) => {
+        if (event.target === node2) {
+          prevAnimationNameRef.current = getAnimationName(stylesRef.current);
+        }
+      }, "handleAnimationStart");
+      node2.addEventListener("animationstart", handleAnimationStart);
+      node2.addEventListener("animationcancel", handleAnimationEnd);
+      node2.addEventListener("animationend", handleAnimationEnd);
+      return () => {
+        ownerWindow.clearTimeout(timeoutId);
+        node2.removeEventListener("animationstart", handleAnimationStart);
+        node2.removeEventListener("animationcancel", handleAnimationEnd);
+        node2.removeEventListener("animationend", handleAnimationEnd);
+      };
+    } else {
+      send("ANIMATION_END");
+    }
+  }, [node2, send]);
+  return {
+    isPresent: ["mounted", "unmountSuspended"].includes(state),
+    ref: reactExports.useCallback((node22) => {
+      if (node22) {
+        const styles = getComputedStyle(node22);
+        stylesRef.current = styles;
+        mountAnimationNameRef.current = getAnimationName(styles);
+      } else {
+        stylesRef.current = null;
+      }
+      setNode(node22);
+    }, [])
+  };
+}
+__name$2(usePresence, "usePresence");
+function setRef(ref, value) {
+  if (typeof ref === "function") {
+    return ref(value);
+  } else if (ref !== null && ref !== void 0) {
+    ref.current = value;
+  }
+}
+__name$2(setRef, "setRef");
+function useStableComposedRefs(...refs) {
+  const refsRef = reactExports.useRef(refs);
+  refsRef.current = refs;
+  return reactExports.useCallback((node2) => {
+    const currentRefs = refsRef.current;
+    let hasCleanup = false;
+    const cleanups = currentRefs.map((ref) => {
+      const cleanup = setRef(ref, node2);
+      if (!hasCleanup && typeof cleanup === "function") {
+        hasCleanup = true;
+      }
+      return cleanup;
+    });
+    if (hasCleanup) {
+      return () => {
+        for (let i = 0; i < cleanups.length; i++) {
+          const cleanup = cleanups[i];
+          if (typeof cleanup === "function") {
+            cleanup();
+          } else {
+            setRef(currentRefs[i], null);
+          }
+        }
+      };
+    }
+  }, []);
+}
+__name$2(useStableComposedRefs, "useStableComposedRefs");
+function getAnimationName(styles) {
+  return (styles == null ? void 0 : styles.animationName) || "none";
+}
+__name$2(getAnimationName, "getAnimationName");
+function getElementRef(element2) {
+  var _a2, _b2;
+  let getter = (_a2 = Object.getOwnPropertyDescriptor(element2.props, "ref")) == null ? void 0 : _a2.get;
+  let mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+  if (mayWarn) {
+    return element2.ref;
+  }
+  getter = (_b2 = Object.getOwnPropertyDescriptor(element2, "ref")) == null ? void 0 : _b2.get;
+  mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+  if (mayWarn) {
+    return element2.props.ref;
+  }
+  return element2.props.ref || element2.ref;
+}
+__name$2(getElementRef, "getElementRef");
+var __defProp$1 = Object.defineProperty;
+var __name$1 = (target, value) => __defProp$1(target, "name", { value, configurable: true });
+var count = 0;
+var guards = null;
+function FocusGuards(props2) {
+  useFocusGuards();
+  return props2.children;
+}
+__name$1(FocusGuards, "FocusGuards");
+function useFocusGuards() {
+  reactExports.useEffect(() => {
+    if (!guards) {
+      guards = { start: createFocusGuard(), end: createFocusGuard() };
+    }
+    const { start, end } = guards;
+    if (document.body.firstElementChild !== start) {
+      document.body.insertAdjacentElement("afterbegin", start);
+    }
+    if (document.body.lastElementChild !== end) {
+      document.body.insertAdjacentElement("beforeend", end);
+    }
+    count++;
+    return () => {
+      if (count === 1) {
+        guards == null ? void 0 : guards.start.remove();
+        guards == null ? void 0 : guards.end.remove();
+        guards = null;
+      }
+      count = Math.max(0, count - 1);
+    };
+  }, []);
+}
+__name$1(useFocusGuards, "useFocusGuards");
+function createFocusGuard() {
+  const element2 = document.createElement("span");
+  element2.setAttribute("data-radix-focus-guard", "");
+  element2.tabIndex = 0;
+  element2.style.outline = "none";
+  element2.style.opacity = "0";
+  element2.style.position = "fixed";
+  element2.style.pointerEvents = "none";
+  return element2;
+}
+__name$1(createFocusGuard, "createFocusGuard");
+var __assign = function() {
+  __assign = Object.assign || function __assign2(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+      s = arguments[i];
+      for (var p2 in s) if (Object.prototype.hasOwnProperty.call(s, p2)) t[p2] = s[p2];
+    }
+    return t;
+  };
+  return __assign.apply(this, arguments);
+};
+function __rest(s, e) {
+  var t = {};
+  for (var p2 in s) if (Object.prototype.hasOwnProperty.call(s, p2) && e.indexOf(p2) < 0)
+    t[p2] = s[p2];
+  if (s != null && typeof Object.getOwnPropertySymbols === "function")
+    for (var i = 0, p2 = Object.getOwnPropertySymbols(s); i < p2.length; i++) {
+      if (e.indexOf(p2[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p2[i]))
+        t[p2[i]] = s[p2[i]];
+    }
+  return t;
+}
+function __spreadArray(to, from, pack) {
+  if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+    if (ar || !(i in from)) {
+      if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+      ar[i] = from[i];
+    }
+  }
+  return to.concat(ar || Array.prototype.slice.call(from));
+}
+typeof SuppressedError === "function" ? SuppressedError : function(error, suppressed, message) {
+  var e = new Error(message);
+  return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+};
+var zeroRightClassName = "right-scroll-bar-position";
+var fullWidthClassName = "width-before-scroll-bar";
+var noScrollbarsClassName = "with-scroll-bars-hidden";
+var removedBarSizeVariable = "--removed-body-scroll-bar-size";
+function assignRef(ref, value) {
+  if (typeof ref === "function") {
+    ref(value);
+  } else if (ref) {
+    ref.current = value;
+  }
+  return ref;
+}
+function useCallbackRef(initialValue, callback) {
+  var ref = reactExports.useState(function() {
+    return {
+      // value
+      value: initialValue,
+      // last callback
+      callback,
+      // "memoized" public interface
+      facade: {
+        get current() {
+          return ref.value;
+        },
+        set current(value) {
+          var last = ref.value;
+          if (last !== value) {
+            ref.value = value;
+            ref.callback(value, last);
+          }
+        }
+      }
+    };
+  })[0];
+  ref.callback = callback;
+  return ref.facade;
+}
+var useIsomorphicLayoutEffect$1 = typeof window !== "undefined" ? reactExports.useLayoutEffect : reactExports.useEffect;
+var currentValues = /* @__PURE__ */ new WeakMap();
+function useMergeRefs(refs, defaultValue) {
+  var callbackRef = useCallbackRef(null, function(newValue) {
+    return refs.forEach(function(ref) {
+      return assignRef(ref, newValue);
+    });
+  });
+  useIsomorphicLayoutEffect$1(function() {
+    var oldValue = currentValues.get(callbackRef);
+    if (oldValue) {
+      var prevRefs_1 = new Set(oldValue);
+      var nextRefs_1 = new Set(refs);
+      var current_1 = callbackRef.current;
+      prevRefs_1.forEach(function(ref) {
+        if (!nextRefs_1.has(ref)) {
+          assignRef(ref, null);
+        }
+      });
+      nextRefs_1.forEach(function(ref) {
+        if (!prevRefs_1.has(ref)) {
+          assignRef(ref, current_1);
+        }
+      });
+    }
+    currentValues.set(callbackRef, refs);
+  }, [refs]);
+  return callbackRef;
+}
+function ItoI(a) {
+  return a;
+}
+function innerCreateMedium(defaults, middleware) {
+  if (middleware === void 0) {
+    middleware = ItoI;
+  }
+  var buffer = [];
+  var assigned = false;
+  var medium = {
+    read: function() {
+      if (assigned) {
+        throw new Error("Sidecar: could not `read` from an `assigned` medium. `read` could be used only with `useMedium`.");
+      }
+      if (buffer.length) {
+        return buffer[buffer.length - 1];
+      }
+      return defaults;
+    },
+    useMedium: function(data) {
+      var item = middleware(data, assigned);
+      buffer.push(item);
+      return function() {
+        buffer = buffer.filter(function(x) {
+          return x !== item;
+        });
+      };
+    },
+    assignSyncMedium: function(cb) {
+      assigned = true;
+      while (buffer.length) {
+        var cbs = buffer;
+        buffer = [];
+        cbs.forEach(cb);
+      }
+      buffer = {
+        push: function(x) {
+          return cb(x);
+        },
+        filter: function() {
+          return buffer;
+        }
+      };
+    },
+    assignMedium: function(cb) {
+      assigned = true;
+      var pendingQueue = [];
+      if (buffer.length) {
+        var cbs = buffer;
+        buffer = [];
+        cbs.forEach(cb);
+        pendingQueue = buffer;
+      }
+      var executeQueue = function() {
+        var cbs2 = pendingQueue;
+        pendingQueue = [];
+        cbs2.forEach(cb);
+      };
+      var cycle = function() {
+        return Promise.resolve().then(executeQueue);
+      };
+      cycle();
+      buffer = {
+        push: function(x) {
+          pendingQueue.push(x);
+          cycle();
+        },
+        filter: function(filter) {
+          pendingQueue = pendingQueue.filter(filter);
+          return buffer;
+        }
+      };
+    }
+  };
+  return medium;
+}
+function createSidecarMedium(options) {
+  if (options === void 0) {
+    options = {};
+  }
+  var medium = innerCreateMedium(null);
+  medium.options = __assign({ async: true, ssr: false }, options);
+  return medium;
+}
+var SideCar$1 = function(_a2) {
+  var sideCar = _a2.sideCar, rest = __rest(_a2, ["sideCar"]);
+  if (!sideCar) {
+    throw new Error("Sidecar: please provide `sideCar` property to import the right car");
+  }
+  var Target = sideCar.read();
+  if (!Target) {
+    throw new Error("Sidecar medium not found");
+  }
+  return reactExports.createElement(Target, __assign({}, rest));
+};
+SideCar$1.isSideCarExport = true;
+function exportSidecar(medium, exported) {
+  medium.useMedium(exported);
+  return SideCar$1;
+}
+var effectCar = createSidecarMedium();
+var nothing = function() {
+  return;
+};
+var RemoveScroll = reactExports.forwardRef(function(props2, parentRef) {
+  var ref = reactExports.useRef(null);
+  var _a2 = reactExports.useState({
+    onScrollCapture: nothing,
+    onWheelCapture: nothing,
+    onTouchMoveCapture: nothing
+  }), callbacks = _a2[0], setCallbacks = _a2[1];
+  var forwardProps = props2.forwardProps, children = props2.children, className = props2.className, removeScrollBar = props2.removeScrollBar, enabled = props2.enabled, shards = props2.shards, sideCar = props2.sideCar, noRelative = props2.noRelative, noIsolation = props2.noIsolation, inert = props2.inert, allowPinchZoom = props2.allowPinchZoom, _b2 = props2.as, Container = _b2 === void 0 ? "div" : _b2, gapMode = props2.gapMode, rest = __rest(props2, ["forwardProps", "children", "className", "removeScrollBar", "enabled", "shards", "sideCar", "noRelative", "noIsolation", "inert", "allowPinchZoom", "as", "gapMode"]);
+  var SideCar2 = sideCar;
+  var containerRef = useMergeRefs([ref, parentRef]);
+  var containerProps = __assign(__assign({}, rest), callbacks);
+  return reactExports.createElement(
+    reactExports.Fragment,
+    null,
+    enabled && reactExports.createElement(SideCar2, { sideCar: effectCar, removeScrollBar, shards, noRelative, noIsolation, inert, setCallbacks, allowPinchZoom: !!allowPinchZoom, lockRef: ref, gapMode }),
+    forwardProps ? reactExports.cloneElement(reactExports.Children.only(children), __assign(__assign({}, containerProps), { ref: containerRef })) : reactExports.createElement(Container, __assign({}, containerProps, { className, ref: containerRef }), children)
+  );
+});
+RemoveScroll.defaultProps = {
+  enabled: true,
+  removeScrollBar: true,
+  inert: false
+};
+RemoveScroll.classNames = {
+  fullWidth: fullWidthClassName,
+  zeroRight: zeroRightClassName
+};
+var getNonce = function() {
+  if (typeof __webpack_nonce__ !== "undefined") {
+    return __webpack_nonce__;
+  }
+  return void 0;
+};
+function makeStyleTag() {
+  if (!document)
+    return null;
+  var tag = document.createElement("style");
+  tag.type = "text/css";
+  var nonce = getNonce();
+  if (nonce) {
+    tag.setAttribute("nonce", nonce);
+  }
+  return tag;
+}
+function injectStyles(tag, css) {
+  if (tag.styleSheet) {
+    tag.styleSheet.cssText = css;
+  } else {
+    tag.appendChild(document.createTextNode(css));
+  }
+}
+function insertStyleTag(tag) {
+  var head = document.head || document.getElementsByTagName("head")[0];
+  head.appendChild(tag);
+}
+var stylesheetSingleton = function() {
+  var counter2 = 0;
+  var stylesheet = null;
+  return {
+    add: function(style) {
+      if (counter2 == 0) {
+        if (stylesheet = makeStyleTag()) {
+          injectStyles(stylesheet, style);
+          insertStyleTag(stylesheet);
+        }
+      }
+      counter2++;
+    },
+    remove: function() {
+      counter2--;
+      if (!counter2 && stylesheet) {
+        stylesheet.parentNode && stylesheet.parentNode.removeChild(stylesheet);
+        stylesheet = null;
+      }
+    }
+  };
+};
+var styleHookSingleton = function() {
+  var sheet = stylesheetSingleton();
+  return function(styles, isDynamic) {
+    reactExports.useEffect(function() {
+      sheet.add(styles);
+      return function() {
+        sheet.remove();
+      };
+    }, [styles && isDynamic]);
+  };
+};
+var styleSingleton = function() {
+  var useStyle = styleHookSingleton();
+  var Sheet = function(_a2) {
+    var styles = _a2.styles, dynamic = _a2.dynamic;
+    useStyle(styles, dynamic);
+    return null;
+  };
+  return Sheet;
+};
+var zeroGap = {
+  left: 0,
+  top: 0,
+  right: 0,
+  gap: 0
+};
+var parse$1 = function(x) {
+  return parseInt(x || "", 10) || 0;
+};
+var getOffset = function(gapMode) {
+  var cs = window.getComputedStyle(document.body);
+  var left = cs[gapMode === "padding" ? "paddingLeft" : "marginLeft"];
+  var top = cs[gapMode === "padding" ? "paddingTop" : "marginTop"];
+  var right = cs[gapMode === "padding" ? "paddingRight" : "marginRight"];
+  return [parse$1(left), parse$1(top), parse$1(right)];
+};
+var getGapWidth = function(gapMode) {
+  if (gapMode === void 0) {
+    gapMode = "margin";
+  }
+  if (typeof window === "undefined") {
+    return zeroGap;
+  }
+  var offsets = getOffset(gapMode);
+  var documentWidth = document.documentElement.clientWidth;
+  var windowWidth = window.innerWidth;
+  return {
+    left: offsets[0],
+    top: offsets[1],
+    right: offsets[2],
+    gap: Math.max(0, windowWidth - documentWidth + offsets[2] - offsets[0])
+  };
+};
+var Style = styleSingleton();
+var lockAttribute = "data-scroll-locked";
+var getStyles = function(_a2, allowRelative, gapMode, important) {
+  var left = _a2.left, top = _a2.top, right = _a2.right, gap = _a2.gap;
+  if (gapMode === void 0) {
+    gapMode = "margin";
+  }
+  return "\n  .".concat(noScrollbarsClassName, " {\n   overflow: hidden ").concat(important, ";\n   padding-right: ").concat(gap, "px ").concat(important, ";\n  }\n  body[").concat(lockAttribute, "] {\n    overflow: hidden ").concat(important, ";\n    overscroll-behavior: contain;\n    ").concat([
+    allowRelative && "position: relative ".concat(important, ";"),
+    gapMode === "margin" && "\n    padding-left: ".concat(left, "px;\n    padding-top: ").concat(top, "px;\n    padding-right: ").concat(right, "px;\n    margin-left:0;\n    margin-top:0;\n    margin-right: ").concat(gap, "px ").concat(important, ";\n    "),
+    gapMode === "padding" && "padding-right: ".concat(gap, "px ").concat(important, ";")
+  ].filter(Boolean).join(""), "\n  }\n  \n  .").concat(zeroRightClassName, " {\n    right: ").concat(gap, "px ").concat(important, ";\n  }\n  \n  .").concat(fullWidthClassName, " {\n    margin-right: ").concat(gap, "px ").concat(important, ";\n  }\n  \n  .").concat(zeroRightClassName, " .").concat(zeroRightClassName, " {\n    right: 0 ").concat(important, ";\n  }\n  \n  .").concat(fullWidthClassName, " .").concat(fullWidthClassName, " {\n    margin-right: 0 ").concat(important, ";\n  }\n  \n  body[").concat(lockAttribute, "] {\n    ").concat(removedBarSizeVariable, ": ").concat(gap, "px;\n  }\n");
+};
+var getCurrentUseCounter = function() {
+  var counter2 = parseInt(document.body.getAttribute(lockAttribute) || "0", 10);
+  return isFinite(counter2) ? counter2 : 0;
+};
+var useLockAttribute = function() {
+  reactExports.useEffect(function() {
+    document.body.setAttribute(lockAttribute, (getCurrentUseCounter() + 1).toString());
+    return function() {
+      var newCounter = getCurrentUseCounter() - 1;
+      if (newCounter <= 0) {
+        document.body.removeAttribute(lockAttribute);
+      } else {
+        document.body.setAttribute(lockAttribute, newCounter.toString());
+      }
+    };
+  }, []);
+};
+var RemoveScrollBar = function(_a2) {
+  var noRelative = _a2.noRelative, noImportant = _a2.noImportant, _b2 = _a2.gapMode, gapMode = _b2 === void 0 ? "margin" : _b2;
+  useLockAttribute();
+  var gap = reactExports.useMemo(function() {
+    return getGapWidth(gapMode);
+  }, [gapMode]);
+  return reactExports.createElement(Style, { styles: getStyles(gap, !noRelative, gapMode, !noImportant ? "!important" : "") });
+};
+var passiveSupported = false;
+if (typeof window !== "undefined") {
+  try {
+    var options = Object.defineProperty({}, "passive", {
+      get: function() {
+        passiveSupported = true;
+        return true;
+      }
+    });
+    window.addEventListener("test", options, options);
+    window.removeEventListener("test", options, options);
+  } catch (err) {
+    passiveSupported = false;
+  }
+}
+var nonPassive = passiveSupported ? { passive: false } : false;
+var alwaysContainsScroll = function(node2) {
+  return node2.tagName === "TEXTAREA";
+};
+var elementCanBeScrolled = function(node2, overflow) {
+  if (!(node2 instanceof Element)) {
+    return false;
+  }
+  var styles = window.getComputedStyle(node2);
+  return (
+    // not-not-scrollable
+    styles[overflow] !== "hidden" && // contains scroll inside self
+    !(styles.overflowY === styles.overflowX && !alwaysContainsScroll(node2) && styles[overflow] === "visible")
+  );
+};
+var elementCouldBeVScrolled = function(node2) {
+  return elementCanBeScrolled(node2, "overflowY");
+};
+var elementCouldBeHScrolled = function(node2) {
+  return elementCanBeScrolled(node2, "overflowX");
+};
+var locationCouldBeScrolled = function(axis, node2) {
+  var ownerDocument = node2.ownerDocument;
+  var current = node2;
+  do {
+    if (typeof ShadowRoot !== "undefined" && current instanceof ShadowRoot) {
+      current = current.host;
+    }
+    var isScrollable = elementCouldBeScrolled(axis, current);
+    if (isScrollable) {
+      var _a2 = getScrollVariables(axis, current), scrollHeight = _a2[1], clientHeight = _a2[2];
+      if (scrollHeight > clientHeight) {
+        return true;
+      }
+    }
+    current = current.parentNode;
+  } while (current && current !== ownerDocument.body);
+  return false;
+};
+var getVScrollVariables = function(_a2) {
+  var scrollTop = _a2.scrollTop, scrollHeight = _a2.scrollHeight, clientHeight = _a2.clientHeight;
+  return [
+    scrollTop,
+    scrollHeight,
+    clientHeight
+  ];
+};
+var getHScrollVariables = function(_a2) {
+  var scrollLeft = _a2.scrollLeft, scrollWidth = _a2.scrollWidth, clientWidth = _a2.clientWidth;
+  return [
+    scrollLeft,
+    scrollWidth,
+    clientWidth
+  ];
+};
+var elementCouldBeScrolled = function(axis, node2) {
+  return axis === "v" ? elementCouldBeVScrolled(node2) : elementCouldBeHScrolled(node2);
+};
+var getScrollVariables = function(axis, node2) {
+  return axis === "v" ? getVScrollVariables(node2) : getHScrollVariables(node2);
+};
+var getDirectionFactor = function(axis, direction) {
+  return axis === "h" && direction === "rtl" ? -1 : 1;
+};
+var handleScroll = function(axis, endTarget, event, sourceDelta, noOverscroll) {
+  var directionFactor = getDirectionFactor(axis, window.getComputedStyle(endTarget).direction);
+  var delta = directionFactor * sourceDelta;
+  var target = event.target;
+  var targetInLock = endTarget.contains(target);
+  var shouldCancelScroll = false;
+  var isDeltaPositive = delta > 0;
+  var availableScroll = 0;
+  var availableScrollTop = 0;
+  do {
+    if (!target) {
+      break;
+    }
+    var _a2 = getScrollVariables(axis, target), position2 = _a2[0], scroll_1 = _a2[1], capacity = _a2[2];
+    var elementScroll = scroll_1 - capacity - directionFactor * position2;
+    if (position2 || elementScroll) {
+      if (elementCouldBeScrolled(axis, target)) {
+        availableScroll += elementScroll;
+        availableScrollTop += position2;
+      }
+    }
+    var parent_1 = target.parentNode;
+    target = parent_1 && parent_1.nodeType === Node.DOCUMENT_FRAGMENT_NODE ? parent_1.host : parent_1;
+  } while (
+    // portaled content
+    !targetInLock && target !== document.body || // self content
+    targetInLock && (endTarget.contains(target) || endTarget === target)
+  );
+  if (isDeltaPositive && (Math.abs(availableScroll) < 1 || false)) {
+    shouldCancelScroll = true;
+  } else if (!isDeltaPositive && (Math.abs(availableScrollTop) < 1 || false)) {
+    shouldCancelScroll = true;
+  }
+  return shouldCancelScroll;
+};
+var getTouchXY = function(event) {
+  return "changedTouches" in event ? [event.changedTouches[0].clientX, event.changedTouches[0].clientY] : [0, 0];
+};
+var getDeltaXY = function(event) {
+  return [event.deltaX, event.deltaY];
+};
+var extractRef = function(ref) {
+  return ref && "current" in ref ? ref.current : ref;
+};
+var deltaCompare = function(x, y) {
+  return x[0] === y[0] && x[1] === y[1];
+};
+var generateStyle = function(id) {
+  return "\n  .block-interactivity-".concat(id, " {pointer-events: none;}\n  .allow-interactivity-").concat(id, " {pointer-events: all;}\n");
+};
+var idCounter = 0;
+var lockStack = [];
+function RemoveScrollSideCar(props2) {
+  var shouldPreventQueue = reactExports.useRef([]);
+  var touchStartRef = reactExports.useRef([0, 0]);
+  var activeAxis = reactExports.useRef();
+  var id = reactExports.useState(idCounter++)[0];
+  var Style2 = reactExports.useState(styleSingleton)[0];
+  var lastProps = reactExports.useRef(props2);
+  reactExports.useEffect(function() {
+    lastProps.current = props2;
+  }, [props2]);
+  reactExports.useEffect(function() {
+    if (props2.inert) {
+      document.body.classList.add("block-interactivity-".concat(id));
+      var allow_1 = __spreadArray([props2.lockRef.current], (props2.shards || []).map(extractRef), true).filter(Boolean);
+      allow_1.forEach(function(el) {
+        return el.classList.add("allow-interactivity-".concat(id));
+      });
+      return function() {
+        document.body.classList.remove("block-interactivity-".concat(id));
+        allow_1.forEach(function(el) {
+          return el.classList.remove("allow-interactivity-".concat(id));
+        });
+      };
+    }
+    return;
+  }, [props2.inert, props2.lockRef.current, props2.shards]);
+  var shouldCancelEvent = reactExports.useCallback(function(event, parent) {
+    if ("touches" in event && event.touches.length === 2 || event.type === "wheel" && event.ctrlKey) {
+      return !lastProps.current.allowPinchZoom;
+    }
+    var touch = getTouchXY(event);
+    var touchStart = touchStartRef.current;
+    var deltaX = "deltaX" in event ? event.deltaX : touchStart[0] - touch[0];
+    var deltaY = "deltaY" in event ? event.deltaY : touchStart[1] - touch[1];
+    var currentAxis;
+    var target = event.target;
+    var moveDirection = Math.abs(deltaX) > Math.abs(deltaY) ? "h" : "v";
+    if ("touches" in event && moveDirection === "h" && target.type === "range") {
+      return false;
+    }
+    var selection = window.getSelection();
+    var anchorNode = selection && selection.anchorNode;
+    var isTouchingSelection = anchorNode ? anchorNode === target || anchorNode.contains(target) : false;
+    if (isTouchingSelection) {
+      return false;
+    }
+    var canBeScrolledInMainDirection = locationCouldBeScrolled(moveDirection, target);
+    if (!canBeScrolledInMainDirection) {
+      return true;
+    }
+    if (canBeScrolledInMainDirection) {
+      currentAxis = moveDirection;
+    } else {
+      currentAxis = moveDirection === "v" ? "h" : "v";
+      canBeScrolledInMainDirection = locationCouldBeScrolled(moveDirection, target);
+    }
+    if (!canBeScrolledInMainDirection) {
+      return false;
+    }
+    if (!activeAxis.current && "changedTouches" in event && (deltaX || deltaY)) {
+      activeAxis.current = currentAxis;
+    }
+    if (!currentAxis) {
+      return true;
+    }
+    var cancelingAxis = activeAxis.current || currentAxis;
+    return handleScroll(cancelingAxis, parent, event, cancelingAxis === "h" ? deltaX : deltaY);
+  }, []);
+  var shouldPrevent = reactExports.useCallback(function(_event) {
+    var event = _event;
+    if (!lockStack.length || lockStack[lockStack.length - 1] !== Style2) {
+      return;
+    }
+    var delta = "deltaY" in event ? getDeltaXY(event) : getTouchXY(event);
+    var sourceEvent = shouldPreventQueue.current.filter(function(e) {
+      return e.name === event.type && (e.target === event.target || event.target === e.shadowParent) && deltaCompare(e.delta, delta);
+    })[0];
+    if (sourceEvent && sourceEvent.should) {
+      if (event.cancelable) {
+        event.preventDefault();
+      }
+      return;
+    }
+    if (!sourceEvent) {
+      var shardNodes = (lastProps.current.shards || []).map(extractRef).filter(Boolean).filter(function(node2) {
+        return node2.contains(event.target);
+      });
+      var shouldStop = shardNodes.length > 0 ? shouldCancelEvent(event, shardNodes[0]) : !lastProps.current.noIsolation;
+      if (shouldStop) {
+        if (event.cancelable) {
+          event.preventDefault();
+        }
+      }
+    }
+  }, []);
+  var shouldCancel = reactExports.useCallback(function(name2, delta, target, should) {
+    var event = { name: name2, delta, target, should, shadowParent: getOutermostShadowParent(target) };
+    shouldPreventQueue.current.push(event);
+    setTimeout(function() {
+      shouldPreventQueue.current = shouldPreventQueue.current.filter(function(e) {
+        return e !== event;
+      });
+    }, 1);
+  }, []);
+  var scrollTouchStart = reactExports.useCallback(function(event) {
+    touchStartRef.current = getTouchXY(event);
+    activeAxis.current = void 0;
+  }, []);
+  var scrollWheel = reactExports.useCallback(function(event) {
+    shouldCancel(event.type, getDeltaXY(event), event.target, shouldCancelEvent(event, props2.lockRef.current));
+  }, []);
+  var scrollTouchMove = reactExports.useCallback(function(event) {
+    shouldCancel(event.type, getTouchXY(event), event.target, shouldCancelEvent(event, props2.lockRef.current));
+  }, []);
+  reactExports.useEffect(function() {
+    lockStack.push(Style2);
+    props2.setCallbacks({
+      onScrollCapture: scrollWheel,
+      onWheelCapture: scrollWheel,
+      onTouchMoveCapture: scrollTouchMove
+    });
+    document.addEventListener("wheel", shouldPrevent, nonPassive);
+    document.addEventListener("touchmove", shouldPrevent, nonPassive);
+    document.addEventListener("touchstart", scrollTouchStart, nonPassive);
+    return function() {
+      lockStack = lockStack.filter(function(inst) {
+        return inst !== Style2;
+      });
+      document.removeEventListener("wheel", shouldPrevent, nonPassive);
+      document.removeEventListener("touchmove", shouldPrevent, nonPassive);
+      document.removeEventListener("touchstart", scrollTouchStart, nonPassive);
+    };
+  }, []);
+  var removeScrollBar = props2.removeScrollBar, inert = props2.inert;
+  return reactExports.createElement(
+    reactExports.Fragment,
+    null,
+    inert ? reactExports.createElement(Style2, { styles: generateStyle(id) }) : null,
+    removeScrollBar ? reactExports.createElement(RemoveScrollBar, { noRelative: props2.noRelative, gapMode: props2.gapMode }) : null
+  );
+}
+function getOutermostShadowParent(node2) {
+  var shadowParent = null;
+  while (node2 !== null) {
+    if (node2 instanceof ShadowRoot) {
+      shadowParent = node2.host;
+      node2 = node2.host;
+    }
+    node2 = node2.parentNode;
+  }
+  return shadowParent;
+}
+const SideCar = exportSidecar(effectCar, RemoveScrollSideCar);
+var ReactRemoveScroll = reactExports.forwardRef(function(props2, ref) {
+  return reactExports.createElement(RemoveScroll, __assign({}, props2, { ref, sideCar: SideCar }));
+});
+ReactRemoveScroll.classNames = RemoveScroll.classNames;
+var getDefaultParent = function(originalTarget) {
+  if (typeof document === "undefined") {
+    return null;
+  }
+  var sampleTarget = Array.isArray(originalTarget) ? originalTarget[0] : originalTarget;
+  return sampleTarget.ownerDocument.body;
+};
+var counterMap = /* @__PURE__ */ new WeakMap();
+var uncontrolledNodes = /* @__PURE__ */ new WeakMap();
+var markerMap = {};
+var lockCount = 0;
+var unwrapHost = function(node2) {
+  return node2 && (node2.host || unwrapHost(node2.parentNode));
+};
+var correctTargets = function(parent, targets) {
+  return targets.map(function(target) {
+    if (parent.contains(target)) {
+      return target;
+    }
+    var correctedTarget = unwrapHost(target);
+    if (correctedTarget && parent.contains(correctedTarget)) {
+      return correctedTarget;
+    }
+    console.error("aria-hidden", target, "in not contained inside", parent, ". Doing nothing");
+    return null;
+  }).filter(function(x) {
+    return Boolean(x);
+  });
+};
+var applyAttributeToOthers = function(originalTarget, parentNode, markerName, controlAttribute) {
+  var targets = correctTargets(parentNode, Array.isArray(originalTarget) ? originalTarget : [originalTarget]);
+  if (!markerMap[markerName]) {
+    markerMap[markerName] = /* @__PURE__ */ new WeakMap();
+  }
+  var markerCounter = markerMap[markerName];
+  var hiddenNodes = [];
+  var elementsToKeep = /* @__PURE__ */ new Set();
+  var elementsToStop = new Set(targets);
+  var keep = function(el) {
+    if (!el || elementsToKeep.has(el)) {
+      return;
+    }
+    elementsToKeep.add(el);
+    keep(el.parentNode);
+  };
+  targets.forEach(keep);
+  var deep = function(parent) {
+    if (!parent || elementsToStop.has(parent)) {
+      return;
+    }
+    Array.prototype.forEach.call(parent.children, function(node2) {
+      if (elementsToKeep.has(node2)) {
+        deep(node2);
+      } else {
+        try {
+          var attr = node2.getAttribute(controlAttribute);
+          var alreadyHidden = attr !== null && attr !== "false";
+          var counterValue = (counterMap.get(node2) || 0) + 1;
+          var markerValue = (markerCounter.get(node2) || 0) + 1;
+          counterMap.set(node2, counterValue);
+          markerCounter.set(node2, markerValue);
+          hiddenNodes.push(node2);
+          if (counterValue === 1 && alreadyHidden) {
+            uncontrolledNodes.set(node2, true);
+          }
+          if (markerValue === 1) {
+            node2.setAttribute(markerName, "true");
+          }
+          if (!alreadyHidden) {
+            node2.setAttribute(controlAttribute, "true");
+          }
+        } catch (e) {
+          console.error("aria-hidden: cannot operate on ", node2, e);
+        }
+      }
+    });
+  };
+  deep(parentNode);
+  elementsToKeep.clear();
+  lockCount++;
+  return function() {
+    hiddenNodes.forEach(function(node2) {
+      var counterValue = counterMap.get(node2) - 1;
+      var markerValue = markerCounter.get(node2) - 1;
+      counterMap.set(node2, counterValue);
+      markerCounter.set(node2, markerValue);
+      if (!counterValue) {
+        if (!uncontrolledNodes.has(node2)) {
+          node2.removeAttribute(controlAttribute);
+        }
+        uncontrolledNodes.delete(node2);
+      }
+      if (!markerValue) {
+        node2.removeAttribute(markerName);
+      }
+    });
+    lockCount--;
+    if (!lockCount) {
+      counterMap = /* @__PURE__ */ new WeakMap();
+      counterMap = /* @__PURE__ */ new WeakMap();
+      uncontrolledNodes = /* @__PURE__ */ new WeakMap();
+      markerMap = {};
+    }
+  };
+};
+var hideOthers = function(originalTarget, parentNode, markerName) {
+  if (markerName === void 0) {
+    markerName = "data-aria-hidden";
+  }
+  var targets = Array.from(Array.isArray(originalTarget) ? originalTarget : [originalTarget]);
+  var activeParentNode = getDefaultParent(originalTarget);
+  if (!activeParentNode) {
+    return function() {
+      return null;
+    };
+  }
+  targets.push.apply(targets, Array.from(activeParentNode.querySelectorAll("[aria-live], script")));
+  return applyAttributeToOthers(targets, activeParentNode, markerName, "aria-hidden");
+};
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var DIALOG_NAME = "Dialog";
+var [createDialogContext, createDialogScope] = /* @__PURE__ */ createContextScope(DIALOG_NAME);
+var [DialogProvider, useDialogContext] = createDialogContext(DIALOG_NAME);
+var Dialog = /* @__PURE__ */ __name((props2) => {
+  const {
+    __scopeDialog,
+    children,
+    open: openProp,
+    defaultOpen,
+    onOpenChange,
+    modal = true
+  } = props2;
+  const triggerRef = reactExports.useRef(null);
+  const contentRef = reactExports.useRef(null);
+  const [open, setOpen] = useControllableState({
+    prop: openProp,
+    defaultProp: defaultOpen ?? false,
+    onChange: onOpenChange,
+    caller: DIALOG_NAME
+  });
+  const [titleCount, setTitleCount] = reactExports.useState(0);
+  const [descriptionCount, setDescriptionCount] = reactExports.useState(0);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    DialogProvider,
+    {
+      scope: __scopeDialog,
+      triggerRef,
+      contentRef,
+      contentId: useId$1(),
+      titleId: useId$1(),
+      descriptionId: useId$1(),
+      titlePresent: titleCount > 0,
+      descriptionPresent: descriptionCount > 0,
+      setTitleCount,
+      setDescriptionCount,
+      open,
+      onOpenChange: setOpen,
+      onOpenToggle: reactExports.useCallback(() => setOpen((prevOpen) => !prevOpen), [setOpen]),
+      modal,
+      children
+    }
+  );
+}, "Dialog");
+var PORTAL_NAME = "DialogPortal";
+var [PortalProvider, usePortalContext] = createDialogContext(PORTAL_NAME, {
+  forceMount: void 0
+});
+var DialogPortal = /* @__PURE__ */ __name((props2) => {
+  const { __scopeDialog, forceMount, children, container } = props2;
+  const context = useDialogContext(PORTAL_NAME, __scopeDialog);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(PortalProvider, { scope: __scopeDialog, forceMount, children: reactExports.Children.map(children, (child) => /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Portal, { asChild: true, container, children: child }) })) });
+}, "DialogPortal");
+var OVERLAY_NAME = "DialogOverlay";
+var DialogOverlay = /* @__PURE__ */ reactExports.forwardRef(
+  /* @__PURE__ */ __name(function DialogOverlay2(props2, forwardedRef) {
+    const portalContext = usePortalContext(OVERLAY_NAME, props2.__scopeDialog);
+    const { forceMount = portalContext.forceMount, ...overlayProps } = props2;
+    const context = useDialogContext(OVERLAY_NAME, props2.__scopeDialog);
+    return context.modal ? /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsxRuntimeExports.jsx(DialogOverlayImpl, { ...overlayProps, ref: forwardedRef }) }) : null;
+  }, "DialogOverlay")
+);
+var Slot = /* @__PURE__ */ createSlot("DialogOverlay.RemoveScroll");
+var DialogOverlayImpl = /* @__PURE__ */ reactExports.forwardRef(
+  // blank line to reduce diff noise
+  /* @__PURE__ */ __name(function DialogOverlayImpl2(props2, forwardedRef) {
+    const { __scopeDialog, ...overlayProps } = props2;
+    const context = useDialogContext(OVERLAY_NAME, __scopeDialog);
+    const registerDismissableSurface = useDismissableLayerSurface();
+    const composedRefs = useComposedRefs(forwardedRef, registerDismissableSurface);
+    return (
+      // Make sure `Content` is scrollable even when it doesn't live inside `RemoveScroll`
+      // ie. when `Overlay` and `Content` are siblings
+      /* @__PURE__ */ jsxRuntimeExports.jsx(ReactRemoveScroll, { as: Slot, allowPinchZoom: true, shards: [context.contentRef], children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+        Primitive.div,
+        {
+          "data-state": getState(context.open),
+          ...overlayProps,
+          ref: composedRefs,
+          style: { pointerEvents: "auto", ...overlayProps.style }
+        }
+      ) })
+    );
+  }, "DialogOverlayImpl")
+);
+var CONTENT_NAME = "DialogContent";
+var DialogContent = /* @__PURE__ */ reactExports.forwardRef(
+  /* @__PURE__ */ __name(function DialogContent2(props2, forwardedRef) {
+    const portalContext = usePortalContext(CONTENT_NAME, props2.__scopeDialog);
+    const { forceMount = portalContext.forceMount, ...contentProps } = props2;
+    const context = useDialogContext(CONTENT_NAME, props2.__scopeDialog);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: context.modal ? /* @__PURE__ */ jsxRuntimeExports.jsx(DialogContentModal, { ...contentProps, ref: forwardedRef }) : /* @__PURE__ */ jsxRuntimeExports.jsx(DialogContentNonModal, { ...contentProps, ref: forwardedRef }) });
+  }, "DialogContent")
+);
+var DialogContentModal = /* @__PURE__ */ reactExports.forwardRef(
+  // blank line to reduce diff noise
+  /* @__PURE__ */ __name(function DialogContentModal2(props2, forwardedRef) {
+    const context = useDialogContext(CONTENT_NAME, props2.__scopeDialog);
+    const contentRef = reactExports.useRef(null);
+    const composedRefs = useComposedRefs(forwardedRef, context.contentRef, contentRef);
+    reactExports.useEffect(() => {
+      const content2 = contentRef.current;
+      if (content2) return hideOthers(content2);
+    }, []);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      DialogContentImpl,
+      {
+        ...props2,
+        ref: composedRefs,
+        trapFocus: context.open,
+        disableOutsidePointerEvents: context.open,
+        onCloseAutoFocus: composeEventHandlers(props2.onCloseAutoFocus, (event) => {
+          var _a2;
+          event.preventDefault();
+          (_a2 = context.triggerRef.current) == null ? void 0 : _a2.focus();
+        }),
+        onPointerDownOutside: composeEventHandlers(props2.onPointerDownOutside, (event) => {
+          const originalEvent = event.detail.originalEvent;
+          const ctrlLeftClick = originalEvent.button === 0 && originalEvent.ctrlKey === true;
+          const isRightClick = originalEvent.button === 2 || ctrlLeftClick;
+          if (isRightClick) event.preventDefault();
+        }),
+        onFocusOutside: composeEventHandlers(
+          props2.onFocusOutside,
+          (event) => event.preventDefault()
+        )
+      }
+    );
+  }, "DialogContentModal")
+);
+var DialogContentNonModal = /* @__PURE__ */ reactExports.forwardRef(
+  // blank line to reduce diff noise
+  /* @__PURE__ */ __name(function DialogContentNonModal2(props2, forwardedRef) {
+    const context = useDialogContext(CONTENT_NAME, props2.__scopeDialog);
+    const hasInteractedOutsideRef = reactExports.useRef(false);
+    const hasPointerDownOutsideRef = reactExports.useRef(false);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      DialogContentImpl,
+      {
+        ...props2,
+        ref: forwardedRef,
+        trapFocus: false,
+        disableOutsidePointerEvents: false,
+        onCloseAutoFocus: (event) => {
+          var _a2, _b2;
+          (_a2 = props2.onCloseAutoFocus) == null ? void 0 : _a2.call(props2, event);
+          if (!event.defaultPrevented) {
+            if (!hasInteractedOutsideRef.current) (_b2 = context.triggerRef.current) == null ? void 0 : _b2.focus();
+            event.preventDefault();
+          }
+          hasInteractedOutsideRef.current = false;
+          hasPointerDownOutsideRef.current = false;
+        },
+        onInteractOutside: (event) => {
+          var _a2, _b2;
+          (_a2 = props2.onInteractOutside) == null ? void 0 : _a2.call(props2, event);
+          if (!event.defaultPrevented) {
+            hasInteractedOutsideRef.current = true;
+            if (event.detail.originalEvent.type === "pointerdown") {
+              hasPointerDownOutsideRef.current = true;
+            }
+          }
+          const target = event.target;
+          const targetIsTrigger = (_b2 = context.triggerRef.current) == null ? void 0 : _b2.contains(target);
+          if (targetIsTrigger) event.preventDefault();
+          if (event.detail.originalEvent.type === "focusin" && hasPointerDownOutsideRef.current) {
+            event.preventDefault();
+          }
+        }
+      }
+    );
+  }, "DialogContentNonModal")
+);
+var DialogContentImpl = /* @__PURE__ */ reactExports.forwardRef(
+  // blank line to reduce diff noise
+  /* @__PURE__ */ __name(function DialogContentImpl2(props2, forwardedRef) {
+    const { __scopeDialog, trapFocus, onOpenAutoFocus, onCloseAutoFocus, ...contentProps } = props2;
+    const context = useDialogContext(CONTENT_NAME, __scopeDialog);
+    useFocusGuards();
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      FocusScope,
+      {
+        asChild: true,
+        loop: true,
+        trapped: trapFocus,
+        onMountAutoFocus: onOpenAutoFocus,
+        onUnmountAutoFocus: onCloseAutoFocus,
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          DismissableLayer,
+          {
+            role: "dialog",
+            id: context.contentId,
+            "aria-describedby": context.descriptionPresent ? context.descriptionId : void 0,
+            "aria-labelledby": context.titlePresent ? context.titleId : void 0,
+            "data-state": getState(context.open),
+            ...contentProps,
+            ref: forwardedRef,
+            deferPointerDownOutside: true,
+            onDismiss: () => context.onOpenChange(false)
+          }
+        )
+      }
+    ) });
+  }, "DialogContentImpl")
+);
+function getState(open) {
+  return open ? "open" : "closed";
+}
+__name(getState, "getState");
+var N = '[cmdk-group=""]', Y = '[cmdk-group-items=""]', be = '[cmdk-group-heading=""]', le = '[cmdk-item=""]', ce = `${le}:not([aria-disabled="true"])`, Z = "cmdk-item-select", T = "data-value", Re = (r2, o, n) => W(r2, o, n), ue = reactExports.createContext(void 0), K = () => reactExports.useContext(ue), de = reactExports.createContext(void 0), ee = () => reactExports.useContext(de), fe = reactExports.createContext(void 0), me = reactExports.forwardRef((r2, o) => {
+  let n = L(() => {
+    var e, a;
+    return { search: "", value: (a = (e = r2.value) != null ? e : r2.defaultValue) != null ? a : "", selectedItemId: void 0, filtered: { count: 0, items: /* @__PURE__ */ new Map(), groups: /* @__PURE__ */ new Set() } };
+  }), u2 = L(() => /* @__PURE__ */ new Set()), c = L(() => /* @__PURE__ */ new Map()), d = L(() => /* @__PURE__ */ new Map()), f = L(() => /* @__PURE__ */ new Set()), p2 = pe(r2), { label: b, children: m2, value: R, onValueChange: x, filter: C, shouldFilter: S, loop: A, disablePointerSelection: ge = false, vimBindings: j = true, ...O } = r2, $2 = useId$1(), q = useId$1(), _ = useId$1(), I = reactExports.useRef(null), v = ke();
+  k(() => {
+    if (R !== void 0) {
+      let e = R.trim();
+      n.current.value = e, E.emit();
+    }
+  }, [R]), k(() => {
+    v(6, ne);
+  }, []);
+  let E = reactExports.useMemo(() => ({ subscribe: (e) => (f.current.add(e), () => f.current.delete(e)), snapshot: () => n.current, setState: (e, a, s) => {
+    var i, l, g, y;
+    if (!Object.is(n.current[e], a)) {
+      if (n.current[e] = a, e === "search") J2(), z(), v(1, W2);
+      else if (e === "value") {
+        if (document.activeElement.hasAttribute("cmdk-input") || document.activeElement.hasAttribute("cmdk-root")) {
+          let h = document.getElementById(_);
+          h ? h.focus() : (i = document.getElementById($2)) == null || i.focus();
+        }
+        if (v(7, () => {
+          var h;
+          n.current.selectedItemId = (h = M()) == null ? void 0 : h.id, E.emit();
+        }), s || v(5, ne), ((l = p2.current) == null ? void 0 : l.value) !== void 0) {
+          let h = a != null ? a : "";
+          (y = (g = p2.current).onValueChange) == null || y.call(g, h);
+          return;
+        }
+      }
+      E.emit();
+    }
+  }, emit: () => {
+    f.current.forEach((e) => e());
+  } }), []), U2 = reactExports.useMemo(() => ({ value: (e, a, s) => {
+    var i;
+    a !== ((i = d.current.get(e)) == null ? void 0 : i.value) && (d.current.set(e, { value: a, keywords: s }), n.current.filtered.items.set(e, te(a, s)), v(2, () => {
+      z(), E.emit();
+    }));
+  }, item: (e, a) => (u2.current.add(e), a && (c.current.has(a) ? c.current.get(a).add(e) : c.current.set(a, /* @__PURE__ */ new Set([e]))), v(3, () => {
+    J2(), z(), n.current.value || W2(), E.emit();
+  }), () => {
+    d.current.delete(e), u2.current.delete(e), n.current.filtered.items.delete(e);
+    let s = M();
+    v(4, () => {
+      J2(), (s == null ? void 0 : s.getAttribute("id")) === e && W2(), E.emit();
+    });
+  }), group: (e) => (c.current.has(e) || c.current.set(e, /* @__PURE__ */ new Set()), () => {
+    d.current.delete(e), c.current.delete(e);
+  }), filter: () => p2.current.shouldFilter, label: b || r2["aria-label"], getDisablePointerSelection: () => p2.current.disablePointerSelection, listId: $2, inputId: _, labelId: q, listInnerRef: I }), []);
+  function te(e, a) {
+    var i, l;
+    let s = (l = (i = p2.current) == null ? void 0 : i.filter) != null ? l : Re;
+    return e ? s(e, n.current.search, a) : 0;
+  }
+  function z() {
+    if (!n.current.search || p2.current.shouldFilter === false) return;
+    let e = n.current.filtered.items, a = [];
+    n.current.filtered.groups.forEach((i) => {
+      let l = c.current.get(i), g = 0;
+      l.forEach((y) => {
+        let h = e.get(y);
+        g = Math.max(h, g);
+      }), a.push([i, g]);
+    });
+    let s = I.current;
+    V().sort((i, l) => {
+      var h, F;
+      let g = i.getAttribute("id"), y = l.getAttribute("id");
+      return ((h = e.get(y)) != null ? h : 0) - ((F = e.get(g)) != null ? F : 0);
+    }).forEach((i) => {
+      let l = i.closest(Y);
+      l ? l.appendChild(i.parentElement === l ? i : i.closest(`${Y} > *`)) : s.appendChild(i.parentElement === s ? i : i.closest(`${Y} > *`));
+    }), a.sort((i, l) => l[1] - i[1]).forEach((i) => {
+      var g;
+      let l = (g = I.current) == null ? void 0 : g.querySelector(`${N}[${T}="${encodeURIComponent(i[0])}"]`);
+      l == null || l.parentElement.appendChild(l);
+    });
+  }
+  function W2() {
+    let e = V().find((s) => s.getAttribute("aria-disabled") !== "true"), a = e == null ? void 0 : e.getAttribute(T);
+    E.setState("value", a || void 0);
+  }
+  function J2() {
+    var a, s, i, l;
+    if (!n.current.search || p2.current.shouldFilter === false) {
+      n.current.filtered.count = u2.current.size;
+      return;
+    }
+    n.current.filtered.groups = /* @__PURE__ */ new Set();
+    let e = 0;
+    for (let g of u2.current) {
+      let y = (s = (a = d.current.get(g)) == null ? void 0 : a.value) != null ? s : "", h = (l = (i = d.current.get(g)) == null ? void 0 : i.keywords) != null ? l : [], F = te(y, h);
+      n.current.filtered.items.set(g, F), F > 0 && e++;
+    }
+    for (let [g, y] of c.current) for (let h of y) if (n.current.filtered.items.get(h) > 0) {
+      n.current.filtered.groups.add(g);
+      break;
+    }
+    n.current.filtered.count = e;
+  }
+  function ne() {
+    var a, s, i;
+    let e = M();
+    e && (((a = e.parentElement) == null ? void 0 : a.firstChild) === e && ((i = (s = e.closest(N)) == null ? void 0 : s.querySelector(be)) == null || i.scrollIntoView({ block: "nearest" })), e.scrollIntoView({ block: "nearest" }));
+  }
+  function M() {
+    var e;
+    return (e = I.current) == null ? void 0 : e.querySelector(`${le}[aria-selected="true"]`);
+  }
+  function V() {
+    var e;
+    return Array.from(((e = I.current) == null ? void 0 : e.querySelectorAll(ce)) || []);
+  }
+  function X2(e) {
+    let s = V()[e];
+    s && E.setState("value", s.getAttribute(T));
+  }
+  function Q(e) {
+    var g;
+    let a = M(), s = V(), i = s.findIndex((y) => y === a), l = s[i + e];
+    (g = p2.current) != null && g.loop && (l = i + e < 0 ? s[s.length - 1] : i + e === s.length ? s[0] : s[i + e]), l && E.setState("value", l.getAttribute(T));
+  }
+  function re2(e) {
+    let a = M(), s = a == null ? void 0 : a.closest(N), i;
+    for (; s && !i; ) s = e > 0 ? we(s, N) : De(s, N), i = s == null ? void 0 : s.querySelector(ce);
+    i ? E.setState("value", i.getAttribute(T)) : Q(e);
+  }
+  let oe = () => X2(V().length - 1), ie = (e) => {
+    e.preventDefault(), e.metaKey ? oe() : e.altKey ? re2(1) : Q(1);
+  }, se = (e) => {
+    e.preventDefault(), e.metaKey ? X2(0) : e.altKey ? re2(-1) : Q(-1);
+  };
+  return reactExports.createElement(Primitive.div, { ref: o, tabIndex: -1, ...O, "cmdk-root": "", onKeyDown: (e) => {
+    var s;
+    (s = O.onKeyDown) == null || s.call(O, e);
+    let a = e.nativeEvent.isComposing || e.keyCode === 229;
+    if (!(e.defaultPrevented || a)) switch (e.key) {
+      case "n":
+      case "j": {
+        j && e.ctrlKey && ie(e);
+        break;
+      }
+      case "ArrowDown": {
+        ie(e);
+        break;
+      }
+      case "p":
+      case "k": {
+        j && e.ctrlKey && se(e);
+        break;
+      }
+      case "ArrowUp": {
+        se(e);
+        break;
+      }
+      case "Home": {
+        e.preventDefault(), X2(0);
+        break;
+      }
+      case "End": {
+        e.preventDefault(), oe();
+        break;
+      }
+      case "Enter": {
+        e.preventDefault();
+        let i = M();
+        if (i) {
+          let l = new Event(Z);
+          i.dispatchEvent(l);
+        }
+      }
+    }
+  } }, reactExports.createElement("label", { "cmdk-label": "", htmlFor: U2.inputId, id: U2.labelId, style: Te }, b), B(r2, (e) => reactExports.createElement(de.Provider, { value: E }, reactExports.createElement(ue.Provider, { value: U2 }, e))));
+}), he = reactExports.forwardRef((r2, o) => {
+  var _, I;
+  let n = useId$1(), u2 = reactExports.useRef(null), c = reactExports.useContext(fe), d = K(), f = pe(r2), p2 = (I = (_ = f.current) == null ? void 0 : _.forceMount) != null ? I : c == null ? void 0 : c.forceMount;
+  k(() => {
+    if (!p2) return d.item(n, c == null ? void 0 : c.id);
+  }, [p2]);
+  let b = ve(n, u2, [r2.value, r2.children, u2], r2.keywords), m2 = ee(), R = P((v) => v.value && v.value === b.current), x = P((v) => p2 || d.filter() === false ? true : v.search ? v.filtered.items.get(n) > 0 : true);
+  reactExports.useEffect(() => {
+    let v = u2.current;
+    if (!(!v || r2.disabled)) return v.addEventListener(Z, C), () => v.removeEventListener(Z, C);
+  }, [x, r2.onSelect, r2.disabled]);
+  function C() {
+    var v, E;
+    S(), (E = (v = f.current).onSelect) == null || E.call(v, b.current);
+  }
+  function S() {
+    m2.setState("value", b.current, true);
+  }
+  if (!x) return null;
+  let { disabled: A, value: ge, onSelect: j, forceMount: O, keywords: $2, ...q } = r2;
+  return reactExports.createElement(Primitive.div, { ref: composeRefs(u2, o), ...q, id: n, "cmdk-item": "", role: "option", "aria-disabled": !!A, "aria-selected": !!R, "data-disabled": !!A, "data-selected": !!R, onPointerMove: A || d.getDisablePointerSelection() ? void 0 : S, onClick: A ? void 0 : C }, r2.children);
+}), Ee = reactExports.forwardRef((r2, o) => {
+  let { heading: n, children: u2, forceMount: c, ...d } = r2, f = useId$1(), p2 = reactExports.useRef(null), b = reactExports.useRef(null), m2 = useId$1(), R = K(), x = P((S) => c || R.filter() === false ? true : S.search ? S.filtered.groups.has(f) : true);
+  k(() => R.group(f), []), ve(f, p2, [r2.value, r2.heading, b]);
+  let C = reactExports.useMemo(() => ({ id: f, forceMount: c }), [c]);
+  return reactExports.createElement(Primitive.div, { ref: composeRefs(p2, o), ...d, "cmdk-group": "", role: "presentation", hidden: x ? void 0 : true }, n && reactExports.createElement("div", { ref: b, "cmdk-group-heading": "", "aria-hidden": true, id: m2 }, n), B(r2, (S) => reactExports.createElement("div", { "cmdk-group-items": "", role: "group", "aria-labelledby": n ? m2 : void 0 }, reactExports.createElement(fe.Provider, { value: C }, S))));
+}), ye = reactExports.forwardRef((r2, o) => {
+  let { alwaysRender: n, ...u2 } = r2, c = reactExports.useRef(null), d = P((f) => !f.search);
+  return !n && !d ? null : reactExports.createElement(Primitive.div, { ref: composeRefs(c, o), ...u2, "cmdk-separator": "", role: "separator" });
+}), Se = reactExports.forwardRef((r2, o) => {
+  let { onValueChange: n, ...u2 } = r2, c = r2.value != null, d = ee(), f = P((m2) => m2.search), p2 = P((m2) => m2.selectedItemId), b = K();
+  return reactExports.useEffect(() => {
+    r2.value != null && d.setState("search", r2.value);
+  }, [r2.value]), reactExports.createElement(Primitive.input, { ref: o, ...u2, "cmdk-input": "", autoComplete: "off", autoCorrect: "off", spellCheck: false, "aria-autocomplete": "list", role: "combobox", "aria-expanded": true, "aria-controls": b.listId, "aria-labelledby": b.labelId, "aria-activedescendant": p2, id: b.inputId, type: "text", value: c ? r2.value : f, onChange: (m2) => {
+    c || d.setState("search", m2.target.value), n == null || n(m2.target.value);
+  } });
+}), Ce = reactExports.forwardRef((r2, o) => {
+  let { children: n, label: u2 = "Suggestions", ...c } = r2, d = reactExports.useRef(null), f = reactExports.useRef(null), p2 = P((m2) => m2.selectedItemId), b = K();
+  return reactExports.useEffect(() => {
+    if (f.current && d.current) {
+      let m2 = f.current, R = d.current, x, C = new ResizeObserver(() => {
+        x = requestAnimationFrame(() => {
+          let S = m2.offsetHeight;
+          R.style.setProperty("--cmdk-list-height", S.toFixed(1) + "px");
+        });
+      });
+      return C.observe(m2), () => {
+        cancelAnimationFrame(x), C.unobserve(m2);
+      };
+    }
+  }, []), reactExports.createElement(Primitive.div, { ref: composeRefs(d, o), ...c, "cmdk-list": "", role: "listbox", tabIndex: -1, "aria-activedescendant": p2, "aria-label": u2, id: b.listId }, B(r2, (m2) => reactExports.createElement("div", { ref: composeRefs(f, b.listInnerRef), "cmdk-list-sizer": "" }, m2)));
+}), xe = reactExports.forwardRef((r2, o) => {
+  let { open: n, onOpenChange: u2, overlayClassName: c, contentClassName: d, container: f, ...p2 } = r2;
+  return reactExports.createElement(Dialog, { open: n, onOpenChange: u2 }, reactExports.createElement(DialogPortal, { container: f }, reactExports.createElement(DialogOverlay, { "cmdk-overlay": "", className: c }), reactExports.createElement(DialogContent, { "aria-label": r2.label, "cmdk-dialog": "", className: d }, reactExports.createElement(me, { ref: o, ...p2 }))));
+}), Ie = reactExports.forwardRef((r2, o) => P((u2) => u2.filtered.count === 0) ? reactExports.createElement(Primitive.div, { ref: o, ...r2, "cmdk-empty": "", role: "presentation" }) : null), Pe = reactExports.forwardRef((r2, o) => {
+  let { progress: n, children: u2, label: c = "Loading...", ...d } = r2;
+  return reactExports.createElement(Primitive.div, { ref: o, ...d, "cmdk-loading": "", role: "progressbar", "aria-valuenow": n, "aria-valuemin": 0, "aria-valuemax": 100, "aria-label": c }, B(r2, (f) => reactExports.createElement("div", { "aria-hidden": true }, f)));
+}), _e = Object.assign(me, { List: Ce, Item: he, Input: Se, Group: Ee, Separator: ye, Dialog: xe, Empty: Ie, Loading: Pe });
+function we(r2, o) {
+  let n = r2.nextElementSibling;
+  for (; n; ) {
+    if (n.matches(o)) return n;
+    n = n.nextElementSibling;
+  }
+}
+function De(r2, o) {
+  let n = r2.previousElementSibling;
+  for (; n; ) {
+    if (n.matches(o)) return n;
+    n = n.previousElementSibling;
+  }
+}
+function pe(r2) {
+  let o = reactExports.useRef(r2);
+  return k(() => {
+    o.current = r2;
+  }), o;
+}
+var k = typeof window == "undefined" ? reactExports.useEffect : reactExports.useLayoutEffect;
+function L(r2) {
+  let o = reactExports.useRef();
+  return o.current === void 0 && (o.current = r2()), o;
+}
+function P(r2) {
+  let o = ee(), n = () => r2(o.snapshot());
+  return reactExports.useSyncExternalStore(o.subscribe, n, n);
+}
+function ve(r2, o, n, u2 = []) {
+  let c = reactExports.useRef(), d = K();
+  return k(() => {
+    var b;
+    let f = (() => {
+      var m2;
+      for (let R of n) {
+        if (typeof R == "string") return R.trim();
+        if (typeof R == "object" && "current" in R) return R.current ? (m2 = R.current.textContent) == null ? void 0 : m2.trim() : c.current;
+      }
+    })(), p2 = u2.map((m2) => m2.trim());
+    d.value(r2, f, p2), (b = o.current) == null || b.setAttribute(T, f), c.current = f;
+  }), c;
+}
+var ke = () => {
+  let [r2, o] = reactExports.useState(), n = L(() => /* @__PURE__ */ new Map());
+  return k(() => {
+    n.current.forEach((u2) => u2()), n.current = /* @__PURE__ */ new Map();
+  }, [r2]), (u2, c) => {
+    n.current.set(u2, c), o({});
+  };
+};
+function Me(r2) {
+  let o = r2.type;
+  return typeof o == "function" ? o(r2.props) : "render" in o ? o.render(r2.props) : r2;
+}
+function B({ asChild: r2, children: o }, n) {
+  return r2 && reactExports.isValidElement(o) ? reactExports.cloneElement(Me(o), { ref: o.ref }, n(o.props.children)) : n(o);
+}
+var Te = { position: "absolute", width: "1px", height: "1px", padding: "0", margin: "-1px", overflow: "hidden", clip: "rect(0, 0, 0, 0)", whiteSpace: "nowrap", borderWidth: "0" };
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const toKebabCase = (string2) => string2.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+const mergeClasses = (...classes) => classes.filter((className, index2, array) => {
+  return Boolean(className) && className.trim() !== "" && array.indexOf(className) === index2;
+}).join(" ").trim();
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+var defaultAttributes = {
+  xmlns: "http://www.w3.org/2000/svg",
+  width: 24,
+  height: 24,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  strokeLinecap: "round",
+  strokeLinejoin: "round"
+};
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Icon = reactExports.forwardRef(
+  ({
+    color: color2 = "currentColor",
+    size = 24,
+    strokeWidth = 2,
+    absoluteStrokeWidth,
+    className = "",
+    children,
+    iconNode,
+    ...rest
+  }, ref) => {
+    return reactExports.createElement(
+      "svg",
+      {
+        ref,
+        ...defaultAttributes,
+        width: size,
+        height: size,
+        stroke: color2,
+        strokeWidth: absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth,
+        className: mergeClasses("lucide", className),
+        ...rest
+      },
+      [
+        ...iconNode.map(([tag, attrs]) => reactExports.createElement(tag, attrs)),
+        ...Array.isArray(children) ? children : [children]
+      ]
+    );
+  }
+);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const createLucideIcon = (iconName, iconNode) => {
+  const Component = reactExports.forwardRef(
+    ({ className, ...props2 }, ref) => reactExports.createElement(Icon, {
+      ref,
+      iconNode,
+      className: mergeClasses(`lucide-${toKebabCase(iconName)}`, className),
+      ...props2
+    })
+  );
+  Component.displayName = `${iconName}`;
+  return Component;
+};
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const ArrowLeft = createLucideIcon("ArrowLeft", [
+  ["path", { d: "m12 19-7-7 7-7", key: "1l729n" }],
+  ["path", { d: "M19 12H5", key: "x3x0zl" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const ArrowRight = createLucideIcon("ArrowRight", [
+  ["path", { d: "M5 12h14", key: "1ays0h" }],
+  ["path", { d: "m12 5 7 7-7 7", key: "xquz4c" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Box = createLucideIcon("Box", [
+  [
+    "path",
+    {
+      d: "M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z",
+      key: "hh9hay"
+    }
+  ],
+  ["path", { d: "m3.3 7 8.7 5 8.7-5", key: "g66t2b" }],
+  ["path", { d: "M12 22V12", key: "d0xqtd" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const ChartColumn = createLucideIcon("ChartColumn", [
+  ["path", { d: "M3 3v16a2 2 0 0 0 2 2h16", key: "c24i48" }],
+  ["path", { d: "M18 17V9", key: "2bz60n" }],
+  ["path", { d: "M13 17V5", key: "1frdt8" }],
+  ["path", { d: "M8 17v-3", key: "17ska0" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Check = createLucideIcon("Check", [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const ChevronDown = createLucideIcon("ChevronDown", [
+  ["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const ChevronRight = createLucideIcon("ChevronRight", [
+  ["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const ChevronUp = createLucideIcon("ChevronUp", [["path", { d: "m18 15-6-6-6 6", key: "153udz" }]]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const CircleAlert = createLucideIcon("CircleAlert", [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["line", { x1: "12", x2: "12", y1: "8", y2: "12", key: "1pkeuh" }],
+  ["line", { x1: "12", x2: "12.01", y1: "16", y2: "16", key: "4dfq90" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const CircleCheckBig = createLucideIcon("CircleCheckBig", [
+  ["path", { d: "M21.801 10A10 10 0 1 1 17 3.335", key: "yps3ct" }],
+  ["path", { d: "m9 11 3 3L22 4", key: "1pflzl" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const CodeXml = createLucideIcon("CodeXml", [
+  ["path", { d: "m18 16 4-4-4-4", key: "1inbqp" }],
+  ["path", { d: "m6 8-4 4 4 4", key: "15zrgr" }],
+  ["path", { d: "m14.5 4-5 16", key: "e7oirm" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Copy = createLucideIcon("Copy", [
+  ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
+  ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Cpu = createLucideIcon("Cpu", [
+  ["rect", { width: "16", height: "16", x: "4", y: "4", rx: "2", key: "14l7u7" }],
+  ["rect", { width: "6", height: "6", x: "9", y: "9", rx: "1", key: "5aljv4" }],
+  ["path", { d: "M15 2v2", key: "13l42r" }],
+  ["path", { d: "M15 20v2", key: "15mkzm" }],
+  ["path", { d: "M2 15h2", key: "1gxd5l" }],
+  ["path", { d: "M2 9h2", key: "1bbxkp" }],
+  ["path", { d: "M20 15h2", key: "19e6y8" }],
+  ["path", { d: "M20 9h2", key: "19tzq7" }],
+  ["path", { d: "M9 2v2", key: "165o2o" }],
+  ["path", { d: "M9 20v2", key: "i2bqo8" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Database = createLucideIcon("Database", [
+  ["ellipse", { cx: "12", cy: "5", rx: "9", ry: "3", key: "msslwz" }],
+  ["path", { d: "M3 5V19A9 3 0 0 0 21 19V5", key: "1wlel7" }],
+  ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Dna = createLucideIcon("Dna", [
+  ["path", { d: "m10 16 1.5 1.5", key: "11lckj" }],
+  ["path", { d: "m14 8-1.5-1.5", key: "1ohn8i" }],
+  ["path", { d: "M15 2c-1.798 1.998-2.518 3.995-2.807 5.993", key: "80uv8i" }],
+  ["path", { d: "m16.5 10.5 1 1", key: "696xn5" }],
+  ["path", { d: "m17 6-2.891-2.891", key: "xu6p2f" }],
+  ["path", { d: "M2 15c6.667-6 13.333 0 20-6", key: "1pyr53" }],
+  ["path", { d: "m20 9 .891.891", key: "3xwk7g" }],
+  ["path", { d: "M3.109 14.109 4 15", key: "q76aoh" }],
+  ["path", { d: "m6.5 12.5 1 1", key: "cs35ky" }],
+  ["path", { d: "m7 18 2.891 2.891", key: "1sisit" }],
+  ["path", { d: "M9 22c1.798-1.998 2.518-3.995 2.807-5.993", key: "q3hbxp" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const ExternalLink = createLucideIcon("ExternalLink", [
+  ["path", { d: "M15 3h6v6", key: "1q9fwt" }],
+  ["path", { d: "M10 14 21 3", key: "gplh6r" }],
+  ["path", { d: "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6", key: "a6xqqp" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const EyeOff = createLucideIcon("EyeOff", [
+  [
+    "path",
+    {
+      d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49",
+      key: "ct8e1f"
+    }
+  ],
+  ["path", { d: "M14.084 14.158a3 3 0 0 1-4.242-4.242", key: "151rxh" }],
+  [
+    "path",
+    {
+      d: "M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143",
+      key: "13bj9a"
+    }
+  ],
+  ["path", { d: "m2 2 20 20", key: "1ooewy" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Eye = createLucideIcon("Eye", [
+  [
+    "path",
+    {
+      d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
+      key: "1nclc0"
+    }
+  ],
+  ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const FileCode = createLucideIcon("FileCode", [
+  ["path", { d: "M10 12.5 8 15l2 2.5", key: "1tg20x" }],
+  ["path", { d: "m14 12.5 2 2.5-2 2.5", key: "yinavb" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z", key: "1mlx9k" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const FilePlus2 = createLucideIcon("FilePlus2", [
+  ["path", { d: "M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4", key: "1pf5j1" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "M3 15h6", key: "4e2qda" }],
+  ["path", { d: "M6 12v6", key: "1u72j0" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const FileText = createLucideIcon("FileText", [
+  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "M10 9H8", key: "b1mrlr" }],
+  ["path", { d: "M16 13H8", key: "t4e002" }],
+  ["path", { d: "M16 17H8", key: "z1uh3a" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Filter = createLucideIcon("Filter", [
+  ["polygon", { points: "22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3", key: "1yg77f" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const FolderOpen = createLucideIcon("FolderOpen", [
+  [
+    "path",
+    {
+      d: "m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2",
+      key: "usdka0"
+    }
+  ]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const FolderTree = createLucideIcon("FolderTree", [
+  [
+    "path",
+    {
+      d: "M20 10a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2.5a1 1 0 0 1-.8-.4l-.9-1.2A1 1 0 0 0 15 3h-2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z",
+      key: "hod4my"
+    }
+  ],
+  [
+    "path",
+    {
+      d: "M20 21a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1h-2.9a1 1 0 0 1-.88-.55l-.42-.85a1 1 0 0 0-.92-.6H13a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z",
+      key: "w4yl2u"
+    }
+  ],
+  ["path", { d: "M3 5a2 2 0 0 0 2 2h3", key: "f2jnh7" }],
+  ["path", { d: "M3 3v13a2 2 0 0 0 2 2h3", key: "k8epm1" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Folder = createLucideIcon("Folder", [
+  [
+    "path",
+    {
+      d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z",
+      key: "1kt360"
+    }
+  ]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Globe = createLucideIcon("Globe", [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20", key: "13o1zl" }],
+  ["path", { d: "M2 12h20", key: "9i4pu4" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Layers = createLucideIcon("Layers", [
+  [
+    "path",
+    {
+      d: "M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z",
+      key: "zw3jo"
+    }
+  ],
+  [
+    "path",
+    {
+      d: "M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12",
+      key: "1wduqc"
+    }
+  ],
+  [
+    "path",
+    {
+      d: "M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17",
+      key: "kqbvx6"
+    }
+  ]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Link2 = createLucideIcon("Link2", [
+  ["path", { d: "M9 17H7A5 5 0 0 1 7 7h2", key: "8i5ue5" }],
+  ["path", { d: "M15 7h2a5 5 0 1 1 0 10h-2", key: "1b9ql8" }],
+  ["line", { x1: "8", x2: "16", y1: "12", y2: "12", key: "1jonct" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const LoaderCircle = createLucideIcon("LoaderCircle", [
+  ["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Lock = createLucideIcon("Lock", [
+  ["rect", { width: "18", height: "11", x: "3", y: "11", rx: "2", ry: "2", key: "1w4ew1" }],
+  ["path", { d: "M7 11V7a5 5 0 0 1 10 0v4", key: "fwvmzm" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const MousePointerClick = createLucideIcon("MousePointerClick", [
+  ["path", { d: "M14 4.1 12 6", key: "ita8i4" }],
+  ["path", { d: "m5.1 8-2.9-.8", key: "1go3kf" }],
+  ["path", { d: "m6 12-1.9 2", key: "mnht97" }],
+  ["path", { d: "M7.2 2.2 8 5.1", key: "1cfko1" }],
+  [
+    "path",
+    {
+      d: "M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z",
+      key: "s0h3yz"
+    }
+  ]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Network = createLucideIcon("Network", [
+  ["rect", { x: "16", y: "16", width: "6", height: "6", rx: "1", key: "4q2zg0" }],
+  ["rect", { x: "2", y: "16", width: "6", height: "6", rx: "1", key: "8cvhb9" }],
+  ["rect", { x: "9", y: "2", width: "6", height: "6", rx: "1", key: "1egb70" }],
+  ["path", { d: "M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3", key: "1jsf9p" }],
+  ["path", { d: "M12 12V8", key: "2874zd" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const OctagonAlert = createLucideIcon("OctagonAlert", [
+  ["path", { d: "M12 16h.01", key: "1drbdi" }],
+  ["path", { d: "M12 8v4", key: "1got3b" }],
+  [
+    "path",
+    {
+      d: "M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z",
+      key: "1fd625"
+    }
+  ]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Package = createLucideIcon("Package", [
+  [
+    "path",
+    {
+      d: "M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z",
+      key: "1a0edw"
+    }
+  ],
+  ["path", { d: "M12 22V12", key: "d0xqtd" }],
+  ["path", { d: "m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7", key: "yx3hmr" }],
+  ["path", { d: "m7.5 4.27 9 5.15", key: "1c824w" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const PenLine = createLucideIcon("PenLine", [
+  ["path", { d: "M12 20h9", key: "t2du7b" }],
+  [
+    "path",
+    {
+      d: "M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z",
+      key: "1ykcvy"
+    }
+  ]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Plus = createLucideIcon("Plus", [
+  ["path", { d: "M5 12h14", key: "1ays0h" }],
+  ["path", { d: "M12 5v14", key: "s699le" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const RefreshCw = createLucideIcon("RefreshCw", [
+  ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
+  ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
+  ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
+  ["path", { d: "M8 16H3v5", key: "1cv678" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const RotateCcw = createLucideIcon("RotateCcw", [
+  ["path", { d: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8", key: "1357e3" }],
+  ["path", { d: "M3 3v5h5", key: "1xhq8a" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Save = createLucideIcon("Save", [
+  [
+    "path",
+    {
+      d: "M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",
+      key: "1c8476"
+    }
+  ],
+  ["path", { d: "M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7", key: "1ydtos" }],
+  ["path", { d: "M7 3v4a1 1 0 0 0 1 1h7", key: "t51u73" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Search = createLucideIcon("Search", [
+  ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }],
+  ["path", { d: "m21 21-4.3-4.3", key: "1qie3q" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Settings = createLucideIcon("Settings", [
+  [
+    "path",
+    {
+      d: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z",
+      key: "1qme2f"
+    }
+  ],
+  ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const ShieldCheck = createLucideIcon("ShieldCheck", [
+  [
+    "path",
+    {
+      d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
+      key: "oel41y"
+    }
+  ],
+  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Shield = createLucideIcon("Shield", [
+  [
+    "path",
+    {
+      d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
+      key: "oel41y"
+    }
+  ]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const SlidersVertical = createLucideIcon("SlidersVertical", [
+  ["line", { x1: "4", x2: "4", y1: "21", y2: "14", key: "1p332r" }],
+  ["line", { x1: "4", x2: "4", y1: "10", y2: "3", key: "gb41h5" }],
+  ["line", { x1: "12", x2: "12", y1: "21", y2: "12", key: "hf2csr" }],
+  ["line", { x1: "12", x2: "12", y1: "8", y2: "3", key: "1kfi7u" }],
+  ["line", { x1: "20", x2: "20", y1: "21", y2: "16", key: "1lhrwl" }],
+  ["line", { x1: "20", x2: "20", y1: "12", y2: "3", key: "16vvfq" }],
+  ["line", { x1: "2", x2: "6", y1: "14", y2: "14", key: "1uebub" }],
+  ["line", { x1: "10", x2: "14", y1: "8", y2: "8", key: "1yglbp" }],
+  ["line", { x1: "18", x2: "22", y1: "16", y2: "16", key: "1jxqpz" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Sparkles = createLucideIcon("Sparkles", [
+  [
+    "path",
+    {
+      d: "M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z",
+      key: "4pj2yx"
+    }
+  ],
+  ["path", { d: "M20 3v4", key: "1olli1" }],
+  ["path", { d: "M22 5h-4", key: "1gvqau" }],
+  ["path", { d: "M4 17v2", key: "vumght" }],
+  ["path", { d: "M5 18H3", key: "zchphs" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Tag = createLucideIcon("Tag", [
+  [
+    "path",
+    {
+      d: "M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z",
+      key: "vktsd0"
+    }
+  ],
+  ["circle", { cx: "7.5", cy: "7.5", r: ".5", fill: "currentColor", key: "kqv944" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Trash2 = createLucideIcon("Trash2", [
+  ["path", { d: "M3 6h18", key: "d0wm0j" }],
+  ["path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", key: "4alrt4" }],
+  ["path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", key: "v07s0e" }],
+  ["line", { x1: "10", x2: "10", y1: "11", y2: "17", key: "1uufr5" }],
+  ["line", { x1: "14", x2: "14", y1: "11", y2: "17", key: "xtxkd" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const TriangleAlert = createLucideIcon("TriangleAlert", [
+  [
+    "path",
+    {
+      d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",
+      key: "wmoenq"
+    }
+  ],
+  ["path", { d: "M12 9v4", key: "juzpu7" }],
+  ["path", { d: "M12 17h.01", key: "p32p05" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const WandSparkles = createLucideIcon("WandSparkles", [
+  [
+    "path",
+    {
+      d: "m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72",
+      key: "ul74o6"
+    }
+  ],
+  ["path", { d: "m14 7 3 3", key: "1r5n42" }],
+  ["path", { d: "M5 6v4", key: "ilb8ba" }],
+  ["path", { d: "M19 14v4", key: "blhpug" }],
+  ["path", { d: "M10 2v2", key: "7u0qdc" }],
+  ["path", { d: "M7 8H3", key: "zfb6yr" }],
+  ["path", { d: "M21 16h-4", key: "1cnmox" }],
+  ["path", { d: "M11 3H9", key: "1obp7u" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const X = createLucideIcon("X", [
+  ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
+  ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
+]);
 function CommandPalette({
   isOpen,
   onClose,
@@ -310,13 +9494,10 @@ function CommandPalette({
   kernel
 }) {
   const openTab = useIdeStore((state) => state.openTab);
-  const [query, setQuery] = reactExports.useState("");
-  const [selectedIndex, setSelectedIndex] = reactExports.useState(0);
-  const inputRef = reactExports.useRef(null);
   const allItems = reactExports.useMemo(() => {
-    const list = [];
+    const list2 = [];
     if (kernel) {
-      list.push({
+      list2.push({
         id: "atom:kernel",
         type: "atom",
         title: "kernel.md (核心协议)",
@@ -328,7 +9509,7 @@ function CommandPalette({
     for (const item of manifests) {
       const mName = typeof item === "string" ? item : item.name;
       const mWs = typeof item === "string" ? void 0 : item.workspace;
-      list.push({
+      list2.push({
         id: `manifest:${mName}`,
         type: "manifest",
         title: mName,
@@ -338,28 +9519,28 @@ function CommandPalette({
       });
     }
     for (const pkg of packages) {
-      for (const [k, def] of Object.entries(pkg.exports || {})) {
-        list.push({
-          id: `lookup:${k}`,
+      for (const [k2, def] of Object.entries(pkg.exports || {})) {
+        list2.push({
+          id: `lookup:${k2}`,
           type: "lookup",
-          title: k,
+          title: k2,
           subtitle: `公开接口 (@${pkg.name})`,
           badge: (def.pillar || "d1").toUpperCase(),
-          lookupKey: k
+          lookupKey: k2
         });
       }
-      for (const [k, def] of Object.entries(pkg.internal_lookups || {})) {
-        list.push({
-          id: `lookup:${k}`,
+      for (const [k2, def] of Object.entries(pkg.internal_lookups || {})) {
+        list2.push({
+          id: `lookup:${k2}`,
           type: "lookup",
-          title: k,
+          title: k2,
           subtitle: `内部查找 (@${pkg.name})`,
           badge: (def.pillar || "d1").toUpperCase(),
-          lookupKey: k
+          lookupKey: k2
         });
       }
       for (const atom of pkg.atoms || []) {
-        list.push({
+        list2.push({
           id: `atom:${atom.id}`,
           type: "atom",
           title: atom.id,
@@ -369,28 +9550,17 @@ function CommandPalette({
         });
       }
     }
-    return list;
+    return list2;
   }, [manifests, packages, kernel]);
-  const filteredItems = reactExports.useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return allItems.slice(0, 50);
-    return allItems.filter(
-      (item) => {
-        var _a;
-        return item.title.toLowerCase().includes(q) || ((_a = item.subtitle) == null ? void 0 : _a.toLowerCase().includes(q));
-      }
-    ).slice(0, 50);
-  }, [allItems, query]);
   reactExports.useEffect(() => {
-    if (isOpen) {
-      setQuery("");
-      setSelectedIndex(0);
-      setTimeout(() => {
-        var _a;
-        return (_a = inputRef.current) == null ? void 0 : _a.focus();
-      }, 50);
-    }
-  }, [isOpen]);
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
   const handleSelect = (item) => {
     if (item.type === "atom" && item.atomId) {
       openTab({
@@ -419,24 +9589,6 @@ function CommandPalette({
     }
     onClose();
   };
-  const handleKeyDown = (e) => {
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev + 1) % Math.max(1, filteredItems.length));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setSelectedIndex(
-        (prev) => (prev - 1 + filteredItems.length) % Math.max(1, filteredItems.length)
-      );
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (filteredItems[selectedIndex]) {
-        handleSelect(filteredItems[selectedIndex]);
-      }
-    } else if (e.key === "Escape") {
-      onClose();
-    }
-  };
   if (!isOpen) return null;
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     "div",
@@ -445,42 +9597,38 @@ function CommandPalette({
       className: "fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/60 backdrop-blur-sm",
       onClick: onClose,
       onKeyDown: (e) => {
-        if (e.key === "Escape") onClose();
+        if (e.key === "Escape") {
+          onClose();
+        }
       },
-      children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx(
         "div",
         {
           className: "w-full max-w-xl rounded-xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden flex flex-col font-mono text-xs",
           onClick: (e) => e.stopPropagation(),
-          onKeyDown: handleKeyDown,
-          children: [
+          onKeyDown: (e) => e.stopPropagation(),
+          role: "presentation",
+          children: /* @__PURE__ */ jsxRuntimeExports.jsxs(_e, { label: "跳转资产或接口", className: "flex flex-col", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center px-3.5 py-3 border-b border-slate-800 bg-slate-950/80 gap-2.5", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(Search, { className: "h-4 w-4 text-indigo-400 shrink-0" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "input",
+                _e.Input,
                 {
-                  ref: inputRef,
-                  type: "text",
-                  value: query,
-                  onChange: (e) => {
-                    setQuery(e.target.value);
-                    setSelectedIndex(0);
-                  },
                   placeholder: "跳转到原子、清单蓝图或接口定义... (按 Esc 退出)",
-                  className: "flex-1 bg-transparent text-slate-100 placeholder-slate-500 focus:outline-none text-xs"
+                  className: "flex-1 bg-transparent text-slate-100 placeholder-slate-500 focus:outline-none text-xs",
+                  autoFocus: true
                 }
               ),
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700", children: "Esc" })
             ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "max-h-80 overflow-y-auto p-1.5 space-y-0.5", children: filteredItems.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-6 text-center text-slate-500", children: "未找到匹配的资产" }) : filteredItems.map((item, idx) => {
-              const isSelected = idx === selectedIndex;
-              return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "button",
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(_e.List, { className: "max-h-80 overflow-y-auto p-1.5 space-y-0.5", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(_e.Empty, { className: "p-6 text-center text-slate-500", children: "未找到匹配的资产" }),
+              allItems.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                _e.Item,
                 {
-                  type: "button",
-                  onClick: () => handleSelect(item),
-                  onMouseEnter: () => setSelectedIndex(idx),
-                  className: `w-full text-left flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors ${isSelected ? "bg-indigo-600/30 text-indigo-200 border border-indigo-500/40" : "text-slate-300 hover:bg-slate-800/50 border border-transparent"}`,
+                  value: `${item.title} ${item.subtitle || ""}`,
+                  onSelect: () => handleSelect(item),
+                  className: "w-full text-left flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors text-slate-300 aria-selected:bg-indigo-600/30 aria-selected:text-indigo-200 aria-selected:border aria-selected:border-indigo-500/40 border border-transparent",
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5 truncate", children: [
                       item.type === "manifest" ? /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-4 w-4 text-indigo-400 shrink-0" }) : item.type === "lookup" ? /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "h-4 w-4 text-purple-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Box, { className: "h-4 w-4 text-emerald-400 shrink-0" }),
@@ -493,16 +9641,83 @@ function CommandPalette({
                   ]
                 },
                 item.id
-              );
-            }) })
-          ]
+              ))
+            ] })
+          ] })
         }
       )
     }
   );
 }
-const Button = React.forwardRef(
-  ({ className, variant = "default", size = "default", ...props }, ref) => {
+async function apiFetch(url, options) {
+  const res = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      ...options == null ? void 0 : options.headers
+    },
+    ...options
+  });
+  if (!res.ok) {
+    let errorDetail = `HTTP ${res.status}`;
+    try {
+      const data = await res.json();
+      if (data.detail) errorDetail = data.detail;
+    } catch {
+    }
+    throw new Error(errorDetail);
+  }
+  return res.json();
+}
+async function fetchAtomDetail(atomId) {
+  return apiFetch(`/api/atoms/${encodeURIComponent(atomId)}`);
+}
+function useCreateAtomMutation() {
+  const queryClient2 = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) => apiFetch("/api/atoms", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+    onSuccess: () => {
+      queryClient2.invalidateQueries({ queryKey: ["assets"] });
+      queryClient2.invalidateQueries({ queryKey: ["lint"] });
+    }
+  });
+}
+function useUpdateAtomMutation() {
+  const queryClient2 = useQueryClient();
+  return useMutation({
+    mutationFn: ({ atomId, payload }) => apiFetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
+      method: "PUT",
+      body: JSON.stringify(payload)
+    }),
+    onSuccess: (_, variables) => {
+      queryClient2.invalidateQueries({ queryKey: ["assets"] });
+      queryClient2.invalidateQueries({ queryKey: ["lint"] });
+      queryClient2.invalidateQueries({ queryKey: ["atom", variables.atomId] });
+    }
+  });
+}
+function useDeleteAtomMutation() {
+  const queryClient2 = useQueryClient();
+  return useMutation({
+    mutationFn: (atomId) => apiFetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
+      method: "DELETE"
+    }),
+    onSuccess: () => {
+      queryClient2.invalidateQueries({ queryKey: ["assets"] });
+      queryClient2.invalidateQueries({ queryKey: ["lint"] });
+    }
+  });
+}
+async function openInObsidian(filePath) {
+  return apiFetch("/api/system/open-obsidian", {
+    method: "POST",
+    body: JSON.stringify({ file_path: filePath })
+  });
+}
+const Button = React$1.forwardRef(
+  ({ className, variant = "default", size = "default", ...props2 }, ref) => {
     const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 disabled:pointer-events-none disabled:opacity-50";
     const variants = {
       default: "bg-indigo-600 text-white shadow hover:bg-indigo-500",
@@ -522,7 +9737,7 @@ const Button = React.forwardRef(
       {
         ref,
         className: cn(baseStyles, variants[variant], sizes[size], className),
-        ...props
+        ...props2
       }
     );
   }
@@ -554,7 +9769,7 @@ function AtomEditorTab({
   onSaved,
   onDeleted
 }) {
-  var _a;
+  var _a2;
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const replaceTab = useIdeStore((state) => state.replaceTab);
   const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
@@ -567,7 +9782,6 @@ function AtomEditorTab({
   const draftInitialPkg = isDraft && draftParts[1] !== "kernel" ? draftParts[1] : "";
   const [isReady, setIsReady] = reactExports.useState(false);
   const [loading, setLoading] = reactExports.useState(!isDraft);
-  const [saving, setSaving] = reactExports.useState(false);
   const [saveSuccess, setSaveSuccess] = reactExports.useState(false);
   const [errorMsg, setErrorMsg] = reactExports.useState("");
   const [currentId, setCurrentId] = reactExports.useState(isDraft ? isKernel ? "kernel" : "" : atomId);
@@ -575,7 +9789,7 @@ function AtomEditorTab({
     () => isKernel ? "kernel" : isDraft ? generateIdSuffix() : ""
   );
   const [pkgName, setPkgName] = reactExports.useState(
-    isKernel ? "全局" : draftInitialPkg || ((_a = packages[0]) == null ? void 0 : _a.name) || ""
+    isKernel ? "全局" : draftInitialPkg || ((_a2 = packages[0]) == null ? void 0 : _a2.name) || ""
   );
   const [sourceFile, setSourceFile] = reactExports.useState("");
   const [atomType, setAtomType] = reactExports.useState(isKernel ? "kernel" : "d3");
@@ -585,10 +9799,14 @@ function AtomEditorTab({
   const [domainInput, setDomainInput] = reactExports.useState("");
   const [usesList, setUsesList] = reactExports.useState([]);
   const [usesInput, setUsesInput] = reactExports.useState("");
-  const [content, setContent] = reactExports.useState(
+  const [content2, setContent] = reactExports.useState(
     isDraft ? isKernel ? "# ACA 运行时协议 v1.0\n\n## 1. 系统声明\n本文档定义了当前工作区的公理边界与核心执行契约。\n" : "# 新建原子组件\n\n在此输入具体的规则规范或程序技能..." : ""
   );
   const [isModified, setIsModified] = reactExports.useState(false);
+  const createAtomMutation = useCreateAtomMutation();
+  const updateAtomMutation = useUpdateAtomMutation();
+  const deleteAtomMutation = useDeleteAtomMutation();
+  const saving = createAtomMutation.isPending || updateAtomMutation.isPending;
   reactExports.useEffect(() => {
     const snapshot = getSnapshot(tabId);
     if (snapshot) {
@@ -615,17 +9833,14 @@ function AtomEditorTab({
     }
     setLoading(true);
     setErrorMsg("");
-    fetch(`/api/atoms/${encodeURIComponent(atomId)}`).then((res) => {
-      if (!res.ok) throw new Error("加载原子失败");
-      return res.json();
-    }).then((data) => {
+    fetchAtomDetail(atomId).then((data) => {
       const meta = data.meta || {};
       setCurrentId(atomId);
       setPkgName(data.package || "全局");
       setSourceFile(data.source_file || "");
-      setAtomType(meta.type || "d1");
-      setDescription(meta.description || "");
-      setPriority(meta.priority !== void 0 ? meta.priority : 1);
+      setAtomType(String(meta.type || "d1"));
+      setDescription(String(meta.description || ""));
+      setPriority(meta.priority !== void 0 ? Number(meta.priority) : 1);
       setDomainList(Array.isArray(meta.domain) ? meta.domain : []);
       setUsesList(Array.isArray(meta.uses) ? meta.uses : []);
       setContent(data.content || "");
@@ -638,13 +9853,13 @@ function AtomEditorTab({
   }, [atomId, isDraft, setTabDirty, tabId, getSnapshot]);
   reactExports.useEffect(() => {
     const handleExternalUpdate = (e) => {
-      var _a2;
+      var _a3;
       const customEvent = e;
-      if (((_a2 = customEvent.detail) == null ? void 0 : _a2.atomId) === atomId && !isModified) {
+      if (((_a3 = customEvent.detail) == null ? void 0 : _a3.atomId) === atomId && !isModified) {
         if (customEvent.detail.content !== void 0) {
           setContent(customEvent.detail.content);
         } else {
-          fetch(`/api/atoms/${encodeURIComponent(atomId)}`).then((res) => res.json()).then((data) => {
+          fetchAtomDetail(atomId).then((data) => {
             if (data.content !== void 0) {
               setContent(data.content);
             }
@@ -667,7 +9882,7 @@ function AtomEditorTab({
       priority,
       domainList,
       usesList,
-      content,
+      content: content2,
       draftSuffix,
       isModified
     });
@@ -682,7 +9897,7 @@ function AtomEditorTab({
     priority,
     domainList,
     usesList,
-    content,
+    content2,
     draftSuffix,
     isModified,
     saveSnapshot
@@ -696,100 +9911,71 @@ function AtomEditorTab({
   const handleOpenObsidian = async () => {
     if (!sourceFile) return;
     try {
-      await fetch("/api/system/open-obsidian", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ file_path: sourceFile })
-      });
-    } catch (_err) {
+      await openInObsidian(sourceFile);
+    } catch {
     }
   };
   const handleSave = reactExports.useCallback(async () => {
-    setSaving(true);
     setErrorMsg("");
     if (isDraft) {
       if (isKernel) {
-        if (!content.trim()) {
+        if (!content2.trim()) {
           setErrorMsg("Kernel 协议正文不可为空");
-          setSaving(false);
           return;
         }
         try {
-          const res = await fetch("/api/atoms", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              type: "kernel",
-              content
-            })
+          await createAtomMutation.mutateAsync({
+            type: "kernel",
+            content: content2
           });
-          const data = await res.json();
-          if (res.ok) {
-            setSaveSuccess(true);
-            setIsModified(false);
-            setTabDirty(tabId, false);
-            clearSnapshot(tabId);
-            onSaved == null ? void 0 : onSaved();
-            replaceTab(tabId, {
-              id: "atom:kernel",
-              type: "atom",
-              title: "kernel",
-              closable: true,
-              atomId: "kernel"
-            });
-          } else {
-            setErrorMsg(data.detail || "创建 Kernel 失败");
-          }
-        } catch (_err) {
-          setErrorMsg("创建 Kernel 网络异常");
-        } finally {
-          setSaving(false);
+          setSaveSuccess(true);
+          setIsModified(false);
+          setTabDirty(tabId, false);
+          clearSnapshot(tabId);
+          onSaved == null ? void 0 : onSaved();
+          replaceTab(tabId, {
+            id: "atom:kernel",
+            type: "atom",
+            title: "kernel",
+            closable: true,
+            atomId: "kernel"
+          });
+        } catch (err) {
+          setErrorMsg(err instanceof Error ? err.message : "创建 Kernel 失败");
         }
         return;
       }
       const cleanSuffix = draftSuffix.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-");
       const generatedId = `${atomType}-${cleanSuffix}`;
-      if (!pkgName || !cleanSuffix || !content.trim()) {
+      if (!pkgName || !cleanSuffix || !content2.trim()) {
         setErrorMsg("请填写完整的所属包、标识后缀与正文");
-        setSaving(false);
         return;
       }
       try {
-        const res = await fetch("/api/atoms", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            package: pkgName,
-            id: generatedId,
-            type: atomType,
-            priority: atomType === "d3" ? priority : void 0,
-            description: description.trim() || void 0,
-            domain: domainList,
-            uses: atomType === "d2" ? usesList : [],
-            content
-          })
+        await createAtomMutation.mutateAsync({
+          package: pkgName,
+          id: generatedId,
+          type: atomType,
+          priority: atomType === "d3" ? priority : void 0,
+          description: description.trim() || void 0,
+          domain: domainList,
+          uses: atomType === "d2" ? usesList : [],
+          content: content2
         });
-        const data = await res.json();
-        if (res.ok) {
-          setSaveSuccess(true);
-          setIsModified(false);
-          setTabDirty(`atom:${atomId}`, false);
-          clearSnapshot(tabId);
-          onSaved == null ? void 0 : onSaved();
-          replaceTab(tabId, {
-            id: `atom:${generatedId}`,
-            type: "atom",
-            title: generatedId,
-            closable: true,
-            atomId: generatedId
-          });
-        } else {
-          setErrorMsg(data.detail || "创建原子失败");
-        }
-      } catch (_err) {
-        setErrorMsg("创建请求异常");
-      } finally {
-        setSaving(false);
+        setSaveSuccess(true);
+        setIsModified(false);
+        setTabDirty(`atom:${atomId}`, false);
+        clearSnapshot(tabId);
+        onSaved == null ? void 0 : onSaved();
+        replaceTab(tabId, {
+          id: `atom:${generatedId}`,
+          type: "atom",
+          title: generatedId,
+          closable: true,
+          atomId: generatedId
+        });
+      } catch (err) {
+        setErrorMsg(err instanceof Error ? err.message : "创建原子失败");
       }
       return;
     }
@@ -809,33 +9995,25 @@ function AtomEditorTab({
       newMeta.uses = usesList;
     }
     try {
-      const res = await fetch(`/api/atoms/${encodeURIComponent(currentId)}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await updateAtomMutation.mutateAsync({
+        atomId: currentId,
+        payload: {
           meta: newMeta,
-          content
-        })
+          content: content2
+        }
       });
-      if (res.ok) {
-        setSaveSuccess(true);
-        setIsModified(false);
-        setTabDirty(`atom:${atomId}`, false);
-        onSaved == null ? void 0 : onSaved();
-        setTimeout(() => setSaveSuccess(false), 2e3);
-      } else {
-        const data = await res.json();
-        setErrorMsg(data.detail || "保存原子失败");
-      }
-    } catch (_err) {
-      setErrorMsg("网络请求异常");
-    } finally {
-      setSaving(false);
+      setSaveSuccess(true);
+      setIsModified(false);
+      setTabDirty(`atom:${atomId}`, false);
+      onSaved == null ? void 0 : onSaved();
+      setTimeout(() => setSaveSuccess(false), 2e3);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "保存原子失败");
     }
   }, [
     isDraft,
     isKernel,
-    content,
+    content2,
     tabId,
     clearSnapshot,
     onSaved,
@@ -849,28 +10027,20 @@ function AtomEditorTab({
     priority,
     currentId,
     setTabDirty,
-    atomId
+    atomId,
+    createAtomMutation,
+    updateAtomMutation
   ]);
-  const handleDelete = async () => {
+  const handleDelete2 = async () => {
     if (isDraft) return;
     if (!window.confirm(`确定要永久删除原子组件 "${currentId}" 吗？此操作将物理删除文件。`)) {
       return;
     }
-    setSaving(true);
     try {
-      const res = await fetch(`/api/atoms/${encodeURIComponent(currentId)}`, {
-        method: "DELETE"
-      });
-      if (res.ok) {
-        onDeleted == null ? void 0 : onDeleted();
-      } else {
-        const data = await res.json();
-        setErrorMsg(data.detail || "删除原子失败");
-      }
-    } catch (_err) {
-      setErrorMsg("删除请求网络异常");
-    } finally {
-      setSaving(false);
+      await deleteAtomMutation.mutateAsync(currentId);
+      onDeleted == null ? void 0 : onDeleted();
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "删除原子失败");
     }
   };
   const handleKeyDown = (e) => {
@@ -910,7 +10080,7 @@ function AtomEditorTab({
     }
   };
   const removeUsesRef = (ref) => {
-    setUsesList(usesList.filter((u) => u !== ref));
+    setUsesList(usesList.filter((u2) => u2 !== ref));
     markDirty();
   };
   if (loading) {
@@ -970,8 +10140,8 @@ function AtomEditorTab({
               {
                 variant: "outline",
                 size: "sm",
-                onClick: handleDelete,
-                disabled: saving,
+                onClick: handleDelete2,
+                disabled: deleteAtomMutation.isPending,
                 className: "h-7 text-xs flex items-center gap-1 px-2 text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700 cursor-pointer",
                 title: "物理删除该原子 Markdown 文件",
                 children: [
@@ -1008,7 +10178,7 @@ function AtomEditorTab({
                   markDirty();
                 },
                 className: "w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500",
-                children: packages.map((p) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: p.name, children: p.name }, p.name))
+                children: packages.map((p2) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: p2.name, children: p2.name }, p2.name))
               }
             )
           ] }),
@@ -1219,7 +10389,7 @@ function AtomEditorTab({
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-hidden p-2 bg-slate-950", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
           ReactCodeMirror,
           {
-            value: content,
+            value: content2,
             height: "100%",
             extensions: [markdown()],
             theme: "dark",
@@ -1239,80 +10409,12716 @@ function AtomEditorTab({
     }
   );
 }
-const scriptRel = "modulepreload";
-const assetsURL = function(dep) {
-  return "/" + dep;
-};
-const seen = {};
-const __vitePreload = function preload(baseModule, deps, importerUrl) {
-  let promise = Promise.resolve();
-  if (deps && deps.length > 0) {
-    let allSettled2 = function(promises) {
-      return Promise.all(
-        promises.map(
-          (p) => Promise.resolve(p).then(
-            (value) => ({ status: "fulfilled", value }),
-            (reason) => ({ status: "rejected", reason })
-          )
-        )
-      );
-    };
-    document.getElementsByTagName("link");
-    const cspNonceMeta = document.querySelector(
-      "meta[property=csp-nonce]"
+async function evaluateLookupAdhoc(payload) {
+  return apiFetch("/api/lookups/evaluate", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+async function compileLookupAdhoc(payload) {
+  return apiFetch("/api/lookups/compile-adhoc", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+function useSaveLookupMutation() {
+  const queryClient2 = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) => apiFetch("/api/lookups", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+    onSuccess: () => {
+      queryClient2.invalidateQueries({ queryKey: ["assets"] });
+      queryClient2.invalidateQueries({ queryKey: ["lint"] });
+    }
+  });
+}
+function useDeleteLookupMutation() {
+  const queryClient2 = useQueryClient();
+  return useMutation({
+    mutationFn: (lookupKey) => apiFetch(
+      `/api/lookups/${encodeURIComponent(lookupKey)}`,
+      {
+        method: "DELETE"
+      }
+    ),
+    onSuccess: () => {
+      queryClient2.invalidateQueries({ queryKey: ["assets"] });
+      queryClient2.invalidateQueries({ queryKey: ["lint"] });
+    }
+  });
+}
+function ok$1() {
+}
+function unreachable() {
+}
+function stringify$1(values, options) {
+  const settings = {};
+  const input = values[values.length - 1] === "" ? [...values, ""] : values;
+  return input.join(
+    (settings.padRight ? " " : "") + "," + (settings.padLeft === false ? "" : " ")
+  ).trim();
+}
+const nameRe = /^[$_\p{ID_Start}][$_\u{200C}\u{200D}\p{ID_Continue}]*$/u;
+const nameReJsx = /^[$_\p{ID_Start}][-$_\u{200C}\u{200D}\p{ID_Continue}]*$/u;
+const emptyOptions$3 = {};
+function name(name2, options) {
+  const settings = emptyOptions$3;
+  const re2 = settings.jsx ? nameReJsx : nameRe;
+  return re2.test(name2);
+}
+const re = /[ \t\n\f\r]/g;
+function whitespace(thing) {
+  return typeof thing === "object" ? thing.type === "text" ? empty$1(thing.value) : false : empty$1(thing);
+}
+function empty$1(value) {
+  return value.replace(re, "") === "";
+}
+class Schema {
+  /**
+   * @param {SchemaType['property']} property
+   *   Property.
+   * @param {SchemaType['normal']} normal
+   *   Normal.
+   * @param {Space | undefined} [space]
+   *   Space.
+   * @returns
+   *   Schema.
+   */
+  constructor(property, normal, space2) {
+    this.normal = normal;
+    this.property = property;
+    if (space2) {
+      this.space = space2;
+    }
+  }
+}
+Schema.prototype.normal = {};
+Schema.prototype.property = {};
+Schema.prototype.space = void 0;
+function merge(definitions, space2) {
+  const property = {};
+  const normal = {};
+  for (const definition2 of definitions) {
+    Object.assign(property, definition2.property);
+    Object.assign(normal, definition2.normal);
+  }
+  return new Schema(property, normal, space2);
+}
+function normalize$1(value) {
+  return value.toLowerCase();
+}
+class Info {
+  /**
+   * @param {string} property
+   *   Property.
+   * @param {string} attribute
+   *   Attribute.
+   * @returns
+   *   Info.
+   */
+  constructor(property, attribute) {
+    this.attribute = attribute;
+    this.property = property;
+  }
+}
+Info.prototype.attribute = "";
+Info.prototype.booleanish = false;
+Info.prototype.boolean = false;
+Info.prototype.commaOrSpaceSeparated = false;
+Info.prototype.commaSeparated = false;
+Info.prototype.defined = false;
+Info.prototype.mustUseProperty = false;
+Info.prototype.number = false;
+Info.prototype.overloadedBoolean = false;
+Info.prototype.property = "";
+Info.prototype.spaceSeparated = false;
+Info.prototype.space = void 0;
+let powers = 0;
+const boolean = increment();
+const booleanish = increment();
+const overloadedBoolean = increment();
+const number = increment();
+const spaceSeparated = increment();
+const commaSeparated = increment();
+const commaOrSpaceSeparated = increment();
+function increment() {
+  return 2 ** ++powers;
+}
+const types = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  boolean,
+  booleanish,
+  commaOrSpaceSeparated,
+  commaSeparated,
+  number,
+  overloadedBoolean,
+  spaceSeparated
+}, Symbol.toStringTag, { value: "Module" }));
+const checks = (
+  /** @type {ReadonlyArray<keyof typeof types>} */
+  Object.keys(types)
+);
+class DefinedInfo extends Info {
+  /**
+   * @constructor
+   * @param {string} property
+   *   Property.
+   * @param {string} attribute
+   *   Attribute.
+   * @param {number | null | undefined} [mask]
+   *   Mask.
+   * @param {Space | undefined} [space]
+   *   Space.
+   * @returns
+   *   Info.
+   */
+  constructor(property, attribute, mask, space2) {
+    let index2 = -1;
+    super(property, attribute);
+    mark(this, "space", space2);
+    if (typeof mask === "number") {
+      while (++index2 < checks.length) {
+        const check = checks[index2];
+        mark(this, checks[index2], (mask & types[check]) === types[check]);
+      }
+    }
+  }
+}
+DefinedInfo.prototype.defined = true;
+function mark(values, key, value) {
+  if (value) {
+    values[key] = value;
+  }
+}
+function create(definition2) {
+  const properties = {};
+  const normals = {};
+  for (const [property, value] of Object.entries(definition2.properties)) {
+    const info = new DefinedInfo(
+      property,
+      definition2.transform(definition2.attributes || {}, property),
+      value,
+      definition2.space
     );
-    const cspNonce = (cspNonceMeta == null ? void 0 : cspNonceMeta.nonce) || (cspNonceMeta == null ? void 0 : cspNonceMeta.getAttribute("nonce"));
-    promise = allSettled2(
-      deps.map((dep) => {
-        dep = assetsURL(dep);
-        if (dep in seen) return;
-        seen[dep] = true;
-        const isCss = dep.endsWith(".css");
-        const cssSelector = isCss ? '[rel="stylesheet"]' : "";
-        if (document.querySelector(`link[href="${dep}"]${cssSelector}`)) {
+    if (definition2.mustUseProperty && definition2.mustUseProperty.includes(property)) {
+      info.mustUseProperty = true;
+    }
+    properties[property] = info;
+    normals[normalize$1(property)] = property;
+    normals[normalize$1(info.attribute)] = property;
+  }
+  return new Schema(properties, normals, definition2.space);
+}
+const aria = create({
+  properties: {
+    ariaActiveDescendant: null,
+    ariaAtomic: booleanish,
+    ariaAutoComplete: null,
+    ariaBusy: booleanish,
+    ariaChecked: booleanish,
+    ariaColCount: number,
+    ariaColIndex: number,
+    ariaColSpan: number,
+    ariaControls: spaceSeparated,
+    ariaCurrent: null,
+    ariaDescribedBy: spaceSeparated,
+    ariaDetails: null,
+    ariaDisabled: booleanish,
+    ariaDropEffect: spaceSeparated,
+    ariaErrorMessage: null,
+    ariaExpanded: booleanish,
+    ariaFlowTo: spaceSeparated,
+    ariaGrabbed: booleanish,
+    ariaHasPopup: null,
+    ariaHidden: booleanish,
+    ariaInvalid: null,
+    ariaKeyShortcuts: null,
+    ariaLabel: null,
+    ariaLabelledBy: spaceSeparated,
+    ariaLevel: number,
+    ariaLive: null,
+    ariaModal: booleanish,
+    ariaMultiLine: booleanish,
+    ariaMultiSelectable: booleanish,
+    ariaOrientation: null,
+    ariaOwns: spaceSeparated,
+    ariaPlaceholder: null,
+    ariaPosInSet: number,
+    ariaPressed: booleanish,
+    ariaReadOnly: booleanish,
+    ariaRelevant: null,
+    ariaRequired: booleanish,
+    ariaRoleDescription: spaceSeparated,
+    ariaRowCount: number,
+    ariaRowIndex: number,
+    ariaRowSpan: number,
+    ariaSelected: booleanish,
+    ariaSetSize: number,
+    ariaSort: null,
+    ariaValueMax: number,
+    ariaValueMin: number,
+    ariaValueNow: number,
+    ariaValueText: null,
+    role: null
+  },
+  transform(_, property) {
+    return property === "role" ? property : "aria-" + property.slice(4).toLowerCase();
+  }
+});
+function caseSensitiveTransform(attributes, attribute) {
+  return attribute in attributes ? attributes[attribute] : attribute;
+}
+function caseInsensitiveTransform(attributes, property) {
+  return caseSensitiveTransform(attributes, property.toLowerCase());
+}
+const html$3 = create({
+  attributes: {
+    acceptcharset: "accept-charset",
+    classname: "class",
+    htmlfor: "for",
+    httpequiv: "http-equiv"
+  },
+  mustUseProperty: ["checked", "multiple", "muted", "selected"],
+  properties: {
+    // Standard Properties.
+    abbr: null,
+    accept: commaSeparated,
+    acceptCharset: spaceSeparated,
+    accessKey: spaceSeparated,
+    action: null,
+    allow: null,
+    allowFullScreen: boolean,
+    allowPaymentRequest: boolean,
+    allowUserMedia: boolean,
+    alpha: boolean,
+    alt: null,
+    as: null,
+    async: boolean,
+    autoCapitalize: null,
+    autoComplete: spaceSeparated,
+    autoFocus: boolean,
+    autoPlay: boolean,
+    blocking: spaceSeparated,
+    capture: null,
+    charSet: null,
+    checked: boolean,
+    cite: null,
+    className: spaceSeparated,
+    closedBy: null,
+    colorSpace: null,
+    cols: number,
+    colSpan: number,
+    command: null,
+    commandFor: null,
+    content: null,
+    contentEditable: booleanish,
+    controls: boolean,
+    controlsList: spaceSeparated,
+    coords: number | commaSeparated,
+    crossOrigin: null,
+    data: null,
+    dateTime: null,
+    decoding: null,
+    default: boolean,
+    defer: boolean,
+    dir: null,
+    dirName: null,
+    disabled: boolean,
+    download: overloadedBoolean,
+    draggable: booleanish,
+    encType: null,
+    enterKeyHint: null,
+    fetchPriority: null,
+    form: null,
+    formAction: null,
+    formEncType: null,
+    formMethod: null,
+    formNoValidate: boolean,
+    formTarget: null,
+    headers: spaceSeparated,
+    height: number,
+    hidden: overloadedBoolean,
+    high: number,
+    href: null,
+    hrefLang: null,
+    htmlFor: spaceSeparated,
+    httpEquiv: spaceSeparated,
+    id: null,
+    imageSizes: null,
+    imageSrcSet: null,
+    inert: boolean,
+    inputMode: null,
+    integrity: null,
+    is: null,
+    isMap: boolean,
+    itemId: null,
+    itemProp: spaceSeparated,
+    itemRef: spaceSeparated,
+    itemScope: boolean,
+    itemType: spaceSeparated,
+    kind: null,
+    label: null,
+    lang: null,
+    language: null,
+    list: null,
+    loading: null,
+    loop: boolean,
+    low: number,
+    manifest: null,
+    max: null,
+    maxLength: number,
+    media: null,
+    method: null,
+    min: null,
+    minLength: number,
+    multiple: boolean,
+    muted: boolean,
+    name: null,
+    nonce: null,
+    noModule: boolean,
+    noValidate: boolean,
+    onAbort: null,
+    onAfterPrint: null,
+    onAuxClick: null,
+    onBeforeMatch: null,
+    onBeforePrint: null,
+    onBeforeToggle: null,
+    onBeforeUnload: null,
+    onBlur: null,
+    onCancel: null,
+    onCanPlay: null,
+    onCanPlayThrough: null,
+    onChange: null,
+    onClick: null,
+    onClose: null,
+    onContextLost: null,
+    onContextMenu: null,
+    onContextRestored: null,
+    onCopy: null,
+    onCueChange: null,
+    onCut: null,
+    onDblClick: null,
+    onDrag: null,
+    onDragEnd: null,
+    onDragEnter: null,
+    onDragExit: null,
+    onDragLeave: null,
+    onDragOver: null,
+    onDragStart: null,
+    onDrop: null,
+    onDurationChange: null,
+    onEmptied: null,
+    onEnded: null,
+    onError: null,
+    onFocus: null,
+    onFormData: null,
+    onHashChange: null,
+    onInput: null,
+    onInvalid: null,
+    onKeyDown: null,
+    onKeyPress: null,
+    onKeyUp: null,
+    onLanguageChange: null,
+    onLoad: null,
+    onLoadedData: null,
+    onLoadedMetadata: null,
+    onLoadEnd: null,
+    onLoadStart: null,
+    onMessage: null,
+    onMessageError: null,
+    onMouseDown: null,
+    onMouseEnter: null,
+    onMouseLeave: null,
+    onMouseMove: null,
+    onMouseOut: null,
+    onMouseOver: null,
+    onMouseUp: null,
+    onOffline: null,
+    onOnline: null,
+    onPageHide: null,
+    onPageShow: null,
+    onPaste: null,
+    onPause: null,
+    onPlay: null,
+    onPlaying: null,
+    onPopState: null,
+    onProgress: null,
+    onRateChange: null,
+    onRejectionHandled: null,
+    onReset: null,
+    onResize: null,
+    onScroll: null,
+    onScrollEnd: null,
+    onSecurityPolicyViolation: null,
+    onSeeked: null,
+    onSeeking: null,
+    onSelect: null,
+    onSlotChange: null,
+    onStalled: null,
+    onStorage: null,
+    onSubmit: null,
+    onSuspend: null,
+    onTimeUpdate: null,
+    onToggle: null,
+    onUnhandledRejection: null,
+    onUnload: null,
+    onVolumeChange: null,
+    onWaiting: null,
+    onWheel: null,
+    open: boolean,
+    optimum: number,
+    pattern: null,
+    ping: spaceSeparated,
+    placeholder: null,
+    playsInline: boolean,
+    popover: null,
+    popoverTarget: null,
+    popoverTargetAction: null,
+    poster: null,
+    preload: null,
+    readOnly: boolean,
+    referrerPolicy: null,
+    rel: spaceSeparated,
+    required: boolean,
+    reversed: boolean,
+    rows: number,
+    rowSpan: number,
+    sandbox: spaceSeparated,
+    scope: null,
+    scoped: boolean,
+    seamless: boolean,
+    selected: boolean,
+    shadowRootClonable: boolean,
+    shadowRootCustomElementRegistry: boolean,
+    shadowRootDelegatesFocus: boolean,
+    shadowRootMode: null,
+    shadowRootSerializable: boolean,
+    shape: null,
+    size: number,
+    sizes: null,
+    slot: null,
+    span: number,
+    spellCheck: booleanish,
+    src: null,
+    srcDoc: null,
+    srcLang: null,
+    srcSet: null,
+    start: number,
+    step: null,
+    style: null,
+    tabIndex: number,
+    target: null,
+    title: null,
+    translate: null,
+    type: null,
+    typeMustMatch: boolean,
+    useMap: null,
+    value: booleanish,
+    width: number,
+    wrap: null,
+    writingSuggestions: null,
+    // Legacy.
+    // See: https://html.spec.whatwg.org/#other-elements,-attributes-and-apis
+    align: null,
+    // Several. Use CSS `text-align` instead,
+    aLink: null,
+    // `<body>`. Use CSS `a:active {color}` instead
+    archive: spaceSeparated,
+    // `<object>`. List of URIs to archives
+    axis: null,
+    // `<td>` and `<th>`. Use `scope` on `<th>`
+    background: null,
+    // `<body>`. Use CSS `background-image` instead
+    bgColor: null,
+    // `<body>` and table elements. Use CSS `background-color` instead
+    border: number,
+    // `<table>`. Use CSS `border-width` instead,
+    borderColor: null,
+    // `<table>`. Use CSS `border-color` instead,
+    bottomMargin: number,
+    // `<body>`
+    cellPadding: null,
+    // `<table>`
+    cellSpacing: null,
+    // `<table>`
+    char: null,
+    // Several table elements. When `align=char`, sets the character to align on
+    charOff: null,
+    // Several table elements. When `char`, offsets the alignment
+    classId: null,
+    // `<object>`
+    clear: null,
+    // `<br>`. Use CSS `clear` instead
+    code: null,
+    // `<object>`
+    codeBase: null,
+    // `<object>`
+    codeType: null,
+    // `<object>`
+    color: null,
+    // `<font>` and `<hr>`. Use CSS instead
+    compact: boolean,
+    // Lists. Use CSS to reduce space between items instead
+    declare: boolean,
+    // `<object>`
+    event: null,
+    // `<script>`
+    face: null,
+    // `<font>`. Use CSS instead
+    frame: null,
+    // `<table>`
+    frameBorder: null,
+    // `<iframe>`. Use CSS `border` instead
+    hSpace: number,
+    // `<img>` and `<object>`
+    leftMargin: number,
+    // `<body>`
+    link: null,
+    // `<body>`. Use CSS `a:link {color: *}` instead
+    longDesc: null,
+    // `<frame>`, `<iframe>`, and `<img>`. Use an `<a>`
+    lowSrc: null,
+    // `<img>`. Use a `<picture>`
+    marginHeight: number,
+    // `<body>`
+    marginWidth: number,
+    // `<body>`
+    noResize: boolean,
+    // `<frame>`
+    noHref: boolean,
+    // `<area>`. Use no href instead of an explicit `nohref`
+    noShade: boolean,
+    // `<hr>`. Use background-color and height instead of borders
+    noWrap: boolean,
+    // `<td>` and `<th>`
+    object: null,
+    // `<applet>`
+    profile: null,
+    // `<head>`
+    prompt: null,
+    // `<isindex>`
+    rev: null,
+    // `<link>`
+    rightMargin: number,
+    // `<body>`
+    rules: null,
+    // `<table>`
+    scheme: null,
+    // `<meta>`
+    scrolling: booleanish,
+    // `<frame>`. Use overflow in the child context
+    standby: null,
+    // `<object>`
+    summary: null,
+    // `<table>`
+    text: null,
+    // `<body>`. Use CSS `color` instead
+    topMargin: number,
+    // `<body>`
+    valueType: null,
+    // `<param>`
+    version: null,
+    // `<html>`. Use a doctype.
+    vAlign: null,
+    // Several. Use CSS `vertical-align` instead
+    vLink: null,
+    // `<body>`. Use CSS `a:visited {color}` instead
+    vSpace: number,
+    // `<img>` and `<object>`
+    // Non-standard Properties.
+    allowTransparency: null,
+    autoCorrect: null,
+    autoSave: null,
+    credentialless: boolean,
+    disablePictureInPicture: boolean,
+    disableRemotePlayback: boolean,
+    exportParts: commaSeparated,
+    part: spaceSeparated,
+    prefix: null,
+    property: null,
+    results: number,
+    security: null,
+    unselectable: null
+  },
+  space: "html",
+  transform: caseInsensitiveTransform
+});
+const svg$1 = create({
+  attributes: {
+    accentHeight: "accent-height",
+    alignmentBaseline: "alignment-baseline",
+    arabicForm: "arabic-form",
+    baselineShift: "baseline-shift",
+    capHeight: "cap-height",
+    className: "class",
+    clipPath: "clip-path",
+    clipRule: "clip-rule",
+    colorInterpolation: "color-interpolation",
+    colorInterpolationFilters: "color-interpolation-filters",
+    colorProfile: "color-profile",
+    colorRendering: "color-rendering",
+    crossOrigin: "crossorigin",
+    dataType: "datatype",
+    dominantBaseline: "dominant-baseline",
+    enableBackground: "enable-background",
+    fillOpacity: "fill-opacity",
+    fillRule: "fill-rule",
+    floodColor: "flood-color",
+    floodOpacity: "flood-opacity",
+    fontFamily: "font-family",
+    fontSize: "font-size",
+    fontSizeAdjust: "font-size-adjust",
+    fontStretch: "font-stretch",
+    fontStyle: "font-style",
+    fontVariant: "font-variant",
+    fontWeight: "font-weight",
+    glyphName: "glyph-name",
+    glyphOrientationHorizontal: "glyph-orientation-horizontal",
+    glyphOrientationVertical: "glyph-orientation-vertical",
+    hrefLang: "hreflang",
+    horizAdvX: "horiz-adv-x",
+    horizOriginX: "horiz-origin-x",
+    horizOriginY: "horiz-origin-y",
+    imageRendering: "image-rendering",
+    letterSpacing: "letter-spacing",
+    lightingColor: "lighting-color",
+    markerEnd: "marker-end",
+    markerMid: "marker-mid",
+    markerStart: "marker-start",
+    maskType: "mask-type",
+    navDown: "nav-down",
+    navDownLeft: "nav-down-left",
+    navDownRight: "nav-down-right",
+    navLeft: "nav-left",
+    navNext: "nav-next",
+    navPrev: "nav-prev",
+    navRight: "nav-right",
+    navUp: "nav-up",
+    navUpLeft: "nav-up-left",
+    navUpRight: "nav-up-right",
+    onAbort: "onabort",
+    onActivate: "onactivate",
+    onAfterPrint: "onafterprint",
+    onBeforePrint: "onbeforeprint",
+    onBegin: "onbegin",
+    onCancel: "oncancel",
+    onCanPlay: "oncanplay",
+    onCanPlayThrough: "oncanplaythrough",
+    onChange: "onchange",
+    onClick: "onclick",
+    onClose: "onclose",
+    onCopy: "oncopy",
+    onCueChange: "oncuechange",
+    onCut: "oncut",
+    onDblClick: "ondblclick",
+    onDrag: "ondrag",
+    onDragEnd: "ondragend",
+    onDragEnter: "ondragenter",
+    onDragExit: "ondragexit",
+    onDragLeave: "ondragleave",
+    onDragOver: "ondragover",
+    onDragStart: "ondragstart",
+    onDrop: "ondrop",
+    onDurationChange: "ondurationchange",
+    onEmptied: "onemptied",
+    onEnd: "onend",
+    onEnded: "onended",
+    onError: "onerror",
+    onFocus: "onfocus",
+    onFocusIn: "onfocusin",
+    onFocusOut: "onfocusout",
+    onHashChange: "onhashchange",
+    onInput: "oninput",
+    onInvalid: "oninvalid",
+    onKeyDown: "onkeydown",
+    onKeyPress: "onkeypress",
+    onKeyUp: "onkeyup",
+    onLoad: "onload",
+    onLoadedData: "onloadeddata",
+    onLoadedMetadata: "onloadedmetadata",
+    onLoadStart: "onloadstart",
+    onMessage: "onmessage",
+    onMouseDown: "onmousedown",
+    onMouseEnter: "onmouseenter",
+    onMouseLeave: "onmouseleave",
+    onMouseMove: "onmousemove",
+    onMouseOut: "onmouseout",
+    onMouseOver: "onmouseover",
+    onMouseUp: "onmouseup",
+    onMouseWheel: "onmousewheel",
+    onOffline: "onoffline",
+    onOnline: "ononline",
+    onPageHide: "onpagehide",
+    onPageShow: "onpageshow",
+    onPaste: "onpaste",
+    onPause: "onpause",
+    onPlay: "onplay",
+    onPlaying: "onplaying",
+    onPopState: "onpopstate",
+    onProgress: "onprogress",
+    onRateChange: "onratechange",
+    onRepeat: "onrepeat",
+    onReset: "onreset",
+    onResize: "onresize",
+    onScroll: "onscroll",
+    onSeeked: "onseeked",
+    onSeeking: "onseeking",
+    onSelect: "onselect",
+    onShow: "onshow",
+    onStalled: "onstalled",
+    onStorage: "onstorage",
+    onSubmit: "onsubmit",
+    onSuspend: "onsuspend",
+    onTimeUpdate: "ontimeupdate",
+    onToggle: "ontoggle",
+    onUnload: "onunload",
+    onVolumeChange: "onvolumechange",
+    onWaiting: "onwaiting",
+    onZoom: "onzoom",
+    overlinePosition: "overline-position",
+    overlineThickness: "overline-thickness",
+    paintOrder: "paint-order",
+    panose1: "panose-1",
+    pointerEvents: "pointer-events",
+    referrerPolicy: "referrerpolicy",
+    renderingIntent: "rendering-intent",
+    shapeRendering: "shape-rendering",
+    stopColor: "stop-color",
+    stopOpacity: "stop-opacity",
+    strikethroughPosition: "strikethrough-position",
+    strikethroughThickness: "strikethrough-thickness",
+    strokeDashArray: "stroke-dasharray",
+    strokeDashOffset: "stroke-dashoffset",
+    strokeLineCap: "stroke-linecap",
+    strokeLineJoin: "stroke-linejoin",
+    strokeMiterLimit: "stroke-miterlimit",
+    strokeOpacity: "stroke-opacity",
+    strokeWidth: "stroke-width",
+    tabIndex: "tabindex",
+    textAnchor: "text-anchor",
+    textDecoration: "text-decoration",
+    textRendering: "text-rendering",
+    transformOrigin: "transform-origin",
+    typeOf: "typeof",
+    underlinePosition: "underline-position",
+    underlineThickness: "underline-thickness",
+    unicodeBidi: "unicode-bidi",
+    unicodeRange: "unicode-range",
+    unitsPerEm: "units-per-em",
+    vAlphabetic: "v-alphabetic",
+    vHanging: "v-hanging",
+    vIdeographic: "v-ideographic",
+    vMathematical: "v-mathematical",
+    vectorEffect: "vector-effect",
+    vertAdvY: "vert-adv-y",
+    vertOriginX: "vert-origin-x",
+    vertOriginY: "vert-origin-y",
+    wordSpacing: "word-spacing",
+    writingMode: "writing-mode",
+    xHeight: "x-height",
+    // These were camelcased in Tiny. Now lowercased in SVG 2
+    playbackOrder: "playbackorder",
+    timelineBegin: "timelinebegin"
+  },
+  properties: {
+    about: commaOrSpaceSeparated,
+    accentHeight: number,
+    accumulate: null,
+    additive: null,
+    alignmentBaseline: null,
+    alphabetic: number,
+    amplitude: number,
+    arabicForm: null,
+    ascent: number,
+    attributeName: null,
+    attributeType: null,
+    azimuth: number,
+    bandwidth: null,
+    baselineShift: null,
+    baseFrequency: null,
+    baseProfile: null,
+    bbox: null,
+    begin: null,
+    bias: number,
+    by: null,
+    calcMode: null,
+    capHeight: number,
+    className: spaceSeparated,
+    clip: null,
+    clipPath: null,
+    clipPathUnits: null,
+    clipRule: null,
+    color: null,
+    colorInterpolation: null,
+    colorInterpolationFilters: null,
+    colorProfile: null,
+    colorRendering: null,
+    content: null,
+    contentScriptType: null,
+    contentStyleType: null,
+    crossOrigin: null,
+    cursor: null,
+    cx: null,
+    cy: null,
+    d: null,
+    dataType: null,
+    defaultAction: null,
+    descent: number,
+    diffuseConstant: number,
+    direction: null,
+    display: null,
+    dur: null,
+    divisor: number,
+    dominantBaseline: null,
+    download: boolean,
+    dx: null,
+    dy: null,
+    edgeMode: null,
+    editable: null,
+    elevation: number,
+    enableBackground: null,
+    end: null,
+    event: null,
+    exponent: number,
+    externalResourcesRequired: null,
+    fill: null,
+    fillOpacity: number,
+    fillRule: null,
+    filter: null,
+    filterRes: null,
+    filterUnits: null,
+    floodColor: null,
+    floodOpacity: null,
+    focusable: null,
+    focusHighlight: null,
+    fontFamily: null,
+    fontSize: null,
+    fontSizeAdjust: null,
+    fontStretch: null,
+    fontStyle: null,
+    fontVariant: null,
+    fontWeight: null,
+    format: null,
+    fr: null,
+    from: null,
+    fx: null,
+    fy: null,
+    g1: commaSeparated,
+    g2: commaSeparated,
+    glyphName: commaSeparated,
+    glyphOrientationHorizontal: null,
+    glyphOrientationVertical: null,
+    glyphRef: null,
+    gradientTransform: null,
+    gradientUnits: null,
+    handler: null,
+    hanging: number,
+    hatchContentUnits: null,
+    hatchUnits: null,
+    height: null,
+    href: null,
+    hrefLang: null,
+    horizAdvX: number,
+    horizOriginX: number,
+    horizOriginY: number,
+    id: null,
+    ideographic: number,
+    imageRendering: null,
+    initialVisibility: null,
+    in: null,
+    in2: null,
+    intercept: number,
+    k: number,
+    k1: number,
+    k2: number,
+    k3: number,
+    k4: number,
+    kernelMatrix: commaOrSpaceSeparated,
+    kernelUnitLength: null,
+    keyPoints: null,
+    // SEMI_COLON_SEPARATED
+    keySplines: null,
+    // SEMI_COLON_SEPARATED
+    keyTimes: null,
+    // SEMI_COLON_SEPARATED
+    kerning: null,
+    lang: null,
+    lengthAdjust: null,
+    letterSpacing: null,
+    lightingColor: null,
+    limitingConeAngle: number,
+    local: null,
+    markerEnd: null,
+    markerMid: null,
+    markerStart: null,
+    markerHeight: null,
+    markerUnits: null,
+    markerWidth: null,
+    mask: null,
+    maskContentUnits: null,
+    maskType: null,
+    maskUnits: null,
+    mathematical: null,
+    max: null,
+    media: null,
+    mediaCharacterEncoding: null,
+    mediaContentEncodings: null,
+    mediaSize: number,
+    mediaTime: null,
+    method: null,
+    min: null,
+    mode: null,
+    name: null,
+    navDown: null,
+    navDownLeft: null,
+    navDownRight: null,
+    navLeft: null,
+    navNext: null,
+    navPrev: null,
+    navRight: null,
+    navUp: null,
+    navUpLeft: null,
+    navUpRight: null,
+    numOctaves: null,
+    observer: null,
+    offset: null,
+    onAbort: null,
+    onActivate: null,
+    onAfterPrint: null,
+    onBeforePrint: null,
+    onBegin: null,
+    onCancel: null,
+    onCanPlay: null,
+    onCanPlayThrough: null,
+    onChange: null,
+    onClick: null,
+    onClose: null,
+    onCopy: null,
+    onCueChange: null,
+    onCut: null,
+    onDblClick: null,
+    onDrag: null,
+    onDragEnd: null,
+    onDragEnter: null,
+    onDragExit: null,
+    onDragLeave: null,
+    onDragOver: null,
+    onDragStart: null,
+    onDrop: null,
+    onDurationChange: null,
+    onEmptied: null,
+    onEnd: null,
+    onEnded: null,
+    onError: null,
+    onFocus: null,
+    onFocusIn: null,
+    onFocusOut: null,
+    onHashChange: null,
+    onInput: null,
+    onInvalid: null,
+    onKeyDown: null,
+    onKeyPress: null,
+    onKeyUp: null,
+    onLoad: null,
+    onLoadedData: null,
+    onLoadedMetadata: null,
+    onLoadStart: null,
+    onMessage: null,
+    onMouseDown: null,
+    onMouseEnter: null,
+    onMouseLeave: null,
+    onMouseMove: null,
+    onMouseOut: null,
+    onMouseOver: null,
+    onMouseUp: null,
+    onMouseWheel: null,
+    onOffline: null,
+    onOnline: null,
+    onPageHide: null,
+    onPageShow: null,
+    onPaste: null,
+    onPause: null,
+    onPlay: null,
+    onPlaying: null,
+    onPopState: null,
+    onProgress: null,
+    onRateChange: null,
+    onRepeat: null,
+    onReset: null,
+    onResize: null,
+    onScroll: null,
+    onSeeked: null,
+    onSeeking: null,
+    onSelect: null,
+    onShow: null,
+    onStalled: null,
+    onStorage: null,
+    onSubmit: null,
+    onSuspend: null,
+    onTimeUpdate: null,
+    onToggle: null,
+    onUnload: null,
+    onVolumeChange: null,
+    onWaiting: null,
+    onZoom: null,
+    opacity: null,
+    operator: null,
+    order: null,
+    orient: null,
+    orientation: null,
+    origin: null,
+    overflow: null,
+    overlay: null,
+    overlinePosition: number,
+    overlineThickness: number,
+    paintOrder: null,
+    panose1: null,
+    path: null,
+    pathLength: number,
+    patternContentUnits: null,
+    patternTransform: null,
+    patternUnits: null,
+    phase: null,
+    ping: spaceSeparated,
+    pitch: null,
+    playbackOrder: null,
+    pointerEvents: null,
+    points: null,
+    pointsAtX: number,
+    pointsAtY: number,
+    pointsAtZ: number,
+    preserveAlpha: null,
+    preserveAspectRatio: null,
+    primitiveUnits: null,
+    propagate: null,
+    property: commaOrSpaceSeparated,
+    r: null,
+    radius: null,
+    referrerPolicy: null,
+    refX: null,
+    refY: null,
+    rel: commaOrSpaceSeparated,
+    rev: commaOrSpaceSeparated,
+    renderingIntent: null,
+    repeatCount: null,
+    repeatDur: null,
+    requiredExtensions: commaOrSpaceSeparated,
+    requiredFeatures: commaOrSpaceSeparated,
+    requiredFonts: commaOrSpaceSeparated,
+    requiredFormats: commaOrSpaceSeparated,
+    resource: null,
+    restart: null,
+    result: null,
+    rotate: null,
+    rx: null,
+    ry: null,
+    scale: null,
+    seed: null,
+    shapeRendering: null,
+    side: null,
+    slope: null,
+    snapshotTime: null,
+    specularConstant: number,
+    specularExponent: number,
+    spreadMethod: null,
+    spacing: null,
+    startOffset: null,
+    stdDeviation: null,
+    stemh: null,
+    stemv: null,
+    stitchTiles: null,
+    stopColor: null,
+    stopOpacity: null,
+    strikethroughPosition: number,
+    strikethroughThickness: number,
+    string: null,
+    stroke: null,
+    strokeDashArray: commaOrSpaceSeparated,
+    strokeDashOffset: null,
+    strokeLineCap: null,
+    strokeLineJoin: null,
+    strokeMiterLimit: number,
+    strokeOpacity: number,
+    strokeWidth: null,
+    style: null,
+    surfaceScale: number,
+    syncBehavior: null,
+    syncBehaviorDefault: null,
+    syncMaster: null,
+    syncTolerance: null,
+    syncToleranceDefault: null,
+    systemLanguage: commaOrSpaceSeparated,
+    tabIndex: number,
+    tableValues: null,
+    target: null,
+    targetX: number,
+    targetY: number,
+    textAnchor: null,
+    textDecoration: null,
+    textRendering: null,
+    textLength: null,
+    timelineBegin: null,
+    title: null,
+    transformBehavior: null,
+    type: null,
+    typeOf: commaOrSpaceSeparated,
+    to: null,
+    transform: null,
+    transformOrigin: null,
+    u1: null,
+    u2: null,
+    underlinePosition: number,
+    underlineThickness: number,
+    unicode: null,
+    unicodeBidi: null,
+    unicodeRange: null,
+    unitsPerEm: number,
+    values: null,
+    vAlphabetic: number,
+    vMathematical: number,
+    vectorEffect: null,
+    vHanging: number,
+    vIdeographic: number,
+    version: null,
+    vertAdvY: number,
+    vertOriginX: number,
+    vertOriginY: number,
+    viewBox: null,
+    viewTarget: null,
+    visibility: null,
+    width: null,
+    widths: null,
+    wordSpacing: null,
+    writingMode: null,
+    x: null,
+    x1: null,
+    x2: null,
+    xChannelSelector: null,
+    xHeight: number,
+    y: null,
+    y1: null,
+    y2: null,
+    yChannelSelector: null,
+    z: null,
+    zoomAndPan: null
+  },
+  space: "svg",
+  transform: caseSensitiveTransform
+});
+const xlink = create({
+  properties: {
+    xLinkActuate: null,
+    xLinkArcRole: null,
+    xLinkHref: null,
+    xLinkRole: null,
+    xLinkShow: null,
+    xLinkTitle: null,
+    xLinkType: null
+  },
+  space: "xlink",
+  transform(_, property) {
+    return "xlink:" + property.slice(5).toLowerCase();
+  }
+});
+const xmlns = create({
+  attributes: { xmlnsxlink: "xmlns:xlink" },
+  properties: { xmlnsXLink: null, xmlns: null },
+  space: "xmlns",
+  transform: caseInsensitiveTransform
+});
+const xml = create({
+  properties: { xmlBase: null, xmlLang: null, xmlSpace: null },
+  space: "xml",
+  transform(_, property) {
+    return "xml:" + property.slice(3).toLowerCase();
+  }
+});
+const hastToReact = {
+  classId: "classID",
+  dataType: "datatype",
+  itemId: "itemID",
+  strokeDashArray: "strokeDasharray",
+  strokeDashOffset: "strokeDashoffset",
+  strokeLineCap: "strokeLinecap",
+  strokeLineJoin: "strokeLinejoin",
+  strokeMiterLimit: "strokeMiterlimit",
+  typeOf: "typeof",
+  xLinkActuate: "xlinkActuate",
+  xLinkArcRole: "xlinkArcrole",
+  xLinkHref: "xlinkHref",
+  xLinkRole: "xlinkRole",
+  xLinkShow: "xlinkShow",
+  xLinkTitle: "xlinkTitle",
+  xLinkType: "xlinkType",
+  xmlnsXLink: "xmlnsXlink"
+};
+const cap$1 = /[A-Z]/g;
+const dash = /-[a-z]/g;
+const valid = /^data[-\w.:]+$/i;
+function find(schema, value) {
+  const normal = normalize$1(value);
+  let property = value;
+  let Type = Info;
+  if (normal in schema.normal) {
+    return schema.property[schema.normal[normal]];
+  }
+  if (normal.length > 4 && normal.slice(0, 4) === "data" && valid.test(value)) {
+    if (value.charAt(4) === "-") {
+      const rest = value.slice(5).replace(dash, camelcase);
+      property = "data" + rest.charAt(0).toUpperCase() + rest.slice(1);
+    } else {
+      const rest = value.slice(4);
+      if (!dash.test(rest)) {
+        let dashes = rest.replace(cap$1, kebab);
+        if (dashes.charAt(0) !== "-") {
+          dashes = "-" + dashes;
+        }
+        value = "data" + dashes;
+      }
+    }
+    Type = DefinedInfo;
+  }
+  return new Type(property, value);
+}
+function kebab($0) {
+  return "-" + $0.toLowerCase();
+}
+function camelcase($0) {
+  return $0.charAt(1).toUpperCase();
+}
+const html$2 = merge([aria, html$3, xlink, xmlns, xml], "html");
+const svg = merge([aria, svg$1, xlink, xmlns, xml], "svg");
+function stringify(values) {
+  return values.join(" ").trim();
+}
+var cjs$2 = {};
+var cjs$1;
+var hasRequiredCjs$2;
+function requireCjs$2() {
+  if (hasRequiredCjs$2) return cjs$1;
+  hasRequiredCjs$2 = 1;
+  var COMMENT_REGEX = /\/\*[^*]*\*+([^/*][^*]*\*+)*\//g;
+  var NEWLINE_REGEX = /\n/g;
+  var WHITESPACE_REGEX = /^\s*/;
+  var PROPERTY_REGEX = /^(\*?[-#/*\\\w]+(\[[0-9a-z_-]+\])?)\s*/;
+  var COLON_REGEX = /^:\s*/;
+  var VALUE_REGEX = /^((?:'(?:\\'|.)*?'|"(?:\\"|.)*?"|\([^)]*?\)|[^};])+)/;
+  var SEMICOLON_REGEX = /^[;\s]*/;
+  var TRIM_REGEX = /^\s+|\s+$/g;
+  var NEWLINE = "\n";
+  var FORWARD_SLASH = "/";
+  var ASTERISK = "*";
+  var EMPTY_STRING = "";
+  var TYPE_COMMENT = "comment";
+  var TYPE_DECLARATION = "declaration";
+  function index2(style, options) {
+    if (typeof style !== "string") {
+      throw new TypeError("First argument must be a string");
+    }
+    if (!style) return [];
+    options = options || {};
+    var lineno = 1;
+    var column = 1;
+    function updatePosition(str) {
+      var lines = str.match(NEWLINE_REGEX);
+      if (lines) lineno += lines.length;
+      var i = str.lastIndexOf(NEWLINE);
+      column = ~i ? str.length - i : column + str.length;
+    }
+    function position2() {
+      var start = { line: lineno, column };
+      return function(node2) {
+        node2.position = new Position2(start);
+        whitespace2();
+        return node2;
+      };
+    }
+    function Position2(start) {
+      this.start = start;
+      this.end = { line: lineno, column };
+      this.source = options.source;
+    }
+    Position2.prototype.content = style;
+    function error(msg) {
+      var err = new Error(
+        options.source + ":" + lineno + ":" + column + ": " + msg
+      );
+      err.reason = msg;
+      err.filename = options.source;
+      err.line = lineno;
+      err.column = column;
+      err.source = style;
+      if (options.silent) ;
+      else {
+        throw err;
+      }
+    }
+    function match(re2) {
+      var m2 = re2.exec(style);
+      if (!m2) return;
+      var str = m2[0];
+      updatePosition(str);
+      style = style.slice(str.length);
+      return m2;
+    }
+    function whitespace2() {
+      match(WHITESPACE_REGEX);
+    }
+    function comments(rules) {
+      var c;
+      rules = rules || [];
+      while (c = comment()) {
+        if (c !== false) {
+          rules.push(c);
+        }
+      }
+      return rules;
+    }
+    function comment() {
+      var pos = position2();
+      if (FORWARD_SLASH != style.charAt(0) || ASTERISK != style.charAt(1)) return;
+      var i = 2;
+      while (EMPTY_STRING != style.charAt(i) && (ASTERISK != style.charAt(i) || FORWARD_SLASH != style.charAt(i + 1))) {
+        ++i;
+      }
+      i += 2;
+      if (EMPTY_STRING === style.charAt(i - 1)) {
+        return error("End of comment missing");
+      }
+      var str = style.slice(2, i - 2);
+      column += 2;
+      updatePosition(str);
+      style = style.slice(i);
+      column += 2;
+      return pos({
+        type: TYPE_COMMENT,
+        comment: str
+      });
+    }
+    function declaration() {
+      var pos = position2();
+      var prop = match(PROPERTY_REGEX);
+      if (!prop) return;
+      comment();
+      if (!match(COLON_REGEX)) return error("property missing ':'");
+      var val = match(VALUE_REGEX);
+      var ret = pos({
+        type: TYPE_DECLARATION,
+        property: trim(prop[0].replace(COMMENT_REGEX, EMPTY_STRING)),
+        value: val ? trim(val[0].replace(COMMENT_REGEX, EMPTY_STRING)) : EMPTY_STRING
+      });
+      match(SEMICOLON_REGEX);
+      return ret;
+    }
+    function declarations() {
+      var decls = [];
+      comments(decls);
+      var decl;
+      while (decl = declaration()) {
+        if (decl !== false) {
+          decls.push(decl);
+          comments(decls);
+        }
+      }
+      return decls;
+    }
+    whitespace2();
+    return declarations();
+  }
+  function trim(str) {
+    return str ? str.replace(TRIM_REGEX, EMPTY_STRING) : EMPTY_STRING;
+  }
+  cjs$1 = index2;
+  return cjs$1;
+}
+var hasRequiredCjs$1;
+function requireCjs$1() {
+  if (hasRequiredCjs$1) return cjs$2;
+  hasRequiredCjs$1 = 1;
+  var __importDefault = cjs$2 && cjs$2.__importDefault || function(mod) {
+    return mod && mod.__esModule ? mod : { "default": mod };
+  };
+  Object.defineProperty(cjs$2, "__esModule", { value: true });
+  cjs$2.default = StyleToObject;
+  const inline_style_parser_1 = __importDefault(requireCjs$2());
+  function StyleToObject(style, iterator) {
+    let styleObject = null;
+    if (!style || typeof style !== "string") {
+      return styleObject;
+    }
+    const declarations = (0, inline_style_parser_1.default)(style);
+    const hasIterator = typeof iterator === "function";
+    declarations.forEach((declaration) => {
+      if (declaration.type !== "declaration") {
+        return;
+      }
+      const { property, value } = declaration;
+      if (hasIterator) {
+        iterator(property, value, declaration);
+      } else if (value) {
+        styleObject = styleObject || {};
+        styleObject[property] = value;
+      }
+    });
+    return styleObject;
+  }
+  return cjs$2;
+}
+var utilities = {};
+var hasRequiredUtilities;
+function requireUtilities() {
+  if (hasRequiredUtilities) return utilities;
+  hasRequiredUtilities = 1;
+  Object.defineProperty(utilities, "__esModule", { value: true });
+  utilities.camelCase = void 0;
+  var CUSTOM_PROPERTY_REGEX = /^--[a-zA-Z0-9_-]+$/;
+  var HYPHEN_REGEX = /-([a-z])/g;
+  var NO_HYPHEN_REGEX = /^[^-]+$/;
+  var VENDOR_PREFIX_REGEX = /^-(webkit|moz|ms|o|khtml)-/;
+  var MS_VENDOR_PREFIX_REGEX = /^-(ms)-/;
+  var skipCamelCase = function(property) {
+    return !property || NO_HYPHEN_REGEX.test(property) || CUSTOM_PROPERTY_REGEX.test(property);
+  };
+  var capitalize = function(match, character) {
+    return character.toUpperCase();
+  };
+  var trimHyphen = function(match, prefix) {
+    return "".concat(prefix, "-");
+  };
+  var camelCase = function(property, options) {
+    if (options === void 0) {
+      options = {};
+    }
+    if (skipCamelCase(property)) {
+      return property;
+    }
+    property = property.toLowerCase();
+    if (options.reactCompat) {
+      property = property.replace(MS_VENDOR_PREFIX_REGEX, trimHyphen);
+    } else {
+      property = property.replace(VENDOR_PREFIX_REGEX, trimHyphen);
+    }
+    return property.replace(HYPHEN_REGEX, capitalize);
+  };
+  utilities.camelCase = camelCase;
+  return utilities;
+}
+var cjs;
+var hasRequiredCjs;
+function requireCjs() {
+  if (hasRequiredCjs) return cjs;
+  hasRequiredCjs = 1;
+  var __importDefault = cjs && cjs.__importDefault || function(mod) {
+    return mod && mod.__esModule ? mod : { "default": mod };
+  };
+  var style_to_object_1 = __importDefault(requireCjs$1());
+  var utilities_1 = requireUtilities();
+  function StyleToJS(style, options) {
+    var output = {};
+    if (!style || typeof style !== "string") {
+      return output;
+    }
+    (0, style_to_object_1.default)(style, function(property, value) {
+      if (property && value) {
+        output[(0, utilities_1.camelCase)(property, options)] = value;
+      }
+    });
+    return output;
+  }
+  StyleToJS.default = StyleToJS;
+  cjs = StyleToJS;
+  return cjs;
+}
+var cjsExports = requireCjs();
+const styleToJs = /* @__PURE__ */ getDefaultExportFromCjs(cjsExports);
+const pointEnd = point$2("end");
+const pointStart = point$2("start");
+function point$2(type) {
+  return point2;
+  function point2(node2) {
+    const point3 = node2 && node2.position && node2.position[type] || {};
+    if (typeof point3.line === "number" && point3.line > 0 && typeof point3.column === "number" && point3.column > 0) {
+      return {
+        line: point3.line,
+        column: point3.column,
+        offset: typeof point3.offset === "number" && point3.offset > -1 ? point3.offset : void 0
+      };
+    }
+  }
+}
+function position$1(node2) {
+  const start = pointStart(node2);
+  const end = pointEnd(node2);
+  if (start && end) {
+    return { start, end };
+  }
+}
+function stringifyPosition(value) {
+  if (!value || typeof value !== "object") {
+    return "";
+  }
+  if ("position" in value || "type" in value) {
+    return position(value.position);
+  }
+  if ("start" in value || "end" in value) {
+    return position(value);
+  }
+  if ("line" in value || "column" in value) {
+    return point$1(value);
+  }
+  return "";
+}
+function point$1(point2) {
+  return index(point2 && point2.line) + ":" + index(point2 && point2.column);
+}
+function position(pos) {
+  return point$1(pos && pos.start) + "-" + point$1(pos && pos.end);
+}
+function index(value) {
+  return value && typeof value === "number" ? value : 1;
+}
+class VFileMessage extends Error {
+  /**
+   * Create a message for `reason`.
+   *
+   * > 🪦 **Note**: also has obsolete signatures.
+   *
+   * @overload
+   * @param {string} reason
+   * @param {Options | null | undefined} [options]
+   * @returns
+   *
+   * @overload
+   * @param {string} reason
+   * @param {Node | NodeLike | null | undefined} parent
+   * @param {string | null | undefined} [origin]
+   * @returns
+   *
+   * @overload
+   * @param {string} reason
+   * @param {Point | Position | null | undefined} place
+   * @param {string | null | undefined} [origin]
+   * @returns
+   *
+   * @overload
+   * @param {string} reason
+   * @param {string | null | undefined} [origin]
+   * @returns
+   *
+   * @overload
+   * @param {Error | VFileMessage} cause
+   * @param {Node | NodeLike | null | undefined} parent
+   * @param {string | null | undefined} [origin]
+   * @returns
+   *
+   * @overload
+   * @param {Error | VFileMessage} cause
+   * @param {Point | Position | null | undefined} place
+   * @param {string | null | undefined} [origin]
+   * @returns
+   *
+   * @overload
+   * @param {Error | VFileMessage} cause
+   * @param {string | null | undefined} [origin]
+   * @returns
+   *
+   * @param {Error | VFileMessage | string} causeOrReason
+   *   Reason for message, should use markdown.
+   * @param {Node | NodeLike | Options | Point | Position | string | null | undefined} [optionsOrParentOrPlace]
+   *   Configuration (optional).
+   * @param {string | null | undefined} [origin]
+   *   Place in code where the message originates (example:
+   *   `'my-package:my-rule'` or `'my-rule'`).
+   * @returns
+   *   Instance of `VFileMessage`.
+   */
+  // eslint-disable-next-line complexity
+  constructor(causeOrReason, optionsOrParentOrPlace, origin) {
+    super();
+    if (typeof optionsOrParentOrPlace === "string") {
+      origin = optionsOrParentOrPlace;
+      optionsOrParentOrPlace = void 0;
+    }
+    let reason = "";
+    let options = {};
+    let legacyCause = false;
+    if (optionsOrParentOrPlace) {
+      if ("line" in optionsOrParentOrPlace && "column" in optionsOrParentOrPlace) {
+        options = { place: optionsOrParentOrPlace };
+      } else if ("start" in optionsOrParentOrPlace && "end" in optionsOrParentOrPlace) {
+        options = { place: optionsOrParentOrPlace };
+      } else if ("type" in optionsOrParentOrPlace) {
+        options = {
+          ancestors: [optionsOrParentOrPlace],
+          place: optionsOrParentOrPlace.position
+        };
+      } else {
+        options = { ...optionsOrParentOrPlace };
+      }
+    }
+    if (typeof causeOrReason === "string") {
+      reason = causeOrReason;
+    } else if (!options.cause && causeOrReason) {
+      legacyCause = true;
+      reason = causeOrReason.message;
+      options.cause = causeOrReason;
+    }
+    if (!options.ruleId && !options.source && typeof origin === "string") {
+      const index2 = origin.indexOf(":");
+      if (index2 === -1) {
+        options.ruleId = origin;
+      } else {
+        options.source = origin.slice(0, index2);
+        options.ruleId = origin.slice(index2 + 1);
+      }
+    }
+    if (!options.place && options.ancestors && options.ancestors) {
+      const parent = options.ancestors[options.ancestors.length - 1];
+      if (parent) {
+        options.place = parent.position;
+      }
+    }
+    const start = options.place && "start" in options.place ? options.place.start : options.place;
+    this.ancestors = options.ancestors || void 0;
+    this.cause = options.cause || void 0;
+    this.column = start ? start.column : void 0;
+    this.fatal = void 0;
+    this.file = "";
+    this.message = reason;
+    this.line = start ? start.line : void 0;
+    this.name = stringifyPosition(options.place) || "1:1";
+    this.place = options.place || void 0;
+    this.reason = this.message;
+    this.ruleId = options.ruleId || void 0;
+    this.source = options.source || void 0;
+    this.stack = legacyCause && options.cause && typeof options.cause.stack === "string" ? options.cause.stack : "";
+    this.actual = void 0;
+    this.expected = void 0;
+    this.note = void 0;
+    this.url = void 0;
+  }
+}
+VFileMessage.prototype.file = "";
+VFileMessage.prototype.name = "";
+VFileMessage.prototype.reason = "";
+VFileMessage.prototype.message = "";
+VFileMessage.prototype.stack = "";
+VFileMessage.prototype.column = void 0;
+VFileMessage.prototype.line = void 0;
+VFileMessage.prototype.ancestors = void 0;
+VFileMessage.prototype.cause = void 0;
+VFileMessage.prototype.fatal = void 0;
+VFileMessage.prototype.place = void 0;
+VFileMessage.prototype.ruleId = void 0;
+VFileMessage.prototype.source = void 0;
+const own$3 = {}.hasOwnProperty;
+const emptyMap = /* @__PURE__ */ new Map();
+const cap = /[A-Z]/g;
+const tableElements = /* @__PURE__ */ new Set(["table", "tbody", "thead", "tfoot", "tr"]);
+const tableCellElement = /* @__PURE__ */ new Set(["td", "th"]);
+const docs = "https://github.com/syntax-tree/hast-util-to-jsx-runtime";
+function toJsxRuntime(tree, options) {
+  if (!options || options.Fragment === void 0) {
+    throw new TypeError("Expected `Fragment` in options");
+  }
+  const filePath = options.filePath || void 0;
+  let create2;
+  if (options.development) {
+    if (typeof options.jsxDEV !== "function") {
+      throw new TypeError(
+        "Expected `jsxDEV` in options when `development: true`"
+      );
+    }
+    create2 = developmentCreate(filePath, options.jsxDEV);
+  } else {
+    if (typeof options.jsx !== "function") {
+      throw new TypeError("Expected `jsx` in production options");
+    }
+    if (typeof options.jsxs !== "function") {
+      throw new TypeError("Expected `jsxs` in production options");
+    }
+    create2 = productionCreate(filePath, options.jsx, options.jsxs);
+  }
+  const state = {
+    Fragment: options.Fragment,
+    ancestors: [],
+    components: options.components || {},
+    create: create2,
+    elementAttributeNameCase: options.elementAttributeNameCase || "react",
+    evaluater: options.createEvaluater ? options.createEvaluater() : void 0,
+    filePath,
+    ignoreInvalidStyle: options.ignoreInvalidStyle || false,
+    passKeys: options.passKeys !== false,
+    passNode: options.passNode || false,
+    schema: options.space === "svg" ? svg : html$2,
+    stylePropertyNameCase: options.stylePropertyNameCase || "dom",
+    tableCellAlignToStyle: options.tableCellAlignToStyle !== false
+  };
+  const result = one$1(state, tree, void 0);
+  if (result && typeof result !== "string") {
+    return result;
+  }
+  return state.create(
+    tree,
+    state.Fragment,
+    { children: result || void 0 },
+    void 0
+  );
+}
+function one$1(state, node2, key) {
+  if (node2.type === "element") {
+    return element$1(state, node2, key);
+  }
+  if (node2.type === "mdxFlowExpression" || node2.type === "mdxTextExpression") {
+    return mdxExpression(state, node2);
+  }
+  if (node2.type === "mdxJsxFlowElement" || node2.type === "mdxJsxTextElement") {
+    return mdxJsxElement(state, node2, key);
+  }
+  if (node2.type === "mdxjsEsm") {
+    return mdxEsm(state, node2);
+  }
+  if (node2.type === "root") {
+    return root$2(state, node2, key);
+  }
+  if (node2.type === "text") {
+    return text$5(state, node2);
+  }
+}
+function element$1(state, node2, key) {
+  const parentSchema = state.schema;
+  let schema = parentSchema;
+  if (node2.tagName.toLowerCase() === "svg" && parentSchema.space === "html") {
+    schema = svg;
+    state.schema = schema;
+  }
+  state.ancestors.push(node2);
+  const type = findComponentFromName(state, node2.tagName, false);
+  const props2 = createElementProps(state, node2);
+  let children = createChildren(state, node2);
+  if (tableElements.has(node2.tagName)) {
+    children = children.filter(function(child) {
+      return typeof child === "string" ? !whitespace(child) : true;
+    });
+  }
+  addNode(state, props2, type, node2);
+  addChildren(props2, children);
+  state.ancestors.pop();
+  state.schema = parentSchema;
+  return state.create(node2, type, props2, key);
+}
+function mdxExpression(state, node2) {
+  if (node2.data && node2.data.estree && state.evaluater) {
+    const program = node2.data.estree;
+    const expression = program.body[0];
+    ok$1(expression.type === "ExpressionStatement");
+    return (
+      /** @type {Child | undefined} */
+      state.evaluater.evaluateExpression(expression.expression)
+    );
+  }
+  crashEstree(state, node2.position);
+}
+function mdxEsm(state, node2) {
+  if (node2.data && node2.data.estree && state.evaluater) {
+    return (
+      /** @type {Child | undefined} */
+      state.evaluater.evaluateProgram(node2.data.estree)
+    );
+  }
+  crashEstree(state, node2.position);
+}
+function mdxJsxElement(state, node2, key) {
+  const parentSchema = state.schema;
+  let schema = parentSchema;
+  if (node2.name === "svg" && parentSchema.space === "html") {
+    schema = svg;
+    state.schema = schema;
+  }
+  state.ancestors.push(node2);
+  const type = node2.name === null ? state.Fragment : findComponentFromName(state, node2.name, true);
+  const props2 = createJsxElementProps(state, node2);
+  const children = createChildren(state, node2);
+  addNode(state, props2, type, node2);
+  addChildren(props2, children);
+  state.ancestors.pop();
+  state.schema = parentSchema;
+  return state.create(node2, type, props2, key);
+}
+function root$2(state, node2, key) {
+  const props2 = {};
+  addChildren(props2, createChildren(state, node2));
+  return state.create(node2, state.Fragment, props2, key);
+}
+function text$5(_, node2) {
+  return node2.value;
+}
+function addNode(state, props2, type, node2) {
+  if (typeof type !== "string" && type !== state.Fragment && state.passNode) {
+    props2.node = node2;
+  }
+}
+function addChildren(props2, children) {
+  if (children.length > 0) {
+    const value = children.length > 1 ? children : children[0];
+    if (value) {
+      props2.children = value;
+    }
+  }
+}
+function productionCreate(_, jsx, jsxs) {
+  return create2;
+  function create2(_2, type, props2, key) {
+    const isStaticChildren = Array.isArray(props2.children);
+    const fn = isStaticChildren ? jsxs : jsx;
+    return key ? fn(type, props2, key) : fn(type, props2);
+  }
+}
+function developmentCreate(filePath, jsxDEV) {
+  return create2;
+  function create2(node2, type, props2, key) {
+    const isStaticChildren = Array.isArray(props2.children);
+    const point2 = pointStart(node2);
+    return jsxDEV(
+      type,
+      props2,
+      key,
+      isStaticChildren,
+      {
+        columnNumber: point2 ? point2.column - 1 : void 0,
+        fileName: filePath,
+        lineNumber: point2 ? point2.line : void 0
+      },
+      void 0
+    );
+  }
+}
+function createElementProps(state, node2) {
+  const props2 = {};
+  let alignValue;
+  let prop;
+  for (prop in node2.properties) {
+    if (prop !== "children" && own$3.call(node2.properties, prop)) {
+      const result = createProperty(state, prop, node2.properties[prop]);
+      if (result) {
+        const [key, value] = result;
+        if (state.tableCellAlignToStyle && key === "align" && typeof value === "string" && tableCellElement.has(node2.tagName)) {
+          alignValue = value;
+        } else {
+          props2[key] = value;
+        }
+      }
+    }
+  }
+  if (alignValue) {
+    const style = (
+      /** @type {Style} */
+      props2.style || (props2.style = {})
+    );
+    style[state.stylePropertyNameCase === "css" ? "text-align" : "textAlign"] = alignValue;
+  }
+  return props2;
+}
+function createJsxElementProps(state, node2) {
+  const props2 = {};
+  for (const attribute of node2.attributes) {
+    if (attribute.type === "mdxJsxExpressionAttribute") {
+      if (attribute.data && attribute.data.estree && state.evaluater) {
+        const program = attribute.data.estree;
+        const expression = program.body[0];
+        ok$1(expression.type === "ExpressionStatement");
+        const objectExpression = expression.expression;
+        ok$1(objectExpression.type === "ObjectExpression");
+        const property = objectExpression.properties[0];
+        ok$1(property.type === "SpreadElement");
+        Object.assign(
+          props2,
+          state.evaluater.evaluateExpression(property.argument)
+        );
+      } else {
+        crashEstree(state, node2.position);
+      }
+    } else {
+      const name2 = attribute.name;
+      let value;
+      if (attribute.value && typeof attribute.value === "object") {
+        if (attribute.value.data && attribute.value.data.estree && state.evaluater) {
+          const program = attribute.value.data.estree;
+          const expression = program.body[0];
+          ok$1(expression.type === "ExpressionStatement");
+          value = state.evaluater.evaluateExpression(expression.expression);
+        } else {
+          crashEstree(state, node2.position);
+        }
+      } else {
+        value = attribute.value === null ? true : attribute.value;
+      }
+      props2[name2] = /** @type {Props[keyof Props]} */
+      value;
+    }
+  }
+  return props2;
+}
+function createChildren(state, node2) {
+  const children = [];
+  let index2 = -1;
+  const countsByName = state.passKeys ? /* @__PURE__ */ new Map() : emptyMap;
+  while (++index2 < node2.children.length) {
+    const child = node2.children[index2];
+    let key;
+    if (state.passKeys) {
+      const name2 = child.type === "element" ? child.tagName : child.type === "mdxJsxFlowElement" || child.type === "mdxJsxTextElement" ? child.name : void 0;
+      if (name2) {
+        const count2 = countsByName.get(name2) || 0;
+        key = name2 + "-" + count2;
+        countsByName.set(name2, count2 + 1);
+      }
+    }
+    const result = one$1(state, child, key);
+    if (result !== void 0) children.push(result);
+  }
+  return children;
+}
+function createProperty(state, prop, value) {
+  const info = find(state.schema, prop);
+  if (value === null || value === void 0 || typeof value === "number" && Number.isNaN(value)) {
+    return;
+  }
+  if (Array.isArray(value)) {
+    value = info.commaSeparated ? stringify$1(value) : stringify(value);
+  }
+  if (info.property === "style") {
+    let styleObject = typeof value === "object" ? value : parseStyle(state, String(value));
+    if (state.stylePropertyNameCase === "css") {
+      styleObject = transformStylesToCssCasing(styleObject);
+    }
+    return ["style", styleObject];
+  }
+  return [
+    state.elementAttributeNameCase === "react" && info.space ? hastToReact[info.property] || info.property : info.attribute,
+    value
+  ];
+}
+function parseStyle(state, value) {
+  try {
+    return styleToJs(value, { reactCompat: true });
+  } catch (error) {
+    if (state.ignoreInvalidStyle) {
+      return {};
+    }
+    const cause = (
+      /** @type {Error} */
+      error
+    );
+    const message = new VFileMessage("Cannot parse `style` attribute", {
+      ancestors: state.ancestors,
+      cause,
+      ruleId: "style",
+      source: "hast-util-to-jsx-runtime"
+    });
+    message.file = state.filePath || void 0;
+    message.url = docs + "#cannot-parse-style-attribute";
+    throw message;
+  }
+}
+function findComponentFromName(state, name$1, allowExpression) {
+  let result;
+  if (!allowExpression) {
+    result = { type: "Literal", value: name$1 };
+  } else if (name$1.includes(".")) {
+    const identifiers = name$1.split(".");
+    let index2 = -1;
+    let node2;
+    while (++index2 < identifiers.length) {
+      const prop = name(identifiers[index2]) ? { type: "Identifier", name: identifiers[index2] } : { type: "Literal", value: identifiers[index2] };
+      node2 = node2 ? {
+        type: "MemberExpression",
+        object: node2,
+        property: prop,
+        computed: Boolean(index2 && prop.type === "Literal"),
+        optional: false
+      } : prop;
+    }
+    result = node2;
+  } else {
+    result = name(name$1) && !/^[a-z]/.test(name$1) ? { type: "Identifier", name: name$1 } : { type: "Literal", value: name$1 };
+  }
+  if (result.type === "Literal") {
+    const name2 = (
+      /** @type {string | number} */
+      result.value
+    );
+    return own$3.call(state.components, name2) ? state.components[name2] : name2;
+  }
+  if (state.evaluater) {
+    return state.evaluater.evaluateExpression(result);
+  }
+  crashEstree(state);
+}
+function crashEstree(state, place) {
+  const message = new VFileMessage(
+    "Cannot handle MDX estrees without `createEvaluater`",
+    {
+      ancestors: state.ancestors,
+      place,
+      ruleId: "mdx-estree",
+      source: "hast-util-to-jsx-runtime"
+    }
+  );
+  message.file = state.filePath || void 0;
+  message.url = docs + "#cannot-handle-mdx-estrees-without-createevaluater";
+  throw message;
+}
+function transformStylesToCssCasing(domCasing) {
+  const cssCasing = {};
+  let from;
+  for (from in domCasing) {
+    if (own$3.call(domCasing, from)) {
+      cssCasing[transformStyleToCssCasing(from)] = domCasing[from];
+    }
+  }
+  return cssCasing;
+}
+function transformStyleToCssCasing(from) {
+  let to = from.replace(cap, toDash);
+  if (to.slice(0, 3) === "ms-") to = "-" + to;
+  return to;
+}
+function toDash($0) {
+  return "-" + $0.toLowerCase();
+}
+const urlAttributes = {
+  action: ["form"],
+  cite: ["blockquote", "del", "ins", "q"],
+  data: ["object"],
+  formAction: ["button", "input"],
+  href: ["a", "area", "base", "link"],
+  icon: ["menuitem"],
+  itemId: null,
+  manifest: ["html"],
+  ping: ["a", "area"],
+  poster: ["video"],
+  src: [
+    "audio",
+    "embed",
+    "iframe",
+    "img",
+    "input",
+    "script",
+    "source",
+    "track",
+    "video"
+  ]
+};
+const emptyOptions$2 = {};
+function toString$1(value, options) {
+  const settings = emptyOptions$2;
+  const includeImageAlt = typeof settings.includeImageAlt === "boolean" ? settings.includeImageAlt : true;
+  const includeHtml = typeof settings.includeHtml === "boolean" ? settings.includeHtml : true;
+  return one(value, includeImageAlt, includeHtml);
+}
+function one(value, includeImageAlt, includeHtml) {
+  if (node(value)) {
+    if ("value" in value) {
+      return value.type === "html" && !includeHtml ? "" : value.value;
+    }
+    if (includeImageAlt && "alt" in value && value.alt) {
+      return value.alt;
+    }
+    if ("children" in value) {
+      return all(value.children, includeImageAlt, includeHtml);
+    }
+  }
+  if (Array.isArray(value)) {
+    return all(value, includeImageAlt, includeHtml);
+  }
+  return "";
+}
+function all(values, includeImageAlt, includeHtml) {
+  const result = [];
+  let index2 = -1;
+  while (++index2 < values.length) {
+    result[index2] = one(values[index2], includeImageAlt, includeHtml);
+  }
+  return result.join("");
+}
+function node(value) {
+  return Boolean(value && typeof value === "object");
+}
+const element = document.createElement("i");
+function decodeNamedCharacterReference(value) {
+  const characterReference2 = "&" + value + ";";
+  element.innerHTML = characterReference2;
+  const character = element.textContent;
+  if (character.charCodeAt(character.length - 1) === 59 && value !== "semi") {
+    return false;
+  }
+  return character === characterReference2 ? false : character;
+}
+function splice(list2, start, remove, items) {
+  const end = list2.length;
+  let chunkStart = 0;
+  let parameters;
+  if (start < 0) {
+    start = -start > end ? 0 : end + start;
+  } else {
+    start = start > end ? end : start;
+  }
+  remove = remove > 0 ? remove : 0;
+  if (items.length < 1e4) {
+    parameters = Array.from(items);
+    parameters.unshift(start, remove);
+    list2.splice(...parameters);
+  } else {
+    if (remove) list2.splice(start, remove);
+    while (chunkStart < items.length) {
+      parameters = items.slice(chunkStart, chunkStart + 1e4);
+      parameters.unshift(start, 0);
+      list2.splice(...parameters);
+      chunkStart += 1e4;
+      start += 1e4;
+    }
+  }
+}
+function push(list2, items) {
+  if (list2.length > 0) {
+    splice(list2, list2.length, 0, items);
+    return list2;
+  }
+  return items;
+}
+const hasOwnProperty = {}.hasOwnProperty;
+function combineExtensions(extensions) {
+  const all2 = {};
+  let index2 = -1;
+  while (++index2 < extensions.length) {
+    syntaxExtension(all2, extensions[index2]);
+  }
+  return all2;
+}
+function syntaxExtension(all2, extension2) {
+  let hook;
+  for (hook in extension2) {
+    const maybe = hasOwnProperty.call(all2, hook) ? all2[hook] : void 0;
+    const left = maybe || (all2[hook] = {});
+    const right = extension2[hook];
+    let code2;
+    if (right) {
+      for (code2 in right) {
+        if (!hasOwnProperty.call(left, code2)) left[code2] = [];
+        const value = right[code2];
+        constructs(
+          // @ts-expect-error Looks like a list.
+          left[code2],
+          Array.isArray(value) ? value : value ? [value] : []
+        );
+      }
+    }
+  }
+}
+function constructs(existing, list2) {
+  let index2 = -1;
+  const before = [];
+  while (++index2 < list2.length) {
+    (list2[index2].add === "after" ? existing : before).push(list2[index2]);
+  }
+  splice(existing, 0, 0, before);
+}
+function decodeNumericCharacterReference(value, base) {
+  const code2 = Number.parseInt(value, base);
+  if (
+    // C0 except for HT, LF, FF, CR, space.
+    code2 < 9 || code2 === 11 || code2 > 13 && code2 < 32 || // Control character (DEL) of C0, and C1 controls.
+    code2 > 126 && code2 < 160 || // Lone high surrogates and low surrogates.
+    code2 > 55295 && code2 < 57344 || // Noncharacters.
+    code2 > 64975 && code2 < 65008 || /* eslint-disable no-bitwise */
+    (code2 & 65535) === 65535 || (code2 & 65535) === 65534 || /* eslint-enable no-bitwise */
+    // Out of range
+    code2 > 1114111
+  ) {
+    return "�";
+  }
+  return String.fromCodePoint(code2);
+}
+function normalizeIdentifier(value) {
+  return value.replace(/[\t\n\r ]+/g, " ").replace(/^ | $/g, "").toLowerCase().toUpperCase();
+}
+const asciiAlpha = regexCheck(/[A-Za-z]/);
+const asciiAlphanumeric = regexCheck(/[\dA-Za-z]/);
+const asciiAtext = regexCheck(/[#-'*+\--9=?A-Z^-~]/);
+function asciiControl(code2) {
+  return (
+    // Special whitespace codes (which have negative values), C0 and Control
+    // character DEL
+    code2 !== null && (code2 < 32 || code2 === 127)
+  );
+}
+const asciiDigit = regexCheck(/\d/);
+const asciiHexDigit = regexCheck(/[\dA-Fa-f]/);
+const asciiPunctuation = regexCheck(/[!-/:-@[-`{-~]/);
+function markdownLineEnding(code2) {
+  return code2 !== null && code2 < -2;
+}
+function markdownLineEndingOrSpace(code2) {
+  return code2 !== null && (code2 < 0 || code2 === 32);
+}
+function markdownSpace(code2) {
+  return code2 === -2 || code2 === -1 || code2 === 32;
+}
+const unicodePunctuation = regexCheck(new RegExp("\\p{P}|\\p{S}", "u"));
+const unicodeWhitespace = regexCheck(/\s/);
+function regexCheck(regex) {
+  return check;
+  function check(code2) {
+    return code2 !== null && code2 > -1 && regex.test(String.fromCharCode(code2));
+  }
+}
+function normalizeUri(value) {
+  const result = [];
+  let index2 = -1;
+  let start = 0;
+  let skip = 0;
+  while (++index2 < value.length) {
+    const code2 = value.charCodeAt(index2);
+    let replace2 = "";
+    if (code2 === 37 && asciiAlphanumeric(value.charCodeAt(index2 + 1)) && asciiAlphanumeric(value.charCodeAt(index2 + 2))) {
+      skip = 2;
+    } else if (code2 < 128) {
+      if (!/[!#$&-;=?-Z_a-z~]/.test(String.fromCharCode(code2))) {
+        replace2 = String.fromCharCode(code2);
+      }
+    } else if (code2 > 55295 && code2 < 57344) {
+      const next = value.charCodeAt(index2 + 1);
+      if (code2 < 56320 && next > 56319 && next < 57344) {
+        replace2 = String.fromCharCode(code2, next);
+        skip = 1;
+      } else {
+        replace2 = "�";
+      }
+    } else {
+      replace2 = String.fromCharCode(code2);
+    }
+    if (replace2) {
+      result.push(value.slice(start, index2), encodeURIComponent(replace2));
+      start = index2 + skip + 1;
+      replace2 = "";
+    }
+    if (skip) {
+      index2 += skip;
+      skip = 0;
+    }
+  }
+  return result.join("") + value.slice(start);
+}
+function factorySpace(effects, ok2, type, max) {
+  const limit = max ? max - 1 : Infinity;
+  let size = 0;
+  return start;
+  function start(code2) {
+    if (markdownSpace(code2)) {
+      effects.enter(type);
+      return prefix(code2);
+    }
+    return ok2(code2);
+  }
+  function prefix(code2) {
+    if (markdownSpace(code2) && size++ < limit) {
+      effects.consume(code2);
+      return prefix;
+    }
+    effects.exit(type);
+    return ok2(code2);
+  }
+}
+function factorySpaceMinMax(effects, ok2, nok, type, min, max) {
+  let size = 0;
+  return start;
+  function start(code2) {
+    if (markdownSpace(code2)) {
+      effects.enter(type);
+      return prefix(code2);
+    }
+    return after(code2);
+  }
+  function prefix(code2) {
+    if (markdownSpace(code2) && size < max) {
+      effects.consume(code2);
+      size++;
+      return prefix;
+    }
+    effects.exit(type);
+    return after(code2);
+  }
+  function after(code2) {
+    return size >= min ? ok2(code2) : nok(code2);
+  }
+}
+const content$1 = {
+  tokenize: initializeContent
+};
+function initializeContent(effects) {
+  const contentStart = effects.attempt(this.parser.constructs.contentInitial, afterContentStartConstruct, paragraphInitial);
+  let previous2;
+  return contentStart;
+  function afterContentStartConstruct(code2) {
+    if (code2 === null) {
+      effects.consume(code2);
+      return;
+    }
+    effects.enter("lineEnding");
+    effects.consume(code2);
+    effects.exit("lineEnding");
+    return factorySpace(effects, contentStart, "linePrefix");
+  }
+  function paragraphInitial(code2) {
+    effects.enter("paragraph");
+    return lineStart(code2);
+  }
+  function lineStart(code2) {
+    const token = effects.enter("chunkText", {
+      contentType: "text",
+      previous: previous2
+    });
+    if (previous2) {
+      previous2.next = token;
+    }
+    previous2 = token;
+    return data(code2);
+  }
+  function data(code2) {
+    if (code2 === null) {
+      effects.exit("chunkText");
+      effects.exit("paragraph");
+      effects.consume(code2);
+      return;
+    }
+    if (markdownLineEnding(code2)) {
+      effects.consume(code2);
+      effects.exit("chunkText");
+      return lineStart;
+    }
+    effects.consume(code2);
+    return data;
+  }
+}
+let EditMap$1 = class EditMap {
+  /**
+   * Create a new edit map.
+   *
+   * @returns
+   *   New instance.
+   */
+  constructor() {
+    this.index = /* @__PURE__ */ new Map();
+    this.map = [];
+  }
+  /**
+   * Create an edit: a remove and/or add at a certain place.
+   *
+   * @param {number} index
+   *   Index at which to apply the edit.
+   * @param {number} remove
+   *   Count of items to remove at the index.
+   * @param {Array<Event>} add
+   *   Items to add at the index.
+   * @returns {undefined}
+   *   Nothing.
+   */
+  add(index2, remove, add) {
+    addImplementation$1(this, index2, remove, add, false);
+  }
+  /**
+   * Create an edit: but insert `add` before existing additions, instead of
+   * after them.
+   *
+   * @param {number} index
+   *   Index at which to apply the edit.
+   * @param {number} remove
+   *   Count of items to remove at the index.
+   * @param {Array<Event>} add
+   *   Items to add at the index.
+   * @returns {undefined}
+   *   Nothing.
+   */
+  addBefore(index2, remove, add) {
+    addImplementation$1(this, index2, remove, add, true);
+  }
+  /**
+   * Done, change the events.
+   *
+   * @param {Array<Event>} events
+   *   List of events to apply the edits to.
+   * @returns {undefined}
+   *   Nothing.
+   */
+  consume(events) {
+    this.map.sort(function(a, b) {
+      return a[0] - b[0];
+    });
+    if (this.map.length === 0) {
+      return;
+    }
+    let index2 = this.map.length;
+    const vecs = [];
+    while (index2 > 0) {
+      index2 -= 1;
+      vecs.push(events.slice(this.map[index2][0] + this.map[index2][1]), this.map[index2][2]);
+      events.length = this.map[index2][0];
+    }
+    vecs.push(events.slice());
+    events.length = 0;
+    let slice = vecs.pop();
+    while (slice) {
+      for (const element2 of slice) {
+        events.push(element2);
+      }
+      slice = vecs.pop();
+    }
+    this.map.length = 0;
+    this.index.clear();
+  }
+};
+function addImplementation$1(editMap, at, remove, add, before) {
+  if (remove === 0 && add.length === 0) {
+    return;
+  }
+  const existing = editMap.index.get(at);
+  if (existing) {
+    existing[1] += remove;
+    if (before) {
+      add.push(...existing[2]);
+      existing[2] = add;
+    } else {
+      existing[2].push(...add);
+    }
+    return;
+  }
+  const change = [at, remove, add];
+  editMap.map.push(change);
+  editMap.index.set(at, change);
+}
+const document$2 = {
+  tokenize: initializeDocument
+};
+const containerConstruct = {
+  tokenize: tokenizeContainer
+};
+function initializeDocument(effects) {
+  const self2 = this;
+  const stack = [];
+  let continued = 0;
+  let childFlow;
+  let childToken;
+  let lineStartOffset;
+  return start;
+  function start(code2) {
+    if (continued < stack.length) {
+      const item = stack[continued];
+      self2.containerState = item[1];
+      return effects.attempt(item[0].continuation, documentContinue, checkNewContainers)(code2);
+    }
+    return checkNewContainers(code2);
+  }
+  function documentContinue(code2) {
+    continued++;
+    if (self2.containerState._closeFlow) {
+      self2.containerState._closeFlow = void 0;
+      if (childFlow) {
+        closeFlow();
+      }
+      const indexBeforeExits = self2.events.length;
+      let indexBeforeFlow = indexBeforeExits;
+      let point2;
+      while (indexBeforeFlow--) {
+        if (self2.events[indexBeforeFlow][0] === "exit" && self2.events[indexBeforeFlow][1].type === "chunkFlow") {
+          point2 = self2.events[indexBeforeFlow][1].end;
+          break;
+        }
+      }
+      exitContainers(continued);
+      let index2 = indexBeforeExits;
+      while (index2 < self2.events.length) {
+        self2.events[index2][1].end = {
+          ...point2
+        };
+        index2++;
+      }
+      const editMap = new EditMap$1();
+      editMap.add(indexBeforeFlow + 1, 0, self2.events.slice(indexBeforeExits));
+      editMap.add(indexBeforeExits, index2 - indexBeforeExits, []);
+      editMap.consume(self2.events);
+      return checkNewContainers(code2);
+    }
+    return start(code2);
+  }
+  function checkNewContainers(code2) {
+    if (continued === stack.length) {
+      if (!childFlow) {
+        return documentContinued(code2);
+      }
+      if (childFlow.currentConstruct && childFlow.currentConstruct.concrete) {
+        return flowStart(code2);
+      }
+      self2.interrupt = Boolean(childFlow.currentConstruct && !childFlow._gfmTableDynamicInterruptHack);
+    }
+    self2.containerState = {};
+    return effects.check(containerConstruct, thereIsANewContainer, thereIsNoNewContainer)(code2);
+  }
+  function thereIsANewContainer(code2) {
+    if (childFlow) {
+      closeFlow();
+    }
+    exitContainers(continued);
+    return documentContinued(code2);
+  }
+  function thereIsNoNewContainer(code2) {
+    self2.parser.lazy[self2.now().line] = continued !== stack.length;
+    lineStartOffset = self2.now().offset;
+    return flowStart(code2);
+  }
+  function documentContinued(code2) {
+    self2.containerState = {};
+    return effects.attempt(containerConstruct, containerContinue, flowStart)(code2);
+  }
+  function containerContinue(code2) {
+    continued++;
+    stack.push([self2.currentConstruct, self2.containerState]);
+    return documentContinued(code2);
+  }
+  function flowStart(code2) {
+    if (code2 === null) {
+      if (childFlow) {
+        closeFlow();
+      }
+      exitContainers(0);
+      effects.consume(code2);
+      return;
+    }
+    childFlow = childFlow || self2.parser.flow(self2.now());
+    effects.enter("chunkFlow", {
+      _tokenizer: childFlow,
+      contentType: "flow",
+      previous: childToken
+    });
+    return flowContinue(code2);
+  }
+  function flowContinue(code2) {
+    if (code2 === null) {
+      writeToChild(effects.exit("chunkFlow"), true);
+      exitContainers(0);
+      effects.consume(code2);
+      return;
+    }
+    if (markdownLineEnding(code2)) {
+      effects.consume(code2);
+      writeToChild(effects.exit("chunkFlow"));
+      continued = 0;
+      self2.interrupt = void 0;
+      return start;
+    }
+    effects.consume(code2);
+    return flowContinue;
+  }
+  function writeToChild(token, endOfFile) {
+    const stream = self2.sliceStream(token);
+    if (endOfFile) {
+      stream.push(null);
+    }
+    token.previous = childToken;
+    if (childToken) {
+      childToken.next = token;
+    }
+    childToken = token;
+    childFlow.defineSkip(token.start);
+    childFlow.write(stream);
+    if (self2.parser.lazy[token.start.line]) {
+      let index2 = childFlow.events.length;
+      while (index2--) {
+        if (
+          // The token starts before the line ending…
+          childFlow.events[index2][1].start.offset < lineStartOffset && // …and either is not ended yet…
+          (!childFlow.events[index2][1].end || // …or ends after it.
+          childFlow.events[index2][1].end.offset > lineStartOffset)
+        ) {
           return;
         }
-        const link = document.createElement("link");
-        link.rel = isCss ? "stylesheet" : scriptRel;
-        if (!isCss) {
-          link.as = "script";
+      }
+      const indexBeforeExits = self2.events.length;
+      let indexBeforeFlow = indexBeforeExits;
+      let seen;
+      let point2;
+      while (indexBeforeFlow--) {
+        if (self2.events[indexBeforeFlow][0] === "exit" && self2.events[indexBeforeFlow][1].type === "chunkFlow") {
+          if (seen) {
+            point2 = self2.events[indexBeforeFlow][1].end;
+            break;
+          }
+          seen = true;
         }
-        link.crossOrigin = "";
-        link.href = dep;
-        if (cspNonce) {
-          link.setAttribute("nonce", cspNonce);
+      }
+      exitContainers(continued);
+      index2 = indexBeforeExits;
+      while (index2 < self2.events.length) {
+        self2.events[index2][1].end = {
+          ...point2
+        };
+        index2++;
+      }
+      const editMap = new EditMap$1();
+      editMap.add(indexBeforeFlow + 1, 0, self2.events.slice(indexBeforeExits));
+      editMap.add(indexBeforeExits, index2 - indexBeforeExits, []);
+      editMap.consume(self2.events);
+    }
+  }
+  function exitContainers(size) {
+    let index2 = stack.length;
+    while (index2-- > size) {
+      const entry = stack[index2];
+      self2.containerState = entry[1];
+      entry[0].exit.call(self2, effects);
+    }
+    stack.length = size;
+  }
+  function closeFlow() {
+    childFlow.write([null]);
+    childToken = void 0;
+    childFlow = void 0;
+    self2.containerState._closeFlow = void 0;
+  }
+}
+function tokenizeContainer(effects, ok2, nok) {
+  return factorySpace(effects, effects.attempt(this.parser.constructs.document, ok2, nok), "linePrefix", this.parser.constructs.disable.null.includes("codeIndented") ? void 0 : 4);
+}
+function classifyCharacter(code2) {
+  if (code2 === null || markdownLineEndingOrSpace(code2) || unicodeWhitespace(code2)) {
+    return 1;
+  }
+  if (unicodePunctuation(code2)) {
+    return 2;
+  }
+}
+function resolveAll(constructs2, events, context) {
+  const called = [];
+  let index2 = -1;
+  while (++index2 < constructs2.length) {
+    const resolve = constructs2[index2].resolveAll;
+    if (resolve && !called.includes(resolve)) {
+      events = resolve(events, context);
+      called.push(resolve);
+    }
+  }
+  return events;
+}
+const attention$2 = {
+  name: "attention",
+  resolveAll: resolveAllAttention,
+  tokenize: tokenizeAttention
+};
+function resolveAllAttention(events, context) {
+  let index2 = -1;
+  let nextEvents;
+  while (++index2 < events.length) {
+    if (events[index2][0] === "enter" && events[index2][1].type === "attentionSequence" && events[index2][1]._close) {
+      let open = index2;
+      while (open--) {
+        if (events[open][0] === "exit" && events[open][1].type === "attentionSequence" && events[open][1]._open && // If the markers are the same:
+        context.sliceSerialize(events[open][1]).charCodeAt(0) === context.sliceSerialize(events[index2][1]).charCodeAt(0)) {
+          if ((events[open][1]._close || events[index2][1]._open) && (events[index2][1].end.offset - events[index2][1].start.offset) % 3 && !((events[open][1].end.offset - events[open][1].start.offset + events[index2][1].end.offset - events[index2][1].start.offset) % 3)) {
+            continue;
+          }
+          const use2 = events[open][1].end.offset - events[open][1].start.offset > 1 && events[index2][1].end.offset - events[index2][1].start.offset > 1 ? 2 : 1;
+          const start = {
+            ...events[open][1].end
+          };
+          const end = {
+            ...events[index2][1].start
+          };
+          movePoint(start, -use2);
+          movePoint(end, use2);
+          const openingSequence = {
+            type: use2 > 1 ? "strongSequence" : "emphasisSequence",
+            start,
+            end: {
+              ...events[open][1].end
+            }
+          };
+          const closingSequence = {
+            type: use2 > 1 ? "strongSequence" : "emphasisSequence",
+            start: {
+              ...events[index2][1].start
+            },
+            end
+          };
+          const text2 = {
+            type: use2 > 1 ? "strongText" : "emphasisText",
+            start: {
+              ...events[open][1].end
+            },
+            end: {
+              ...events[index2][1].start
+            }
+          };
+          const group = {
+            type: use2 > 1 ? "strong" : "emphasis",
+            start: {
+              ...openingSequence.start
+            },
+            end: {
+              ...closingSequence.end
+            }
+          };
+          events[open][1].end = {
+            ...openingSequence.start
+          };
+          events[index2][1].start = {
+            ...closingSequence.end
+          };
+          nextEvents = [];
+          if (events[open][1].end.offset - events[open][1].start.offset) {
+            nextEvents = push(nextEvents, [["enter", events[open][1], context], ["exit", events[open][1], context]]);
+          }
+          nextEvents = push(nextEvents, [["enter", group, context], ["enter", openingSequence, context], ["exit", openingSequence, context], ["enter", text2, context]]);
+          nextEvents = push(nextEvents, resolveAll(context.parser.constructs.insideSpan.null, events.slice(open + 1, index2), context));
+          nextEvents = push(nextEvents, [["exit", text2, context], ["enter", closingSequence, context], ["exit", closingSequence, context], ["exit", group, context]]);
+          let offset = 0;
+          if (events[index2][1].end.offset - events[index2][1].start.offset) {
+            offset = 2;
+            nextEvents = push(nextEvents, [["enter", events[index2][1], context], ["exit", events[index2][1], context]]);
+          }
+          splice(events, open - 1, index2 - open + 3, nextEvents);
+          index2 = open + nextEvents.length - offset - 2;
+          break;
         }
-        document.head.appendChild(link);
-        if (isCss) {
-          return new Promise((res, rej) => {
-            link.addEventListener("load", res);
-            link.addEventListener(
-              "error",
-              () => rej(new Error(`Unable to preload CSS for ${dep}`))
-            );
+      }
+    }
+  }
+  index2 = -1;
+  while (++index2 < events.length) {
+    if (events[index2][1].type === "attentionSequence") {
+      events[index2][1].type = "data";
+    }
+  }
+  return events;
+}
+function tokenizeAttention(effects, ok2) {
+  const attentionMarkers2 = this.parser.constructs.attentionMarkers.null;
+  const previous2 = this.previous;
+  const before = classifyCharacter(previous2);
+  let marker;
+  return start;
+  function start(code2) {
+    marker = code2;
+    effects.enter("attentionSequence");
+    return inside(code2);
+  }
+  function inside(code2) {
+    if (code2 === marker) {
+      effects.consume(code2);
+      return inside;
+    }
+    const token = effects.exit("attentionSequence");
+    const after = classifyCharacter(code2);
+    const open = !after || after === 2 && before || attentionMarkers2.includes(code2) && code2 !== 42 && code2 !== 95;
+    const close = !before || before === 2 && after || attentionMarkers2.includes(previous2) && previous2 !== 42 && previous2 !== 95;
+    token._open = Boolean(marker === 42 ? open : open && (before || !close));
+    token._close = Boolean(marker === 42 ? close : close && (after || !open));
+    return ok2(code2);
+  }
+}
+function movePoint(point2, offset) {
+  point2.column += offset;
+  point2.offset += offset;
+  point2._bufferIndex += offset;
+}
+const autolink = {
+  name: "autolink",
+  tokenize: tokenizeAutolink
+};
+function tokenizeAutolink(effects, ok2, nok) {
+  let size = 0;
+  return start;
+  function start(code2) {
+    effects.enter("autolink");
+    effects.enter("autolinkMarker");
+    effects.consume(code2);
+    effects.exit("autolinkMarker");
+    effects.enter("autolinkProtocol");
+    return open;
+  }
+  function open(code2) {
+    if (asciiAlpha(code2)) {
+      effects.consume(code2);
+      return schemeOrEmailAtext;
+    }
+    if (code2 === 64) {
+      return nok(code2);
+    }
+    return emailAtext(code2);
+  }
+  function schemeOrEmailAtext(code2) {
+    if (code2 === 43 || code2 === 45 || code2 === 46 || asciiAlphanumeric(code2)) {
+      size = 1;
+      return schemeInsideOrEmailAtext(code2);
+    }
+    return emailAtext(code2);
+  }
+  function schemeInsideOrEmailAtext(code2) {
+    if (code2 === 58) {
+      effects.consume(code2);
+      size = 0;
+      return urlInside;
+    }
+    if ((code2 === 43 || code2 === 45 || code2 === 46 || asciiAlphanumeric(code2)) && size++ < 32) {
+      effects.consume(code2);
+      return schemeInsideOrEmailAtext;
+    }
+    size = 0;
+    return emailAtext(code2);
+  }
+  function urlInside(code2) {
+    if (code2 === 62) {
+      effects.exit("autolinkProtocol");
+      effects.enter("autolinkMarker");
+      effects.consume(code2);
+      effects.exit("autolinkMarker");
+      effects.exit("autolink");
+      return ok2;
+    }
+    if (code2 === null || code2 === 32 || code2 === 60 || asciiControl(code2)) {
+      return nok(code2);
+    }
+    effects.consume(code2);
+    return urlInside;
+  }
+  function emailAtext(code2) {
+    if (code2 === 64) {
+      effects.consume(code2);
+      return emailAtSignOrDot;
+    }
+    if (asciiAtext(code2)) {
+      effects.consume(code2);
+      return emailAtext;
+    }
+    return nok(code2);
+  }
+  function emailAtSignOrDot(code2) {
+    return asciiAlphanumeric(code2) ? emailLabel(code2) : nok(code2);
+  }
+  function emailLabel(code2) {
+    if (code2 === 46) {
+      effects.consume(code2);
+      size = 0;
+      return emailAtSignOrDot;
+    }
+    if (code2 === 62) {
+      effects.exit("autolinkProtocol").type = "autolinkEmail";
+      effects.enter("autolinkMarker");
+      effects.consume(code2);
+      effects.exit("autolinkMarker");
+      effects.exit("autolink");
+      return ok2;
+    }
+    return emailValue(code2);
+  }
+  function emailValue(code2) {
+    if ((code2 === 45 || asciiAlphanumeric(code2)) && size++ < 63) {
+      const next = code2 === 45 ? emailValue : emailLabel;
+      effects.consume(code2);
+      return next;
+    }
+    return nok(code2);
+  }
+}
+const blankLine = {
+  partial: true,
+  tokenize: tokenizeBlankLine
+};
+function tokenizeBlankLine(effects, ok2, nok) {
+  return start;
+  function start(code2) {
+    return markdownSpace(code2) ? factorySpace(effects, after, "linePrefix")(code2) : after(code2);
+  }
+  function after(code2) {
+    return code2 === null || markdownLineEnding(code2) ? ok2(code2) : nok(code2);
+  }
+}
+const blockQuote = {
+  continuation: {
+    tokenize: tokenizeBlockQuoteContinuation
+  },
+  exit: exit$1,
+  name: "blockQuote",
+  tokenize: tokenizeBlockQuoteStart
+};
+function tokenizeBlockQuoteStart(effects, ok2, nok) {
+  const self2 = this;
+  return start;
+  function start(code2) {
+    if (code2 === 62) {
+      const state = self2.containerState;
+      if (!state.open) {
+        effects.enter("blockQuote", {
+          _container: true
+        });
+        state.open = true;
+      }
+      effects.enter("blockQuotePrefix");
+      effects.enter("blockQuoteMarker");
+      effects.consume(code2);
+      effects.exit("blockQuoteMarker");
+      return after;
+    }
+    return nok(code2);
+  }
+  function after(code2) {
+    if (markdownSpace(code2)) {
+      effects.enter("blockQuotePrefixWhitespace");
+      effects.consume(code2);
+      effects.exit("blockQuotePrefixWhitespace");
+      effects.exit("blockQuotePrefix");
+      return ok2;
+    }
+    effects.exit("blockQuotePrefix");
+    return ok2(code2);
+  }
+}
+function tokenizeBlockQuoteContinuation(effects, ok2, nok) {
+  const self2 = this;
+  return contStart;
+  function contStart(code2) {
+    if (markdownSpace(code2)) {
+      return factorySpace(effects, contBefore, "linePrefix", self2.parser.constructs.disable.null.includes("codeIndented") ? void 0 : 4)(code2);
+    }
+    return contBefore(code2);
+  }
+  function contBefore(code2) {
+    return effects.attempt(blockQuote, ok2, nok)(code2);
+  }
+}
+function exit$1(effects) {
+  effects.exit("blockQuote");
+}
+const characterEscape = {
+  name: "characterEscape",
+  tokenize: tokenizeCharacterEscape
+};
+function tokenizeCharacterEscape(effects, ok2, nok) {
+  return start;
+  function start(code2) {
+    effects.enter("characterEscape");
+    effects.enter("escapeMarker");
+    effects.consume(code2);
+    effects.exit("escapeMarker");
+    return inside;
+  }
+  function inside(code2) {
+    if (asciiPunctuation(code2)) {
+      effects.enter("characterEscapeValue");
+      effects.consume(code2);
+      effects.exit("characterEscapeValue");
+      effects.exit("characterEscape");
+      return ok2;
+    }
+    return nok(code2);
+  }
+}
+const characterReference = {
+  name: "characterReference",
+  tokenize: tokenizeCharacterReference
+};
+function tokenizeCharacterReference(effects, ok2, nok) {
+  const self2 = this;
+  let size = 0;
+  let max;
+  let test;
+  return start;
+  function start(code2) {
+    effects.enter("characterReference");
+    effects.enter("characterReferenceMarker");
+    effects.consume(code2);
+    effects.exit("characterReferenceMarker");
+    return open;
+  }
+  function open(code2) {
+    if (code2 === 35) {
+      effects.enter("characterReferenceMarkerNumeric");
+      effects.consume(code2);
+      effects.exit("characterReferenceMarkerNumeric");
+      return numeric;
+    }
+    effects.enter("characterReferenceValue");
+    max = 31;
+    test = asciiAlphanumeric;
+    return value(code2);
+  }
+  function numeric(code2) {
+    if (code2 === 88 || code2 === 120) {
+      effects.enter("characterReferenceMarkerHexadecimal");
+      effects.consume(code2);
+      effects.exit("characterReferenceMarkerHexadecimal");
+      effects.enter("characterReferenceValue");
+      max = 6;
+      test = asciiHexDigit;
+      return value;
+    }
+    effects.enter("characterReferenceValue");
+    max = 7;
+    test = asciiDigit;
+    return value(code2);
+  }
+  function value(code2) {
+    if (code2 === 59 && size) {
+      const token = effects.exit("characterReferenceValue");
+      if (test === asciiAlphanumeric && !decodeNamedCharacterReference(self2.sliceSerialize(token))) {
+        return nok(code2);
+      }
+      effects.enter("characterReferenceMarker");
+      effects.consume(code2);
+      effects.exit("characterReferenceMarker");
+      effects.exit("characterReference");
+      return ok2;
+    }
+    if (test(code2) && size++ < max) {
+      effects.consume(code2);
+      return value;
+    }
+    return nok(code2);
+  }
+}
+const nonLazyContinuation = {
+  partial: true,
+  tokenize: tokenizeNonLazyContinuation
+};
+function tokenizeNonLazyContinuation(effects, ok2, nok) {
+  const self2 = this;
+  return start;
+  function start(code2) {
+    if (code2 === null) {
+      return nok(code2);
+    }
+    effects.enter("lineEnding");
+    effects.consume(code2);
+    effects.exit("lineEnding");
+    return after;
+  }
+  function after(code2) {
+    return self2.parser.lazy[self2.now().line] ? nok(code2) : ok2(code2);
+  }
+}
+const codeFenced = {
+  concrete: true,
+  name: "codeFenced",
+  tokenize: tokenizeCodeFenced
+};
+function tokenizeCodeFenced(effects, ok2, nok) {
+  const self2 = this;
+  const closeStart = {
+    partial: true,
+    tokenize: tokenizeCloseStart
+  };
+  let initialPrefix = 0;
+  let sizeOpen = 0;
+  let marker;
+  return start;
+  function start(code2) {
+    return beforeSequenceOpen(code2);
+  }
+  function beforeSequenceOpen(code2) {
+    const tail = self2.events[self2.events.length - 1];
+    initialPrefix = tail && tail[1].type === "linePrefix" ? tail[2].sliceSerialize(tail[1], true).length : 0;
+    marker = code2;
+    effects.enter("codeFenced");
+    effects.enter("codeFencedFence");
+    effects.enter("codeFencedFenceSequence");
+    return sequenceOpen(code2);
+  }
+  function sequenceOpen(code2) {
+    if (code2 === marker) {
+      sizeOpen++;
+      effects.consume(code2);
+      return sequenceOpen;
+    }
+    if (sizeOpen < 3) {
+      return nok(code2);
+    }
+    effects.exit("codeFencedFenceSequence");
+    return markdownSpace(code2) ? factorySpace(effects, infoBefore, "whitespace")(code2) : infoBefore(code2);
+  }
+  function infoBefore(code2) {
+    if (code2 === null || markdownLineEnding(code2)) {
+      effects.exit("codeFencedFence");
+      return self2.interrupt ? ok2(code2) : effects.check(nonLazyContinuation, atNonLazyBreak, after)(code2);
+    }
+    effects.enter("codeFencedFenceInfo");
+    effects.enter("chunkString", {
+      contentType: "string"
+    });
+    return info(code2);
+  }
+  function info(code2) {
+    if (code2 === null || markdownLineEnding(code2)) {
+      effects.exit("chunkString");
+      effects.exit("codeFencedFenceInfo");
+      return infoBefore(code2);
+    }
+    if (markdownSpace(code2)) {
+      effects.exit("chunkString");
+      effects.exit("codeFencedFenceInfo");
+      return factorySpace(effects, metaBefore, "whitespace")(code2);
+    }
+    if (code2 === 96 && code2 === marker) {
+      return nok(code2);
+    }
+    effects.consume(code2);
+    return info;
+  }
+  function metaBefore(code2) {
+    if (code2 === null || markdownLineEnding(code2)) {
+      return infoBefore(code2);
+    }
+    effects.enter("codeFencedFenceMeta");
+    effects.enter("chunkString", {
+      contentType: "string"
+    });
+    return meta(code2);
+  }
+  function meta(code2) {
+    if (code2 === null || markdownLineEnding(code2)) {
+      effects.exit("chunkString");
+      effects.exit("codeFencedFenceMeta");
+      return infoBefore(code2);
+    }
+    if (code2 === 96 && code2 === marker) {
+      return nok(code2);
+    }
+    effects.consume(code2);
+    return meta;
+  }
+  function atNonLazyBreak(code2) {
+    return effects.attempt(closeStart, after, contentBefore)(code2);
+  }
+  function contentBefore(code2) {
+    effects.enter("lineEnding");
+    effects.consume(code2);
+    effects.exit("lineEnding");
+    return contentStart;
+  }
+  function contentStart(code2) {
+    return initialPrefix > 0 && markdownSpace(code2) ? factorySpace(effects, beforeContentChunk, "linePrefix", initialPrefix + 1)(code2) : beforeContentChunk(code2);
+  }
+  function beforeContentChunk(code2) {
+    if (code2 === null || markdownLineEnding(code2)) {
+      return effects.check(nonLazyContinuation, atNonLazyBreak, after)(code2);
+    }
+    effects.enter("codeFlowValue");
+    return contentChunk(code2);
+  }
+  function contentChunk(code2) {
+    if (code2 === null || markdownLineEnding(code2)) {
+      effects.exit("codeFlowValue");
+      return beforeContentChunk(code2);
+    }
+    effects.consume(code2);
+    return contentChunk;
+  }
+  function after(code2) {
+    effects.exit("codeFenced");
+    return ok2(code2);
+  }
+  function tokenizeCloseStart(effects2, ok3, nok2) {
+    let size = 0;
+    return startBefore;
+    function startBefore(code2) {
+      effects2.enter("lineEnding");
+      effects2.consume(code2);
+      effects2.exit("lineEnding");
+      return start2;
+    }
+    function start2(code2) {
+      effects2.enter("codeFencedFence");
+      return markdownSpace(code2) ? factorySpace(effects2, beforeSequenceClose, "linePrefix", self2.parser.constructs.disable.null.includes("codeIndented") ? void 0 : 4)(code2) : beforeSequenceClose(code2);
+    }
+    function beforeSequenceClose(code2) {
+      if (code2 === marker) {
+        effects2.enter("codeFencedFenceSequence");
+        return sequenceClose(code2);
+      }
+      return nok2(code2);
+    }
+    function sequenceClose(code2) {
+      if (code2 === marker) {
+        size++;
+        effects2.consume(code2);
+        return sequenceClose;
+      }
+      if (size >= sizeOpen) {
+        effects2.exit("codeFencedFenceSequence");
+        return markdownSpace(code2) ? factorySpace(effects2, sequenceCloseAfter, "whitespace")(code2) : sequenceCloseAfter(code2);
+      }
+      return nok2(code2);
+    }
+    function sequenceCloseAfter(code2) {
+      if (code2 === null || markdownLineEnding(code2)) {
+        effects2.exit("codeFencedFence");
+        return ok3(code2);
+      }
+      return nok2(code2);
+    }
+  }
+}
+const codeIndented = {
+  name: "codeIndented",
+  tokenize: tokenizeCodeIndented
+};
+const furtherStart = {
+  partial: true,
+  tokenize: tokenizeFurtherStart
+};
+function tokenizeCodeIndented(effects, ok2, nok) {
+  return start;
+  function start(code2) {
+    effects.enter("codeIndented");
+    return factorySpaceMinMax(effects, atBreak, nok, "linePrefix", 4, 4)(code2);
+  }
+  function atBreak(code2) {
+    if (code2 === null) {
+      return after(code2);
+    }
+    if (markdownLineEnding(code2)) {
+      return effects.attempt(furtherStart, atBreak, after)(code2);
+    }
+    effects.enter("codeFlowValue");
+    return inside(code2);
+  }
+  function inside(code2) {
+    if (code2 === null || markdownLineEnding(code2)) {
+      effects.exit("codeFlowValue");
+      return atBreak(code2);
+    }
+    effects.consume(code2);
+    return inside;
+  }
+  function after(code2) {
+    effects.exit("codeIndented");
+    return ok2(code2);
+  }
+}
+function tokenizeFurtherStart(effects, ok2, nok) {
+  const self2 = this;
+  return furtherStart2;
+  function furtherStart2(code2) {
+    if (self2.parser.lazy[self2.now().line]) {
+      return nok(code2);
+    }
+    if (markdownLineEnding(code2)) {
+      effects.enter("lineEnding");
+      effects.consume(code2);
+      effects.exit("lineEnding");
+      return furtherStart2;
+    }
+    return factorySpaceMinMax(effects, ok2, onNotEnoughPrefix, "linePrefix", 4, 4)(code2);
+  }
+  function onNotEnoughPrefix(code2) {
+    return markdownLineEnding(code2) ? furtherStart2(code2) : nok(code2);
+  }
+}
+const codeText = {
+  name: "codeText",
+  previous: previous$1,
+  resolve: resolveCodeText,
+  tokenize: tokenizeCodeText
+};
+function resolveCodeText(events) {
+  let tailExitIndex = events.length - 4;
+  let headEnterIndex = 3;
+  let index2;
+  let enter;
+  if ((events[headEnterIndex][1].type === "lineEnding" || events[headEnterIndex][1].type === "space") && (events[tailExitIndex][1].type === "lineEnding" || events[tailExitIndex][1].type === "space")) {
+    index2 = headEnterIndex;
+    while (++index2 < tailExitIndex) {
+      if (events[index2][1].type === "codeTextData") {
+        events[headEnterIndex][1].type = "codeTextPadding";
+        events[tailExitIndex][1].type = "codeTextPadding";
+        headEnterIndex += 2;
+        tailExitIndex -= 2;
+        break;
+      }
+    }
+  }
+  index2 = headEnterIndex - 1;
+  tailExitIndex++;
+  while (++index2 <= tailExitIndex) {
+    if (enter === void 0) {
+      if (index2 !== tailExitIndex && events[index2][1].type !== "lineEnding") {
+        enter = index2;
+      }
+    } else if (index2 === tailExitIndex || events[index2][1].type === "lineEnding") {
+      events[enter][1].type = "codeTextData";
+      if (index2 !== enter + 2) {
+        events[enter][1].end = events[index2 - 1][1].end;
+        events.splice(enter + 2, index2 - enter - 2);
+        tailExitIndex -= index2 - enter - 2;
+        index2 = enter + 2;
+      }
+      enter = void 0;
+    }
+  }
+  return events;
+}
+function previous$1(code2) {
+  return code2 !== 96 || this.events[this.events.length - 1][1].type === "characterEscape";
+}
+function tokenizeCodeText(effects, ok2, nok) {
+  let sizeOpen = 0;
+  let size;
+  let token;
+  return start;
+  function start(code2) {
+    effects.enter("codeText");
+    effects.enter("codeTextSequence");
+    return sequenceOpen(code2);
+  }
+  function sequenceOpen(code2) {
+    if (code2 === 96) {
+      effects.consume(code2);
+      sizeOpen++;
+      return sequenceOpen;
+    }
+    effects.exit("codeTextSequence");
+    return between(code2);
+  }
+  function between(code2) {
+    if (code2 === null) {
+      return nok(code2);
+    }
+    if (code2 === 32) {
+      effects.enter("space");
+      effects.consume(code2);
+      effects.exit("space");
+      return between;
+    }
+    if (code2 === 96) {
+      token = effects.enter("codeTextSequence");
+      size = 0;
+      return sequenceClose(code2);
+    }
+    if (markdownLineEnding(code2)) {
+      effects.enter("lineEnding");
+      effects.consume(code2);
+      effects.exit("lineEnding");
+      return between;
+    }
+    effects.enter("codeTextData");
+    return data(code2);
+  }
+  function data(code2) {
+    if (code2 === null || code2 === 32 || code2 === 96 || markdownLineEnding(code2)) {
+      effects.exit("codeTextData");
+      return between(code2);
+    }
+    effects.consume(code2);
+    return data;
+  }
+  function sequenceClose(code2) {
+    if (code2 === 96) {
+      effects.consume(code2);
+      size++;
+      return sequenceClose;
+    }
+    if (size === sizeOpen) {
+      effects.exit("codeTextSequence");
+      effects.exit("codeText");
+      return ok2(code2);
+    }
+    token.type = "codeTextData";
+    return data(code2);
+  }
+}
+class SpliceBuffer {
+  /**
+   * @param {ReadonlyArray<T> | null | undefined} [initial]
+   *   Initial items (optional).
+   * @returns
+   *   Splice buffer.
+   */
+  constructor(initial) {
+    this.left = initial ? [...initial] : [];
+    this.right = [];
+  }
+  /**
+   * Array access;
+   * does not move the cursor.
+   *
+   * @param {number} index
+   *   Index.
+   * @return {T}
+   *   Item.
+   */
+  get(index2) {
+    if (index2 < 0 || index2 >= this.left.length + this.right.length) {
+      throw new RangeError("Cannot access index `" + index2 + "` in a splice buffer of size `" + (this.left.length + this.right.length) + "`");
+    }
+    if (index2 < this.left.length) return this.left[index2];
+    return this.right[this.right.length - index2 + this.left.length - 1];
+  }
+  /**
+   * The length of the splice buffer, one greater than the largest index in the
+   * array.
+   */
+  get length() {
+    return this.left.length + this.right.length;
+  }
+  /**
+   * Remove and return `list[0]`;
+   * moves the cursor to `0`.
+   *
+   * @returns {T | undefined}
+   *   Item, optional.
+   */
+  shift() {
+    this.setCursor(0);
+    return this.right.pop();
+  }
+  /**
+   * Slice the buffer to get an array;
+   * does not move the cursor.
+   *
+   * @param {number} start
+   *   Start.
+   * @param {number | null | undefined} [end]
+   *   End (optional).
+   * @returns {Array<T>}
+   *   Array of items.
+   */
+  slice(start, end) {
+    const stop = end === null || end === void 0 ? Number.POSITIVE_INFINITY : end;
+    if (stop < this.left.length) {
+      return this.left.slice(start, stop);
+    }
+    if (start > this.left.length) {
+      return this.right.slice(this.right.length - stop + this.left.length, this.right.length - start + this.left.length).reverse();
+    }
+    return this.left.slice(start).concat(this.right.slice(this.right.length - stop + this.left.length).reverse());
+  }
+  /**
+   * Mimics the behavior of Array.prototype.splice() except for the change of
+   * interface necessary to avoid segfaults when patching in very large arrays.
+   *
+   * This operation moves cursor is moved to `start` and results in the cursor
+   * placed after any inserted items.
+   *
+   * @param {number} start
+   *   Start;
+   *   zero-based index at which to start changing the array;
+   *   negative numbers count backwards from the end of the array and values
+   *   that are out-of bounds are clamped to the appropriate end of the array.
+   * @param {number | null | undefined} [deleteCount=0]
+   *   Delete count (default: `0`);
+   *   maximum number of elements to delete, starting from start.
+   * @param {Array<T> | null | undefined} [items=[]]
+   *   Items to include in place of the deleted items (default: `[]`).
+   * @return {Array<T>}
+   *   Any removed items.
+   */
+  splice(start, deleteCount, items) {
+    const count2 = deleteCount || 0;
+    this.setCursor(Math.trunc(start));
+    const removed = this.right.splice(this.right.length - count2, Number.POSITIVE_INFINITY);
+    if (items) chunkedPush(this.left, items);
+    return removed.reverse();
+  }
+  /**
+   * Remove and return the highest-numbered item in the array, so
+   * `list[list.length - 1]`;
+   * Moves the cursor to `length`.
+   *
+   * @returns {T | undefined}
+   *   Item, optional.
+   */
+  pop() {
+    this.setCursor(Number.POSITIVE_INFINITY);
+    return this.left.pop();
+  }
+  /**
+   * Inserts a single item to the high-numbered side of the array;
+   * moves the cursor to `length`.
+   *
+   * @param {T} item
+   *   Item.
+   * @returns {undefined}
+   *   Nothing.
+   */
+  push(item) {
+    this.setCursor(Number.POSITIVE_INFINITY);
+    this.left.push(item);
+  }
+  /**
+   * Inserts many items to the high-numbered side of the array.
+   * Moves the cursor to `length`.
+   *
+   * @param {Array<T>} items
+   *   Items.
+   * @returns {undefined}
+   *   Nothing.
+   */
+  pushMany(items) {
+    this.setCursor(Number.POSITIVE_INFINITY);
+    chunkedPush(this.left, items);
+  }
+  /**
+   * Inserts a single item to the low-numbered side of the array;
+   * Moves the cursor to `0`.
+   *
+   * @param {T} item
+   *   Item.
+   * @returns {undefined}
+   *   Nothing.
+   */
+  unshift(item) {
+    this.setCursor(0);
+    this.right.push(item);
+  }
+  /**
+   * Inserts many items to the low-numbered side of the array;
+   * moves the cursor to `0`.
+   *
+   * @param {Array<T>} items
+   *   Items.
+   * @returns {undefined}
+   *   Nothing.
+   */
+  unshiftMany(items) {
+    this.setCursor(0);
+    chunkedPush(this.right, items.reverse());
+  }
+  /**
+   * Move the cursor to a specific position in the array. Requires
+   * time proportional to the distance moved.
+   *
+   * If `n < 0`, the cursor will end up at the beginning.
+   * If `n > length`, the cursor will end up at the end.
+   *
+   * @param {number} n
+   *   Position.
+   * @return {undefined}
+   *   Nothing.
+   */
+  setCursor(n) {
+    if (n === this.left.length || n > this.left.length && this.right.length === 0 || n < 0 && this.left.length === 0) return;
+    if (n < this.left.length) {
+      const removed = this.left.splice(n, Number.POSITIVE_INFINITY);
+      chunkedPush(this.right, removed.reverse());
+    } else {
+      const removed = this.right.splice(this.left.length + this.right.length - n, Number.POSITIVE_INFINITY);
+      chunkedPush(this.left, removed.reverse());
+    }
+  }
+}
+function chunkedPush(list2, right) {
+  let chunkStart = 0;
+  if (right.length < 1e4) {
+    list2.push(...right);
+  } else {
+    while (chunkStart < right.length) {
+      list2.push(...right.slice(chunkStart, chunkStart + 1e4));
+      chunkStart += 1e4;
+    }
+  }
+}
+function subtokenize(eventsArray) {
+  const jumps = {};
+  let index2 = -1;
+  let event;
+  let lineIndex;
+  let otherIndex;
+  let otherEvent;
+  let parameters;
+  let subevents;
+  let more;
+  const events = new SpliceBuffer(eventsArray);
+  while (++index2 < events.length) {
+    while (index2 in jumps) {
+      index2 = jumps[index2];
+    }
+    event = events.get(index2);
+    if (index2 && event[1].type === "chunkFlow" && events.get(index2 - 1)[1].type === "listItemPrefix") {
+      subevents = event[1]._tokenizer.events;
+      otherIndex = 0;
+      if (otherIndex < subevents.length && subevents[otherIndex][1].type === "lineEndingBlank") {
+        otherIndex += 2;
+      }
+      if (otherIndex < subevents.length && subevents[otherIndex][1].type === "content") {
+        while (++otherIndex < subevents.length) {
+          if (subevents[otherIndex][1].type === "content") {
+            break;
+          }
+          if (subevents[otherIndex][1].type === "chunkText") {
+            subevents[otherIndex][1]._isInFirstContentOfListItem = true;
+            otherIndex++;
+          }
+        }
+      }
+    }
+    if (event[0] === "enter") {
+      if (event[1].contentType) {
+        Object.assign(jumps, subcontent(events, index2));
+        index2 = jumps[index2];
+        more = true;
+      }
+    } else if (event[1]._container) {
+      otherIndex = index2;
+      lineIndex = void 0;
+      while (otherIndex--) {
+        otherEvent = events.get(otherIndex);
+        if (otherEvent[1].type === "lineEnding" || otherEvent[1].type === "lineEndingBlank") {
+          if (otherEvent[0] === "enter") {
+            if (lineIndex) {
+              events.get(lineIndex)[1].type = "lineEndingBlank";
+            }
+            otherEvent[1].type = "lineEnding";
+            lineIndex = otherIndex;
+          }
+        } else if (otherEvent[1].type === "linePrefix" || otherEvent[1].type === "listItemIndent") ;
+        else {
+          break;
+        }
+      }
+      if (lineIndex) {
+        event[1].end = {
+          ...events.get(lineIndex)[1].start
+        };
+        parameters = events.slice(lineIndex, index2);
+        parameters.unshift(event);
+        events.splice(lineIndex, index2 - lineIndex + 1, parameters);
+      }
+    }
+  }
+  splice(eventsArray, 0, Number.POSITIVE_INFINITY, events.slice(0));
+  return !more;
+}
+function subcontent(events, eventIndex) {
+  const token = events.get(eventIndex)[1];
+  const context = events.get(eventIndex)[2];
+  let startPosition = eventIndex - 1;
+  const startPositions = [];
+  let tokenizer = token._tokenizer;
+  if (!tokenizer) {
+    tokenizer = context.parser[token.contentType](token.start);
+    if (token._contentTypeTextTrailing) {
+      tokenizer._contentTypeTextTrailing = true;
+    }
+  }
+  const childEvents = tokenizer.events;
+  const jumps = [];
+  const gaps = {};
+  let stream;
+  let previous2;
+  let index2 = -1;
+  let current = token;
+  let adjust = 0;
+  let start = 0;
+  const breaks = [start];
+  while (current) {
+    while (events.get(++startPosition)[1] !== current) {
+    }
+    startPositions.push(startPosition);
+    if (!current._tokenizer) {
+      stream = context.sliceStream(current);
+      if (!current.next) {
+        stream.push(null);
+      }
+      if (previous2) {
+        tokenizer.defineSkip(current.start);
+      }
+      if (current._isInFirstContentOfListItem) {
+        tokenizer._gfmTasklistFirstContentOfListItem = true;
+      }
+      tokenizer.write(stream);
+      if (current._isInFirstContentOfListItem) {
+        tokenizer._gfmTasklistFirstContentOfListItem = void 0;
+      }
+    }
+    previous2 = current;
+    current = current.next;
+  }
+  current = token;
+  while (++index2 < childEvents.length) {
+    if (
+      // Find a void token that includes a break.
+      childEvents[index2][0] === "exit" && childEvents[index2 - 1][0] === "enter" && childEvents[index2][1].type === childEvents[index2 - 1][1].type && childEvents[index2][1].start.line !== childEvents[index2][1].end.line
+    ) {
+      start = index2 + 1;
+      breaks.push(start);
+      current._tokenizer = void 0;
+      current.previous = void 0;
+      current = current.next;
+    }
+  }
+  tokenizer.events = [];
+  if (current) {
+    current._tokenizer = void 0;
+    current.previous = void 0;
+  } else {
+    breaks.pop();
+  }
+  index2 = breaks.length;
+  while (index2--) {
+    const slice = childEvents.slice(breaks[index2], breaks[index2 + 1]);
+    const start2 = startPositions.pop();
+    jumps.push([start2, start2 + slice.length - 1]);
+    events.splice(start2, 2, slice);
+  }
+  jumps.reverse();
+  index2 = -1;
+  while (++index2 < jumps.length) {
+    gaps[adjust + jumps[index2][0]] = adjust + jumps[index2][1];
+    adjust += jumps[index2][1] - jumps[index2][0] - 1;
+  }
+  return gaps;
+}
+const content = {
+  resolve: resolveContent,
+  tokenize: tokenizeContent
+};
+const continuationConstruct = {
+  partial: true,
+  tokenize: tokenizeContinuation
+};
+function resolveContent(events) {
+  subtokenize(events);
+  return events;
+}
+function tokenizeContent(effects, ok2) {
+  let previous2;
+  return chunkStart;
+  function chunkStart(code2) {
+    effects.enter("content");
+    previous2 = effects.enter("chunkContent", {
+      contentType: "content"
+    });
+    return chunkInside(code2);
+  }
+  function chunkInside(code2) {
+    if (code2 === null) {
+      return contentEnd(code2);
+    }
+    if (markdownLineEnding(code2)) {
+      return effects.check(continuationConstruct, contentContinue, contentEnd)(code2);
+    }
+    effects.consume(code2);
+    return chunkInside;
+  }
+  function contentEnd(code2) {
+    effects.exit("chunkContent");
+    effects.exit("content");
+    return ok2(code2);
+  }
+  function contentContinue(code2) {
+    effects.consume(code2);
+    effects.exit("chunkContent");
+    previous2.next = effects.enter("chunkContent", {
+      contentType: "content",
+      previous: previous2
+    });
+    previous2 = previous2.next;
+    return chunkInside;
+  }
+}
+function tokenizeContinuation(effects, ok2, nok) {
+  const self2 = this;
+  return startLookahead;
+  function startLookahead(code2) {
+    effects.exit("chunkContent");
+    effects.enter("lineEnding");
+    effects.consume(code2);
+    effects.exit("lineEnding");
+    return factorySpace(effects, prefixed, "linePrefix");
+  }
+  function prefixed(code2) {
+    if (code2 === null || markdownLineEnding(code2)) {
+      return nok(code2);
+    }
+    const tail = self2.events[self2.events.length - 1];
+    if (!self2.parser.constructs.disable.null.includes("codeIndented") && tail && tail[1].type === "linePrefix" && tail[2].sliceSerialize(tail[1], true).length >= 4) {
+      return ok2(code2);
+    }
+    return effects.interrupt(self2.parser.constructs.flow, nok, ok2)(code2);
+  }
+}
+function factoryDestination(effects, ok2, nok, type, literalType, literalMarkerType, rawType, stringType, max) {
+  const limit = max || Number.POSITIVE_INFINITY;
+  let balance = 0;
+  return start;
+  function start(code2) {
+    if (code2 === 60) {
+      effects.enter(type);
+      effects.enter(literalType);
+      effects.enter(literalMarkerType);
+      effects.consume(code2);
+      effects.exit(literalMarkerType);
+      return enclosedBefore;
+    }
+    if (code2 === null || code2 === 32 || code2 === 41 || asciiControl(code2)) {
+      return nok(code2);
+    }
+    effects.enter(type);
+    effects.enter(rawType);
+    effects.enter(stringType);
+    effects.enter("chunkString", {
+      contentType: "string"
+    });
+    return raw(code2);
+  }
+  function enclosedBefore(code2) {
+    if (code2 === 62) {
+      effects.enter(literalMarkerType);
+      effects.consume(code2);
+      effects.exit(literalMarkerType);
+      effects.exit(literalType);
+      effects.exit(type);
+      return ok2;
+    }
+    effects.enter(stringType);
+    effects.enter("chunkString", {
+      contentType: "string"
+    });
+    return enclosed(code2);
+  }
+  function enclosed(code2) {
+    if (code2 === 62) {
+      effects.exit("chunkString");
+      effects.exit(stringType);
+      return enclosedBefore(code2);
+    }
+    if (code2 === null || code2 === 60 || markdownLineEnding(code2)) {
+      return nok(code2);
+    }
+    effects.consume(code2);
+    return code2 === 92 ? enclosedEscape : enclosed;
+  }
+  function enclosedEscape(code2) {
+    if (code2 === 60 || code2 === 62 || code2 === 92) {
+      effects.consume(code2);
+      return enclosed;
+    }
+    return enclosed(code2);
+  }
+  function raw(code2) {
+    if (!balance && (code2 === null || code2 === 41 || markdownLineEndingOrSpace(code2))) {
+      effects.exit("chunkString");
+      effects.exit(stringType);
+      effects.exit(rawType);
+      effects.exit(type);
+      return ok2(code2);
+    }
+    if (balance < limit && code2 === 40) {
+      effects.consume(code2);
+      balance++;
+      return raw;
+    }
+    if (code2 === 41) {
+      effects.consume(code2);
+      balance--;
+      return raw;
+    }
+    if (code2 === null || code2 === 32 || code2 === 40 || asciiControl(code2)) {
+      return nok(code2);
+    }
+    effects.consume(code2);
+    return code2 === 92 ? rawEscape : raw;
+  }
+  function rawEscape(code2) {
+    if (code2 === 40 || code2 === 41 || code2 === 92) {
+      effects.consume(code2);
+      return raw;
+    }
+    return raw(code2);
+  }
+}
+function factoryLabel(effects, ok2, nok, type, markerType, stringType) {
+  const self2 = this;
+  let size = 0;
+  let seen;
+  return start;
+  function start(code2) {
+    effects.enter(type);
+    effects.enter(markerType);
+    effects.consume(code2);
+    effects.exit(markerType);
+    effects.enter(stringType);
+    return atBreak;
+  }
+  function atBreak(code2) {
+    if (size > 999 || code2 === null || code2 === 91 || code2 === 93 && !seen || // To do: remove in the future once we’ve switched from
+    // `micromark-extension-footnote` to `micromark-extension-gfm-footnote`,
+    // which doesn’t need this.
+    // Hidden footnotes hook.
+    /* c8 ignore next 3 */
+    code2 === 94 && !size && "_hiddenFootnoteSupport" in self2.parser.constructs) {
+      return nok(code2);
+    }
+    if (code2 === 93) {
+      effects.exit(stringType);
+      effects.enter(markerType);
+      effects.consume(code2);
+      effects.exit(markerType);
+      effects.exit(type);
+      return ok2;
+    }
+    if (markdownLineEnding(code2)) {
+      effects.enter("lineEnding");
+      effects.consume(code2);
+      effects.exit("lineEnding");
+      return atBreak;
+    }
+    effects.enter("chunkString", {
+      contentType: "string"
+    });
+    return labelInside(code2);
+  }
+  function labelInside(code2) {
+    if (code2 === null || code2 === 91 || code2 === 93 || markdownLineEnding(code2) || size++ > 999) {
+      effects.exit("chunkString");
+      return atBreak(code2);
+    }
+    effects.consume(code2);
+    if (!seen) seen = !markdownSpace(code2);
+    return code2 === 92 ? labelEscape : labelInside;
+  }
+  function labelEscape(code2) {
+    if (code2 === 91 || code2 === 92 || code2 === 93) {
+      effects.consume(code2);
+      size++;
+      return labelInside;
+    }
+    return labelInside(code2);
+  }
+}
+function factoryTitle(effects, ok2, nok, type, markerType, stringType) {
+  let marker;
+  return start;
+  function start(code2) {
+    if (code2 === 34 || code2 === 39 || code2 === 40) {
+      effects.enter(type);
+      effects.enter(markerType);
+      effects.consume(code2);
+      effects.exit(markerType);
+      marker = code2 === 40 ? 41 : code2;
+      return begin;
+    }
+    return nok(code2);
+  }
+  function begin(code2) {
+    if (code2 === marker) {
+      effects.enter(markerType);
+      effects.consume(code2);
+      effects.exit(markerType);
+      effects.exit(type);
+      return ok2;
+    }
+    effects.enter(stringType);
+    return atBreak(code2);
+  }
+  function atBreak(code2) {
+    if (code2 === marker) {
+      effects.exit(stringType);
+      return begin(marker);
+    }
+    if (code2 === null) {
+      return nok(code2);
+    }
+    if (markdownLineEnding(code2)) {
+      effects.enter("lineEnding");
+      effects.consume(code2);
+      effects.exit("lineEnding");
+      return factorySpace(effects, atBreak, "linePrefix");
+    }
+    effects.enter("chunkString", {
+      contentType: "string"
+    });
+    return inside(code2);
+  }
+  function inside(code2) {
+    if (code2 === marker || code2 === null || markdownLineEnding(code2)) {
+      effects.exit("chunkString");
+      return atBreak(code2);
+    }
+    effects.consume(code2);
+    return code2 === 92 ? escape : inside;
+  }
+  function escape(code2) {
+    if (code2 === marker || code2 === 92) {
+      effects.consume(code2);
+      return inside;
+    }
+    return inside(code2);
+  }
+}
+function factoryWhitespace(effects, ok2) {
+  let seen;
+  return start;
+  function start(code2) {
+    if (markdownLineEnding(code2)) {
+      effects.enter("lineEnding");
+      effects.consume(code2);
+      effects.exit("lineEnding");
+      seen = true;
+      return start;
+    }
+    if (markdownSpace(code2)) {
+      return factorySpace(effects, start, seen ? "linePrefix" : "lineSuffix")(code2);
+    }
+    return ok2(code2);
+  }
+}
+const definition$1 = {
+  name: "definition",
+  tokenize: tokenizeDefinition
+};
+const titleBefore = {
+  partial: true,
+  tokenize: tokenizeTitleBefore
+};
+function tokenizeDefinition(effects, ok2, nok) {
+  const self2 = this;
+  let identifier;
+  return start;
+  function start(code2) {
+    effects.enter("definition");
+    return before(code2);
+  }
+  function before(code2) {
+    return factoryLabel.call(
+      self2,
+      effects,
+      labelAfter,
+      // Note: we don’t need to reset the way `markdown-rs` does.
+      nok,
+      "definitionLabel",
+      "definitionLabelMarker",
+      "definitionLabelString"
+    )(code2);
+  }
+  function labelAfter(code2) {
+    identifier = normalizeIdentifier(self2.sliceSerialize(self2.events[self2.events.length - 1][1]).slice(1, -1));
+    if (code2 === 58) {
+      effects.enter("definitionMarker");
+      effects.consume(code2);
+      effects.exit("definitionMarker");
+      return markerAfter;
+    }
+    return nok(code2);
+  }
+  function markerAfter(code2) {
+    return markdownLineEndingOrSpace(code2) ? factoryWhitespace(effects, destinationBefore)(code2) : destinationBefore(code2);
+  }
+  function destinationBefore(code2) {
+    return factoryDestination(
+      effects,
+      destinationAfter,
+      // Note: we don’t need to reset the way `markdown-rs` does.
+      nok,
+      "definitionDestination",
+      "definitionDestinationLiteral",
+      "definitionDestinationLiteralMarker",
+      "definitionDestinationRaw",
+      "definitionDestinationString"
+    )(code2);
+  }
+  function destinationAfter(code2) {
+    return effects.attempt(titleBefore, after, after)(code2);
+  }
+  function after(code2) {
+    return markdownSpace(code2) ? factorySpace(effects, afterWhitespace, "whitespace")(code2) : afterWhitespace(code2);
+  }
+  function afterWhitespace(code2) {
+    if (code2 === null || markdownLineEnding(code2)) {
+      effects.exit("definition");
+      self2.parser.defined.push(identifier);
+      return ok2(code2);
+    }
+    return nok(code2);
+  }
+}
+function tokenizeTitleBefore(effects, ok2, nok) {
+  return titleBefore2;
+  function titleBefore2(code2) {
+    return markdownLineEndingOrSpace(code2) ? factoryWhitespace(effects, beforeMarker)(code2) : nok(code2);
+  }
+  function beforeMarker(code2) {
+    return factoryTitle(effects, titleAfter, nok, "definitionTitle", "definitionTitleMarker", "definitionTitleString")(code2);
+  }
+  function titleAfter(code2) {
+    return markdownSpace(code2) ? factorySpace(effects, titleAfterOptionalWhitespace, "whitespace")(code2) : titleAfterOptionalWhitespace(code2);
+  }
+  function titleAfterOptionalWhitespace(code2) {
+    return code2 === null || markdownLineEnding(code2) ? ok2(code2) : nok(code2);
+  }
+}
+const hardBreakEscape = {
+  name: "hardBreakEscape",
+  tokenize: tokenizeHardBreakEscape
+};
+function tokenizeHardBreakEscape(effects, ok2, nok) {
+  return start;
+  function start(code2) {
+    effects.enter("hardBreakEscape");
+    effects.consume(code2);
+    return after;
+  }
+  function after(code2) {
+    if (markdownLineEnding(code2)) {
+      effects.exit("hardBreakEscape");
+      return ok2(code2);
+    }
+    return nok(code2);
+  }
+}
+const headingAtx = {
+  name: "headingAtx",
+  resolve: resolveHeadingAtx,
+  tokenize: tokenizeHeadingAtx
+};
+function resolveHeadingAtx(events, context) {
+  let contentEnd = events.length - 2;
+  let contentStart = 3;
+  if (events[contentStart][1].type === "whitespace") {
+    contentStart += 2;
+  }
+  if (contentEnd - 2 > contentStart && events[contentEnd][1].type === "whitespace") {
+    contentEnd -= 2;
+  }
+  if (events[contentEnd][1].type === "atxHeadingSequence" && (contentStart === contentEnd - 1 || contentEnd - 4 > contentStart && events[contentEnd - 2][1].type === "whitespace")) {
+    contentEnd -= contentStart + 1 === contentEnd ? 2 : 4;
+  }
+  if (contentEnd > contentStart) {
+    const content2 = {
+      type: "atxHeadingText",
+      start: events[contentStart][1].start,
+      end: events[contentEnd][1].end
+    };
+    const text2 = {
+      type: "chunkText",
+      start: events[contentStart][1].start,
+      end: events[contentEnd][1].end,
+      contentType: "text"
+    };
+    splice(events, contentStart, contentEnd - contentStart + 1, [["enter", content2, context], ["enter", text2, context], ["exit", text2, context], ["exit", content2, context]]);
+  }
+  return events;
+}
+function tokenizeHeadingAtx(effects, ok2, nok) {
+  let size = 0;
+  return start;
+  function start(code2) {
+    effects.enter("atxHeading");
+    return before(code2);
+  }
+  function before(code2) {
+    effects.enter("atxHeadingSequence");
+    return sequenceOpen(code2);
+  }
+  function sequenceOpen(code2) {
+    if (code2 === 35 && size++ < 6) {
+      effects.consume(code2);
+      return sequenceOpen;
+    }
+    if (code2 === null || markdownLineEndingOrSpace(code2)) {
+      effects.exit("atxHeadingSequence");
+      return atBreak(code2);
+    }
+    return nok(code2);
+  }
+  function atBreak(code2) {
+    if (code2 === 35) {
+      effects.enter("atxHeadingSequence");
+      return sequenceFurther(code2);
+    }
+    if (code2 === null || markdownLineEnding(code2)) {
+      effects.exit("atxHeading");
+      return ok2(code2);
+    }
+    if (markdownSpace(code2)) {
+      return factorySpace(effects, atBreak, "whitespace")(code2);
+    }
+    effects.enter("atxHeadingText");
+    return data(code2);
+  }
+  function sequenceFurther(code2) {
+    if (code2 === 35) {
+      effects.consume(code2);
+      return sequenceFurther;
+    }
+    effects.exit("atxHeadingSequence");
+    return atBreak(code2);
+  }
+  function data(code2) {
+    if (code2 === null || code2 === 35 || markdownLineEndingOrSpace(code2)) {
+      effects.exit("atxHeadingText");
+      return atBreak(code2);
+    }
+    effects.consume(code2);
+    return data;
+  }
+}
+const htmlBlockNames = [
+  "address",
+  "article",
+  "aside",
+  "base",
+  "basefont",
+  "blockquote",
+  "body",
+  "caption",
+  "center",
+  "col",
+  "colgroup",
+  "dd",
+  "details",
+  "dialog",
+  "dir",
+  "div",
+  "dl",
+  "dt",
+  "fieldset",
+  "figcaption",
+  "figure",
+  "footer",
+  "form",
+  "frame",
+  "frameset",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "head",
+  "header",
+  "hr",
+  "html",
+  "iframe",
+  "legend",
+  "li",
+  "link",
+  "main",
+  "menu",
+  "menuitem",
+  "nav",
+  "noframes",
+  "ol",
+  "optgroup",
+  "option",
+  "p",
+  "param",
+  "search",
+  "section",
+  "summary",
+  "table",
+  "tbody",
+  "td",
+  "tfoot",
+  "th",
+  "thead",
+  "title",
+  "tr",
+  "track",
+  "ul"
+];
+const htmlRawNames = ["pre", "script", "style", "textarea"];
+const htmlFlow = {
+  concrete: true,
+  name: "htmlFlow",
+  resolveTo: resolveToHtmlFlow,
+  tokenize: tokenizeHtmlFlow
+};
+const blankLineBefore = {
+  partial: true,
+  tokenize: tokenizeBlankLineBefore
+};
+function resolveToHtmlFlow(events) {
+  let index2 = events.length;
+  while (index2--) {
+    if (events[index2][0] === "enter" && events[index2][1].type === "htmlFlow") {
+      break;
+    }
+  }
+  if (index2 > 1 && events[index2 - 2][1].type === "linePrefix") {
+    events[index2][1].start = events[index2 - 2][1].start;
+    events[index2 + 1][1].start = events[index2 - 2][1].start;
+    events.splice(index2 - 2, 2);
+  }
+  return events;
+}
+function tokenizeHtmlFlow(effects, ok2, nok) {
+  const self2 = this;
+  let marker;
+  let closingTag;
+  let buffer;
+  let index2;
+  let markerB;
+  return start;
+  function start(code2) {
+    return before(code2);
+  }
+  function before(code2) {
+    effects.enter("htmlFlow");
+    effects.enter("htmlFlowData");
+    effects.consume(code2);
+    return open;
+  }
+  function open(code2) {
+    if (code2 === 33) {
+      effects.consume(code2);
+      return declarationOpen;
+    }
+    if (code2 === 47) {
+      effects.consume(code2);
+      closingTag = true;
+      return tagCloseStart;
+    }
+    if (code2 === 63) {
+      effects.consume(code2);
+      marker = 3;
+      return self2.interrupt ? ok2 : continuationDeclarationInside;
+    }
+    if (asciiAlpha(code2)) {
+      effects.consume(code2);
+      buffer = String.fromCharCode(code2);
+      return tagName;
+    }
+    return nok(code2);
+  }
+  function declarationOpen(code2) {
+    if (code2 === 45) {
+      effects.consume(code2);
+      marker = 2;
+      return commentOpenInside;
+    }
+    if (code2 === 91) {
+      effects.consume(code2);
+      marker = 5;
+      index2 = 0;
+      return cdataOpenInside;
+    }
+    if (asciiAlpha(code2)) {
+      effects.consume(code2);
+      marker = 4;
+      return self2.interrupt ? ok2 : continuationDeclarationInside;
+    }
+    return nok(code2);
+  }
+  function commentOpenInside(code2) {
+    if (code2 === 45) {
+      effects.consume(code2);
+      return self2.interrupt ? ok2 : continuationDeclarationInside;
+    }
+    return nok(code2);
+  }
+  function cdataOpenInside(code2) {
+    const value = "CDATA[";
+    if (code2 === value.charCodeAt(index2++)) {
+      effects.consume(code2);
+      if (index2 === value.length) {
+        return self2.interrupt ? ok2 : continuation;
+      }
+      return cdataOpenInside;
+    }
+    return nok(code2);
+  }
+  function tagCloseStart(code2) {
+    if (asciiAlpha(code2)) {
+      effects.consume(code2);
+      buffer = String.fromCharCode(code2);
+      return tagName;
+    }
+    return nok(code2);
+  }
+  function tagName(code2) {
+    if (code2 === null || code2 === 47 || code2 === 62 || markdownLineEndingOrSpace(code2)) {
+      const slash = code2 === 47;
+      const name2 = buffer.toLowerCase();
+      if (!slash && !closingTag && htmlRawNames.includes(name2)) {
+        marker = 1;
+        return self2.interrupt ? ok2(code2) : continuation(code2);
+      }
+      if (htmlBlockNames.includes(buffer.toLowerCase())) {
+        marker = 6;
+        if (slash) {
+          effects.consume(code2);
+          return basicSelfClosing;
+        }
+        return self2.interrupt ? ok2(code2) : continuation(code2);
+      }
+      marker = 7;
+      return self2.interrupt && !self2.parser.lazy[self2.now().line] ? nok(code2) : closingTag ? completeClosingTagAfter(code2) : completeAttributeNameBefore(code2);
+    }
+    if (code2 === 45 || asciiAlphanumeric(code2)) {
+      effects.consume(code2);
+      buffer += String.fromCharCode(code2);
+      return tagName;
+    }
+    return nok(code2);
+  }
+  function basicSelfClosing(code2) {
+    if (code2 === 62) {
+      effects.consume(code2);
+      return self2.interrupt ? ok2 : continuation;
+    }
+    return nok(code2);
+  }
+  function completeClosingTagAfter(code2) {
+    if (markdownSpace(code2)) {
+      effects.consume(code2);
+      return completeClosingTagAfter;
+    }
+    return completeEnd(code2);
+  }
+  function completeAttributeNameBefore(code2) {
+    if (code2 === 47) {
+      effects.consume(code2);
+      return completeEnd;
+    }
+    if (code2 === 58 || code2 === 95 || asciiAlpha(code2)) {
+      effects.consume(code2);
+      return completeAttributeName;
+    }
+    if (markdownSpace(code2)) {
+      effects.consume(code2);
+      return completeAttributeNameBefore;
+    }
+    return completeEnd(code2);
+  }
+  function completeAttributeName(code2) {
+    if (code2 === 45 || code2 === 46 || code2 === 58 || code2 === 95 || asciiAlphanumeric(code2)) {
+      effects.consume(code2);
+      return completeAttributeName;
+    }
+    return completeAttributeNameAfter(code2);
+  }
+  function completeAttributeNameAfter(code2) {
+    if (code2 === 61) {
+      effects.consume(code2);
+      return completeAttributeValueBefore;
+    }
+    if (markdownSpace(code2)) {
+      effects.consume(code2);
+      return completeAttributeNameAfter;
+    }
+    return completeAttributeNameBefore(code2);
+  }
+  function completeAttributeValueBefore(code2) {
+    if (code2 === null || code2 === 60 || code2 === 61 || code2 === 62 || code2 === 96) {
+      return nok(code2);
+    }
+    if (code2 === 34 || code2 === 39) {
+      effects.consume(code2);
+      markerB = code2;
+      return completeAttributeValueQuoted;
+    }
+    if (markdownSpace(code2)) {
+      effects.consume(code2);
+      return completeAttributeValueBefore;
+    }
+    return completeAttributeValueUnquoted(code2);
+  }
+  function completeAttributeValueQuoted(code2) {
+    if (code2 === markerB) {
+      effects.consume(code2);
+      markerB = null;
+      return completeAttributeValueQuotedAfter;
+    }
+    if (code2 === null || markdownLineEnding(code2)) {
+      return nok(code2);
+    }
+    effects.consume(code2);
+    return completeAttributeValueQuoted;
+  }
+  function completeAttributeValueUnquoted(code2) {
+    if (code2 === null || code2 === 34 || code2 === 39 || code2 === 47 || code2 === 60 || code2 === 61 || code2 === 62 || code2 === 96 || markdownLineEndingOrSpace(code2)) {
+      return completeAttributeNameAfter(code2);
+    }
+    effects.consume(code2);
+    return completeAttributeValueUnquoted;
+  }
+  function completeAttributeValueQuotedAfter(code2) {
+    if (code2 === 47 || code2 === 62 || markdownSpace(code2)) {
+      return completeAttributeNameBefore(code2);
+    }
+    return nok(code2);
+  }
+  function completeEnd(code2) {
+    if (code2 === 62) {
+      effects.consume(code2);
+      return completeAfter;
+    }
+    return nok(code2);
+  }
+  function completeAfter(code2) {
+    if (code2 === null || markdownLineEnding(code2)) {
+      return continuation(code2);
+    }
+    if (markdownSpace(code2)) {
+      effects.consume(code2);
+      return completeAfter;
+    }
+    return nok(code2);
+  }
+  function continuation(code2) {
+    if (code2 === 45 && marker === 2) {
+      effects.consume(code2);
+      return continuationCommentInside;
+    }
+    if (code2 === 60 && marker === 1) {
+      effects.consume(code2);
+      return continuationRawTagOpen;
+    }
+    if (code2 === 62 && marker === 4) {
+      effects.consume(code2);
+      return continuationClose;
+    }
+    if (code2 === 63 && marker === 3) {
+      effects.consume(code2);
+      return continuationDeclarationInside;
+    }
+    if (code2 === 93 && marker === 5) {
+      effects.consume(code2);
+      return continuationCdataInside;
+    }
+    if (markdownLineEnding(code2) && (marker === 6 || marker === 7)) {
+      effects.exit("htmlFlowData");
+      return effects.check(blankLineBefore, continuationAfter, continuationStart)(code2);
+    }
+    if (code2 === null || markdownLineEnding(code2)) {
+      effects.exit("htmlFlowData");
+      return continuationStart(code2);
+    }
+    effects.consume(code2);
+    return continuation;
+  }
+  function continuationStart(code2) {
+    return effects.check(nonLazyContinuation, continuationStartNonLazy, continuationAfter)(code2);
+  }
+  function continuationStartNonLazy(code2) {
+    effects.enter("lineEnding");
+    effects.consume(code2);
+    effects.exit("lineEnding");
+    return continuationBefore;
+  }
+  function continuationBefore(code2) {
+    if (code2 === null || markdownLineEnding(code2)) {
+      return continuationStart(code2);
+    }
+    effects.enter("htmlFlowData");
+    return continuation(code2);
+  }
+  function continuationCommentInside(code2) {
+    if (code2 === 45) {
+      effects.consume(code2);
+      return continuationDeclarationInside;
+    }
+    return continuation(code2);
+  }
+  function continuationRawTagOpen(code2) {
+    if (code2 === 47) {
+      effects.consume(code2);
+      buffer = "";
+      return continuationRawEndTag;
+    }
+    return continuation(code2);
+  }
+  function continuationRawEndTag(code2) {
+    if (code2 === 62) {
+      const name2 = buffer.toLowerCase();
+      if (htmlRawNames.includes(name2)) {
+        effects.consume(code2);
+        return continuationClose;
+      }
+      return continuation(code2);
+    }
+    if (asciiAlpha(code2) && buffer.length < 8) {
+      effects.consume(code2);
+      buffer += String.fromCharCode(code2);
+      return continuationRawEndTag;
+    }
+    return continuation(code2);
+  }
+  function continuationCdataInside(code2) {
+    if (code2 === 93) {
+      effects.consume(code2);
+      return continuationDeclarationInside;
+    }
+    return continuation(code2);
+  }
+  function continuationDeclarationInside(code2) {
+    if (code2 === 62) {
+      effects.consume(code2);
+      return continuationClose;
+    }
+    if (code2 === 45 && marker === 2) {
+      effects.consume(code2);
+      return continuationDeclarationInside;
+    }
+    return continuation(code2);
+  }
+  function continuationClose(code2) {
+    if (code2 === null || markdownLineEnding(code2)) {
+      effects.exit("htmlFlowData");
+      return continuationAfter(code2);
+    }
+    effects.consume(code2);
+    return continuationClose;
+  }
+  function continuationAfter(code2) {
+    effects.exit("htmlFlow");
+    return ok2(code2);
+  }
+}
+function tokenizeBlankLineBefore(effects, ok2, nok) {
+  return start;
+  function start(code2) {
+    effects.enter("lineEnding");
+    effects.consume(code2);
+    effects.exit("lineEnding");
+    return effects.attempt(blankLine, ok2, nok);
+  }
+}
+const htmlText = {
+  name: "htmlText",
+  tokenize: tokenizeHtmlText
+};
+function tokenizeHtmlText(effects, ok2, nok) {
+  const self2 = this;
+  let marker;
+  let index2;
+  let returnState;
+  return start;
+  function start(code2) {
+    effects.enter("htmlText");
+    effects.enter("htmlTextData");
+    effects.consume(code2);
+    return open;
+  }
+  function open(code2) {
+    if (code2 === 33) {
+      effects.consume(code2);
+      return declarationOpen;
+    }
+    if (code2 === 47) {
+      effects.consume(code2);
+      return tagCloseStart;
+    }
+    if (code2 === 63) {
+      effects.consume(code2);
+      return instruction;
+    }
+    if (asciiAlpha(code2)) {
+      effects.consume(code2);
+      return tagOpen;
+    }
+    return nok(code2);
+  }
+  function declarationOpen(code2) {
+    if (code2 === 45) {
+      effects.consume(code2);
+      return commentOpenInside;
+    }
+    if (code2 === 91) {
+      effects.consume(code2);
+      index2 = 0;
+      return cdataOpenInside;
+    }
+    if (asciiAlpha(code2)) {
+      effects.consume(code2);
+      return declaration;
+    }
+    return nok(code2);
+  }
+  function commentOpenInside(code2) {
+    if (code2 === 45) {
+      effects.consume(code2);
+      return commentEnd;
+    }
+    return nok(code2);
+  }
+  function comment(code2) {
+    if (code2 === null) {
+      return nok(code2);
+    }
+    if (code2 === 45) {
+      effects.consume(code2);
+      return commentClose;
+    }
+    if (markdownLineEnding(code2)) {
+      returnState = comment;
+      return lineEndingBefore(code2);
+    }
+    effects.consume(code2);
+    return comment;
+  }
+  function commentClose(code2) {
+    if (code2 === 45) {
+      effects.consume(code2);
+      return commentEnd;
+    }
+    return comment(code2);
+  }
+  function commentEnd(code2) {
+    return code2 === 62 ? end(code2) : code2 === 45 ? commentClose(code2) : comment(code2);
+  }
+  function cdataOpenInside(code2) {
+    const value = "CDATA[";
+    if (code2 === value.charCodeAt(index2++)) {
+      effects.consume(code2);
+      return index2 === value.length ? cdata : cdataOpenInside;
+    }
+    return nok(code2);
+  }
+  function cdata(code2) {
+    if (code2 === null) {
+      return nok(code2);
+    }
+    if (code2 === 93) {
+      effects.consume(code2);
+      return cdataClose;
+    }
+    if (markdownLineEnding(code2)) {
+      returnState = cdata;
+      return lineEndingBefore(code2);
+    }
+    effects.consume(code2);
+    return cdata;
+  }
+  function cdataClose(code2) {
+    if (code2 === 93) {
+      effects.consume(code2);
+      return cdataEnd;
+    }
+    return cdata(code2);
+  }
+  function cdataEnd(code2) {
+    if (code2 === 62) {
+      return end(code2);
+    }
+    if (code2 === 93) {
+      effects.consume(code2);
+      return cdataEnd;
+    }
+    return cdata(code2);
+  }
+  function declaration(code2) {
+    if (code2 === null || code2 === 62) {
+      return end(code2);
+    }
+    if (markdownLineEnding(code2)) {
+      returnState = declaration;
+      return lineEndingBefore(code2);
+    }
+    effects.consume(code2);
+    return declaration;
+  }
+  function instruction(code2) {
+    if (code2 === null) {
+      return nok(code2);
+    }
+    if (code2 === 63) {
+      effects.consume(code2);
+      return instructionClose;
+    }
+    if (markdownLineEnding(code2)) {
+      returnState = instruction;
+      return lineEndingBefore(code2);
+    }
+    effects.consume(code2);
+    return instruction;
+  }
+  function instructionClose(code2) {
+    return code2 === 62 ? end(code2) : instruction(code2);
+  }
+  function tagCloseStart(code2) {
+    if (asciiAlpha(code2)) {
+      effects.consume(code2);
+      return tagClose;
+    }
+    return nok(code2);
+  }
+  function tagClose(code2) {
+    if (code2 === 45 || asciiAlphanumeric(code2)) {
+      effects.consume(code2);
+      return tagClose;
+    }
+    return tagCloseBetween(code2);
+  }
+  function tagCloseBetween(code2) {
+    if (markdownLineEnding(code2)) {
+      returnState = tagCloseBetween;
+      return lineEndingBefore(code2);
+    }
+    if (markdownSpace(code2)) {
+      effects.consume(code2);
+      return tagCloseBetween;
+    }
+    return end(code2);
+  }
+  function tagOpen(code2) {
+    if (code2 === 45 || asciiAlphanumeric(code2)) {
+      effects.consume(code2);
+      return tagOpen;
+    }
+    if (code2 === 47 || code2 === 62 || markdownLineEndingOrSpace(code2)) {
+      return tagOpenBetween(code2);
+    }
+    return nok(code2);
+  }
+  function tagOpenBetween(code2) {
+    if (code2 === 47) {
+      effects.consume(code2);
+      return end;
+    }
+    if (code2 === 58 || code2 === 95 || asciiAlpha(code2)) {
+      effects.consume(code2);
+      return tagOpenAttributeName;
+    }
+    if (markdownLineEnding(code2)) {
+      returnState = tagOpenBetween;
+      return lineEndingBefore(code2);
+    }
+    if (markdownSpace(code2)) {
+      effects.consume(code2);
+      return tagOpenBetween;
+    }
+    return end(code2);
+  }
+  function tagOpenAttributeName(code2) {
+    if (code2 === 45 || code2 === 46 || code2 === 58 || code2 === 95 || asciiAlphanumeric(code2)) {
+      effects.consume(code2);
+      return tagOpenAttributeName;
+    }
+    return tagOpenAttributeNameAfter(code2);
+  }
+  function tagOpenAttributeNameAfter(code2) {
+    if (code2 === 61) {
+      effects.consume(code2);
+      return tagOpenAttributeValueBefore;
+    }
+    if (markdownLineEnding(code2)) {
+      returnState = tagOpenAttributeNameAfter;
+      return lineEndingBefore(code2);
+    }
+    if (markdownSpace(code2)) {
+      effects.consume(code2);
+      return tagOpenAttributeNameAfter;
+    }
+    return tagOpenBetween(code2);
+  }
+  function tagOpenAttributeValueBefore(code2) {
+    if (code2 === null || code2 === 60 || code2 === 61 || code2 === 62 || code2 === 96) {
+      return nok(code2);
+    }
+    if (code2 === 34 || code2 === 39) {
+      effects.consume(code2);
+      marker = code2;
+      return tagOpenAttributeValueQuoted;
+    }
+    if (markdownLineEnding(code2)) {
+      returnState = tagOpenAttributeValueBefore;
+      return lineEndingBefore(code2);
+    }
+    if (markdownSpace(code2)) {
+      effects.consume(code2);
+      return tagOpenAttributeValueBefore;
+    }
+    effects.consume(code2);
+    return tagOpenAttributeValueUnquoted;
+  }
+  function tagOpenAttributeValueQuoted(code2) {
+    if (code2 === marker) {
+      effects.consume(code2);
+      marker = void 0;
+      return tagOpenAttributeValueQuotedAfter;
+    }
+    if (code2 === null) {
+      return nok(code2);
+    }
+    if (markdownLineEnding(code2)) {
+      returnState = tagOpenAttributeValueQuoted;
+      return lineEndingBefore(code2);
+    }
+    effects.consume(code2);
+    return tagOpenAttributeValueQuoted;
+  }
+  function tagOpenAttributeValueUnquoted(code2) {
+    if (code2 === null || code2 === 34 || code2 === 39 || code2 === 60 || code2 === 61 || code2 === 96) {
+      return nok(code2);
+    }
+    if (code2 === 47 || code2 === 62 || markdownLineEndingOrSpace(code2)) {
+      return tagOpenBetween(code2);
+    }
+    effects.consume(code2);
+    return tagOpenAttributeValueUnquoted;
+  }
+  function tagOpenAttributeValueQuotedAfter(code2) {
+    if (code2 === 47 || code2 === 62 || markdownLineEndingOrSpace(code2)) {
+      return tagOpenBetween(code2);
+    }
+    return nok(code2);
+  }
+  function end(code2) {
+    if (code2 === 62) {
+      effects.consume(code2);
+      effects.exit("htmlTextData");
+      effects.exit("htmlText");
+      return ok2;
+    }
+    return nok(code2);
+  }
+  function lineEndingBefore(code2) {
+    effects.exit("htmlTextData");
+    effects.enter("lineEnding");
+    effects.consume(code2);
+    effects.exit("lineEnding");
+    return lineEndingAfter;
+  }
+  function lineEndingAfter(code2) {
+    return markdownSpace(code2) ? factorySpace(effects, lineEndingAfterPrefix, "linePrefix", self2.parser.constructs.disable.null.includes("codeIndented") ? void 0 : 4)(code2) : lineEndingAfterPrefix(code2);
+  }
+  function lineEndingAfterPrefix(code2) {
+    effects.enter("htmlTextData");
+    return returnState(code2);
+  }
+}
+const labelEnd = {
+  name: "labelEnd",
+  resolveAll: resolveAllLabelEnd,
+  resolveTo: resolveToLabelEnd,
+  tokenize: tokenizeLabelEnd
+};
+const resourceConstruct = {
+  tokenize: tokenizeResource
+};
+const referenceFullConstruct = {
+  tokenize: tokenizeReferenceFull
+};
+const referenceCollapsedConstruct = {
+  tokenize: tokenizeReferenceCollapsed
+};
+function resolveAllLabelEnd(events) {
+  let index2 = -1;
+  const newEvents = [];
+  while (++index2 < events.length) {
+    const token = events[index2][1];
+    newEvents.push(events[index2]);
+    if (token.type === "labelImage" || token.type === "labelLink" || token.type === "labelEnd") {
+      const offset = token.type === "labelImage" ? 4 : 2;
+      token.type = "data";
+      index2 += offset;
+    }
+  }
+  if (events.length !== newEvents.length) {
+    splice(events, 0, events.length, newEvents);
+  }
+  return events;
+}
+function resolveToLabelEnd(events, context) {
+  let index2 = events.length;
+  let offset = 0;
+  let open;
+  let close;
+  let media;
+  while (index2--) {
+    const token = events[index2][1];
+    if (open) {
+      if (token.type === "link" || token.type === "labelLink" && token._inactive) {
+        break;
+      }
+      if (events[index2][0] === "enter" && token.type === "labelLink") {
+        token._inactive = true;
+      }
+    } else if (close) {
+      if (events[index2][0] === "enter" && (token.type === "labelImage" || token.type === "labelLink") && !token._balanced) {
+        open = index2;
+        if (token.type !== "labelLink") {
+          offset = 2;
+          break;
+        }
+      }
+    } else if (token.type === "labelEnd") {
+      close = index2;
+    }
+  }
+  const group = {
+    type: events[open][1].type === "labelLink" ? "link" : "image",
+    start: {
+      ...events[open][1].start
+    },
+    end: {
+      ...events[events.length - 1][1].end
+    }
+  };
+  const label = {
+    type: "label",
+    start: {
+      ...events[open][1].start
+    },
+    end: {
+      ...events[close][1].end
+    }
+  };
+  const text2 = {
+    type: "labelText",
+    start: {
+      ...events[open + offset + 2][1].end
+    },
+    end: {
+      ...events[close - 2][1].start
+    }
+  };
+  media = [["enter", group, context], ["enter", label, context]];
+  media = push(media, events.slice(open + 1, open + offset + 3));
+  media = push(media, [["enter", text2, context]]);
+  media = push(media, resolveAll(context.parser.constructs.insideSpan.null, events.slice(open + offset + 4, close - 3), context));
+  media = push(media, [["exit", text2, context], events[close - 2], events[close - 1], ["exit", label, context]]);
+  media = push(media, events.slice(close + 1));
+  media = push(media, [["exit", group, context]]);
+  splice(events, open, events.length, media);
+  return events;
+}
+function tokenizeLabelEnd(effects, ok2, nok) {
+  const self2 = this;
+  const labelStarts = self2._labelStarts;
+  let labelStart;
+  let defined;
+  if (labelStarts) {
+    while (labelStarts.length > 0 && labelStarts[labelStarts.length - 1]._balanced) {
+      labelStarts.pop();
+    }
+    labelStart = labelStarts[labelStarts.length - 1];
+  }
+  return start;
+  function start(code2) {
+    if (!labelStart) {
+      return nok(code2);
+    }
+    if (labelStart._inactive) {
+      return labelEndNok(code2);
+    }
+    defined = self2.parser.defined.includes(normalizeIdentifier(self2.sliceSerialize({
+      start: labelStart.end,
+      end: self2.now()
+    })));
+    effects.enter("labelEnd");
+    effects.enter("labelMarker");
+    effects.consume(code2);
+    effects.exit("labelMarker");
+    effects.exit("labelEnd");
+    return after;
+  }
+  function after(code2) {
+    if (code2 === 40) {
+      return effects.attempt(resourceConstruct, labelEndOk, defined ? labelEndOk : labelEndNok)(code2);
+    }
+    if (code2 === 91) {
+      return effects.attempt(referenceFullConstruct, labelEndOk, defined ? referenceNotFull : labelEndNok)(code2);
+    }
+    return defined ? labelEndOk(code2) : labelEndNok(code2);
+  }
+  function referenceNotFull(code2) {
+    return effects.attempt(referenceCollapsedConstruct, labelEndOk, labelEndNok)(code2);
+  }
+  function labelEndOk(code2) {
+    labelStarts.pop();
+    return ok2(code2);
+  }
+  function labelEndNok(code2) {
+    labelStart._balanced = true;
+    return nok(code2);
+  }
+}
+function tokenizeResource(effects, ok2, nok) {
+  return resourceStart;
+  function resourceStart(code2) {
+    effects.enter("resource");
+    effects.enter("resourceMarker");
+    effects.consume(code2);
+    effects.exit("resourceMarker");
+    return resourceBefore;
+  }
+  function resourceBefore(code2) {
+    return markdownLineEndingOrSpace(code2) ? factoryWhitespace(effects, resourceOpen)(code2) : resourceOpen(code2);
+  }
+  function resourceOpen(code2) {
+    if (code2 === 41) {
+      return resourceEnd(code2);
+    }
+    return factoryDestination(effects, resourceDestinationAfter, resourceDestinationMissing, "resourceDestination", "resourceDestinationLiteral", "resourceDestinationLiteralMarker", "resourceDestinationRaw", "resourceDestinationString", 32)(code2);
+  }
+  function resourceDestinationAfter(code2) {
+    return markdownLineEndingOrSpace(code2) ? factoryWhitespace(effects, resourceBetween)(code2) : resourceEnd(code2);
+  }
+  function resourceDestinationMissing(code2) {
+    return nok(code2);
+  }
+  function resourceBetween(code2) {
+    if (code2 === 34 || code2 === 39 || code2 === 40) {
+      return factoryTitle(effects, resourceTitleAfter, nok, "resourceTitle", "resourceTitleMarker", "resourceTitleString")(code2);
+    }
+    return resourceEnd(code2);
+  }
+  function resourceTitleAfter(code2) {
+    return markdownLineEndingOrSpace(code2) ? factoryWhitespace(effects, resourceEnd)(code2) : resourceEnd(code2);
+  }
+  function resourceEnd(code2) {
+    if (code2 === 41) {
+      effects.enter("resourceMarker");
+      effects.consume(code2);
+      effects.exit("resourceMarker");
+      effects.exit("resource");
+      return ok2;
+    }
+    return nok(code2);
+  }
+}
+function tokenizeReferenceFull(effects, ok2, nok) {
+  const self2 = this;
+  return referenceFull;
+  function referenceFull(code2) {
+    return factoryLabel.call(self2, effects, referenceFullAfter, referenceFullMissing, "reference", "referenceMarker", "referenceString")(code2);
+  }
+  function referenceFullAfter(code2) {
+    return self2.parser.defined.includes(normalizeIdentifier(self2.sliceSerialize(self2.events[self2.events.length - 1][1]).slice(1, -1))) ? ok2(code2) : nok(code2);
+  }
+  function referenceFullMissing(code2) {
+    return nok(code2);
+  }
+}
+function tokenizeReferenceCollapsed(effects, ok2, nok) {
+  return referenceCollapsedStart;
+  function referenceCollapsedStart(code2) {
+    effects.enter("reference");
+    effects.enter("referenceMarker");
+    effects.consume(code2);
+    effects.exit("referenceMarker");
+    return referenceCollapsedOpen;
+  }
+  function referenceCollapsedOpen(code2) {
+    if (code2 === 93) {
+      effects.enter("referenceMarker");
+      effects.consume(code2);
+      effects.exit("referenceMarker");
+      effects.exit("reference");
+      return ok2;
+    }
+    return nok(code2);
+  }
+}
+const labelStartImage = {
+  name: "labelStartImage",
+  resolveAll: labelEnd.resolveAll,
+  tokenize: tokenizeLabelStartImage
+};
+function tokenizeLabelStartImage(effects, ok2, nok) {
+  const self2 = this;
+  let labelImage;
+  return start;
+  function start(code2) {
+    effects.enter("labelImage");
+    effects.enter("labelImageMarker");
+    effects.consume(code2);
+    effects.exit("labelImageMarker");
+    return open;
+  }
+  function open(code2) {
+    if (code2 === 91) {
+      effects.enter("labelMarker");
+      effects.consume(code2);
+      effects.exit("labelMarker");
+      labelImage = effects.exit("labelImage");
+      return after;
+    }
+    return nok(code2);
+  }
+  function after(code2) {
+    if (code2 === 94 && "_hiddenFootnoteSupport" in self2.parser.constructs) {
+      return nok(code2);
+    }
+    self2._labelStarts = self2._labelStarts || [];
+    self2._labelStarts.push(labelImage);
+    return ok2(code2);
+  }
+}
+const labelStartLink = {
+  name: "labelStartLink",
+  resolveAll: labelEnd.resolveAll,
+  tokenize: tokenizeLabelStartLink
+};
+function tokenizeLabelStartLink(effects, ok2, nok) {
+  const self2 = this;
+  let labelLink;
+  return start;
+  function start(code2) {
+    effects.enter("labelLink");
+    effects.enter("labelMarker");
+    effects.consume(code2);
+    effects.exit("labelMarker");
+    labelLink = effects.exit("labelLink");
+    return after;
+  }
+  function after(code2) {
+    if (code2 === 94 && "_hiddenFootnoteSupport" in self2.parser.constructs) {
+      return nok(code2);
+    }
+    self2._labelStarts = self2._labelStarts || [];
+    self2._labelStarts.push(labelLink);
+    return ok2(code2);
+  }
+}
+const lineEnding = {
+  name: "lineEnding",
+  tokenize: tokenizeLineEnding
+};
+function tokenizeLineEnding(effects, ok2) {
+  return start;
+  function start(code2) {
+    effects.enter("lineEnding");
+    effects.consume(code2);
+    effects.exit("lineEnding");
+    return factorySpace(effects, ok2, "linePrefix");
+  }
+}
+const thematicBreak$2 = {
+  name: "thematicBreak",
+  tokenize: tokenizeThematicBreak
+};
+function tokenizeThematicBreak(effects, ok2, nok) {
+  let size = 0;
+  let marker;
+  return start;
+  function start(code2) {
+    effects.enter("thematicBreak");
+    return before(code2);
+  }
+  function before(code2) {
+    marker = code2;
+    return atBreak(code2);
+  }
+  function atBreak(code2) {
+    if (code2 === marker) {
+      effects.enter("thematicBreakSequence");
+      return sequence(code2);
+    }
+    if (size >= 3 && (code2 === null || markdownLineEnding(code2))) {
+      effects.exit("thematicBreak");
+      return ok2(code2);
+    }
+    return nok(code2);
+  }
+  function sequence(code2) {
+    if (code2 === marker) {
+      effects.consume(code2);
+      size++;
+      return sequence;
+    }
+    effects.exit("thematicBreakSequence");
+    return markdownSpace(code2) ? factorySpace(effects, atBreak, "whitespace")(code2) : atBreak(code2);
+  }
+}
+const list$2 = {
+  continuation: {
+    tokenize: tokenizeListContinuation
+  },
+  exit: tokenizeListEnd,
+  name: "list",
+  tokenize: tokenizeListStart
+};
+const listItemPrefixWhitespaceConstruct = {
+  partial: true,
+  tokenize: tokenizeListItemPrefixWhitespace
+};
+const indentConstruct = {
+  partial: true,
+  tokenize: tokenizeIndent$1
+};
+function tokenizeListStart(effects, ok2, nok) {
+  const self2 = this;
+  const tail = self2.events[self2.events.length - 1];
+  let initialSize = tail && tail[1].type === "linePrefix" ? tail[2].sliceSerialize(tail[1], true).length : 0;
+  let size = 0;
+  return start;
+  function start(code2) {
+    const kind = self2.containerState.type || (code2 === 42 || code2 === 43 || code2 === 45 ? "listUnordered" : "listOrdered");
+    if (kind === "listUnordered" ? !self2.containerState.marker || code2 === self2.containerState.marker : asciiDigit(code2)) {
+      if (!self2.containerState.type) {
+        self2.containerState.type = kind;
+        effects.enter(kind, {
+          _container: true
+        });
+      }
+      if (kind === "listUnordered") {
+        effects.enter("listItemPrefix");
+        return code2 === 42 || code2 === 45 ? effects.check(thematicBreak$2, nok, atMarker)(code2) : atMarker(code2);
+      }
+      if (!self2.interrupt || code2 === 49) {
+        effects.enter("listItemPrefix");
+        effects.enter("listItemValue");
+        return inside(code2);
+      }
+    }
+    return nok(code2);
+  }
+  function inside(code2) {
+    if (asciiDigit(code2) && ++size < 10) {
+      effects.consume(code2);
+      return inside;
+    }
+    if ((!self2.interrupt || size < 2) && (self2.containerState.marker ? code2 === self2.containerState.marker : code2 === 41 || code2 === 46)) {
+      effects.exit("listItemValue");
+      return atMarker(code2);
+    }
+    return nok(code2);
+  }
+  function atMarker(code2) {
+    effects.enter("listItemMarker");
+    effects.consume(code2);
+    effects.exit("listItemMarker");
+    self2.containerState.marker = self2.containerState.marker || code2;
+    return effects.check(
+      blankLine,
+      // Can’t be empty when interrupting.
+      self2.interrupt ? nok : onBlank,
+      effects.attempt(listItemPrefixWhitespaceConstruct, endOfPrefix, otherPrefix)
+    );
+  }
+  function onBlank(code2) {
+    self2.containerState.initialBlankLine = true;
+    initialSize++;
+    return endOfPrefix(code2);
+  }
+  function otherPrefix(code2) {
+    if (markdownSpace(code2)) {
+      effects.enter("listItemPrefixWhitespace");
+      effects.consume(code2);
+      effects.exit("listItemPrefixWhitespace");
+      return endOfPrefix;
+    }
+    return nok(code2);
+  }
+  function endOfPrefix(code2) {
+    self2.containerState.size = initialSize + self2.sliceSerialize(effects.exit("listItemPrefix"), true).length;
+    return ok2(code2);
+  }
+}
+function tokenizeListContinuation(effects, ok2, nok) {
+  const self2 = this;
+  self2.containerState._closeFlow = void 0;
+  return effects.check(blankLine, onBlank, notBlank);
+  function onBlank(code2) {
+    self2.containerState.furtherBlankLines = self2.containerState.furtherBlankLines || self2.containerState.initialBlankLine;
+    return factorySpace(effects, ok2, "listItemIndent", self2.containerState.size + 1)(code2);
+  }
+  function notBlank(code2) {
+    if (self2.containerState.furtherBlankLines || !markdownSpace(code2)) {
+      self2.containerState.furtherBlankLines = void 0;
+      self2.containerState.initialBlankLine = void 0;
+      return notInCurrentItem(code2);
+    }
+    self2.containerState.furtherBlankLines = void 0;
+    self2.containerState.initialBlankLine = void 0;
+    return effects.attempt(indentConstruct, ok2, notInCurrentItem)(code2);
+  }
+  function notInCurrentItem(code2) {
+    self2.containerState._closeFlow = true;
+    self2.interrupt = void 0;
+    return factorySpace(effects, effects.attempt(list$2, ok2, nok), "linePrefix", self2.parser.constructs.disable.null.includes("codeIndented") ? void 0 : 4)(code2);
+  }
+}
+function tokenizeIndent$1(effects, ok2, nok) {
+  const self2 = this;
+  return factorySpace(effects, afterPrefix, "listItemIndent", self2.containerState.size + 1);
+  function afterPrefix(code2) {
+    const tail = self2.events[self2.events.length - 1];
+    return tail && tail[1].type === "listItemIndent" && tail[2].sliceSerialize(tail[1], true).length === self2.containerState.size ? ok2(code2) : nok(code2);
+  }
+}
+function tokenizeListEnd(effects) {
+  effects.exit(this.containerState.type);
+}
+function tokenizeListItemPrefixWhitespace(effects, ok2, nok) {
+  const self2 = this;
+  return factorySpace(effects, afterPrefix, "listItemPrefixWhitespace", self2.parser.constructs.disable.null.includes("codeIndented") ? void 0 : 4 + 1);
+  function afterPrefix(code2) {
+    const tail = self2.events[self2.events.length - 1];
+    return !markdownSpace(code2) && tail && tail[1].type === "listItemPrefixWhitespace" ? ok2(code2) : nok(code2);
+  }
+}
+const setextUnderline = {
+  name: "setextUnderline",
+  resolveTo: resolveToSetextUnderline,
+  tokenize: tokenizeSetextUnderline
+};
+function resolveToSetextUnderline(events, context) {
+  const editMap = new EditMap$1();
+  let index2 = events.length;
+  let content2;
+  let text2;
+  let definition2;
+  while (index2--) {
+    if (events[index2][0] === "enter") {
+      if (events[index2][1].type === "content") {
+        content2 = index2;
+        break;
+      }
+      if (events[index2][1].type === "paragraph") {
+        text2 = index2;
+      }
+    } else {
+      if (events[index2][1].type === "content") {
+        editMap.add(index2, 1, []);
+      }
+      if (!definition2 && events[index2][1].type === "definition") {
+        definition2 = index2;
+      }
+    }
+  }
+  const heading2 = {
+    type: "setextHeading",
+    start: {
+      ...events[content2][1].start
+    },
+    end: {
+      ...events[events.length - 1][1].end
+    }
+  };
+  events[text2][1].type = "setextHeadingText";
+  if (definition2) {
+    editMap.add(text2, 0, [["enter", heading2, context]]);
+    editMap.add(definition2 + 1, 0, [["exit", events[content2][1], context]]);
+    events[content2][1].end = {
+      ...events[definition2][1].end
+    };
+  } else {
+    events[content2][1] = heading2;
+  }
+  editMap.add(events.length, 0, [["exit", heading2, context]]);
+  editMap.consume(events);
+  return events;
+}
+function tokenizeSetextUnderline(effects, ok2, nok) {
+  const self2 = this;
+  let marker;
+  return start;
+  function start(code2) {
+    let index2 = self2.events.length;
+    let paragraph2;
+    while (index2--) {
+      if (self2.events[index2][1].type !== "lineEnding" && self2.events[index2][1].type !== "linePrefix" && self2.events[index2][1].type !== "content") {
+        paragraph2 = self2.events[index2][1].type === "paragraph";
+        break;
+      }
+    }
+    if (!self2.parser.lazy[self2.now().line] && (self2.interrupt || paragraph2)) {
+      effects.enter("setextHeadingLine");
+      marker = code2;
+      return before(code2);
+    }
+    return nok(code2);
+  }
+  function before(code2) {
+    effects.enter("setextHeadingLineSequence");
+    return inside(code2);
+  }
+  function inside(code2) {
+    if (code2 === marker) {
+      effects.consume(code2);
+      return inside;
+    }
+    effects.exit("setextHeadingLineSequence");
+    return markdownSpace(code2) ? factorySpace(effects, after, "lineSuffix")(code2) : after(code2);
+  }
+  function after(code2) {
+    if (code2 === null || markdownLineEnding(code2)) {
+      effects.exit("setextHeadingLine");
+      return ok2(code2);
+    }
+    return nok(code2);
+  }
+}
+const flow$1 = {
+  tokenize: initializeFlow
+};
+function initializeFlow(effects) {
+  const self2 = this;
+  const initial = effects.attempt(
+    // Try to parse a blank line.
+    blankLine,
+    atBlankEnding,
+    // Try to parse initial flow (essentially, only code).
+    effects.attempt(this.parser.constructs.flowInitial, afterConstruct, factorySpace(effects, effects.attempt(this.parser.constructs.flow, afterConstruct, effects.attempt(content, afterConstruct)), "linePrefix"))
+  );
+  return initial;
+  function atBlankEnding(code2) {
+    if (code2 === null) {
+      effects.consume(code2);
+      return;
+    }
+    effects.enter("lineEndingBlank");
+    effects.consume(code2);
+    effects.exit("lineEndingBlank");
+    self2.currentConstruct = void 0;
+    return initial;
+  }
+  function afterConstruct(code2) {
+    if (code2 === null) {
+      effects.consume(code2);
+      return;
+    }
+    effects.enter("lineEnding");
+    effects.consume(code2);
+    effects.exit("lineEnding");
+    self2.currentConstruct = void 0;
+    return initial;
+  }
+}
+const resolver = {
+  resolveAll: createResolver()
+};
+const string$1 = initializeFactory("string");
+const text$4 = initializeFactory("text");
+function initializeFactory(field) {
+  return {
+    resolveAll: createResolver(field === "text" ? resolveAllLineSuffixes : void 0),
+    tokenize: initializeText
+  };
+  function initializeText(effects) {
+    const self2 = this;
+    const constructs2 = this.parser.constructs[field];
+    const text2 = effects.attempt(constructs2, start, notText);
+    return start;
+    function start(code2) {
+      return atBreak(code2) ? text2(code2) : notText(code2);
+    }
+    function notText(code2) {
+      if (code2 === null) {
+        effects.consume(code2);
+        return;
+      }
+      effects.enter("data");
+      effects.consume(code2);
+      return data;
+    }
+    function data(code2) {
+      if (atBreak(code2)) {
+        effects.exit("data");
+        return text2(code2);
+      }
+      effects.consume(code2);
+      return data;
+    }
+    function atBreak(code2) {
+      if (code2 === null) {
+        return true;
+      }
+      const list2 = constructs2[code2];
+      let index2 = -1;
+      if (list2) {
+        while (++index2 < list2.length) {
+          const item = list2[index2];
+          if (!item.previous || item.previous.call(self2, self2.previous)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+  }
+}
+function createResolver(extraResolver) {
+  return resolveAllText;
+  function resolveAllText(events, context) {
+    let index2 = -1;
+    let enter;
+    while (++index2 <= events.length) {
+      if (enter === void 0) {
+        if (events[index2] && events[index2][1].type === "data") {
+          enter = index2;
+          index2++;
+        }
+      } else if (!events[index2] || events[index2][1].type !== "data") {
+        if (index2 !== enter + 2) {
+          events[enter][1].end = events[index2 - 1][1].end;
+          events.splice(enter + 2, index2 - enter - 2);
+          index2 = enter + 2;
+        }
+        enter = void 0;
+      }
+    }
+    return extraResolver ? extraResolver(events, context) : events;
+  }
+}
+function resolveAllLineSuffixes(events, context) {
+  const editMap = new EditMap$1();
+  let eventIndex = 0;
+  while (++eventIndex <= events.length) {
+    if ((eventIndex === events.length || events[eventIndex][1].type === "lineEnding") && events[eventIndex - 1][1].type === "data") {
+      const data = events[eventIndex - 1][1];
+      const chunks = context.sliceStream(data);
+      let index2 = chunks.length;
+      let bufferIndex = -1;
+      let size = 0;
+      let tabs;
+      while (index2--) {
+        const chunk = chunks[index2];
+        if (typeof chunk === "string") {
+          bufferIndex = chunk.length;
+          while (chunk.charCodeAt(bufferIndex - 1) === 32) {
+            size++;
+            bufferIndex--;
+          }
+          if (bufferIndex) {
+            break;
+          }
+          bufferIndex = -1;
+        } else if (chunk === -2) {
+          tabs = true;
+          size++;
+        } else if (chunk === -1) ;
+        else {
+          index2++;
+          break;
+        }
+      }
+      if (context._contentTypeTextTrailing && eventIndex === events.length) {
+        size = 0;
+      }
+      if (size) {
+        const token = {
+          type: eventIndex === events.length || tabs || size < 2 ? "lineSuffix" : "hardBreakTrailing",
+          start: {
+            _bufferIndex: index2 ? bufferIndex : data.start._bufferIndex + bufferIndex,
+            _index: data.start._index + index2,
+            line: data.end.line,
+            column: data.end.column - size,
+            offset: data.end.offset - size
+          },
+          end: {
+            ...data.end
+          }
+        };
+        data.end = {
+          ...token.start
+        };
+        if (data.start.offset === data.end.offset) {
+          Object.assign(data, token);
+        } else {
+          editMap.add(eventIndex, 0, [["enter", token, context], ["exit", token, context]]);
+        }
+      }
+      eventIndex++;
+    }
+  }
+  editMap.consume(events);
+  return events;
+}
+const document$1 = {
+  [42]: list$2,
+  [43]: list$2,
+  [45]: list$2,
+  [48]: list$2,
+  [49]: list$2,
+  [50]: list$2,
+  [51]: list$2,
+  [52]: list$2,
+  [53]: list$2,
+  [54]: list$2,
+  [55]: list$2,
+  [56]: list$2,
+  [57]: list$2,
+  [62]: blockQuote
+};
+const contentInitial = {
+  [91]: definition$1
+};
+const flowInitial = {
+  [-2]: codeIndented,
+  [-1]: codeIndented,
+  [32]: codeIndented
+};
+const flow = {
+  [35]: headingAtx,
+  [42]: thematicBreak$2,
+  [45]: [setextUnderline, thematicBreak$2],
+  [60]: htmlFlow,
+  [61]: setextUnderline,
+  [95]: thematicBreak$2,
+  [96]: codeFenced,
+  [126]: codeFenced
+};
+const string = {
+  [38]: characterReference,
+  [92]: characterEscape
+};
+const text$3 = {
+  [-5]: lineEnding,
+  [-4]: lineEnding,
+  [-3]: lineEnding,
+  [33]: labelStartImage,
+  [38]: characterReference,
+  [42]: attention$2,
+  [60]: [autolink, htmlText],
+  [91]: labelStartLink,
+  [92]: [hardBreakEscape, characterEscape],
+  [93]: labelEnd,
+  [95]: attention$2,
+  [96]: codeText
+};
+const insideSpan = {
+  null: [attention$2, resolver]
+};
+const attentionMarkers = {
+  null: [42, 95]
+};
+const disable = {
+  null: []
+};
+const defaultConstructs = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  attentionMarkers,
+  contentInitial,
+  disable,
+  document: document$1,
+  flow,
+  flowInitial,
+  insideSpan,
+  string,
+  text: text$3
+}, Symbol.toStringTag, { value: "Module" }));
+function createTokenizer(parser, initialize, from) {
+  let point2 = {
+    _bufferIndex: -1,
+    _index: 0,
+    line: from && from.line || 1,
+    column: from && from.column || 1,
+    offset: from && from.offset || 0
+  };
+  const columnStart = {};
+  const resolveAllConstructs = [];
+  let chunks = [];
+  let stack = [];
+  const effects = {
+    attempt: constructFactory(onsuccessfulconstruct),
+    check: constructFactory(onsuccessfulcheck),
+    consume,
+    enter,
+    exit: exit2,
+    interrupt: constructFactory(onsuccessfulcheck, {
+      interrupt: true
+    })
+  };
+  const context = {
+    code: null,
+    containerState: {},
+    defineSkip,
+    events: [],
+    now,
+    parser,
+    previous: null,
+    sliceSerialize,
+    sliceStream,
+    write
+  };
+  let state = initialize.tokenize.call(context, effects);
+  if (initialize.resolveAll) {
+    resolveAllConstructs.push(initialize);
+  }
+  return context;
+  function write(slice) {
+    chunks = push(chunks, slice);
+    main();
+    if (chunks[chunks.length - 1] !== null) {
+      return [];
+    }
+    addResult(initialize, 0);
+    context.events = resolveAll(resolveAllConstructs, context.events, context);
+    return context.events;
+  }
+  function sliceSerialize(token, expandTabs) {
+    return serializeChunks(sliceStream(token), expandTabs);
+  }
+  function sliceStream(token) {
+    return sliceChunks(chunks, token);
+  }
+  function now() {
+    const {
+      _bufferIndex,
+      _index,
+      line,
+      column,
+      offset
+    } = point2;
+    return {
+      _bufferIndex,
+      _index,
+      line,
+      column,
+      offset
+    };
+  }
+  function defineSkip(value) {
+    columnStart[value.line] = value.column;
+    accountForPotentialSkip();
+  }
+  function main() {
+    while (point2._index < chunks.length) {
+      const chunk = chunks[point2._index];
+      if (typeof chunk === "string") {
+        const chunkIndex = point2._index;
+        if (point2._bufferIndex < 0) {
+          point2._bufferIndex = 0;
+        }
+        while (point2._index === chunkIndex && point2._bufferIndex < chunk.length) {
+          go(chunk.charCodeAt(point2._bufferIndex));
+        }
+      } else {
+        go(chunk);
+      }
+    }
+  }
+  function go(code2) {
+    state = state(code2);
+  }
+  function consume(code2) {
+    if (markdownLineEnding(code2)) {
+      point2.line++;
+      point2.column = 1;
+      point2.offset += code2 === -3 ? 2 : 1;
+      accountForPotentialSkip();
+    } else if (code2 !== -1) {
+      point2.column++;
+      point2.offset++;
+    }
+    if (point2._bufferIndex < 0) {
+      point2._index++;
+    } else {
+      point2._bufferIndex++;
+      if (point2._bufferIndex === // Points w/ non-negative `_bufferIndex` reference
+      // strings.
+      /** @type {string} */
+      chunks[point2._index].length) {
+        point2._bufferIndex = -1;
+        point2._index++;
+      }
+    }
+    context.previous = code2;
+  }
+  function enter(type, fields) {
+    const token = fields || {};
+    token.type = type;
+    token.start = now();
+    context.events.push(["enter", token, context]);
+    stack.push(token);
+    return token;
+  }
+  function exit2(type) {
+    const token = stack.pop();
+    token.end = now();
+    context.events.push(["exit", token, context]);
+    return token;
+  }
+  function onsuccessfulconstruct(construct, info) {
+    addResult(construct, info.from);
+  }
+  function onsuccessfulcheck(_, info) {
+    info.restore();
+  }
+  function constructFactory(onreturn, fields) {
+    return hook;
+    function hook(constructs2, returnState, bogusState) {
+      let listOfConstructs;
+      let constructIndex;
+      let currentConstruct;
+      let info;
+      return Array.isArray(constructs2) ? (
+        /* c8 ignore next 1 */
+        handleListOfConstructs(constructs2)
+      ) : "tokenize" in constructs2 ? (
+        // Looks like a construct.
+        handleListOfConstructs([
+          /** @type {Construct} */
+          constructs2
+        ])
+      ) : handleMapOfConstructs(constructs2);
+      function handleMapOfConstructs(map2) {
+        return start;
+        function start(code2) {
+          const left = code2 !== null && map2[code2];
+          const all2 = code2 !== null && map2.null;
+          const list2 = [
+            // To do: add more extension tests.
+            /* c8 ignore next 2 */
+            ...Array.isArray(left) ? left : left ? [left] : [],
+            ...Array.isArray(all2) ? all2 : all2 ? [all2] : []
+          ];
+          return handleListOfConstructs(list2)(code2);
+        }
+      }
+      function handleListOfConstructs(list2) {
+        listOfConstructs = list2;
+        constructIndex = 0;
+        if (list2.length === 0) {
+          return bogusState;
+        }
+        return handleConstruct(list2[constructIndex]);
+      }
+      function handleConstruct(construct) {
+        return start;
+        function start(code2) {
+          info = store();
+          currentConstruct = construct;
+          if (!construct.partial) {
+            context.currentConstruct = construct;
+          }
+          if (construct.name && context.parser.constructs.disable.null.includes(construct.name)) {
+            return nok();
+          }
+          return construct.tokenize.call(
+            // If we do have fields, create an object w/ `context` as its
+            // prototype.
+            // This allows a “live binding”, which is needed for `interrupt`.
+            fields ? Object.assign(Object.create(context), fields) : context,
+            effects,
+            ok2,
+            nok
+          )(code2);
+        }
+      }
+      function ok2(code2) {
+        onreturn(currentConstruct, info);
+        return returnState;
+      }
+      function nok(code2) {
+        info.restore();
+        if (++constructIndex < listOfConstructs.length) {
+          return handleConstruct(listOfConstructs[constructIndex]);
+        }
+        return bogusState;
+      }
+    }
+  }
+  function addResult(construct, from2) {
+    if (construct.resolveAll && !resolveAllConstructs.includes(construct)) {
+      resolveAllConstructs.push(construct);
+    }
+    if (construct.resolve) {
+      splice(context.events, from2, context.events.length - from2, construct.resolve(context.events.slice(from2), context));
+    }
+    if (construct.resolveTo) {
+      context.events = construct.resolveTo(context.events, context);
+    }
+  }
+  function store() {
+    const startPoint = now();
+    const startPrevious = context.previous;
+    const startCurrentConstruct = context.currentConstruct;
+    const startEventsIndex = context.events.length;
+    const startStack = Array.from(stack);
+    return {
+      from: startEventsIndex,
+      restore
+    };
+    function restore() {
+      point2 = startPoint;
+      context.previous = startPrevious;
+      context.currentConstruct = startCurrentConstruct;
+      context.events.length = startEventsIndex;
+      stack = startStack;
+      accountForPotentialSkip();
+    }
+  }
+  function accountForPotentialSkip() {
+    if (point2.line in columnStart && point2.column < 2) {
+      point2.column = columnStart[point2.line];
+      point2.offset += columnStart[point2.line] - 1;
+    }
+  }
+}
+function sliceChunks(chunks, token) {
+  const startIndex = token.start._index;
+  const startBufferIndex = token.start._bufferIndex;
+  const endIndex = token.end._index;
+  const endBufferIndex = token.end._bufferIndex;
+  let view;
+  if (startIndex === endIndex) {
+    view = [chunks[startIndex].slice(startBufferIndex, endBufferIndex)];
+  } else {
+    view = chunks.slice(startIndex, endIndex);
+    if (startBufferIndex > -1) {
+      const head = view[0];
+      if (typeof head === "string") {
+        view[0] = head.slice(startBufferIndex);
+      } else {
+        view.shift();
+      }
+    }
+    if (endBufferIndex > 0) {
+      view.push(chunks[endIndex].slice(0, endBufferIndex));
+    }
+  }
+  return view;
+}
+function serializeChunks(chunks, expandTabs) {
+  let index2 = -1;
+  const result = [];
+  let atTab;
+  while (++index2 < chunks.length) {
+    const chunk = chunks[index2];
+    let value;
+    if (typeof chunk === "string") {
+      value = chunk;
+    } else {
+      switch (chunk) {
+        case -5: {
+          value = "\r";
+          break;
+        }
+        case -4: {
+          value = "\n";
+          break;
+        }
+        case -3: {
+          value = "\r\n";
+          break;
+        }
+        case -2: {
+          value = expandTabs ? " " : "	";
+          break;
+        }
+        case -1: {
+          if (!expandTabs && atTab) {
+            continue;
+          }
+          value = " ";
+          break;
+        }
+        default: {
+          value = String.fromCharCode(chunk);
+        }
+      }
+    }
+    atTab = chunk === -2;
+    result.push(value);
+  }
+  return result.join("");
+}
+function parse(options) {
+  const settings = options || {};
+  const constructs2 = (
+    /** @type {FullNormalizedExtension} */
+    combineExtensions([defaultConstructs, ...settings.extensions || []])
+  );
+  const parser = {
+    constructs: constructs2,
+    content: create2(content$1),
+    defined: [],
+    document: create2(document$2),
+    flow: create2(flow$1),
+    lazy: {},
+    string: create2(string$1),
+    text: create2(text$4)
+  };
+  return parser;
+  function create2(initial) {
+    return creator;
+    function creator(from) {
+      return createTokenizer(parser, initial, from);
+    }
+  }
+}
+function postprocess(events) {
+  while (!subtokenize(events)) {
+  }
+  return events;
+}
+const search = /[\0\t\n\r]/g;
+function preprocess() {
+  let column = 1;
+  let buffer = "";
+  let start = true;
+  let atCarriageReturn;
+  return preprocessor;
+  function preprocessor(value, encoding, end) {
+    value = buffer + (typeof value === "string" ? value.toString() : new TextDecoder(encoding || void 0).decode(value));
+    const chunks = [];
+    let startPosition = 0;
+    buffer = "";
+    if (start) {
+      if (value.charCodeAt(0) === 65279) {
+        startPosition++;
+      }
+      start = void 0;
+    }
+    while (startPosition < value.length) {
+      search.lastIndex = startPosition;
+      const match = search.exec(value);
+      const endPosition = match && match.index !== void 0 ? match.index : value.length;
+      const code2 = value.charCodeAt(endPosition);
+      if (!match) {
+        buffer = value.slice(startPosition);
+        break;
+      }
+      if (code2 === 10 && startPosition === endPosition && atCarriageReturn) {
+        chunks.push(-3);
+        atCarriageReturn = void 0;
+      } else {
+        if (atCarriageReturn) {
+          chunks.push(-5);
+          atCarriageReturn = void 0;
+        }
+        if (startPosition < endPosition) {
+          chunks.push(value.slice(startPosition, endPosition));
+          column += endPosition - startPosition;
+        }
+        switch (code2) {
+          case 0: {
+            chunks.push(65533);
+            column++;
+            break;
+          }
+          case 9: {
+            const next = Math.ceil(column / 4) * 4;
+            chunks.push(-2);
+            while (column++ < next) {
+              chunks.push(-1);
+            }
+            break;
+          }
+          case 10: {
+            chunks.push(-4);
+            column = 1;
+            break;
+          }
+          default: {
+            atCarriageReturn = true;
+            column = 1;
+          }
+        }
+      }
+      startPosition = endPosition + 1;
+    }
+    if (end) {
+      if (atCarriageReturn) {
+        chunks.push(-5);
+      }
+      if (buffer) {
+        chunks.push(buffer);
+      }
+      chunks.push(null);
+    }
+    return chunks;
+  }
+}
+const characterEscapeOrReference = /\\([!-/:-@[-`{-~])|&(#(?:\d{1,7}|x[\da-f]{1,6})|[\da-z]{1,31});/gi;
+function decodeString(value) {
+  return value.replace(characterEscapeOrReference, decode);
+}
+function decode($0, $1, $2) {
+  if ($1) {
+    return $1;
+  }
+  const head = $2.charCodeAt(0);
+  if (head === 35) {
+    const head2 = $2.charCodeAt(1);
+    const hex = head2 === 120 || head2 === 88;
+    return decodeNumericCharacterReference($2.slice(hex ? 2 : 1), hex ? 16 : 10);
+  }
+  return decodeNamedCharacterReference($2) || $0;
+}
+const own$2 = {}.hasOwnProperty;
+function fromMarkdown(value, encoding, options) {
+  if (encoding && typeof encoding === "object") {
+    options = encoding;
+    encoding = void 0;
+  }
+  return compiler(options)(postprocess(parse(options).document().write(preprocess()(value, encoding, true))));
+}
+function compiler(options) {
+  const config = {
+    transforms: [],
+    canContainEols: ["emphasis", "fragment", "heading", "paragraph", "strong"],
+    enter: {
+      autolink: opener(link2),
+      autolinkProtocol: onenterdata,
+      autolinkEmail: onenterdata,
+      atxHeading: opener(heading2),
+      blockQuote: opener(blockQuote2),
+      characterEscape: onenterdata,
+      characterReference: onenterdata,
+      codeFenced: opener(codeFlow),
+      codeFencedFenceInfo: buffer,
+      codeFencedFenceMeta: buffer,
+      codeIndented: opener(codeFlow, buffer),
+      codeText: opener(codeText2, buffer),
+      codeTextData: onenterdata,
+      data: onenterdata,
+      codeFlowValue: onenterdata,
+      definition: opener(definition2),
+      definitionDestinationString: buffer,
+      definitionLabelString: buffer,
+      definitionTitleString: buffer,
+      emphasis: opener(emphasis2),
+      hardBreakEscape: opener(hardBreak2),
+      hardBreakTrailing: opener(hardBreak2),
+      htmlFlow: opener(html2, buffer),
+      htmlFlowData: onenterdata,
+      htmlText: opener(html2, buffer),
+      htmlTextData: onenterdata,
+      image: opener(image2),
+      label: buffer,
+      link: opener(link2),
+      listItem: opener(listItem2),
+      listItemValue: onenterlistitemvalue,
+      listOrdered: opener(list2, onenterlistordered),
+      listUnordered: opener(list2),
+      paragraph: opener(paragraph2),
+      reference: onenterreference,
+      referenceString: buffer,
+      resourceDestinationString: buffer,
+      resourceTitleString: buffer,
+      setextHeading: opener(heading2),
+      strong: opener(strong2),
+      thematicBreak: opener(thematicBreak2)
+    },
+    exit: {
+      atxHeading: closer(),
+      atxHeadingSequence: onexitatxheadingsequence,
+      autolink: closer(),
+      autolinkEmail: onexitautolinkemail,
+      autolinkProtocol: onexitautolinkprotocol,
+      blockQuote: closer(),
+      characterEscapeValue: onexitdata,
+      characterReferenceMarkerHexadecimal: onexitcharacterreferencemarker,
+      characterReferenceMarkerNumeric: onexitcharacterreferencemarker,
+      characterReferenceValue: onexitcharacterreferencevalue,
+      characterReference: onexitcharacterreference,
+      codeFenced: closer(onexitcodefenced),
+      codeFencedFence: onexitcodefencedfence,
+      codeFencedFenceInfo: onexitcodefencedfenceinfo,
+      codeFencedFenceMeta: onexitcodefencedfencemeta,
+      codeFlowValue: onexitdata,
+      codeIndented: closer(onexitcodeindented),
+      codeText: closer(onexitcodetext),
+      codeTextData: onexitdata,
+      data: onexitdata,
+      definition: closer(),
+      definitionDestinationString: onexitdefinitiondestinationstring,
+      definitionLabelString: onexitdefinitionlabelstring,
+      definitionTitleString: onexitdefinitiontitlestring,
+      emphasis: closer(),
+      hardBreakEscape: closer(onexithardbreak),
+      hardBreakTrailing: closer(onexithardbreak),
+      htmlFlow: closer(onexithtmlflow),
+      htmlFlowData: onexitdata,
+      htmlText: closer(onexithtmltext),
+      htmlTextData: onexitdata,
+      image: closer(onexitimage),
+      label: onexitlabel,
+      labelText: onexitlabeltext,
+      lineEnding: onexitlineending,
+      link: closer(onexitlink),
+      listItem: closer(),
+      listOrdered: closer(),
+      listUnordered: closer(),
+      paragraph: closer(),
+      referenceString: onexitreferencestring,
+      resourceDestinationString: onexitresourcedestinationstring,
+      resourceTitleString: onexitresourcetitlestring,
+      resource: onexitresource,
+      setextHeading: closer(onexitsetextheading),
+      setextHeadingLineSequence: onexitsetextheadinglinesequence,
+      setextHeadingText: onexitsetextheadingtext,
+      strong: closer(),
+      thematicBreak: closer()
+    }
+  };
+  configure(config, (options || {}).mdastExtensions || []);
+  const data = {};
+  return compile;
+  function compile(events) {
+    let tree = {
+      type: "root",
+      children: []
+    };
+    const context = {
+      stack: [tree],
+      tokenStack: [],
+      config,
+      enter,
+      exit: exit2,
+      buffer,
+      resume,
+      data
+    };
+    const listStack = [];
+    let index2 = -1;
+    while (++index2 < events.length) {
+      if (events[index2][1].type === "listOrdered" || events[index2][1].type === "listUnordered") {
+        if (events[index2][0] === "enter") {
+          listStack.push(index2);
+        } else {
+          const tail = listStack.pop();
+          index2 = prepareList(events, tail, index2);
+        }
+      }
+    }
+    index2 = -1;
+    while (++index2 < events.length) {
+      const handler = config[events[index2][0]];
+      if (own$2.call(handler, events[index2][1].type)) {
+        handler[events[index2][1].type].call(Object.assign({
+          sliceSerialize: events[index2][2].sliceSerialize
+        }, context), events[index2][1]);
+      }
+    }
+    if (context.tokenStack.length > 0) {
+      const tail = context.tokenStack[context.tokenStack.length - 1];
+      const handler = tail[1] || defaultOnError;
+      handler.call(context, void 0, tail[0]);
+    }
+    tree.position = {
+      start: point(events.length > 0 ? events[0][1].start : {
+        line: 1,
+        column: 1,
+        offset: 0
+      }),
+      end: point(events.length > 0 ? events[events.length - 2][1].end : {
+        line: 1,
+        column: 1,
+        offset: 0
+      })
+    };
+    index2 = -1;
+    while (++index2 < config.transforms.length) {
+      tree = config.transforms[index2](tree) || tree;
+    }
+    return tree;
+  }
+  function prepareList(events, start, length) {
+    let index2 = start - 1;
+    let containerBalance = -1;
+    let listSpread = false;
+    let listItem3;
+    let lineIndex;
+    let firstBlankLineIndex;
+    let atMarker;
+    while (++index2 <= length) {
+      const event = events[index2];
+      switch (event[1].type) {
+        case "listUnordered":
+        case "listOrdered":
+        case "blockQuote": {
+          if (event[0] === "enter") {
+            containerBalance++;
+          } else {
+            containerBalance--;
+          }
+          atMarker = void 0;
+          break;
+        }
+        case "lineEndingBlank": {
+          if (event[0] === "enter") {
+            if (listItem3 && !atMarker && !containerBalance && !firstBlankLineIndex) {
+              firstBlankLineIndex = index2;
+            }
+            atMarker = void 0;
+          }
+          break;
+        }
+        case "linePrefix":
+        case "listItemValue":
+        case "listItemMarker":
+        case "listItemPrefix":
+        case "listItemPrefixWhitespace": {
+          break;
+        }
+        default: {
+          atMarker = void 0;
+        }
+      }
+      if (!containerBalance && event[0] === "enter" && event[1].type === "listItemPrefix" || containerBalance === -1 && event[0] === "exit" && (event[1].type === "listUnordered" || event[1].type === "listOrdered")) {
+        if (listItem3) {
+          let tailIndex = index2;
+          lineIndex = void 0;
+          while (tailIndex--) {
+            const tailEvent = events[tailIndex];
+            if (tailEvent[1].type === "lineEnding" || tailEvent[1].type === "lineEndingBlank") {
+              if (tailEvent[0] === "exit") continue;
+              if (lineIndex) {
+                events[lineIndex][1].type = "lineEndingBlank";
+                listSpread = true;
+              }
+              tailEvent[1].type = "lineEnding";
+              lineIndex = tailIndex;
+            } else if (tailEvent[1].type === "linePrefix" || tailEvent[1].type === "blockQuotePrefix" || tailEvent[1].type === "blockQuotePrefixWhitespace" || tailEvent[1].type === "blockQuoteMarker" || tailEvent[1].type === "listItemIndent") ;
+            else {
+              break;
+            }
+          }
+          if (firstBlankLineIndex && (!lineIndex || firstBlankLineIndex < lineIndex)) {
+            listItem3._spread = true;
+          }
+          listItem3.end = Object.assign({}, lineIndex ? events[lineIndex][1].start : event[1].end);
+          events.splice(lineIndex || index2, 0, ["exit", listItem3, event[2]]);
+          index2++;
+          length++;
+        }
+        if (event[1].type === "listItemPrefix") {
+          const item = {
+            type: "listItem",
+            _spread: false,
+            start: Object.assign({}, event[1].start),
+            // @ts-expect-error: we’ll add `end` in a second.
+            end: void 0
+          };
+          listItem3 = item;
+          events.splice(index2, 0, ["enter", item, event[2]]);
+          index2++;
+          length++;
+          firstBlankLineIndex = void 0;
+          atMarker = true;
+        }
+      }
+    }
+    events[start][1]._spread = listSpread;
+    return length;
+  }
+  function opener(create2, and) {
+    return open;
+    function open(token) {
+      enter.call(this, create2(token), token);
+      if (and) and.call(this, token);
+    }
+  }
+  function buffer() {
+    this.stack.push({
+      type: "fragment",
+      children: []
+    });
+  }
+  function enter(node2, token, errorHandler) {
+    const parent = this.stack[this.stack.length - 1];
+    const siblings = parent.children;
+    siblings.push(node2);
+    this.stack.push(node2);
+    this.tokenStack.push([token, errorHandler || void 0]);
+    node2.position = {
+      start: point(token.start),
+      // @ts-expect-error: `end` will be patched later.
+      end: void 0
+    };
+  }
+  function closer(and) {
+    return close;
+    function close(token) {
+      if (and) and.call(this, token);
+      exit2.call(this, token);
+    }
+  }
+  function exit2(token, onExitError) {
+    const node2 = this.stack.pop();
+    const open = this.tokenStack.pop();
+    if (!open) {
+      throw new Error("Cannot close `" + token.type + "` (" + stringifyPosition({
+        start: token.start,
+        end: token.end
+      }) + "): it’s not open");
+    } else if (open[0].type !== token.type) {
+      if (onExitError) {
+        onExitError.call(this, token, open[0]);
+      } else {
+        const handler = open[1] || defaultOnError;
+        handler.call(this, token, open[0]);
+      }
+    }
+    node2.position.end = point(token.end);
+  }
+  function resume() {
+    return toString$1(this.stack.pop());
+  }
+  function onenterlistordered() {
+    this.data.expectingFirstListItemValue = true;
+  }
+  function onenterlistitemvalue(token) {
+    if (this.data.expectingFirstListItemValue) {
+      const ancestor = this.stack[this.stack.length - 2];
+      ancestor.start = Number.parseInt(this.sliceSerialize(token), 10);
+      this.data.expectingFirstListItemValue = void 0;
+    }
+  }
+  function onexitcodefencedfenceinfo() {
+    const data2 = this.resume();
+    const node2 = this.stack[this.stack.length - 1];
+    node2.lang = data2;
+  }
+  function onexitcodefencedfencemeta() {
+    const data2 = this.resume();
+    const node2 = this.stack[this.stack.length - 1];
+    node2.meta = data2;
+  }
+  function onexitcodefencedfence() {
+    if (this.data.flowCodeInside) return;
+    this.buffer();
+    this.data.flowCodeInside = true;
+  }
+  function onexitcodefenced() {
+    const data2 = this.resume();
+    const node2 = this.stack[this.stack.length - 1];
+    node2.value = data2.replace(/^(\r?\n|\r)|(\r?\n|\r)$/g, "");
+    this.data.flowCodeInside = void 0;
+  }
+  function onexitcodeindented() {
+    const data2 = this.resume();
+    const node2 = this.stack[this.stack.length - 1];
+    node2.value = data2.replace(/(\r?\n|\r)$/g, "");
+  }
+  function onexitdefinitionlabelstring(token) {
+    const label = this.resume();
+    const node2 = this.stack[this.stack.length - 1];
+    node2.label = label;
+    node2.identifier = normalizeIdentifier(this.sliceSerialize(token)).toLowerCase();
+  }
+  function onexitdefinitiontitlestring() {
+    const data2 = this.resume();
+    const node2 = this.stack[this.stack.length - 1];
+    node2.title = data2;
+  }
+  function onexitdefinitiondestinationstring() {
+    const data2 = this.resume();
+    const node2 = this.stack[this.stack.length - 1];
+    node2.url = data2;
+  }
+  function onexitatxheadingsequence(token) {
+    const node2 = this.stack[this.stack.length - 1];
+    if (!node2.depth) {
+      const depth = this.sliceSerialize(token).length;
+      node2.depth = depth;
+    }
+  }
+  function onexitsetextheadingtext() {
+    this.data.setextHeadingSlurpLineEnding = true;
+  }
+  function onexitsetextheadinglinesequence(token) {
+    const node2 = this.stack[this.stack.length - 1];
+    node2.depth = this.sliceSerialize(token).codePointAt(0) === 61 ? 1 : 2;
+  }
+  function onexitsetextheading() {
+    this.data.setextHeadingSlurpLineEnding = void 0;
+  }
+  function onenterdata(token) {
+    const node2 = this.stack[this.stack.length - 1];
+    const siblings = node2.children;
+    let tail = siblings[siblings.length - 1];
+    if (!tail || tail.type !== "text") {
+      tail = text2();
+      tail.position = {
+        start: point(token.start),
+        // @ts-expect-error: we’ll add `end` later.
+        end: void 0
+      };
+      siblings.push(tail);
+    }
+    this.stack.push(tail);
+  }
+  function onexitdata(token) {
+    const tail = this.stack.pop();
+    tail.value += this.sliceSerialize(token);
+    tail.position.end = point(token.end);
+  }
+  function onexitlineending(token) {
+    const context = this.stack[this.stack.length - 1];
+    if (this.data.atHardBreak) {
+      const tail = context.children[context.children.length - 1];
+      tail.position.end = point(token.end);
+      this.data.atHardBreak = void 0;
+      return;
+    }
+    if (!this.data.setextHeadingSlurpLineEnding && config.canContainEols.includes(context.type)) {
+      onenterdata.call(this, token);
+      onexitdata.call(this, token);
+    }
+  }
+  function onexithardbreak() {
+    this.data.atHardBreak = true;
+  }
+  function onexithtmlflow() {
+    const data2 = this.resume();
+    const node2 = this.stack[this.stack.length - 1];
+    node2.value = data2;
+  }
+  function onexithtmltext() {
+    const data2 = this.resume();
+    const node2 = this.stack[this.stack.length - 1];
+    node2.value = data2;
+  }
+  function onexitcodetext() {
+    const data2 = this.resume();
+    const node2 = this.stack[this.stack.length - 1];
+    node2.value = data2;
+  }
+  function onexitlink() {
+    const node2 = this.stack[this.stack.length - 1];
+    if (this.data.inReference) {
+      const referenceType = this.data.referenceType || "shortcut";
+      node2.type += "Reference";
+      node2.referenceType = referenceType;
+      delete node2.url;
+      delete node2.title;
+    } else {
+      delete node2.identifier;
+      delete node2.label;
+    }
+    this.data.referenceType = void 0;
+  }
+  function onexitimage() {
+    const node2 = this.stack[this.stack.length - 1];
+    if (this.data.inReference) {
+      const referenceType = this.data.referenceType || "shortcut";
+      node2.type += "Reference";
+      node2.referenceType = referenceType;
+      delete node2.url;
+      delete node2.title;
+    } else {
+      delete node2.identifier;
+      delete node2.label;
+    }
+    this.data.referenceType = void 0;
+  }
+  function onexitlabeltext(token) {
+    const string2 = this.sliceSerialize(token);
+    const ancestor = this.stack[this.stack.length - 2];
+    ancestor.label = decodeString(string2);
+    ancestor.identifier = normalizeIdentifier(string2).toLowerCase();
+  }
+  function onexitlabel() {
+    const fragment = this.stack[this.stack.length - 1];
+    const value = this.resume();
+    const node2 = this.stack[this.stack.length - 1];
+    this.data.inReference = true;
+    if (node2.type === "link") {
+      const children = fragment.children;
+      node2.children = children;
+    } else {
+      node2.alt = value;
+    }
+  }
+  function onexitresourcedestinationstring() {
+    const data2 = this.resume();
+    const node2 = this.stack[this.stack.length - 1];
+    node2.url = data2;
+  }
+  function onexitresourcetitlestring() {
+    const data2 = this.resume();
+    const node2 = this.stack[this.stack.length - 1];
+    node2.title = data2;
+  }
+  function onexitresource() {
+    this.data.inReference = void 0;
+  }
+  function onenterreference() {
+    this.data.referenceType = "collapsed";
+  }
+  function onexitreferencestring(token) {
+    const label = this.resume();
+    const node2 = this.stack[this.stack.length - 1];
+    node2.label = label;
+    node2.identifier = normalizeIdentifier(this.sliceSerialize(token)).toLowerCase();
+    this.data.referenceType = "full";
+  }
+  function onexitcharacterreferencemarker(token) {
+    this.data.characterReferenceType = token.type;
+  }
+  function onexitcharacterreferencevalue(token) {
+    const data2 = this.sliceSerialize(token);
+    const type = this.data.characterReferenceType;
+    let value;
+    if (type) {
+      value = decodeNumericCharacterReference(data2, type === "characterReferenceMarkerNumeric" ? 10 : 16);
+      this.data.characterReferenceType = void 0;
+    } else {
+      const result = decodeNamedCharacterReference(data2);
+      value = result;
+    }
+    const tail = this.stack[this.stack.length - 1];
+    tail.value += value;
+  }
+  function onexitcharacterreference(token) {
+    const tail = this.stack.pop();
+    tail.position.end = point(token.end);
+  }
+  function onexitautolinkprotocol(token) {
+    onexitdata.call(this, token);
+    const node2 = this.stack[this.stack.length - 1];
+    node2.url = this.sliceSerialize(token);
+  }
+  function onexitautolinkemail(token) {
+    onexitdata.call(this, token);
+    const node2 = this.stack[this.stack.length - 1];
+    node2.url = "mailto:" + this.sliceSerialize(token);
+  }
+  function blockQuote2() {
+    return {
+      type: "blockquote",
+      children: []
+    };
+  }
+  function codeFlow() {
+    return {
+      type: "code",
+      lang: null,
+      meta: null,
+      value: ""
+    };
+  }
+  function codeText2() {
+    return {
+      type: "inlineCode",
+      value: ""
+    };
+  }
+  function definition2() {
+    return {
+      type: "definition",
+      identifier: "",
+      label: null,
+      title: null,
+      url: ""
+    };
+  }
+  function emphasis2() {
+    return {
+      type: "emphasis",
+      children: []
+    };
+  }
+  function heading2() {
+    return {
+      type: "heading",
+      // @ts-expect-error `depth` will be set later.
+      depth: 0,
+      children: []
+    };
+  }
+  function hardBreak2() {
+    return {
+      type: "break"
+    };
+  }
+  function html2() {
+    return {
+      type: "html",
+      value: ""
+    };
+  }
+  function image2() {
+    return {
+      type: "image",
+      title: null,
+      url: "",
+      alt: null
+    };
+  }
+  function link2() {
+    return {
+      type: "link",
+      title: null,
+      url: "",
+      children: []
+    };
+  }
+  function list2(token) {
+    return {
+      type: "list",
+      ordered: token.type === "listOrdered",
+      start: null,
+      spread: token._spread,
+      children: []
+    };
+  }
+  function listItem2(token) {
+    return {
+      type: "listItem",
+      spread: token._spread,
+      checked: null,
+      children: []
+    };
+  }
+  function paragraph2() {
+    return {
+      type: "paragraph",
+      children: []
+    };
+  }
+  function strong2() {
+    return {
+      type: "strong",
+      children: []
+    };
+  }
+  function text2() {
+    return {
+      type: "text",
+      value: ""
+    };
+  }
+  function thematicBreak2() {
+    return {
+      type: "thematicBreak"
+    };
+  }
+}
+function point(d) {
+  return {
+    line: d.line,
+    column: d.column,
+    offset: d.offset
+  };
+}
+function configure(combined, extensions) {
+  let index2 = -1;
+  while (++index2 < extensions.length) {
+    const value = extensions[index2];
+    if (Array.isArray(value)) {
+      configure(combined, value);
+    } else {
+      extension(combined, value);
+    }
+  }
+}
+function extension(combined, extension2) {
+  let key;
+  for (key in extension2) {
+    if (own$2.call(extension2, key)) {
+      switch (key) {
+        case "canContainEols": {
+          const right = extension2[key];
+          if (right) {
+            combined[key].push(...right);
+          }
+          break;
+        }
+        case "transforms": {
+          const right = extension2[key];
+          if (right) {
+            combined[key].push(...right);
+          }
+          break;
+        }
+        case "enter":
+        case "exit": {
+          const right = extension2[key];
+          if (right) {
+            Object.assign(combined[key], right);
+          }
+          break;
+        }
+      }
+    }
+  }
+}
+function defaultOnError(left, right) {
+  if (left) {
+    throw new Error("Cannot close `" + left.type + "` (" + stringifyPosition({
+      start: left.start,
+      end: left.end
+    }) + "): a different token (`" + right.type + "`, " + stringifyPosition({
+      start: right.start,
+      end: right.end
+    }) + ") is open");
+  } else {
+    throw new Error("Cannot close document, a token (`" + right.type + "`, " + stringifyPosition({
+      start: right.start,
+      end: right.end
+    }) + ") is still open");
+  }
+}
+function remarkParse(options) {
+  const self2 = this;
+  self2.parser = parser;
+  function parser(doc) {
+    return fromMarkdown(doc, {
+      ...self2.data("settings"),
+      ...options,
+      // Note: these options are not in the readme.
+      // The goal is for them to be set by plugins on `data` instead of being
+      // passed by users.
+      extensions: self2.data("micromarkExtensions") || [],
+      mdastExtensions: self2.data("fromMarkdownExtensions") || []
+    });
+  }
+}
+function blockquote$1(state, node2) {
+  const result = {
+    type: "element",
+    tagName: "blockquote",
+    properties: {},
+    children: state.wrap(state.all(node2), true)
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function hardBreak$1(state, node2) {
+  const result = { type: "element", tagName: "br", properties: {}, children: [] };
+  state.patch(node2, result);
+  return [state.applyData(node2, result), { type: "text", value: "\n" }];
+}
+function code$2(state, node2) {
+  const value = node2.value ? node2.value + "\n" : "";
+  const properties = {};
+  const language = node2.lang ? node2.lang.split(/\s+/) : [];
+  if (language.length > 0) {
+    properties.className = ["language-" + language[0]];
+  }
+  let result = {
+    type: "element",
+    tagName: "code",
+    properties,
+    children: [{ type: "text", value }]
+  };
+  if (node2.meta) {
+    result.data = { meta: node2.meta };
+  }
+  state.patch(node2, result);
+  result = state.applyData(node2, result);
+  result = { type: "element", tagName: "pre", properties: {}, children: [result] };
+  state.patch(node2, result);
+  return result;
+}
+function strikethrough(state, node2) {
+  const result = {
+    type: "element",
+    tagName: "del",
+    properties: {},
+    children: state.all(node2)
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function emphasis$1(state, node2) {
+  const result = {
+    type: "element",
+    tagName: "em",
+    properties: {},
+    children: state.all(node2)
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function footnoteReference$1(state, node2) {
+  const clobberPrefix = typeof state.options.clobberPrefix === "string" ? state.options.clobberPrefix : "user-content-";
+  const id = String(node2.identifier).toUpperCase();
+  const safeId = normalizeUri(id.toLowerCase());
+  const index2 = state.footnoteOrder.indexOf(id);
+  let counter2;
+  let reuseCounter = state.footnoteCounts.get(id);
+  if (reuseCounter === void 0) {
+    reuseCounter = 0;
+    state.footnoteOrder.push(id);
+    counter2 = state.footnoteOrder.length;
+  } else {
+    counter2 = index2 + 1;
+  }
+  reuseCounter += 1;
+  state.footnoteCounts.set(id, reuseCounter);
+  const link2 = {
+    type: "element",
+    tagName: "a",
+    properties: {
+      href: "#" + clobberPrefix + "fn-" + safeId,
+      id: clobberPrefix + "fnref-" + safeId + (reuseCounter > 1 ? "-" + reuseCounter : ""),
+      dataFootnoteRef: true,
+      ariaDescribedBy: ["footnote-label"]
+    },
+    children: [{ type: "text", value: String(counter2) }]
+  };
+  state.patch(node2, link2);
+  const sup = {
+    type: "element",
+    tagName: "sup",
+    properties: {},
+    children: [link2]
+  };
+  state.patch(node2, sup);
+  return state.applyData(node2, sup);
+}
+function heading$1(state, node2) {
+  const result = {
+    type: "element",
+    tagName: "h" + node2.depth,
+    properties: {},
+    children: state.all(node2)
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function html$1(state, node2) {
+  if (state.options.allowDangerousHtml) {
+    const result = { type: "raw", value: node2.value };
+    state.patch(node2, result);
+    return state.applyData(node2, result);
+  }
+  return void 0;
+}
+function revert(state, node2) {
+  const subtype = node2.referenceType;
+  let suffix = "]";
+  if (subtype === "collapsed") {
+    suffix += "[]";
+  } else if (subtype === "full") {
+    suffix += "[" + (node2.label || node2.identifier) + "]";
+  }
+  if (node2.type === "imageReference") {
+    return [{ type: "text", value: "![" + node2.alt + suffix }];
+  }
+  const contents = state.all(node2);
+  const head = contents[0];
+  if (head && head.type === "text") {
+    head.value = "[" + head.value;
+  } else {
+    contents.unshift({ type: "text", value: "[" });
+  }
+  const tail = contents[contents.length - 1];
+  if (tail && tail.type === "text") {
+    tail.value += suffix;
+  } else {
+    contents.push({ type: "text", value: suffix });
+  }
+  return contents;
+}
+function imageReference$1(state, node2) {
+  const id = String(node2.identifier).toUpperCase();
+  const definition2 = state.definitionById.get(id);
+  if (!definition2) {
+    return revert(state, node2);
+  }
+  const properties = { src: normalizeUri(definition2.url || ""), alt: node2.alt };
+  if (definition2.title !== null && definition2.title !== void 0) {
+    properties.title = definition2.title;
+  }
+  const result = { type: "element", tagName: "img", properties, children: [] };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function image$1(state, node2) {
+  const properties = { src: normalizeUri(node2.url) };
+  if (node2.alt !== null && node2.alt !== void 0) {
+    properties.alt = node2.alt;
+  }
+  if (node2.title !== null && node2.title !== void 0) {
+    properties.title = node2.title;
+  }
+  const result = { type: "element", tagName: "img", properties, children: [] };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function inlineCode$1(state, node2) {
+  const text2 = { type: "text", value: node2.value.replace(/\r?\n|\r/g, " ") };
+  state.patch(node2, text2);
+  const result = {
+    type: "element",
+    tagName: "code",
+    properties: {},
+    children: [text2]
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function linkReference$1(state, node2) {
+  const id = String(node2.identifier).toUpperCase();
+  const definition2 = state.definitionById.get(id);
+  if (!definition2) {
+    return revert(state, node2);
+  }
+  const properties = { href: normalizeUri(definition2.url || "") };
+  if (definition2.title !== null && definition2.title !== void 0) {
+    properties.title = definition2.title;
+  }
+  const result = {
+    type: "element",
+    tagName: "a",
+    properties,
+    children: state.all(node2)
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function link$1(state, node2) {
+  const properties = { href: normalizeUri(node2.url) };
+  if (node2.title !== null && node2.title !== void 0) {
+    properties.title = node2.title;
+  }
+  const result = {
+    type: "element",
+    tagName: "a",
+    properties,
+    children: state.all(node2)
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function listItem$1(state, node2, parent) {
+  const results = state.all(node2);
+  const loose = parent ? listLoose(parent) : listItemLoose(node2);
+  const properties = {};
+  const children = [];
+  if (typeof node2.checked === "boolean") {
+    const head = results[0];
+    let paragraph2;
+    if (head && head.type === "element" && head.tagName === "p") {
+      paragraph2 = head;
+    } else {
+      paragraph2 = { type: "element", tagName: "p", properties: {}, children: [] };
+      results.unshift(paragraph2);
+    }
+    if (paragraph2.children.length > 0) {
+      paragraph2.children.unshift({ type: "text", value: " " });
+    }
+    paragraph2.children.unshift({
+      type: "element",
+      tagName: "input",
+      properties: { type: "checkbox", checked: node2.checked, disabled: true },
+      children: []
+    });
+    properties.className = ["task-list-item"];
+  }
+  let index2 = -1;
+  while (++index2 < results.length) {
+    const child = results[index2];
+    if (loose || index2 !== 0 || child.type !== "element" || child.tagName !== "p") {
+      children.push({ type: "text", value: "\n" });
+    }
+    if (child.type === "element" && child.tagName === "p" && !loose) {
+      children.push(...child.children);
+    } else {
+      children.push(child);
+    }
+  }
+  const tail = results[results.length - 1];
+  if (tail && (loose || tail.type !== "element" || tail.tagName !== "p")) {
+    children.push({ type: "text", value: "\n" });
+  }
+  const result = { type: "element", tagName: "li", properties, children };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function listLoose(node2) {
+  let loose = false;
+  if (node2.type === "list") {
+    loose = node2.spread || false;
+    const children = node2.children;
+    let index2 = -1;
+    while (!loose && ++index2 < children.length) {
+      loose = listItemLoose(children[index2]);
+    }
+  }
+  return loose;
+}
+function listItemLoose(node2) {
+  const spread = node2.spread;
+  return spread === null || spread === void 0 ? node2.children.length > 1 : spread;
+}
+function list$1(state, node2) {
+  const properties = {};
+  const results = state.all(node2);
+  let index2 = -1;
+  if (typeof node2.start === "number" && node2.start !== 1) {
+    properties.start = node2.start;
+  }
+  while (++index2 < results.length) {
+    const child = results[index2];
+    if (child.type === "element" && child.tagName === "li" && child.properties && Array.isArray(child.properties.className) && child.properties.className.includes("task-list-item")) {
+      properties.className = ["contains-task-list"];
+      break;
+    }
+  }
+  const result = {
+    type: "element",
+    tagName: node2.ordered ? "ol" : "ul",
+    properties,
+    children: state.wrap(results, true)
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function paragraph$1(state, node2) {
+  const result = {
+    type: "element",
+    tagName: "p",
+    properties: {},
+    children: state.all(node2)
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function root$1(state, node2) {
+  const result = { type: "root", children: state.wrap(state.all(node2)) };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function strong$1(state, node2) {
+  const result = {
+    type: "element",
+    tagName: "strong",
+    properties: {},
+    children: state.all(node2)
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function table(state, node2) {
+  const rows = state.all(node2);
+  const firstRow = rows.shift();
+  const tableContent = [];
+  if (firstRow) {
+    const head = {
+      type: "element",
+      tagName: "thead",
+      properties: {},
+      children: state.wrap([firstRow], true)
+    };
+    state.patch(node2.children[0], head);
+    tableContent.push(head);
+  }
+  if (rows.length > 0) {
+    const body = {
+      type: "element",
+      tagName: "tbody",
+      properties: {},
+      children: state.wrap(rows, true)
+    };
+    const start = pointStart(node2.children[1]);
+    const end = pointEnd(node2.children[node2.children.length - 1]);
+    if (start && end) body.position = { start, end };
+    tableContent.push(body);
+  }
+  const result = {
+    type: "element",
+    tagName: "table",
+    properties: {},
+    children: state.wrap(tableContent, true)
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function tableRow(state, node2, parent) {
+  const siblings = parent ? parent.children : void 0;
+  const rowIndex = siblings ? siblings.indexOf(node2) : 1;
+  const tagName = rowIndex === 0 ? "th" : "td";
+  const align = parent && parent.type === "table" ? parent.align : void 0;
+  const length = align ? align.length : node2.children.length;
+  let cellIndex = -1;
+  const cells = [];
+  while (++cellIndex < length) {
+    const cell = node2.children[cellIndex];
+    const properties = {};
+    const alignValue = align ? align[cellIndex] : void 0;
+    if (alignValue) {
+      properties.align = alignValue;
+    }
+    let result2 = { type: "element", tagName, properties, children: [] };
+    if (cell) {
+      result2.children = state.all(cell);
+      state.patch(cell, result2);
+      result2 = state.applyData(cell, result2);
+    }
+    cells.push(result2);
+  }
+  const result = {
+    type: "element",
+    tagName: "tr",
+    properties: {},
+    children: state.wrap(cells, true)
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function tableCell(state, node2) {
+  const result = {
+    type: "element",
+    tagName: "td",
+    // Assume body cell.
+    properties: {},
+    children: state.all(node2)
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+const tab = 9;
+const space = 32;
+function trimLines(value) {
+  const source = String(value);
+  const search2 = /\r?\n|\r/g;
+  let match = search2.exec(source);
+  let last = 0;
+  const lines = [];
+  while (match) {
+    lines.push(
+      trimLine(source.slice(last, match.index), last > 0, true),
+      match[0]
+    );
+    last = match.index + match[0].length;
+    match = search2.exec(source);
+  }
+  lines.push(trimLine(source.slice(last), last > 0, false));
+  return lines.join("");
+}
+function trimLine(value, start, end) {
+  let startIndex = 0;
+  let endIndex = value.length;
+  if (start) {
+    let code2 = value.codePointAt(startIndex);
+    while (code2 === tab || code2 === space) {
+      startIndex++;
+      code2 = value.codePointAt(startIndex);
+    }
+  }
+  if (end) {
+    let code2 = value.codePointAt(endIndex - 1);
+    while (code2 === tab || code2 === space) {
+      endIndex--;
+      code2 = value.codePointAt(endIndex - 1);
+    }
+  }
+  return endIndex > startIndex ? value.slice(startIndex, endIndex) : "";
+}
+function text$2(state, node2) {
+  const result = { type: "text", value: trimLines(String(node2.value)) };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function thematicBreak$1(state, node2) {
+  const result = {
+    type: "element",
+    tagName: "hr",
+    properties: {},
+    children: []
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+const handlers = {
+  blockquote: blockquote$1,
+  break: hardBreak$1,
+  code: code$2,
+  delete: strikethrough,
+  emphasis: emphasis$1,
+  footnoteReference: footnoteReference$1,
+  heading: heading$1,
+  html: html$1,
+  imageReference: imageReference$1,
+  image: image$1,
+  inlineCode: inlineCode$1,
+  linkReference: linkReference$1,
+  link: link$1,
+  listItem: listItem$1,
+  list: list$1,
+  paragraph: paragraph$1,
+  // @ts-expect-error: root is different, but hard to type.
+  root: root$1,
+  strong: strong$1,
+  table,
+  tableCell,
+  tableRow,
+  text: text$2,
+  thematicBreak: thematicBreak$1,
+  toml: ignore,
+  yaml: ignore,
+  definition: ignore,
+  footnoteDefinition: ignore
+};
+function ignore() {
+  return void 0;
+}
+const VOID = -1;
+const PRIMITIVE = 0;
+const ARRAY = 1;
+const OBJECT = 2;
+const DATE = 3;
+const REGEXP = 4;
+const MAP = 5;
+const SET = 6;
+const ERROR = 7;
+const BIGINT = 8;
+const { defineProperty } = Object;
+const env = typeof self === "object" ? self : globalThis;
+const guard = (name2, init) => {
+  switch (name2) {
+    case "Function":
+    case "SharedWorker":
+    case "Worker":
+    case "eval":
+    case "setInterval":
+    case "setTimeout":
+      throw new TypeError("unable to deserialize " + name2);
+  }
+  return new env[name2](init);
+};
+const deserializer = ($2, _) => {
+  const as = (out, index2) => {
+    $2.set(index2, out);
+    return out;
+  };
+  const unpair = (index2) => {
+    if ($2.has(index2))
+      return $2.get(index2);
+    const [type, value] = _[index2];
+    switch (type) {
+      case PRIMITIVE:
+      case VOID:
+        return as(value, index2);
+      case ARRAY: {
+        const arr = as([], index2);
+        for (const index3 of value)
+          arr.push(unpair(index3));
+        return arr;
+      }
+      case OBJECT: {
+        const object = as({}, index2);
+        for (const [key, index3] of value) {
+          const k2 = unpair(key), value2 = unpair(index3);
+          if (k2 === "__proto__") defineProperty(object, k2, {
+            value: value2,
+            configurable: true,
+            enumerable: true,
+            writable: true
+          });
+          else object[k2] = value2;
+        }
+        return object;
+      }
+      case DATE:
+        return as(new Date(value), index2);
+      case REGEXP: {
+        const { source, flags } = value;
+        return as(new RegExp(source, flags), index2);
+      }
+      case MAP: {
+        const map2 = as(/* @__PURE__ */ new Map(), index2);
+        for (const [key, index3] of value)
+          map2.set(unpair(key), unpair(index3));
+        return map2;
+      }
+      case SET: {
+        const set = as(/* @__PURE__ */ new Set(), index2);
+        for (const index3 of value)
+          set.add(unpair(index3));
+        return set;
+      }
+      case ERROR: {
+        const { name: name2, message } = value;
+        return as(
+          typeof env[name2] === "function" ? guard(name2, message) : new Error(message),
+          index2
+        );
+      }
+      case BIGINT:
+        return as(BigInt(value), index2);
+      case "BigInt":
+        return as(Object(BigInt(value)), index2);
+      case "ArrayBuffer":
+        return as(new Uint8Array(value).buffer, value);
+      case "DataView": {
+        const { buffer } = new Uint8Array(value);
+        return as(new DataView(buffer), value);
+      }
+      case "-0":
+        return -0;
+    }
+    return as(guard(type, value), index2);
+  };
+  return unpair;
+};
+const deserialize = (serialized) => deserializer(/* @__PURE__ */ new Map(), serialized)(0);
+const EMPTY = "";
+const { toString } = {};
+const { keys, is } = Object;
+const typeOf = (value) => {
+  const type = typeof value;
+  if (type !== "object" || !value)
+    return [PRIMITIVE, type];
+  const asString = toString.call(value).slice(8, -1);
+  switch (asString) {
+    case "Array":
+      return [ARRAY, EMPTY];
+    case "Object":
+      return [OBJECT, EMPTY];
+    case "Date":
+      return [DATE, EMPTY];
+    case "RegExp":
+      return [REGEXP, EMPTY];
+    case "Map":
+      return [MAP, EMPTY];
+    case "Set":
+      return [SET, EMPTY];
+    case "DataView":
+      return [ARRAY, asString];
+  }
+  if (asString.includes("Array"))
+    return [ARRAY, asString];
+  if (value instanceof Error)
+    return [ERROR, value.name || "Error"];
+  return [OBJECT, asString];
+};
+const shouldSkip = ([TYPE, type]) => TYPE === PRIMITIVE && (type === "function" || type === "symbol");
+const serializer = (strict, json, $2, _) => {
+  const as = (out, value) => {
+    const index2 = _.push(out) - 1;
+    $2.set(value, index2);
+    return index2;
+  };
+  const pair = (value) => {
+    if ($2.has(value))
+      return $2.get(value);
+    let [TYPE, type] = typeOf(value);
+    switch (TYPE) {
+      case PRIMITIVE: {
+        let entry = value;
+        switch (type) {
+          case "bigint":
+            TYPE = BIGINT;
+            entry = value.toString();
+            break;
+          case "number":
+            if (!value && is(value, -0))
+              return _.push(["-0"]) - 1;
+            break;
+          case "function":
+          case "symbol":
+            if (strict)
+              throw new TypeError("unable to serialize " + type);
+            entry = null;
+            break;
+          case "undefined":
+            return as([VOID], value);
+        }
+        return as([TYPE, entry], value);
+      }
+      case ARRAY: {
+        if (type) {
+          let spread = value;
+          if (type === "DataView") {
+            spread = new Uint8Array(value.buffer);
+          } else if (type === "ArrayBuffer") {
+            spread = new Uint8Array(value);
+          }
+          return as([type, [...spread]], value);
+        }
+        const arr = [];
+        const index2 = as([TYPE, arr], value);
+        for (const entry of value)
+          arr.push(pair(entry));
+        return index2;
+      }
+      case OBJECT: {
+        if (type) {
+          switch (type) {
+            case "BigInt":
+              return as([type, value.toString()], value);
+            case "Boolean":
+            case "Number":
+            case "String":
+              return as([type, value.valueOf()], value);
+          }
+        }
+        if (json && "toJSON" in value)
+          return pair(value.toJSON());
+        const entries = [];
+        const index2 = as([TYPE, entries], value);
+        for (const key of keys(value)) {
+          if (strict || !shouldSkip(typeOf(value[key])))
+            entries.push([pair(key), pair(value[key])]);
+        }
+        return index2;
+      }
+      case DATE:
+        return as([TYPE, isNaN(value.getTime()) ? EMPTY : value.toISOString()], value);
+      case REGEXP: {
+        const { source, flags } = value;
+        return as([TYPE, { source, flags }], value);
+      }
+      case MAP: {
+        const entries = [];
+        const index2 = as([TYPE, entries], value);
+        for (const [key, entry] of value) {
+          if (strict || !(shouldSkip(typeOf(key)) || shouldSkip(typeOf(entry))))
+            entries.push([pair(key), pair(entry)]);
+        }
+        return index2;
+      }
+      case SET: {
+        const entries = [];
+        const index2 = as([TYPE, entries], value);
+        for (const entry of value) {
+          if (strict || !shouldSkip(typeOf(entry)))
+            entries.push(pair(entry));
+        }
+        return index2;
+      }
+    }
+    const { message } = value;
+    return as([TYPE, { name: type, message }], value);
+  };
+  return pair;
+};
+const serialize$1 = (value, { json, lossy } = {}) => {
+  const _ = [];
+  return serializer(!(json || lossy), !!json, /* @__PURE__ */ new Map(), _)(value), _;
+};
+const structuredClone$1 = typeof structuredClone === "function" ? (
+  /* c8 ignore start */
+  (any, options) => options && ("json" in options || "lossy" in options) ? deserialize(serialize$1(any, options)) : structuredClone(any)
+) : (any, options) => deserialize(serialize$1(any, options));
+function defaultFootnoteBackContent(_, rereferenceIndex) {
+  const result = [{ type: "text", value: "↩" }];
+  if (rereferenceIndex > 1) {
+    result.push({
+      type: "element",
+      tagName: "sup",
+      properties: {},
+      children: [{ type: "text", value: String(rereferenceIndex) }]
+    });
+  }
+  return result;
+}
+function defaultFootnoteBackLabel(referenceIndex, rereferenceIndex) {
+  return "Back to reference " + (referenceIndex + 1) + (rereferenceIndex > 1 ? "-" + rereferenceIndex : "");
+}
+function footer(state) {
+  const clobberPrefix = typeof state.options.clobberPrefix === "string" ? state.options.clobberPrefix : "user-content-";
+  const footnoteBackContent = state.options.footnoteBackContent || defaultFootnoteBackContent;
+  const footnoteBackLabel = state.options.footnoteBackLabel || defaultFootnoteBackLabel;
+  const footnoteLabel = state.options.footnoteLabel || "Footnotes";
+  const footnoteLabelTagName = state.options.footnoteLabelTagName || "h2";
+  const footnoteLabelProperties = state.options.footnoteLabelProperties || {
+    className: ["sr-only"]
+  };
+  const listItems = [];
+  let referenceIndex = -1;
+  while (++referenceIndex < state.footnoteOrder.length) {
+    const definition2 = state.footnoteById.get(
+      state.footnoteOrder[referenceIndex]
+    );
+    if (!definition2) {
+      continue;
+    }
+    const content2 = state.all(definition2);
+    const id = String(definition2.identifier).toUpperCase();
+    const safeId = normalizeUri(id.toLowerCase());
+    let rereferenceIndex = 0;
+    const backReferences = [];
+    const counts = state.footnoteCounts.get(id);
+    while (counts !== void 0 && ++rereferenceIndex <= counts) {
+      if (backReferences.length > 0) {
+        backReferences.push({ type: "text", value: " " });
+      }
+      let children = typeof footnoteBackContent === "string" ? footnoteBackContent : footnoteBackContent(referenceIndex, rereferenceIndex);
+      if (typeof children === "string") {
+        children = { type: "text", value: children };
+      }
+      backReferences.push({
+        type: "element",
+        tagName: "a",
+        properties: {
+          href: "#" + clobberPrefix + "fnref-" + safeId + (rereferenceIndex > 1 ? "-" + rereferenceIndex : ""),
+          dataFootnoteBackref: "",
+          ariaLabel: typeof footnoteBackLabel === "string" ? footnoteBackLabel : footnoteBackLabel(referenceIndex, rereferenceIndex),
+          className: ["data-footnote-backref"]
+        },
+        children: Array.isArray(children) ? children : [children]
+      });
+    }
+    const tail = content2[content2.length - 1];
+    if (tail && tail.type === "element" && tail.tagName === "p") {
+      const tailTail = tail.children[tail.children.length - 1];
+      if (tailTail && tailTail.type === "text") {
+        tailTail.value += " ";
+      } else {
+        tail.children.push({ type: "text", value: " " });
+      }
+      tail.children.push(...backReferences);
+    } else {
+      content2.push(...backReferences);
+    }
+    const listItem2 = {
+      type: "element",
+      tagName: "li",
+      properties: { id: clobberPrefix + "fn-" + safeId },
+      children: state.wrap(content2, true)
+    };
+    state.patch(definition2, listItem2);
+    listItems.push(listItem2);
+  }
+  if (listItems.length === 0) {
+    return;
+  }
+  return {
+    type: "element",
+    tagName: "section",
+    properties: { dataFootnotes: true, className: ["footnotes"] },
+    children: [
+      {
+        type: "element",
+        tagName: footnoteLabelTagName,
+        properties: {
+          ...structuredClone$1(footnoteLabelProperties),
+          id: "footnote-label"
+        },
+        children: [{ type: "text", value: footnoteLabel }]
+      },
+      { type: "text", value: "\n" },
+      {
+        type: "element",
+        tagName: "ol",
+        properties: {},
+        children: state.wrap(listItems, true)
+      },
+      { type: "text", value: "\n" }
+    ]
+  };
+}
+const convert = (
+  // Note: overloads in JSDoc can’t yet use different `@template`s.
+  /**
+   * @type {(
+   *   (<Condition extends string>(test: Condition) => (node: unknown, index?: number | null | undefined, parent?: Parent | null | undefined, context?: unknown) => node is Node & {type: Condition}) &
+   *   (<Condition extends Props>(test: Condition) => (node: unknown, index?: number | null | undefined, parent?: Parent | null | undefined, context?: unknown) => node is Node & Condition) &
+   *   (<Condition extends TestFunction>(test: Condition) => (node: unknown, index?: number | null | undefined, parent?: Parent | null | undefined, context?: unknown) => node is Node & Predicate<Condition, Node>) &
+   *   ((test?: null | undefined) => (node?: unknown, index?: number | null | undefined, parent?: Parent | null | undefined, context?: unknown) => node is Node) &
+   *   ((test?: Test) => Check)
+   * )}
+   */
+  /**
+   * @param {Test} [test]
+   * @returns {Check}
+   */
+  (function(test) {
+    if (test === null || test === void 0) {
+      return ok;
+    }
+    if (typeof test === "function") {
+      return castFactory(test);
+    }
+    if (typeof test === "object") {
+      return Array.isArray(test) ? anyFactory(test) : (
+        // Cast because `ReadonlyArray` goes into the above but `isArray`
+        // narrows to `Array`.
+        propertiesFactory(
+          /** @type {Props} */
+          test
+        )
+      );
+    }
+    if (typeof test === "string") {
+      return typeFactory(test);
+    }
+    throw new Error("Expected function, string, or object as test");
+  })
+);
+function anyFactory(tests) {
+  const checks2 = [];
+  let index2 = -1;
+  while (++index2 < tests.length) {
+    checks2[index2] = convert(tests[index2]);
+  }
+  return castFactory(any);
+  function any(...parameters) {
+    let index3 = -1;
+    while (++index3 < checks2.length) {
+      if (checks2[index3].apply(this, parameters)) return true;
+    }
+    return false;
+  }
+}
+function propertiesFactory(check) {
+  const checkAsRecord = (
+    /** @type {Record<string, unknown>} */
+    check
+  );
+  return castFactory(all2);
+  function all2(node2) {
+    const nodeAsRecord = (
+      /** @type {Record<string, unknown>} */
+      /** @type {unknown} */
+      node2
+    );
+    let key;
+    for (key in check) {
+      if (nodeAsRecord[key] !== checkAsRecord[key]) return false;
+    }
+    return true;
+  }
+}
+function typeFactory(check) {
+  return castFactory(type);
+  function type(node2) {
+    return node2 && node2.type === check;
+  }
+}
+function castFactory(testFunction) {
+  return check;
+  function check(value, index2, parent) {
+    return Boolean(
+      looksLikeANode(value) && testFunction.call(
+        this,
+        value,
+        typeof index2 === "number" ? index2 : void 0,
+        parent || void 0
+      )
+    );
+  }
+}
+function ok() {
+  return true;
+}
+function looksLikeANode(value) {
+  return value !== null && typeof value === "object" && "type" in value;
+}
+function color(d) {
+  return d;
+}
+const empty = [];
+const CONTINUE = true;
+const EXIT = false;
+const SKIP = "skip";
+function visitParents(tree, test, visitor, reverse) {
+  let check;
+  if (typeof test === "function" && typeof visitor !== "function") {
+    reverse = visitor;
+    visitor = test;
+  } else {
+    check = test;
+  }
+  const is2 = convert(check);
+  const step = reverse ? -1 : 1;
+  factory(tree, void 0, [])();
+  function factory(node2, index2, parents) {
+    const value = (
+      /** @type {Record<string, unknown>} */
+      node2 && typeof node2 === "object" ? node2 : {}
+    );
+    if (typeof value.type === "string") {
+      const name2 = (
+        // `hast`
+        typeof value.tagName === "string" ? value.tagName : (
+          // `xast`
+          typeof value.name === "string" ? value.name : void 0
+        )
+      );
+      Object.defineProperty(visit2, "name", {
+        value: "node (" + color(node2.type + (name2 ? "<" + name2 + ">" : "")) + ")"
+      });
+    }
+    return visit2;
+    function visit2() {
+      let result = empty;
+      let subresult;
+      let offset;
+      let grandparents;
+      if (!test || is2(node2, index2, parents[parents.length - 1] || void 0)) {
+        result = toResult(visitor(node2, parents));
+        if (result[0] === EXIT) {
+          return result;
+        }
+      }
+      if ("children" in node2 && node2.children) {
+        const nodeAsParent = (
+          /** @type {UnistParent} */
+          node2
+        );
+        if (nodeAsParent.children && result[0] !== SKIP) {
+          offset = (reverse ? nodeAsParent.children.length : -1) + step;
+          grandparents = parents.concat(nodeAsParent);
+          while (offset > -1 && offset < nodeAsParent.children.length) {
+            const child = nodeAsParent.children[offset];
+            subresult = factory(child, offset, grandparents)();
+            if (subresult[0] === EXIT) {
+              return subresult;
+            }
+            offset = typeof subresult[1] === "number" ? subresult[1] : offset + step;
+          }
+        }
+      }
+      return result;
+    }
+  }
+}
+function toResult(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (typeof value === "number") {
+    return [CONTINUE, value];
+  }
+  return value === null || value === void 0 ? empty : [value];
+}
+function visit(tree, testOrVisitor, visitorOrReverse, maybeReverse) {
+  let reverse;
+  let test;
+  let visitor;
+  if (typeof testOrVisitor === "function" && typeof visitorOrReverse !== "function") {
+    test = void 0;
+    visitor = testOrVisitor;
+    reverse = visitorOrReverse;
+  } else {
+    test = testOrVisitor;
+    visitor = visitorOrReverse;
+    reverse = maybeReverse;
+  }
+  visitParents(tree, test, overload, reverse);
+  function overload(node2, parents) {
+    const parent = parents[parents.length - 1];
+    const index2 = parent ? parent.children.indexOf(node2) : void 0;
+    return visitor(node2, index2, parent);
+  }
+}
+const own$1 = {}.hasOwnProperty;
+const emptyOptions$1 = {};
+function createState(tree, options) {
+  const settings = options || emptyOptions$1;
+  const definitionById = /* @__PURE__ */ new Map();
+  const footnoteById = /* @__PURE__ */ new Map();
+  const footnoteCounts = /* @__PURE__ */ new Map();
+  const handlers$1 = { ...handlers, ...settings.handlers };
+  const state = {
+    all: all2,
+    applyData,
+    definitionById,
+    footnoteById,
+    footnoteCounts,
+    footnoteOrder: [],
+    handlers: handlers$1,
+    one: one2,
+    options: settings,
+    patch,
+    wrap: wrap$1
+  };
+  visit(tree, function(node2) {
+    if (node2.type === "definition" || node2.type === "footnoteDefinition") {
+      const map2 = node2.type === "definition" ? definitionById : footnoteById;
+      const id = String(node2.identifier).toUpperCase();
+      if (!map2.has(id)) {
+        map2.set(id, node2);
+      }
+    }
+  });
+  return state;
+  function one2(node2, parent) {
+    const type = node2.type;
+    const handle2 = state.handlers[type];
+    if (own$1.call(state.handlers, type) && handle2) {
+      return handle2(state, node2, parent);
+    }
+    if (state.options.passThrough && state.options.passThrough.includes(type)) {
+      if ("children" in node2) {
+        const { children, ...shallow } = node2;
+        const result = structuredClone$1(shallow);
+        result.children = state.all(node2);
+        return result;
+      }
+      return structuredClone$1(node2);
+    }
+    const unknown = state.options.unknownHandler || defaultUnknownHandler;
+    return unknown(state, node2, parent);
+  }
+  function all2(parent) {
+    const values = [];
+    if ("children" in parent) {
+      const nodes = parent.children;
+      let index2 = -1;
+      while (++index2 < nodes.length) {
+        const result = state.one(nodes[index2], parent);
+        if (result) {
+          if (index2 && nodes[index2 - 1].type === "break") {
+            if (!Array.isArray(result) && result.type === "text") {
+              result.value = trimMarkdownSpaceStart(result.value);
+            }
+            if (!Array.isArray(result) && result.type === "element") {
+              const head = result.children[0];
+              if (head && head.type === "text") {
+                head.value = trimMarkdownSpaceStart(head.value);
+              }
+            }
+          }
+          if (Array.isArray(result)) {
+            values.push(...result);
+          } else {
+            values.push(result);
+          }
+        }
+      }
+    }
+    return values;
+  }
+}
+function patch(from, to) {
+  if (from.position) to.position = position$1(from);
+}
+function applyData(from, to) {
+  let result = to;
+  if (from && from.data) {
+    const hName = from.data.hName;
+    const hChildren = from.data.hChildren;
+    const hProperties = from.data.hProperties;
+    if (typeof hName === "string") {
+      if (result.type === "element") {
+        result.tagName = hName;
+      } else {
+        const children = "children" in result ? result.children : [result];
+        result = { type: "element", tagName: hName, properties: {}, children };
+      }
+    }
+    if (result.type === "element" && hProperties) {
+      Object.assign(result.properties, structuredClone$1(hProperties));
+    }
+    if ("children" in result && result.children && hChildren !== null && hChildren !== void 0) {
+      result.children = hChildren;
+    }
+  }
+  return result;
+}
+function defaultUnknownHandler(state, node2) {
+  const data = node2.data || {};
+  const result = "value" in node2 && !(own$1.call(data, "hProperties") || own$1.call(data, "hChildren")) ? { type: "text", value: node2.value } : {
+    type: "element",
+    tagName: "div",
+    properties: {},
+    children: state.all(node2)
+  };
+  state.patch(node2, result);
+  return state.applyData(node2, result);
+}
+function wrap$1(nodes, loose) {
+  const result = [];
+  let index2 = -1;
+  if (loose) {
+    result.push({ type: "text", value: "\n" });
+  }
+  while (++index2 < nodes.length) {
+    if (index2) result.push({ type: "text", value: "\n" });
+    result.push(nodes[index2]);
+  }
+  if (loose && nodes.length > 0) {
+    result.push({ type: "text", value: "\n" });
+  }
+  return result;
+}
+function trimMarkdownSpaceStart(value) {
+  let index2 = 0;
+  let code2 = value.charCodeAt(index2);
+  while (code2 === 9 || code2 === 32) {
+    index2++;
+    code2 = value.charCodeAt(index2);
+  }
+  return value.slice(index2);
+}
+function toHast(tree, options) {
+  const state = createState(tree, options);
+  const node2 = state.one(tree, void 0);
+  const foot = footer(state);
+  const result = Array.isArray(node2) ? { type: "root", children: node2 } : node2 || { type: "root", children: [] };
+  if (foot) {
+    result.children.push({ type: "text", value: "\n" }, foot);
+  }
+  return result;
+}
+function remarkRehype(destination, options) {
+  if (destination && "run" in destination) {
+    return async function(tree, file) {
+      const hastTree = (
+        /** @type {HastRoot} */
+        toHast(tree, { file, ...options })
+      );
+      await destination.run(hastTree, file);
+    };
+  }
+  return function(tree, file) {
+    return (
+      /** @type {HastRoot} */
+      toHast(tree, { file, ...destination || options })
+    );
+  };
+}
+function bail(error) {
+  if (error) {
+    throw error;
+  }
+}
+var extend$1;
+var hasRequiredExtend;
+function requireExtend() {
+  if (hasRequiredExtend) return extend$1;
+  hasRequiredExtend = 1;
+  var hasOwn2 = Object.prototype.hasOwnProperty;
+  var toStr = Object.prototype.toString;
+  var defineProperty2 = Object.defineProperty;
+  var gOPD = Object.getOwnPropertyDescriptor;
+  var isArray = function isArray2(arr) {
+    if (typeof Array.isArray === "function") {
+      return Array.isArray(arr);
+    }
+    return toStr.call(arr) === "[object Array]";
+  };
+  var isPlainObject2 = function isPlainObject3(obj) {
+    if (!obj || toStr.call(obj) !== "[object Object]") {
+      return false;
+    }
+    var hasOwnConstructor = hasOwn2.call(obj, "constructor");
+    var hasIsPrototypeOf = obj.constructor && obj.constructor.prototype && hasOwn2.call(obj.constructor.prototype, "isPrototypeOf");
+    if (obj.constructor && !hasOwnConstructor && !hasIsPrototypeOf) {
+      return false;
+    }
+    var key;
+    for (key in obj) {
+    }
+    return typeof key === "undefined" || hasOwn2.call(obj, key);
+  };
+  var setProperty = function setProperty2(target, options) {
+    if (defineProperty2 && options.name === "__proto__") {
+      defineProperty2(target, options.name, {
+        enumerable: true,
+        configurable: true,
+        value: options.newValue,
+        writable: true
+      });
+    } else {
+      target[options.name] = options.newValue;
+    }
+  };
+  var getProperty = function getProperty2(obj, name2) {
+    if (name2 === "__proto__") {
+      if (!hasOwn2.call(obj, name2)) {
+        return void 0;
+      } else if (gOPD) {
+        return gOPD(obj, name2).value;
+      }
+    }
+    return obj[name2];
+  };
+  extend$1 = function extend2() {
+    var options, name2, src, copy, copyIsArray, clone;
+    var target = arguments[0];
+    var i = 1;
+    var length = arguments.length;
+    var deep = false;
+    if (typeof target === "boolean") {
+      deep = target;
+      target = arguments[1] || {};
+      i = 2;
+    }
+    if (target == null || typeof target !== "object" && typeof target !== "function") {
+      target = {};
+    }
+    for (; i < length; ++i) {
+      options = arguments[i];
+      if (options != null) {
+        for (name2 in options) {
+          src = getProperty(target, name2);
+          copy = getProperty(options, name2);
+          if (target !== copy) {
+            if (deep && copy && (isPlainObject2(copy) || (copyIsArray = isArray(copy)))) {
+              if (copyIsArray) {
+                copyIsArray = false;
+                clone = src && isArray(src) ? src : [];
+              } else {
+                clone = src && isPlainObject2(src) ? src : {};
+              }
+              setProperty(target, { name: name2, newValue: extend2(deep, clone, copy) });
+            } else if (typeof copy !== "undefined") {
+              setProperty(target, { name: name2, newValue: copy });
+            }
+          }
+        }
+      }
+    }
+    return target;
+  };
+  return extend$1;
+}
+var extendExports = requireExtend();
+const extend = /* @__PURE__ */ getDefaultExportFromCjs(extendExports);
+function isPlainObject(value) {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in value) && !(Symbol.iterator in value);
+}
+function trough() {
+  const fns = [];
+  const pipeline = { run, use: use2 };
+  return pipeline;
+  function run(...values) {
+    let middlewareIndex = -1;
+    const callback = values.pop();
+    if (typeof callback !== "function") {
+      throw new TypeError("Expected function as last argument, not " + callback);
+    }
+    next(null, ...values);
+    function next(error, ...output) {
+      const fn = fns[++middlewareIndex];
+      let index2 = -1;
+      if (error) {
+        callback(error);
+        return;
+      }
+      while (++index2 < values.length) {
+        if (output[index2] === null || output[index2] === void 0) {
+          output[index2] = values[index2];
+        }
+      }
+      values = output;
+      if (fn) {
+        wrap(fn, next)(...output);
+      } else {
+        callback(null, ...output);
+      }
+    }
+  }
+  function use2(middelware) {
+    if (typeof middelware !== "function") {
+      throw new TypeError(
+        "Expected `middelware` to be a function, not " + middelware
+      );
+    }
+    fns.push(middelware);
+    return pipeline;
+  }
+}
+function wrap(middleware, callback) {
+  let called;
+  return wrapped;
+  function wrapped(...parameters) {
+    const fnExpectsCallback = middleware.length > parameters.length;
+    let result;
+    if (fnExpectsCallback) {
+      parameters.push(done);
+    }
+    try {
+      result = middleware.apply(this, parameters);
+    } catch (error) {
+      const exception = (
+        /** @type {Error} */
+        error
+      );
+      if (fnExpectsCallback && called) {
+        throw exception;
+      }
+      return done(exception);
+    }
+    if (!fnExpectsCallback) {
+      if (result && result.then && typeof result.then === "function") {
+        result.then(then, done);
+      } else if (result instanceof Error) {
+        done(result);
+      } else {
+        then(result);
+      }
+    }
+  }
+  function done(error, ...output) {
+    if (!called) {
+      called = true;
+      callback(error, ...output);
+    }
+  }
+  function then(value) {
+    done(null, value);
+  }
+}
+const minpath = { basename, dirname, extname, join, sep: "/" };
+function basename(path2, extname2) {
+  if (extname2 !== void 0 && typeof extname2 !== "string") {
+    throw new TypeError('"ext" argument must be a string');
+  }
+  assertPath$1(path2);
+  let start = 0;
+  let end = -1;
+  let index2 = path2.length;
+  let seenNonSlash;
+  if (extname2 === void 0 || extname2.length === 0 || extname2.length > path2.length) {
+    while (index2--) {
+      if (path2.codePointAt(index2) === 47) {
+        if (seenNonSlash) {
+          start = index2 + 1;
+          break;
+        }
+      } else if (end < 0) {
+        seenNonSlash = true;
+        end = index2 + 1;
+      }
+    }
+    return end < 0 ? "" : path2.slice(start, end);
+  }
+  if (extname2 === path2) {
+    return "";
+  }
+  let firstNonSlashEnd = -1;
+  let extnameIndex = extname2.length - 1;
+  while (index2--) {
+    if (path2.codePointAt(index2) === 47) {
+      if (seenNonSlash) {
+        start = index2 + 1;
+        break;
+      }
+    } else {
+      if (firstNonSlashEnd < 0) {
+        seenNonSlash = true;
+        firstNonSlashEnd = index2 + 1;
+      }
+      if (extnameIndex > -1) {
+        if (path2.codePointAt(index2) === extname2.codePointAt(extnameIndex--)) {
+          if (extnameIndex < 0) {
+            end = index2;
+          }
+        } else {
+          extnameIndex = -1;
+          end = firstNonSlashEnd;
+        }
+      }
+    }
+  }
+  if (start === end) {
+    end = firstNonSlashEnd;
+  } else if (end < 0) {
+    end = path2.length;
+  }
+  return path2.slice(start, end);
+}
+function dirname(path2) {
+  assertPath$1(path2);
+  if (path2.length === 0) {
+    return ".";
+  }
+  let end = -1;
+  let index2 = path2.length;
+  let unmatchedSlash;
+  while (--index2) {
+    if (path2.codePointAt(index2) === 47) {
+      if (unmatchedSlash) {
+        end = index2;
+        break;
+      }
+    } else if (!unmatchedSlash) {
+      unmatchedSlash = true;
+    }
+  }
+  return end < 0 ? path2.codePointAt(0) === 47 ? "/" : "." : end === 1 && path2.codePointAt(0) === 47 ? "//" : path2.slice(0, end);
+}
+function extname(path2) {
+  assertPath$1(path2);
+  let index2 = path2.length;
+  let end = -1;
+  let startPart = 0;
+  let startDot = -1;
+  let preDotState = 0;
+  let unmatchedSlash;
+  while (index2--) {
+    const code2 = path2.codePointAt(index2);
+    if (code2 === 47) {
+      if (unmatchedSlash) {
+        startPart = index2 + 1;
+        break;
+      }
+      continue;
+    }
+    if (end < 0) {
+      unmatchedSlash = true;
+      end = index2 + 1;
+    }
+    if (code2 === 46) {
+      if (startDot < 0) {
+        startDot = index2;
+      } else if (preDotState !== 1) {
+        preDotState = 1;
+      }
+    } else if (startDot > -1) {
+      preDotState = -1;
+    }
+  }
+  if (startDot < 0 || end < 0 || // We saw a non-dot character immediately before the dot.
+  preDotState === 0 || // The (right-most) trimmed path component is exactly `..`.
+  preDotState === 1 && startDot === end - 1 && startDot === startPart + 1) {
+    return "";
+  }
+  return path2.slice(startDot, end);
+}
+function join(...segments) {
+  let index2 = -1;
+  let joined;
+  while (++index2 < segments.length) {
+    assertPath$1(segments[index2]);
+    if (segments[index2]) {
+      joined = joined === void 0 ? segments[index2] : joined + "/" + segments[index2];
+    }
+  }
+  return joined === void 0 ? "." : normalize(joined);
+}
+function normalize(path2) {
+  assertPath$1(path2);
+  const absolute = path2.codePointAt(0) === 47;
+  let value = normalizeString(path2, !absolute);
+  if (value.length === 0 && !absolute) {
+    value = ".";
+  }
+  if (value.length > 0 && path2.codePointAt(path2.length - 1) === 47) {
+    value += "/";
+  }
+  return absolute ? "/" + value : value;
+}
+function normalizeString(path2, allowAboveRoot) {
+  let result = "";
+  let lastSegmentLength = 0;
+  let lastSlash = -1;
+  let dots = 0;
+  let index2 = -1;
+  let code2;
+  let lastSlashIndex;
+  while (++index2 <= path2.length) {
+    if (index2 < path2.length) {
+      code2 = path2.codePointAt(index2);
+    } else if (code2 === 47) {
+      break;
+    } else {
+      code2 = 47;
+    }
+    if (code2 === 47) {
+      if (lastSlash === index2 - 1 || dots === 1) ;
+      else if (lastSlash !== index2 - 1 && dots === 2) {
+        if (result.length < 2 || lastSegmentLength !== 2 || result.codePointAt(result.length - 1) !== 46 || result.codePointAt(result.length - 2) !== 46) {
+          if (result.length > 2) {
+            lastSlashIndex = result.lastIndexOf("/");
+            if (lastSlashIndex !== result.length - 1) {
+              if (lastSlashIndex < 0) {
+                result = "";
+                lastSegmentLength = 0;
+              } else {
+                result = result.slice(0, lastSlashIndex);
+                lastSegmentLength = result.length - 1 - result.lastIndexOf("/");
+              }
+              lastSlash = index2;
+              dots = 0;
+              continue;
+            }
+          } else if (result.length > 0) {
+            result = "";
+            lastSegmentLength = 0;
+            lastSlash = index2;
+            dots = 0;
+            continue;
+          }
+        }
+        if (allowAboveRoot) {
+          result = result.length > 0 ? result + "/.." : "..";
+          lastSegmentLength = 2;
+        }
+      } else {
+        if (result.length > 0) {
+          result += "/" + path2.slice(lastSlash + 1, index2);
+        } else {
+          result = path2.slice(lastSlash + 1, index2);
+        }
+        lastSegmentLength = index2 - lastSlash - 1;
+      }
+      lastSlash = index2;
+      dots = 0;
+    } else if (code2 === 46 && dots > -1) {
+      dots++;
+    } else {
+      dots = -1;
+    }
+  }
+  return result;
+}
+function assertPath$1(path2) {
+  if (typeof path2 !== "string") {
+    throw new TypeError(
+      "Path must be a string. Received " + JSON.stringify(path2)
+    );
+  }
+}
+const minproc = { cwd };
+function cwd() {
+  return "/";
+}
+function isUrl(fileUrlOrPath) {
+  return Boolean(
+    fileUrlOrPath !== null && typeof fileUrlOrPath === "object" && "href" in fileUrlOrPath && fileUrlOrPath.href && "protocol" in fileUrlOrPath && fileUrlOrPath.protocol && // @ts-expect-error: indexing is fine.
+    fileUrlOrPath.auth === void 0
+  );
+}
+function urlToPath(path2) {
+  if (typeof path2 === "string") {
+    path2 = new URL(path2);
+  } else if (!isUrl(path2)) {
+    const error = new TypeError(
+      'The "path" argument must be of type string or an instance of URL. Received `' + path2 + "`"
+    );
+    error.code = "ERR_INVALID_ARG_TYPE";
+    throw error;
+  }
+  if (path2.protocol !== "file:") {
+    const error = new TypeError("The URL must be of scheme file");
+    error.code = "ERR_INVALID_URL_SCHEME";
+    throw error;
+  }
+  return getPathFromURLPosix(path2);
+}
+function getPathFromURLPosix(url) {
+  if (url.hostname !== "") {
+    const error = new TypeError(
+      'File URL host must be "localhost" or empty on darwin'
+    );
+    error.code = "ERR_INVALID_FILE_URL_HOST";
+    throw error;
+  }
+  const pathname = url.pathname;
+  let index2 = -1;
+  while (++index2 < pathname.length) {
+    if (pathname.codePointAt(index2) === 37 && pathname.codePointAt(index2 + 1) === 50) {
+      const third = pathname.codePointAt(index2 + 2);
+      if (third === 70 || third === 102) {
+        const error = new TypeError(
+          "File URL path must not include encoded / characters"
+        );
+        error.code = "ERR_INVALID_FILE_URL_PATH";
+        throw error;
+      }
+    }
+  }
+  return decodeURIComponent(pathname);
+}
+const order = (
+  /** @type {const} */
+  [
+    "history",
+    "path",
+    "basename",
+    "stem",
+    "extname",
+    "dirname"
+  ]
+);
+class VFile {
+  /**
+   * Create a new virtual file.
+   *
+   * `options` is treated as:
+   *
+   * *   `string` or `Uint8Array` — `{value: options}`
+   * *   `URL` — `{path: options}`
+   * *   `VFile` — shallow copies its data over to the new file
+   * *   `object` — all fields are shallow copied over to the new file
+   *
+   * Path related fields are set in the following order (least specific to
+   * most specific): `history`, `path`, `basename`, `stem`, `extname`,
+   * `dirname`.
+   *
+   * You cannot set `dirname` or `extname` without setting either `history`,
+   * `path`, `basename`, or `stem` too.
+   *
+   * @param {Compatible | null | undefined} [value]
+   *   File value.
+   * @returns
+   *   New instance.
+   */
+  constructor(value) {
+    let options;
+    if (!value) {
+      options = {};
+    } else if (isUrl(value)) {
+      options = { path: value };
+    } else if (typeof value === "string" || isUint8Array$1(value)) {
+      options = { value };
+    } else {
+      options = value;
+    }
+    this.cwd = "cwd" in options ? "" : minproc.cwd();
+    this.data = {};
+    this.history = [];
+    this.messages = [];
+    this.value;
+    this.map;
+    this.result;
+    this.stored;
+    let index2 = -1;
+    while (++index2 < order.length) {
+      const field2 = order[index2];
+      if (field2 in options && options[field2] !== void 0 && options[field2] !== null) {
+        this[field2] = field2 === "history" ? [...options[field2]] : options[field2];
+      }
+    }
+    let field;
+    for (field in options) {
+      if (!order.includes(field)) {
+        this[field] = options[field];
+      }
+    }
+  }
+  /**
+   * Get the basename (including extname) (example: `'index.min.js'`).
+   *
+   * @returns {string | undefined}
+   *   Basename.
+   */
+  get basename() {
+    return typeof this.path === "string" ? minpath.basename(this.path) : void 0;
+  }
+  /**
+   * Set basename (including extname) (`'index.min.js'`).
+   *
+   * Cannot contain path separators (`'/'` on unix, macOS, and browsers, `'\'`
+   * on windows).
+   * Cannot be nullified (use `file.path = file.dirname` instead).
+   *
+   * @param {string} basename
+   *   Basename.
+   * @returns {undefined}
+   *   Nothing.
+   */
+  set basename(basename2) {
+    assertNonEmpty(basename2, "basename");
+    assertPart(basename2, "basename");
+    this.path = minpath.join(this.dirname || "", basename2);
+  }
+  /**
+   * Get the parent path (example: `'~'`).
+   *
+   * @returns {string | undefined}
+   *   Dirname.
+   */
+  get dirname() {
+    return typeof this.path === "string" ? minpath.dirname(this.path) : void 0;
+  }
+  /**
+   * Set the parent path (example: `'~'`).
+   *
+   * Cannot be set if there’s no `path` yet.
+   *
+   * @param {string | undefined} dirname
+   *   Dirname.
+   * @returns {undefined}
+   *   Nothing.
+   */
+  set dirname(dirname2) {
+    assertPath(this.basename, "dirname");
+    this.path = minpath.join(dirname2 || "", this.basename);
+  }
+  /**
+   * Get the extname (including dot) (example: `'.js'`).
+   *
+   * @returns {string | undefined}
+   *   Extname.
+   */
+  get extname() {
+    return typeof this.path === "string" ? minpath.extname(this.path) : void 0;
+  }
+  /**
+   * Set the extname (including dot) (example: `'.js'`).
+   *
+   * Cannot contain path separators (`'/'` on unix, macOS, and browsers, `'\'`
+   * on windows).
+   * Cannot be set if there’s no `path` yet.
+   *
+   * @param {string | undefined} extname
+   *   Extname.
+   * @returns {undefined}
+   *   Nothing.
+   */
+  set extname(extname2) {
+    assertPart(extname2, "extname");
+    assertPath(this.dirname, "extname");
+    if (extname2) {
+      if (extname2.codePointAt(0) !== 46) {
+        throw new Error("`extname` must start with `.`");
+      }
+      if (extname2.includes(".", 1)) {
+        throw new Error("`extname` cannot contain multiple dots");
+      }
+    }
+    this.path = minpath.join(this.dirname, this.stem + (extname2 || ""));
+  }
+  /**
+   * Get the full path (example: `'~/index.min.js'`).
+   *
+   * @returns {string}
+   *   Path.
+   */
+  get path() {
+    return this.history[this.history.length - 1];
+  }
+  /**
+   * Set the full path (example: `'~/index.min.js'`).
+   *
+   * Cannot be nullified.
+   * You can set a file URL (a `URL` object with a `file:` protocol) which will
+   * be turned into a path with `url.fileURLToPath`.
+   *
+   * @param {URL | string} path
+   *   Path.
+   * @returns {undefined}
+   *   Nothing.
+   */
+  set path(path2) {
+    if (isUrl(path2)) {
+      path2 = urlToPath(path2);
+    }
+    assertNonEmpty(path2, "path");
+    if (this.path !== path2) {
+      this.history.push(path2);
+    }
+  }
+  /**
+   * Get the stem (basename w/o extname) (example: `'index.min'`).
+   *
+   * @returns {string | undefined}
+   *   Stem.
+   */
+  get stem() {
+    return typeof this.path === "string" ? minpath.basename(this.path, this.extname) : void 0;
+  }
+  /**
+   * Set the stem (basename w/o extname) (example: `'index.min'`).
+   *
+   * Cannot contain path separators (`'/'` on unix, macOS, and browsers, `'\'`
+   * on windows).
+   * Cannot be nullified (use `file.path = file.dirname` instead).
+   *
+   * @param {string} stem
+   *   Stem.
+   * @returns {undefined}
+   *   Nothing.
+   */
+  set stem(stem) {
+    assertNonEmpty(stem, "stem");
+    assertPart(stem, "stem");
+    this.path = minpath.join(this.dirname || "", stem + (this.extname || ""));
+  }
+  // Normal prototypal methods.
+  /**
+   * Create a fatal message for `reason` associated with the file.
+   *
+   * The `fatal` field of the message is set to `true` (error; file not usable)
+   * and the `file` field is set to the current file path.
+   * The message is added to the `messages` field on `file`.
+   *
+   * > 🪦 **Note**: also has obsolete signatures.
+   *
+   * @overload
+   * @param {string} reason
+   * @param {MessageOptions | null | undefined} [options]
+   * @returns {never}
+   *
+   * @overload
+   * @param {string} reason
+   * @param {Node | NodeLike | null | undefined} parent
+   * @param {string | null | undefined} [origin]
+   * @returns {never}
+   *
+   * @overload
+   * @param {string} reason
+   * @param {Point | Position | null | undefined} place
+   * @param {string | null | undefined} [origin]
+   * @returns {never}
+   *
+   * @overload
+   * @param {string} reason
+   * @param {string | null | undefined} [origin]
+   * @returns {never}
+   *
+   * @overload
+   * @param {Error | VFileMessage} cause
+   * @param {Node | NodeLike | null | undefined} parent
+   * @param {string | null | undefined} [origin]
+   * @returns {never}
+   *
+   * @overload
+   * @param {Error | VFileMessage} cause
+   * @param {Point | Position | null | undefined} place
+   * @param {string | null | undefined} [origin]
+   * @returns {never}
+   *
+   * @overload
+   * @param {Error | VFileMessage} cause
+   * @param {string | null | undefined} [origin]
+   * @returns {never}
+   *
+   * @param {Error | VFileMessage | string} causeOrReason
+   *   Reason for message, should use markdown.
+   * @param {Node | NodeLike | MessageOptions | Point | Position | string | null | undefined} [optionsOrParentOrPlace]
+   *   Configuration (optional).
+   * @param {string | null | undefined} [origin]
+   *   Place in code where the message originates (example:
+   *   `'my-package:my-rule'` or `'my-rule'`).
+   * @returns {never}
+   *   Never.
+   * @throws {VFileMessage}
+   *   Message.
+   */
+  fail(causeOrReason, optionsOrParentOrPlace, origin) {
+    const message = this.message(causeOrReason, optionsOrParentOrPlace, origin);
+    message.fatal = true;
+    throw message;
+  }
+  /**
+   * Create an info message for `reason` associated with the file.
+   *
+   * The `fatal` field of the message is set to `undefined` (info; change
+   * likely not needed) and the `file` field is set to the current file path.
+   * The message is added to the `messages` field on `file`.
+   *
+   * > 🪦 **Note**: also has obsolete signatures.
+   *
+   * @overload
+   * @param {string} reason
+   * @param {MessageOptions | null | undefined} [options]
+   * @returns {VFileMessage}
+   *
+   * @overload
+   * @param {string} reason
+   * @param {Node | NodeLike | null | undefined} parent
+   * @param {string | null | undefined} [origin]
+   * @returns {VFileMessage}
+   *
+   * @overload
+   * @param {string} reason
+   * @param {Point | Position | null | undefined} place
+   * @param {string | null | undefined} [origin]
+   * @returns {VFileMessage}
+   *
+   * @overload
+   * @param {string} reason
+   * @param {string | null | undefined} [origin]
+   * @returns {VFileMessage}
+   *
+   * @overload
+   * @param {Error | VFileMessage} cause
+   * @param {Node | NodeLike | null | undefined} parent
+   * @param {string | null | undefined} [origin]
+   * @returns {VFileMessage}
+   *
+   * @overload
+   * @param {Error | VFileMessage} cause
+   * @param {Point | Position | null | undefined} place
+   * @param {string | null | undefined} [origin]
+   * @returns {VFileMessage}
+   *
+   * @overload
+   * @param {Error | VFileMessage} cause
+   * @param {string | null | undefined} [origin]
+   * @returns {VFileMessage}
+   *
+   * @param {Error | VFileMessage | string} causeOrReason
+   *   Reason for message, should use markdown.
+   * @param {Node | NodeLike | MessageOptions | Point | Position | string | null | undefined} [optionsOrParentOrPlace]
+   *   Configuration (optional).
+   * @param {string | null | undefined} [origin]
+   *   Place in code where the message originates (example:
+   *   `'my-package:my-rule'` or `'my-rule'`).
+   * @returns {VFileMessage}
+   *   Message.
+   */
+  info(causeOrReason, optionsOrParentOrPlace, origin) {
+    const message = this.message(causeOrReason, optionsOrParentOrPlace, origin);
+    message.fatal = void 0;
+    return message;
+  }
+  /**
+   * Create a message for `reason` associated with the file.
+   *
+   * The `fatal` field of the message is set to `false` (warning; change may be
+   * needed) and the `file` field is set to the current file path.
+   * The message is added to the `messages` field on `file`.
+   *
+   * > 🪦 **Note**: also has obsolete signatures.
+   *
+   * @overload
+   * @param {string} reason
+   * @param {MessageOptions | null | undefined} [options]
+   * @returns {VFileMessage}
+   *
+   * @overload
+   * @param {string} reason
+   * @param {Node | NodeLike | null | undefined} parent
+   * @param {string | null | undefined} [origin]
+   * @returns {VFileMessage}
+   *
+   * @overload
+   * @param {string} reason
+   * @param {Point | Position | null | undefined} place
+   * @param {string | null | undefined} [origin]
+   * @returns {VFileMessage}
+   *
+   * @overload
+   * @param {string} reason
+   * @param {string | null | undefined} [origin]
+   * @returns {VFileMessage}
+   *
+   * @overload
+   * @param {Error | VFileMessage} cause
+   * @param {Node | NodeLike | null | undefined} parent
+   * @param {string | null | undefined} [origin]
+   * @returns {VFileMessage}
+   *
+   * @overload
+   * @param {Error | VFileMessage} cause
+   * @param {Point | Position | null | undefined} place
+   * @param {string | null | undefined} [origin]
+   * @returns {VFileMessage}
+   *
+   * @overload
+   * @param {Error | VFileMessage} cause
+   * @param {string | null | undefined} [origin]
+   * @returns {VFileMessage}
+   *
+   * @param {Error | VFileMessage | string} causeOrReason
+   *   Reason for message, should use markdown.
+   * @param {Node | NodeLike | MessageOptions | Point | Position | string | null | undefined} [optionsOrParentOrPlace]
+   *   Configuration (optional).
+   * @param {string | null | undefined} [origin]
+   *   Place in code where the message originates (example:
+   *   `'my-package:my-rule'` or `'my-rule'`).
+   * @returns {VFileMessage}
+   *   Message.
+   */
+  message(causeOrReason, optionsOrParentOrPlace, origin) {
+    const message = new VFileMessage(
+      // @ts-expect-error: the overloads are fine.
+      causeOrReason,
+      optionsOrParentOrPlace,
+      origin
+    );
+    if (this.path) {
+      message.name = this.path + ":" + message.name;
+      message.file = this.path;
+    }
+    message.fatal = false;
+    this.messages.push(message);
+    return message;
+  }
+  /**
+   * Serialize the file.
+   *
+   * > **Note**: which encodings are supported depends on the engine.
+   * > For info on Node.js, see:
+   * > <https://nodejs.org/api/util.html#whatwg-supported-encodings>.
+   *
+   * @param {string | null | undefined} [encoding='utf8']
+   *   Character encoding to understand `value` as when it’s a `Uint8Array`
+   *   (default: `'utf-8'`).
+   * @returns {string}
+   *   Serialized file.
+   */
+  toString(encoding) {
+    if (this.value === void 0) {
+      return "";
+    }
+    if (typeof this.value === "string") {
+      return this.value;
+    }
+    const decoder = new TextDecoder(encoding || void 0);
+    return decoder.decode(this.value);
+  }
+}
+function assertPart(part, name2) {
+  if (part && part.includes(minpath.sep)) {
+    throw new Error(
+      "`" + name2 + "` cannot be a path: did not expect `" + minpath.sep + "`"
+    );
+  }
+}
+function assertNonEmpty(part, name2) {
+  if (!part) {
+    throw new Error("`" + name2 + "` cannot be empty");
+  }
+}
+function assertPath(path2, name2) {
+  if (!path2) {
+    throw new Error("Setting `" + name2 + "` requires `path` to be set too");
+  }
+}
+function isUint8Array$1(value) {
+  return Boolean(
+    value && typeof value === "object" && "byteLength" in value && "byteOffset" in value
+  );
+}
+const CallableInstance = (
+  /**
+   * @type {new <Parameters extends Array<unknown>, Result>(property: string | symbol) => (...parameters: Parameters) => Result}
+   */
+  /** @type {unknown} */
+  /**
+   * @this {Function}
+   * @param {string | symbol} property
+   * @returns {(...parameters: Array<unknown>) => unknown}
+   */
+  (function(property) {
+    const self2 = this;
+    const constr = self2.constructor;
+    const proto = (
+      /** @type {Record<string | symbol, Function>} */
+      // Prototypes do exist.
+      // type-coverage:ignore-next-line
+      constr.prototype
+    );
+    const value = proto[property];
+    const apply = function() {
+      return value.apply(apply, arguments);
+    };
+    Object.setPrototypeOf(apply, proto);
+    return apply;
+  })
+);
+const own = {}.hasOwnProperty;
+class Processor extends CallableInstance {
+  /**
+   * Create a processor.
+   */
+  constructor() {
+    super("copy");
+    this.Compiler = void 0;
+    this.Parser = void 0;
+    this.attachers = [];
+    this.compiler = void 0;
+    this.freezeIndex = -1;
+    this.frozen = void 0;
+    this.namespace = {};
+    this.parser = void 0;
+    this.transformers = trough();
+  }
+  /**
+   * Copy a processor.
+   *
+   * @deprecated
+   *   This is a private internal method and should not be used.
+   * @returns {Processor<ParseTree, HeadTree, TailTree, CompileTree, CompileResult>}
+   *   New *unfrozen* processor ({@linkcode Processor}) that is
+   *   configured to work the same as its ancestor.
+   *   When the descendant processor is configured in the future it does not
+   *   affect the ancestral processor.
+   */
+  copy() {
+    const destination = (
+      /** @type {Processor<ParseTree, HeadTree, TailTree, CompileTree, CompileResult>} */
+      new Processor()
+    );
+    let index2 = -1;
+    while (++index2 < this.attachers.length) {
+      const attacher = this.attachers[index2];
+      destination.use(...attacher);
+    }
+    destination.data(extend(true, {}, this.namespace));
+    return destination;
+  }
+  /**
+   * Configure the processor with info available to all plugins.
+   * Information is stored in an object.
+   *
+   * Typically, options can be given to a specific plugin, but sometimes it
+   * makes sense to have information shared with several plugins.
+   * For example, a list of HTML elements that are self-closing, which is
+   * needed during all phases.
+   *
+   * > **Note**: setting information cannot occur on *frozen* processors.
+   * > Call the processor first to create a new unfrozen processor.
+   *
+   * > **Note**: to register custom data in TypeScript, augment the
+   * > {@linkcode Data} interface.
+   *
+   * @example
+   *   This example show how to get and set info:
+   *
+   *   ```js
+   *   import {unified} from 'unified'
+   *
+   *   const processor = unified().data('alpha', 'bravo')
+   *
+   *   processor.data('alpha') // => 'bravo'
+   *
+   *   processor.data() // => {alpha: 'bravo'}
+   *
+   *   processor.data({charlie: 'delta'})
+   *
+   *   processor.data() // => {charlie: 'delta'}
+   *   ```
+   *
+   * @template {keyof Data} Key
+   *
+   * @overload
+   * @returns {Data}
+   *
+   * @overload
+   * @param {Data} dataset
+   * @returns {Processor<ParseTree, HeadTree, TailTree, CompileTree, CompileResult>}
+   *
+   * @overload
+   * @param {Key} key
+   * @returns {Data[Key]}
+   *
+   * @overload
+   * @param {Key} key
+   * @param {Data[Key]} value
+   * @returns {Processor<ParseTree, HeadTree, TailTree, CompileTree, CompileResult>}
+   *
+   * @param {Data | Key} [key]
+   *   Key to get or set, or entire dataset to set, or nothing to get the
+   *   entire dataset (optional).
+   * @param {Data[Key]} [value]
+   *   Value to set (optional).
+   * @returns {unknown}
+   *   The current processor when setting, the value at `key` when getting, or
+   *   the entire dataset when getting without key.
+   */
+  data(key, value) {
+    if (typeof key === "string") {
+      if (arguments.length === 2) {
+        assertUnfrozen("data", this.frozen);
+        this.namespace[key] = value;
+        return this;
+      }
+      return own.call(this.namespace, key) && this.namespace[key] || void 0;
+    }
+    if (key) {
+      assertUnfrozen("data", this.frozen);
+      this.namespace = key;
+      return this;
+    }
+    return this.namespace;
+  }
+  /**
+   * Freeze a processor.
+   *
+   * Frozen processors are meant to be extended and not to be configured
+   * directly.
+   *
+   * When a processor is frozen it cannot be unfrozen.
+   * New processors working the same way can be created by calling the
+   * processor.
+   *
+   * It’s possible to freeze processors explicitly by calling `.freeze()`.
+   * Processors freeze automatically when `.parse()`, `.run()`, `.runSync()`,
+   * `.stringify()`, `.process()`, or `.processSync()` are called.
+   *
+   * @returns {Processor<ParseTree, HeadTree, TailTree, CompileTree, CompileResult>}
+   *   The current processor.
+   */
+  freeze() {
+    if (this.frozen) {
+      return this;
+    }
+    const self2 = (
+      /** @type {Processor} */
+      /** @type {unknown} */
+      this
+    );
+    while (++this.freezeIndex < this.attachers.length) {
+      const [attacher, ...options] = this.attachers[this.freezeIndex];
+      if (options[0] === false) {
+        continue;
+      }
+      if (options[0] === true) {
+        options[0] = void 0;
+      }
+      const transformer = attacher.call(self2, ...options);
+      if (typeof transformer === "function") {
+        this.transformers.use(transformer);
+      }
+    }
+    this.frozen = true;
+    this.freezeIndex = Number.POSITIVE_INFINITY;
+    return this;
+  }
+  /**
+   * Parse text to a syntax tree.
+   *
+   * > **Note**: `parse` freezes the processor if not already *frozen*.
+   *
+   * > **Note**: `parse` performs the parse phase, not the run phase or other
+   * > phases.
+   *
+   * @param {Compatible | undefined} [file]
+   *   file to parse (optional); typically `string` or `VFile`; any value
+   *   accepted as `x` in `new VFile(x)`.
+   * @returns {ParseTree extends undefined ? Node : ParseTree}
+   *   Syntax tree representing `file`.
+   */
+  parse(file) {
+    this.freeze();
+    const realFile = vfile(file);
+    const parser = this.parser || this.Parser;
+    assertParser("parse", parser);
+    return parser(String(realFile), realFile);
+  }
+  /**
+   * Process the given file as configured on the processor.
+   *
+   * > **Note**: `process` freezes the processor if not already *frozen*.
+   *
+   * > **Note**: `process` performs the parse, run, and stringify phases.
+   *
+   * @overload
+   * @param {Compatible | undefined} file
+   * @param {ProcessCallback<VFileWithOutput<CompileResult>>} done
+   * @returns {undefined}
+   *
+   * @overload
+   * @param {Compatible | undefined} [file]
+   * @returns {Promise<VFileWithOutput<CompileResult>>}
+   *
+   * @param {Compatible | undefined} [file]
+   *   File (optional); typically `string` or `VFile`]; any value accepted as
+   *   `x` in `new VFile(x)`.
+   * @param {ProcessCallback<VFileWithOutput<CompileResult>> | undefined} [done]
+   *   Callback (optional).
+   * @returns {Promise<VFile> | undefined}
+   *   Nothing if `done` is given.
+   *   Otherwise a promise, rejected with a fatal error or resolved with the
+   *   processed file.
+   *
+   *   The parsed, transformed, and compiled value is available at
+   *   `file.value` (see note).
+   *
+   *   > **Note**: unified typically compiles by serializing: most
+   *   > compilers return `string` (or `Uint8Array`).
+   *   > Some compilers, such as the one configured with
+   *   > [`rehype-react`][rehype-react], return other values (in this case, a
+   *   > React tree).
+   *   > If you’re using a compiler that doesn’t serialize, expect different
+   *   > result values.
+   *   >
+   *   > To register custom results in TypeScript, add them to
+   *   > {@linkcode CompileResultMap}.
+   *
+   *   [rehype-react]: https://github.com/rehypejs/rehype-react
+   */
+  process(file, done) {
+    const self2 = this;
+    this.freeze();
+    assertParser("process", this.parser || this.Parser);
+    assertCompiler("process", this.compiler || this.Compiler);
+    return done ? executor(void 0, done) : new Promise(executor);
+    function executor(resolve, reject) {
+      const realFile = vfile(file);
+      const parseTree = (
+        /** @type {HeadTree extends undefined ? Node : HeadTree} */
+        /** @type {unknown} */
+        self2.parse(realFile)
+      );
+      self2.run(parseTree, realFile, function(error, tree, file2) {
+        if (error || !tree || !file2) {
+          return realDone(error);
+        }
+        const compileTree = (
+          /** @type {CompileTree extends undefined ? Node : CompileTree} */
+          /** @type {unknown} */
+          tree
+        );
+        const compileResult = self2.stringify(compileTree, file2);
+        if (looksLikeAValue(compileResult)) {
+          file2.value = compileResult;
+        } else {
+          file2.result = compileResult;
+        }
+        realDone(
+          error,
+          /** @type {VFileWithOutput<CompileResult>} */
+          file2
+        );
+      });
+      function realDone(error, file2) {
+        if (error || !file2) {
+          reject(error);
+        } else if (resolve) {
+          resolve(file2);
+        } else {
+          done(void 0, file2);
+        }
+      }
+    }
+  }
+  /**
+   * Process the given file as configured on the processor.
+   *
+   * An error is thrown if asynchronous transforms are configured.
+   *
+   * > **Note**: `processSync` freezes the processor if not already *frozen*.
+   *
+   * > **Note**: `processSync` performs the parse, run, and stringify phases.
+   *
+   * @param {Compatible | undefined} [file]
+   *   File (optional); typically `string` or `VFile`; any value accepted as
+   *   `x` in `new VFile(x)`.
+   * @returns {VFileWithOutput<CompileResult>}
+   *   The processed file.
+   *
+   *   The parsed, transformed, and compiled value is available at
+   *   `file.value` (see note).
+   *
+   *   > **Note**: unified typically compiles by serializing: most
+   *   > compilers return `string` (or `Uint8Array`).
+   *   > Some compilers, such as the one configured with
+   *   > [`rehype-react`][rehype-react], return other values (in this case, a
+   *   > React tree).
+   *   > If you’re using a compiler that doesn’t serialize, expect different
+   *   > result values.
+   *   >
+   *   > To register custom results in TypeScript, add them to
+   *   > {@linkcode CompileResultMap}.
+   *
+   *   [rehype-react]: https://github.com/rehypejs/rehype-react
+   */
+  processSync(file) {
+    let complete = false;
+    let result;
+    this.freeze();
+    assertParser("processSync", this.parser || this.Parser);
+    assertCompiler("processSync", this.compiler || this.Compiler);
+    this.process(file, realDone);
+    assertDone("processSync", "process", complete);
+    return result;
+    function realDone(error, file2) {
+      complete = true;
+      bail(error);
+      result = file2;
+    }
+  }
+  /**
+   * Run *transformers* on a syntax tree.
+   *
+   * > **Note**: `run` freezes the processor if not already *frozen*.
+   *
+   * > **Note**: `run` performs the run phase, not other phases.
+   *
+   * @overload
+   * @param {HeadTree extends undefined ? Node : HeadTree} tree
+   * @param {RunCallback<TailTree extends undefined ? Node : TailTree>} done
+   * @returns {undefined}
+   *
+   * @overload
+   * @param {HeadTree extends undefined ? Node : HeadTree} tree
+   * @param {Compatible | undefined} file
+   * @param {RunCallback<TailTree extends undefined ? Node : TailTree>} done
+   * @returns {undefined}
+   *
+   * @overload
+   * @param {HeadTree extends undefined ? Node : HeadTree} tree
+   * @param {Compatible | undefined} [file]
+   * @returns {Promise<TailTree extends undefined ? Node : TailTree>}
+   *
+   * @param {HeadTree extends undefined ? Node : HeadTree} tree
+   *   Tree to transform and inspect.
+   * @param {(
+   *   RunCallback<TailTree extends undefined ? Node : TailTree> |
+   *   Compatible
+   * )} [file]
+   *   File associated with `node` (optional); any value accepted as `x` in
+   *   `new VFile(x)`.
+   * @param {RunCallback<TailTree extends undefined ? Node : TailTree>} [done]
+   *   Callback (optional).
+   * @returns {Promise<TailTree extends undefined ? Node : TailTree> | undefined}
+   *   Nothing if `done` is given.
+   *   Otherwise, a promise rejected with a fatal error or resolved with the
+   *   transformed tree.
+   */
+  run(tree, file, done) {
+    assertNode(tree);
+    this.freeze();
+    const transformers = this.transformers;
+    if (!done && typeof file === "function") {
+      done = file;
+      file = void 0;
+    }
+    return done ? executor(void 0, done) : new Promise(executor);
+    function executor(resolve, reject) {
+      const realFile = vfile(file);
+      transformers.run(tree, realFile, realDone);
+      function realDone(error, outputTree, file2) {
+        const resultingTree = (
+          /** @type {TailTree extends undefined ? Node : TailTree} */
+          outputTree || tree
+        );
+        if (error) {
+          reject(error);
+        } else if (resolve) {
+          resolve(resultingTree);
+        } else {
+          done(void 0, resultingTree, file2);
+        }
+      }
+    }
+  }
+  /**
+   * Run *transformers* on a syntax tree.
+   *
+   * An error is thrown if asynchronous transforms are configured.
+   *
+   * > **Note**: `runSync` freezes the processor if not already *frozen*.
+   *
+   * > **Note**: `runSync` performs the run phase, not other phases.
+   *
+   * @param {HeadTree extends undefined ? Node : HeadTree} tree
+   *   Tree to transform and inspect.
+   * @param {Compatible | undefined} [file]
+   *   File associated with `node` (optional); any value accepted as `x` in
+   *   `new VFile(x)`.
+   * @returns {TailTree extends undefined ? Node : TailTree}
+   *   Transformed tree.
+   */
+  runSync(tree, file) {
+    let complete = false;
+    let result;
+    this.run(tree, file, realDone);
+    assertDone("runSync", "run", complete);
+    return result;
+    function realDone(error, tree2) {
+      bail(error);
+      result = tree2;
+      complete = true;
+    }
+  }
+  /**
+   * Compile a syntax tree.
+   *
+   * > **Note**: `stringify` freezes the processor if not already *frozen*.
+   *
+   * > **Note**: `stringify` performs the stringify phase, not the run phase
+   * > or other phases.
+   *
+   * @param {CompileTree extends undefined ? Node : CompileTree} tree
+   *   Tree to compile.
+   * @param {Compatible | undefined} [file]
+   *   File associated with `node` (optional); any value accepted as `x` in
+   *   `new VFile(x)`.
+   * @returns {CompileResult extends undefined ? Value : CompileResult}
+   *   Textual representation of the tree (see note).
+   *
+   *   > **Note**: unified typically compiles by serializing: most compilers
+   *   > return `string` (or `Uint8Array`).
+   *   > Some compilers, such as the one configured with
+   *   > [`rehype-react`][rehype-react], return other values (in this case, a
+   *   > React tree).
+   *   > If you’re using a compiler that doesn’t serialize, expect different
+   *   > result values.
+   *   >
+   *   > To register custom results in TypeScript, add them to
+   *   > {@linkcode CompileResultMap}.
+   *
+   *   [rehype-react]: https://github.com/rehypejs/rehype-react
+   */
+  stringify(tree, file) {
+    this.freeze();
+    const realFile = vfile(file);
+    const compiler2 = this.compiler || this.Compiler;
+    assertCompiler("stringify", compiler2);
+    assertNode(tree);
+    return compiler2(tree, realFile);
+  }
+  /**
+   * Configure the processor to use a plugin, a list of usable values, or a
+   * preset.
+   *
+   * If the processor is already using a plugin, the previous plugin
+   * configuration is changed based on the options that are passed in.
+   * In other words, the plugin is not added a second time.
+   *
+   * > **Note**: `use` cannot be called on *frozen* processors.
+   * > Call the processor first to create a new unfrozen processor.
+   *
+   * @example
+   *   There are many ways to pass plugins to `.use()`.
+   *   This example gives an overview:
+   *
+   *   ```js
+   *   import {unified} from 'unified'
+   *
+   *   unified()
+   *     // Plugin with options:
+   *     .use(pluginA, {x: true, y: true})
+   *     // Passing the same plugin again merges configuration (to `{x: true, y: false, z: true}`):
+   *     .use(pluginA, {y: false, z: true})
+   *     // Plugins:
+   *     .use([pluginB, pluginC])
+   *     // Two plugins, the second with options:
+   *     .use([pluginD, [pluginE, {}]])
+   *     // Preset with plugins and settings:
+   *     .use({plugins: [pluginF, [pluginG, {}]], settings: {position: false}})
+   *     // Settings only:
+   *     .use({settings: {position: false}})
+   *   ```
+   *
+   * @template {Array<unknown>} [Parameters=[]]
+   * @template {Node | string | undefined} [Input=undefined]
+   * @template [Output=Input]
+   *
+   * @overload
+   * @param {Preset | null | undefined} [preset]
+   * @returns {Processor<ParseTree, HeadTree, TailTree, CompileTree, CompileResult>}
+   *
+   * @overload
+   * @param {PluggableList} list
+   * @returns {Processor<ParseTree, HeadTree, TailTree, CompileTree, CompileResult>}
+   *
+   * @overload
+   * @param {Plugin<Parameters, Input, Output>} plugin
+   * @param {...(Parameters | [boolean])} parameters
+   * @returns {UsePlugin<ParseTree, HeadTree, TailTree, CompileTree, CompileResult, Input, Output>}
+   *
+   * @param {PluggableList | Plugin | Preset | null | undefined} value
+   *   Usable value.
+   * @param {...unknown} parameters
+   *   Parameters, when a plugin is given as a usable value.
+   * @returns {Processor<ParseTree, HeadTree, TailTree, CompileTree, CompileResult>}
+   *   Current processor.
+   */
+  use(value, ...parameters) {
+    const attachers = this.attachers;
+    const namespace = this.namespace;
+    assertUnfrozen("use", this.frozen);
+    if (value === null || value === void 0) ;
+    else if (typeof value === "function") {
+      addPlugin(value, parameters);
+    } else if (typeof value === "object") {
+      if (Array.isArray(value)) {
+        addList(value);
+      } else {
+        addPreset(value);
+      }
+    } else {
+      throw new TypeError("Expected usable value, not `" + value + "`");
+    }
+    return this;
+    function add(value2) {
+      if (typeof value2 === "function") {
+        addPlugin(value2, []);
+      } else if (typeof value2 === "object") {
+        if (Array.isArray(value2)) {
+          const [plugin, ...parameters2] = (
+            /** @type {PluginTuple<Array<unknown>>} */
+            value2
+          );
+          addPlugin(plugin, parameters2);
+        } else {
+          addPreset(value2);
+        }
+      } else {
+        throw new TypeError("Expected usable value, not `" + value2 + "`");
+      }
+    }
+    function addPreset(result) {
+      if (!("plugins" in result) && !("settings" in result)) {
+        throw new Error(
+          "Expected usable value but received an empty preset, which is probably a mistake: presets typically come with `plugins` and sometimes with `settings`, but this has neither"
+        );
+      }
+      addList(result.plugins);
+      if (result.settings) {
+        namespace.settings = extend(true, namespace.settings, result.settings);
+      }
+    }
+    function addList(plugins) {
+      let index2 = -1;
+      if (plugins === null || plugins === void 0) ;
+      else if (Array.isArray(plugins)) {
+        while (++index2 < plugins.length) {
+          const thing = plugins[index2];
+          add(thing);
+        }
+      } else {
+        throw new TypeError("Expected a list of plugins, not `" + plugins + "`");
+      }
+    }
+    function addPlugin(plugin, parameters2) {
+      let index2 = -1;
+      let entryIndex = -1;
+      while (++index2 < attachers.length) {
+        if (attachers[index2][0] === plugin) {
+          entryIndex = index2;
+          break;
+        }
+      }
+      if (entryIndex === -1) {
+        attachers.push([plugin, ...parameters2]);
+      } else if (parameters2.length > 0) {
+        let [primary, ...rest] = parameters2;
+        const currentPrimary = attachers[entryIndex][1];
+        if (isPlainObject(currentPrimary) && isPlainObject(primary)) {
+          primary = extend(true, currentPrimary, primary);
+        }
+        attachers[entryIndex] = [plugin, primary, ...rest];
+      }
+    }
+  }
+}
+const unified = new Processor().freeze();
+function assertParser(name2, value) {
+  if (typeof value !== "function") {
+    throw new TypeError("Cannot `" + name2 + "` without `parser`");
+  }
+}
+function assertCompiler(name2, value) {
+  if (typeof value !== "function") {
+    throw new TypeError("Cannot `" + name2 + "` without `compiler`");
+  }
+}
+function assertUnfrozen(name2, frozen) {
+  if (frozen) {
+    throw new Error(
+      "Cannot call `" + name2 + "` on a frozen processor.\nCreate a new processor first, by calling it: use `processor()` instead of `processor`."
+    );
+  }
+}
+function assertNode(node2) {
+  if (!isPlainObject(node2) || typeof node2.type !== "string") {
+    throw new TypeError("Expected node, got `" + node2 + "`");
+  }
+}
+function assertDone(name2, asyncName, complete) {
+  if (!complete) {
+    throw new Error(
+      "`" + name2 + "` finished async. Use `" + asyncName + "` instead"
+    );
+  }
+}
+function vfile(value) {
+  return looksLikeAVFile(value) ? value : new VFile(value);
+}
+function looksLikeAVFile(value) {
+  return Boolean(
+    value && typeof value === "object" && "message" in value && "messages" in value
+  );
+}
+function looksLikeAValue(value) {
+  return typeof value === "string" || isUint8Array(value);
+}
+function isUint8Array(value) {
+  return Boolean(
+    value && typeof value === "object" && "byteLength" in value && "byteOffset" in value
+  );
+}
+const changelog = "https://github.com/remarkjs/react-markdown/blob/main/changelog.md";
+const emptyPlugins = [];
+const emptyRemarkRehypeOptions = { allowDangerousHtml: true };
+const safeProtocol = /^(https?|ircs?|mailto|xmpp)$/i;
+const deprecations = [
+  { from: "astPlugins", id: "remove-buggy-html-in-markdown-parser" },
+  { from: "allowDangerousHtml", id: "remove-buggy-html-in-markdown-parser" },
+  {
+    from: "allowNode",
+    id: "replace-allownode-allowedtypes-and-disallowedtypes",
+    to: "allowElement"
+  },
+  {
+    from: "allowedTypes",
+    id: "replace-allownode-allowedtypes-and-disallowedtypes",
+    to: "allowedElements"
+  },
+  { from: "className", id: "remove-classname" },
+  {
+    from: "disallowedTypes",
+    id: "replace-allownode-allowedtypes-and-disallowedtypes",
+    to: "disallowedElements"
+  },
+  { from: "escapeHtml", id: "remove-buggy-html-in-markdown-parser" },
+  { from: "includeElementIndex", id: "#remove-includeelementindex" },
+  {
+    from: "includeNodeIndex",
+    id: "change-includenodeindex-to-includeelementindex"
+  },
+  { from: "linkTarget", id: "remove-linktarget" },
+  { from: "plugins", id: "change-plugins-to-remarkplugins", to: "remarkPlugins" },
+  { from: "rawSourcePos", id: "#remove-rawsourcepos" },
+  { from: "renderers", id: "change-renderers-to-components", to: "components" },
+  { from: "source", id: "change-source-to-children", to: "children" },
+  { from: "sourcePos", id: "#remove-sourcepos" },
+  { from: "transformImageUri", id: "#add-urltransform", to: "urlTransform" },
+  { from: "transformLinkUri", id: "#add-urltransform", to: "urlTransform" }
+];
+function Markdown(options) {
+  const processor = createProcessor(options);
+  const file = createFile(options);
+  return post(processor.runSync(processor.parse(file), file), options);
+}
+function createProcessor(options) {
+  const rehypePlugins = options.rehypePlugins || emptyPlugins;
+  const remarkPlugins = options.remarkPlugins || emptyPlugins;
+  const remarkRehypeOptions = options.remarkRehypeOptions ? { ...options.remarkRehypeOptions, ...emptyRemarkRehypeOptions } : emptyRemarkRehypeOptions;
+  const processor = unified().use(remarkParse).use(remarkPlugins).use(remarkRehype, remarkRehypeOptions).use(rehypePlugins);
+  return processor;
+}
+function createFile(options) {
+  const children = options.children || "";
+  const file = new VFile();
+  if (typeof children === "string") {
+    file.value = children;
+  }
+  return file;
+}
+function post(tree, options) {
+  const allowedElements = options.allowedElements;
+  const allowElement = options.allowElement;
+  const components = options.components;
+  const disallowedElements = options.disallowedElements;
+  const skipHtml = options.skipHtml;
+  const unwrapDisallowed = options.unwrapDisallowed;
+  const urlTransform = options.urlTransform || defaultUrlTransform;
+  for (const deprecation of deprecations) {
+    if (Object.hasOwn(options, deprecation.from)) {
+      unreachable(
+        "Unexpected `" + deprecation.from + "` prop, " + (deprecation.to ? "use `" + deprecation.to + "` instead" : "remove it") + " (see <" + changelog + "#" + deprecation.id + "> for more info)"
+      );
+    }
+  }
+  visit(tree, transform);
+  return toJsxRuntime(tree, {
+    Fragment: jsxRuntimeExports.Fragment,
+    components,
+    ignoreInvalidStyle: true,
+    jsx: jsxRuntimeExports.jsx,
+    jsxs: jsxRuntimeExports.jsxs,
+    passKeys: true,
+    passNode: true
+  });
+  function transform(node2, index2, parent) {
+    if (node2.type === "raw" && parent && typeof index2 === "number") {
+      if (skipHtml) {
+        parent.children.splice(index2, 1);
+      } else {
+        parent.children[index2] = { type: "text", value: node2.value };
+      }
+      return index2;
+    }
+    if (node2.type === "element") {
+      let key;
+      for (key in urlAttributes) {
+        if (Object.hasOwn(urlAttributes, key) && Object.hasOwn(node2.properties, key)) {
+          const value = node2.properties[key];
+          const test = urlAttributes[key];
+          if (test === null || test.includes(node2.tagName)) {
+            node2.properties[key] = urlTransform(String(value || ""), key, node2);
+          }
+        }
+      }
+    }
+    if (node2.type === "element") {
+      let remove = allowedElements ? !allowedElements.includes(node2.tagName) : disallowedElements ? disallowedElements.includes(node2.tagName) : false;
+      if (!remove && allowElement && typeof index2 === "number") {
+        remove = !allowElement(node2, index2, parent);
+      }
+      if (remove && parent && typeof index2 === "number") {
+        if (unwrapDisallowed && node2.children) {
+          parent.children.splice(index2, 1, ...node2.children);
+        } else {
+          parent.children.splice(index2, 1);
+        }
+        return index2;
+      }
+    }
+  }
+}
+function defaultUrlTransform(value) {
+  const colon = value.indexOf(":");
+  const questionMark = value.indexOf("?");
+  const numberSign = value.indexOf("#");
+  const slash = value.indexOf("/");
+  if (
+    // If there is no protocol, it’s relative.
+    colon === -1 || // If the first colon is after a `?`, `#`, or `/`, it’s not a protocol.
+    slash !== -1 && colon > slash || questionMark !== -1 && colon > questionMark || numberSign !== -1 && colon > numberSign || // It is a protocol, it should be allowed.
+    safeProtocol.test(value.slice(0, colon))
+  ) {
+    return value;
+  }
+  return "";
+}
+function ccount(value, character) {
+  const source = String(value);
+  if (typeof character !== "string") {
+    throw new TypeError("Expected character");
+  }
+  let count2 = 0;
+  let index2 = source.indexOf(character);
+  while (index2 !== -1) {
+    count2++;
+    index2 = source.indexOf(character, index2 + character.length);
+  }
+  return count2;
+}
+function escapeStringRegexp(string2) {
+  if (typeof string2 !== "string") {
+    throw new TypeError("Expected a string");
+  }
+  return string2.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&").replace(/-/g, "\\x2d");
+}
+function findAndReplace(tree, list2, options) {
+  const settings = options || {};
+  const ignored = convert(settings.ignore || []);
+  const pairs = toPairs(list2);
+  let pairIndex = -1;
+  while (++pairIndex < pairs.length) {
+    visitParents(tree, "text", visitor);
+  }
+  function visitor(node2, parents) {
+    let index2 = -1;
+    let grandparent;
+    while (++index2 < parents.length) {
+      const parent = parents[index2];
+      const siblings = grandparent ? grandparent.children : void 0;
+      if (ignored(
+        parent,
+        siblings ? siblings.indexOf(parent) : void 0,
+        grandparent
+      )) {
+        return;
+      }
+      grandparent = parent;
+    }
+    if (grandparent) {
+      return handler(node2, parents);
+    }
+  }
+  function handler(node2, parents) {
+    const parent = parents[parents.length - 1];
+    const find2 = pairs[pairIndex][0];
+    const replace2 = pairs[pairIndex][1];
+    let start = 0;
+    const siblings = parent.children;
+    const index2 = siblings.indexOf(node2);
+    let change = false;
+    let nodes = [];
+    find2.lastIndex = 0;
+    let match = find2.exec(node2.value);
+    while (match) {
+      const position2 = match.index;
+      const matchObject = {
+        index: match.index,
+        input: match.input,
+        stack: [...parents, node2]
+      };
+      let value = replace2(...match, matchObject);
+      if (typeof value === "string") {
+        value = value.length > 0 ? { type: "text", value } : void 0;
+      }
+      if (value === false) {
+        find2.lastIndex = position2 + 1;
+      } else {
+        if (start !== position2) {
+          nodes.push({
+            type: "text",
+            value: node2.value.slice(start, position2)
           });
         }
+        if (Array.isArray(value)) {
+          nodes.push(...value);
+        } else if (value) {
+          nodes.push(value);
+        }
+        start = position2 + match[0].length;
+        change = true;
+      }
+      if (!find2.global) {
+        break;
+      }
+      match = find2.exec(node2.value);
+    }
+    if (change) {
+      if (start < node2.value.length) {
+        nodes.push({ type: "text", value: node2.value.slice(start) });
+      }
+      parent.children.splice(index2, 1, ...nodes);
+    } else {
+      nodes = [node2];
+    }
+    return index2 + nodes.length;
+  }
+}
+function toPairs(tupleOrList) {
+  const result = [];
+  if (!Array.isArray(tupleOrList)) {
+    throw new TypeError("Expected find and replace tuple or list of tuples");
+  }
+  const list2 = !tupleOrList[0] || Array.isArray(tupleOrList[0]) ? tupleOrList : [tupleOrList];
+  let index2 = -1;
+  while (++index2 < list2.length) {
+    const tuple = list2[index2];
+    result.push([toExpression(tuple[0]), toFunction(tuple[1])]);
+  }
+  return result;
+}
+function toExpression(find2) {
+  return typeof find2 === "string" ? new RegExp(escapeStringRegexp(find2), "g") : find2;
+}
+function toFunction(replace2) {
+  return typeof replace2 === "function" ? replace2 : function() {
+    return replace2;
+  };
+}
+const inConstruct = "phrasing";
+const notInConstruct = ["autolink", "link", "image", "label"];
+function gfmAutolinkLiteralFromMarkdown() {
+  return {
+    transforms: [transformGfmAutolinkLiterals],
+    enter: {
+      literalAutolink: enterLiteralAutolink,
+      literalAutolinkEmail: enterLiteralAutolinkValue,
+      literalAutolinkHttp: enterLiteralAutolinkValue,
+      literalAutolinkWww: enterLiteralAutolinkValue
+    },
+    exit: {
+      literalAutolink: exitLiteralAutolink,
+      literalAutolinkEmail: exitLiteralAutolinkEmail,
+      literalAutolinkHttp: exitLiteralAutolinkHttp,
+      literalAutolinkWww: exitLiteralAutolinkWww
+    }
+  };
+}
+function gfmAutolinkLiteralToMarkdown() {
+  return {
+    unsafe: [
+      {
+        character: "@",
+        before: "[+\\-.\\w]",
+        after: "[\\-.\\w]",
+        inConstruct,
+        notInConstruct
+      },
+      {
+        character: ".",
+        before: "[Ww]",
+        after: "[\\-.\\w]",
+        inConstruct,
+        notInConstruct
+      },
+      {
+        character: ":",
+        before: "[ps]",
+        after: "\\/",
+        inConstruct,
+        notInConstruct
+      }
+    ]
+  };
+}
+function enterLiteralAutolink(token) {
+  this.enter({ type: "link", title: null, url: "", children: [] }, token);
+}
+function enterLiteralAutolinkValue(token) {
+  this.config.enter.autolinkProtocol.call(this, token);
+}
+function exitLiteralAutolinkHttp(token) {
+  this.config.exit.autolinkProtocol.call(this, token);
+}
+function exitLiteralAutolinkWww(token) {
+  this.config.exit.data.call(this, token);
+  const node2 = this.stack[this.stack.length - 1];
+  ok$1(node2.type === "link");
+  node2.url = "http://" + this.sliceSerialize(token);
+}
+function exitLiteralAutolinkEmail(token) {
+  this.config.exit.autolinkEmail.call(this, token);
+}
+function exitLiteralAutolink(token) {
+  this.exit(token);
+}
+function transformGfmAutolinkLiterals(tree) {
+  findAndReplace(
+    tree,
+    [
+      [/(https?:\/\/|www(?=\.))([-.\w]+)([^ \t\r\n]*)/gi, findUrl],
+      [new RegExp("(?<=^|\\s|\\p{P}|\\p{S})([-.\\w+]+)@([-\\w]+(?:\\.[-\\w]+)+)", "gu"), findEmail]
+    ],
+    { ignore: ["link", "linkReference"] }
+  );
+}
+function findUrl(_, protocol, domain2, path2, match) {
+  let prefix = "";
+  if (!previous(match)) {
+    return false;
+  }
+  if (/^w/i.test(protocol)) {
+    domain2 = protocol + domain2;
+    protocol = "";
+    prefix = "http://";
+  }
+  if (!isCorrectDomain(domain2)) {
+    return false;
+  }
+  const parts = splitUrl(domain2 + path2);
+  if (!parts[0]) return false;
+  const result = {
+    type: "link",
+    title: null,
+    url: prefix + protocol + parts[0],
+    children: [{ type: "text", value: protocol + parts[0] }]
+  };
+  if (parts[1]) {
+    return [result, { type: "text", value: parts[1] }];
+  }
+  return result;
+}
+function findEmail(_, atext, label, match) {
+  if (
+    // Not an expected previous character.
+    !previous(match, true) || // Label ends in not allowed character.
+    /[-\d_]$/.test(label)
+  ) {
+    return false;
+  }
+  return {
+    type: "link",
+    title: null,
+    url: "mailto:" + atext + "@" + label,
+    children: [{ type: "text", value: atext + "@" + label }]
+  };
+}
+function isCorrectDomain(domain2) {
+  const parts = domain2.split(".");
+  if (parts.length < 2 || parts[parts.length - 1] && (/_/.test(parts[parts.length - 1]) || !/[a-zA-Z\d]/.test(parts[parts.length - 1])) || parts[parts.length - 2] && (/_/.test(parts[parts.length - 2]) || !/[a-zA-Z\d]/.test(parts[parts.length - 2]))) {
+    return false;
+  }
+  return true;
+}
+function splitUrl(url) {
+  const trailExec = /[!"&'),.:;<>?\]}]+$/.exec(url);
+  if (!trailExec) {
+    return [url, void 0];
+  }
+  url = url.slice(0, trailExec.index);
+  let trail2 = trailExec[0];
+  let closingParenIndex = trail2.indexOf(")");
+  const openingParens = ccount(url, "(");
+  let closingParens = ccount(url, ")");
+  while (closingParenIndex !== -1 && openingParens > closingParens) {
+    url += trail2.slice(0, closingParenIndex + 1);
+    trail2 = trail2.slice(closingParenIndex + 1);
+    closingParenIndex = trail2.indexOf(")");
+    closingParens++;
+  }
+  return [url, trail2];
+}
+function previous(match, email) {
+  const code2 = match.input.charCodeAt(match.index - 1);
+  return (match.index === 0 || unicodeWhitespace(code2) || unicodePunctuation(code2)) && // If it’s an email, the previous character should not be a slash.
+  (!email || code2 !== 47);
+}
+footnoteReference.peek = footnoteReferencePeek;
+function enterFootnoteCallString() {
+  this.buffer();
+}
+function enterFootnoteCall(token) {
+  this.enter({ type: "footnoteReference", identifier: "", label: "" }, token);
+}
+function enterFootnoteDefinitionLabelString() {
+  this.buffer();
+}
+function enterFootnoteDefinition(token) {
+  this.enter(
+    { type: "footnoteDefinition", identifier: "", label: "", children: [] },
+    token
+  );
+}
+function exitFootnoteCallString(token) {
+  const label = this.resume();
+  const node2 = this.stack[this.stack.length - 1];
+  ok$1(node2.type === "footnoteReference");
+  node2.identifier = normalizeIdentifier(
+    this.sliceSerialize(token)
+  ).toLowerCase();
+  node2.label = label;
+}
+function exitFootnoteCall(token) {
+  this.exit(token);
+}
+function exitFootnoteDefinitionLabelString(token) {
+  const label = this.resume();
+  const node2 = this.stack[this.stack.length - 1];
+  ok$1(node2.type === "footnoteDefinition");
+  node2.identifier = normalizeIdentifier(
+    this.sliceSerialize(token)
+  ).toLowerCase();
+  node2.label = label;
+}
+function exitFootnoteDefinition(token) {
+  this.exit(token);
+}
+function footnoteReferencePeek() {
+  return "[";
+}
+function footnoteReference(node2, _, state, info) {
+  const tracker = state.createTracker(info);
+  let value = tracker.move("[^");
+  const exit2 = state.enter("footnoteReference");
+  const subexit = state.enter("reference");
+  value += tracker.move(
+    state.safe(state.associationId(node2), { after: "]", before: value })
+  );
+  subexit();
+  exit2();
+  value += tracker.move("]");
+  return value;
+}
+function gfmFootnoteFromMarkdown() {
+  return {
+    enter: {
+      gfmFootnoteCallString: enterFootnoteCallString,
+      gfmFootnoteCall: enterFootnoteCall,
+      gfmFootnoteDefinitionLabelString: enterFootnoteDefinitionLabelString,
+      gfmFootnoteDefinition: enterFootnoteDefinition
+    },
+    exit: {
+      gfmFootnoteCallString: exitFootnoteCallString,
+      gfmFootnoteCall: exitFootnoteCall,
+      gfmFootnoteDefinitionLabelString: exitFootnoteDefinitionLabelString,
+      gfmFootnoteDefinition: exitFootnoteDefinition
+    }
+  };
+}
+function gfmFootnoteToMarkdown(options) {
+  let firstLineBlank = false;
+  if (options && options.firstLineBlank) {
+    firstLineBlank = true;
+  }
+  return {
+    handlers: { footnoteDefinition, footnoteReference },
+    // This is on by default already.
+    unsafe: [{ character: "[", inConstruct: ["label", "phrasing", "reference"] }]
+  };
+  function footnoteDefinition(node2, _, state, info) {
+    const tracker = state.createTracker(info);
+    let value = tracker.move("[^");
+    const exit2 = state.enter("footnoteDefinition");
+    const subexit = state.enter("label");
+    value += tracker.move(
+      state.safe(state.associationId(node2), { before: value, after: "]" })
+    );
+    subexit();
+    value += tracker.move("]:");
+    if (node2.children && node2.children.length > 0) {
+      tracker.shift(4);
+      value += tracker.move(
+        (firstLineBlank ? "\n" : " ") + state.indentLines(
+          state.containerFlow(node2, tracker.current()),
+          firstLineBlank ? mapAll : mapExceptFirst
+        )
+      );
+    }
+    exit2();
+    return value;
+  }
+}
+function mapExceptFirst(line, index2, blank) {
+  return index2 === 0 ? line : mapAll(line, index2, blank);
+}
+function mapAll(line, index2, blank) {
+  return (blank ? "" : "    ") + line;
+}
+const constructsWithoutStrikethrough = [
+  "autolink",
+  "destinationLiteral",
+  "destinationRaw",
+  "reference",
+  "titleQuote",
+  "titleApostrophe"
+];
+handleDelete.attention = attentionDelete;
+handleDelete.peek = peekDelete;
+function gfmStrikethroughFromMarkdown() {
+  return {
+    canContainEols: ["delete"],
+    enter: { strikethrough: enterStrikethrough },
+    exit: { strikethrough: exitStrikethrough }
+  };
+}
+function gfmStrikethroughToMarkdown() {
+  return {
+    handlers: { delete: handleDelete },
+    unsafe: [
+      {
+        character: "~",
+        inConstruct: "phrasing",
+        notInConstruct: constructsWithoutStrikethrough
+      }
+    ]
+  };
+}
+function enterStrikethrough(token) {
+  this.enter({ type: "delete", children: [], position: void 0 }, token);
+}
+function exitStrikethrough(token) {
+  this.exit(token);
+}
+function handleDelete(node2, _, state, info) {
+  const tracker = state.createTracker(info);
+  const sequence = state.stack.includes("strikethrough") ? "~" : "~~";
+  const exit2 = state.enter("strikethrough");
+  let value = tracker.move(sequence);
+  value += state.containerPhrasing(node2, {
+    ...tracker.current(),
+    before: value,
+    after: "~"
+  });
+  value += tracker.move(sequence);
+  exit2();
+  return value;
+}
+function attentionDelete() {
+  return { construct: "strikethrough", markers: ["~"], sizes: [2, 1] };
+}
+function peekDelete() {
+  return "~";
+}
+function defaultStringLength(value) {
+  return value.length;
+}
+function markdownTable(table2, options) {
+  const settings = options || {};
+  const align = (settings.align || []).concat();
+  const stringLength = settings.stringLength || defaultStringLength;
+  const alignments = [];
+  const cellMatrix = [];
+  const sizeMatrix = [];
+  const longestCellByColumn = [];
+  let mostCellsPerRow = 0;
+  let rowIndex = -1;
+  while (++rowIndex < table2.length) {
+    const row2 = [];
+    const sizes2 = [];
+    let columnIndex2 = -1;
+    if (table2[rowIndex].length > mostCellsPerRow) {
+      mostCellsPerRow = table2[rowIndex].length;
+    }
+    while (++columnIndex2 < table2[rowIndex].length) {
+      const cell = serialize(table2[rowIndex][columnIndex2]);
+      if (settings.alignDelimiters !== false) {
+        const size = stringLength(cell);
+        sizes2[columnIndex2] = size;
+        if (longestCellByColumn[columnIndex2] === void 0 || size > longestCellByColumn[columnIndex2]) {
+          longestCellByColumn[columnIndex2] = size;
+        }
+      }
+      row2.push(cell);
+    }
+    cellMatrix[rowIndex] = row2;
+    sizeMatrix[rowIndex] = sizes2;
+  }
+  let columnIndex = -1;
+  if (typeof align === "object" && "length" in align) {
+    while (++columnIndex < mostCellsPerRow) {
+      alignments[columnIndex] = toAlignment(align[columnIndex]);
+    }
+  } else {
+    const code2 = toAlignment(align);
+    while (++columnIndex < mostCellsPerRow) {
+      alignments[columnIndex] = code2;
+    }
+  }
+  columnIndex = -1;
+  const row = [];
+  const sizes = [];
+  while (++columnIndex < mostCellsPerRow) {
+    const code2 = alignments[columnIndex];
+    let before = "";
+    let after = "";
+    if (code2 === 99) {
+      before = ":";
+      after = ":";
+    } else if (code2 === 108) {
+      before = ":";
+    } else if (code2 === 114) {
+      after = ":";
+    }
+    let size = settings.alignDelimiters === false ? 1 : Math.max(
+      1,
+      longestCellByColumn[columnIndex] - before.length - after.length
+    );
+    const cell = before + "-".repeat(size) + after;
+    if (settings.alignDelimiters !== false) {
+      size = before.length + size + after.length;
+      if (size > longestCellByColumn[columnIndex]) {
+        longestCellByColumn[columnIndex] = size;
+      }
+      sizes[columnIndex] = size;
+    }
+    row[columnIndex] = cell;
+  }
+  cellMatrix.splice(1, 0, row);
+  sizeMatrix.splice(1, 0, sizes);
+  rowIndex = -1;
+  const lines = [];
+  while (++rowIndex < cellMatrix.length) {
+    const row2 = cellMatrix[rowIndex];
+    const sizes2 = sizeMatrix[rowIndex];
+    columnIndex = -1;
+    const line = [];
+    while (++columnIndex < mostCellsPerRow) {
+      const cell = row2[columnIndex] || "";
+      let before = "";
+      let after = "";
+      if (settings.alignDelimiters !== false) {
+        const size = longestCellByColumn[columnIndex] - (sizes2[columnIndex] || 0);
+        const code2 = alignments[columnIndex];
+        if (code2 === 114) {
+          before = " ".repeat(size);
+        } else if (code2 === 99) {
+          if (size % 2) {
+            before = " ".repeat(size / 2 + 0.5);
+            after = " ".repeat(size / 2 - 0.5);
+          } else {
+            before = " ".repeat(size / 2);
+            after = before;
+          }
+        } else {
+          after = " ".repeat(size);
+        }
+      }
+      if (settings.delimiterStart !== false && !columnIndex) {
+        line.push("|");
+      }
+      if (settings.padding !== false && // Don’t add the opening space if we’re not aligning and the cell is
+      // empty: there will be a closing space.
+      !(settings.alignDelimiters === false && cell === "") && (settings.delimiterStart !== false || columnIndex)) {
+        line.push(" ");
+      }
+      if (settings.alignDelimiters !== false) {
+        line.push(before);
+      }
+      line.push(cell);
+      if (settings.alignDelimiters !== false) {
+        line.push(after);
+      }
+      if (settings.padding !== false) {
+        line.push(" ");
+      }
+      if (settings.delimiterEnd !== false || columnIndex !== mostCellsPerRow - 1) {
+        line.push("|");
+      }
+    }
+    lines.push(
+      settings.delimiterEnd === false ? line.join("").replace(/ +$/, "") : line.join("")
+    );
+  }
+  return lines.join("\n");
+}
+function serialize(value) {
+  return value === null || value === void 0 ? "" : String(value);
+}
+function toAlignment(value) {
+  const code2 = typeof value === "string" ? value.codePointAt(0) : 0;
+  return code2 === 67 || code2 === 99 ? 99 : code2 === 76 || code2 === 108 ? 108 : code2 === 82 || code2 === 114 ? 114 : 0;
+}
+const phrasing = (
+  /** @type {(node?: unknown) => node is Exclude<PhrasingContent, Html>} */
+  convert([
+    "break",
+    "delete",
+    "emphasis",
+    // To do: next major: removed since footnotes were added to GFM.
+    "footnote",
+    "footnoteReference",
+    "image",
+    "imageReference",
+    "inlineCode",
+    // Enabled by `mdast-util-math`:
+    "inlineMath",
+    "link",
+    "linkReference",
+    // Enabled by `mdast-util-mdx`:
+    "mdxJsxTextElement",
+    // Enabled by `mdast-util-mdx`:
+    "mdxTextExpression",
+    "strong",
+    "text",
+    // Enabled by `mdast-util-directive`:
+    "textDirective"
+  ])
+);
+function blockquote(node2, _, state, info) {
+  const exit2 = state.enter("blockquote");
+  const tracker = state.createTracker(info);
+  tracker.move("> ");
+  tracker.shift(2);
+  const value = state.indentLines(
+    state.containerFlow(node2, tracker.current()),
+    map$1
+  );
+  exit2();
+  return value;
+}
+function map$1(line, _, blank) {
+  return ">" + (blank ? "" : " ") + line;
+}
+function patternInScope(stack, pattern) {
+  return listInScope(stack, pattern.inConstruct, true) && !listInScope(stack, pattern.notInConstruct, false);
+}
+function listInScope(stack, list2, none) {
+  if (typeof list2 === "string") {
+    list2 = [list2];
+  }
+  if (!list2 || list2.length === 0) {
+    return none;
+  }
+  let index2 = -1;
+  while (++index2 < list2.length) {
+    if (stack.includes(list2[index2])) {
+      return true;
+    }
+  }
+  return false;
+}
+function hardBreak(_, _1, state, info) {
+  let index2 = -1;
+  while (++index2 < state.unsafe.length) {
+    const pattern = state.unsafe[index2];
+    if (pattern.character === "\n" && !pattern.before && !pattern.after && patternInScope(state.stack, pattern)) {
+      return /[\t ]/.test(info.before) ? "" : " ";
+    }
+  }
+  return "\\\n";
+}
+function longestStreak(value, substring) {
+  const source = String(value);
+  let index2 = source.indexOf(substring);
+  let expected = index2;
+  let count2 = 0;
+  let max = 0;
+  if (typeof substring !== "string") {
+    throw new TypeError("Expected substring");
+  }
+  while (index2 !== -1) {
+    if (index2 === expected) {
+      if (++count2 > max) {
+        max = count2;
+      }
+    } else {
+      count2 = 1;
+    }
+    expected = index2 + substring.length;
+    index2 = source.indexOf(substring, expected);
+  }
+  return max;
+}
+function formatCodeAsIndented(node2, state) {
+  return Boolean(
+    state.options.fences === false && node2.value && // If there’s no info…
+    !node2.lang && // And there’s a non-whitespace character…
+    /[^\n\r ]/.test(node2.value) && // And the value doesn’t start or end in a blank…
+    !/^[\t ]*(?:[\n\r]|$)|(?:^|[\n\r])[\t ]*$/.test(node2.value)
+  );
+}
+function checkFence(state) {
+  const marker = state.options.fence || "`";
+  if (marker !== "`" && marker !== "~") {
+    throw new Error(
+      "Cannot serialize code with `" + marker + "` for `options.fence`, expected `` ` `` or `~`"
+    );
+  }
+  return marker;
+}
+function code$1(node2, _, state, info) {
+  const marker = checkFence(state);
+  const raw = node2.value || "";
+  if (formatCodeAsIndented(node2, state)) {
+    const exit3 = state.enter("codeIndented");
+    const value2 = state.indentLines(raw, map);
+    exit3();
+    return value2;
+  }
+  const tracker = state.createTracker(info);
+  const sequence = marker.repeat(Math.max(longestStreak(raw, marker) + 1, 3));
+  const exit2 = state.enter("codeFenced");
+  const suffix = marker === "`" ? "GraveAccent" : "Tilde";
+  let value = tracker.move(sequence);
+  if (node2.lang) {
+    const subexit = state.enter(`codeFencedLang${suffix}`);
+    value += tracker.move(
+      state.safe(node2.lang, {
+        before: value,
+        after: " ",
+        encode: ["`"],
+        ...tracker.current()
+      })
+    );
+    subexit();
+  }
+  if (node2.lang && node2.meta) {
+    const subexit = state.enter(`codeFencedMeta${suffix}`);
+    value += tracker.move(" ");
+    value += tracker.move(
+      state.safe(node2.meta, {
+        before: value,
+        after: "\n",
+        encode: ["`"],
+        ...tracker.current()
+      })
+    );
+    subexit();
+  }
+  value += tracker.move("\n");
+  if (raw) {
+    value += tracker.move(raw + "\n");
+  }
+  value += tracker.move(sequence);
+  exit2();
+  return value;
+}
+function map(line, _, blank) {
+  return (blank ? "" : "    ") + line;
+}
+function checkQuote(state) {
+  const marker = state.options.quote || '"';
+  if (marker !== '"' && marker !== "'") {
+    throw new Error(
+      "Cannot serialize title with `" + marker + "` for `options.quote`, expected `\"`, or `'`"
+    );
+  }
+  return marker;
+}
+function definition(node2, _, state, info) {
+  const quote = checkQuote(state);
+  const suffix = quote === '"' ? "Quote" : "Apostrophe";
+  const exit2 = state.enter("definition");
+  let subexit = state.enter("label");
+  const tracker = state.createTracker(info);
+  let value = tracker.move("[");
+  value += tracker.move(
+    state.safe(state.associationId(node2), {
+      before: value,
+      after: "]",
+      ...tracker.current()
+    })
+  );
+  value += tracker.move("]: ");
+  subexit();
+  if (
+    // If there’s no url, or…
+    !node2.url || // If there are control characters or whitespace.
+    /[\0- \u007F]/.test(node2.url)
+  ) {
+    subexit = state.enter("destinationLiteral");
+    value += tracker.move("<");
+    value += tracker.move(
+      state.safe(node2.url, { before: value, after: ">", ...tracker.current() })
+    );
+    value += tracker.move(">");
+  } else {
+    subexit = state.enter("destinationRaw");
+    value += tracker.move(
+      state.safe(node2.url, {
+        before: value,
+        after: node2.title ? " " : "\n",
+        ...tracker.current()
       })
     );
   }
-  function handlePreloadError(err) {
-    const e = new Event("vite:preloadError", {
-      cancelable: true
+  subexit();
+  if (node2.title) {
+    subexit = state.enter(`title${suffix}`);
+    value += tracker.move(" " + quote);
+    value += tracker.move(
+      state.safe(node2.title, {
+        before: value,
+        after: quote,
+        ...tracker.current()
+      })
+    );
+    value += tracker.move(quote);
+    subexit();
+  }
+  exit2();
+  return value;
+}
+function checkEmphasis(state) {
+  const marker = state.options.emphasis || "*";
+  if (marker !== "*" && marker !== "_") {
+    throw new Error(
+      "Cannot serialize emphasis with `" + marker + "` for `options.emphasis`, expected `*`, or `_`"
+    );
+  }
+  return marker;
+}
+emphasis.attention = attention$1;
+emphasis.peek = peek$1;
+function emphasis(node2, _, state, info) {
+  const exit2 = state.enter("phrasing");
+  const value = state.containerPhrasing({ type: "root", children: [node2] }, info);
+  exit2();
+  return value;
+}
+function attention$1(_, state) {
+  const marker = checkEmphasis(state);
+  return {
+    construct: "emphasis",
+    markers: marker === "*" ? ["*", "_"] : ["_", "*"],
+    sizes: [1]
+  };
+}
+function peek$1(_, _1, state) {
+  return state.options.emphasis || "*";
+}
+function encodeCharacterReference(code2) {
+  return "&#x" + code2.toString(16).toUpperCase() + ";";
+}
+function formatHeadingAsSetext(node2, state) {
+  let literalWithBreak = false;
+  visit(node2, function(node3) {
+    if ("value" in node3 && /\r?\n|\r/.test(node3.value) || node3.type === "break") {
+      literalWithBreak = true;
+      return EXIT;
+    }
+  });
+  return Boolean(
+    (!node2.depth || node2.depth < 3) && toString$1(node2) && (state.options.setext || literalWithBreak)
+  );
+}
+function heading(node2, _, state, info) {
+  const rank = Math.max(Math.min(6, node2.depth || 1), 1);
+  const tracker = state.createTracker(info);
+  if (formatHeadingAsSetext(node2, state)) {
+    const exit3 = state.enter("headingSetext");
+    const subexit2 = state.enter("phrasing");
+    const value2 = state.containerPhrasing(node2, {
+      ...tracker.current(),
+      before: "\n",
+      after: "\n"
     });
-    e.payload = err;
-    window.dispatchEvent(e);
-    if (!e.defaultPrevented) {
-      throw err;
+    subexit2();
+    exit3();
+    return value2 + "\n" + (rank === 1 ? "=" : "-").repeat(
+      // The whole size…
+      value2.length - // Minus the position of the character after the last EOL (or
+      // 0 if there is none)…
+      (Math.max(value2.lastIndexOf("\r"), value2.lastIndexOf("\n")) + 1)
+    );
+  }
+  const sequence = "#".repeat(rank);
+  const exit2 = state.enter("headingAtx");
+  const subexit = state.enter("phrasing");
+  tracker.move(sequence + " ");
+  let value = state.containerPhrasing(node2, {
+    before: "# ",
+    after: "\n",
+    ...tracker.current()
+  });
+  const head = value.charCodeAt(0);
+  if (head === 9 || head === 32) {
+    value = encodeCharacterReference(head) + value.slice(1);
+  }
+  value = value ? sequence + " " + value : sequence;
+  if (state.options.closeAtx) {
+    value += " " + sequence;
+  }
+  subexit();
+  exit2();
+  return value;
+}
+html.peek = htmlPeek;
+function html(node2) {
+  return node2.value || "";
+}
+function htmlPeek() {
+  return "<";
+}
+image.peek = imagePeek;
+function image(node2, _, state, info) {
+  const quote = checkQuote(state);
+  const suffix = quote === '"' ? "Quote" : "Apostrophe";
+  const exit2 = state.enter("image");
+  let subexit = state.enter("label");
+  const tracker = state.createTracker(info);
+  let value = tracker.move("![");
+  value += tracker.move(
+    state.safe(node2.alt, { before: value, after: "]", ...tracker.current() })
+  );
+  value += tracker.move("](");
+  subexit();
+  if (
+    // If there’s no url but there is a title…
+    !node2.url && node2.title || // If there are control characters or whitespace.
+    /[\0- \u007F]/.test(node2.url)
+  ) {
+    subexit = state.enter("destinationLiteral");
+    value += tracker.move("<");
+    value += tracker.move(
+      state.safe(node2.url, { before: value, after: ">", ...tracker.current() })
+    );
+    value += tracker.move(">");
+  } else {
+    subexit = state.enter("destinationRaw");
+    value += tracker.move(
+      state.safe(node2.url, {
+        before: value,
+        after: node2.title ? " " : ")",
+        ...tracker.current()
+      })
+    );
+  }
+  subexit();
+  if (node2.title) {
+    subexit = state.enter(`title${suffix}`);
+    value += tracker.move(" " + quote);
+    value += tracker.move(
+      state.safe(node2.title, {
+        before: value,
+        after: quote,
+        ...tracker.current()
+      })
+    );
+    value += tracker.move(quote);
+    subexit();
+  }
+  value += tracker.move(")");
+  exit2();
+  return value;
+}
+function imagePeek() {
+  return "!";
+}
+imageReference.peek = imageReferencePeek;
+function imageReference(node2, _, state, info) {
+  const type = node2.referenceType;
+  const exit2 = state.enter("imageReference");
+  let subexit = state.enter("label");
+  const tracker = state.createTracker(info);
+  let value = tracker.move("![");
+  const alt = state.safe(node2.alt, {
+    before: value,
+    after: "]",
+    ...tracker.current()
+  });
+  value += tracker.move(alt + "][");
+  subexit();
+  const stack = state.stack;
+  state.stack = stack.filter(function(d) {
+    return d !== "phrasing";
+  });
+  subexit = state.enter("reference");
+  const reference = state.safe(state.associationId(node2), {
+    before: value,
+    after: "]",
+    ...tracker.current()
+  });
+  subexit();
+  state.stack = stack;
+  exit2();
+  if (type === "full" || !alt || alt !== reference) {
+    value += tracker.move(reference + "]");
+  } else if (type === "shortcut") {
+    value = value.slice(0, -1);
+  } else {
+    value += tracker.move("]");
+  }
+  return value;
+}
+function imageReferencePeek() {
+  return "!";
+}
+inlineCode.peek = inlineCodePeek;
+function inlineCode(node2, _, state) {
+  let value = node2.value || "";
+  let sequence = "`";
+  let index2 = -1;
+  while (new RegExp("(^|[^`])" + sequence + "([^`]|$)").test(value)) {
+    sequence += "`";
+  }
+  if (/[^\n\r ]/.test(value) && (/^[\n\r ]/.test(value) && /[\n\r ]$/.test(value) || /^`|`$/.test(value))) {
+    value = " " + value + " ";
+  }
+  while (++index2 < state.unsafe.length) {
+    const pattern = state.unsafe[index2];
+    const expression = state.compilePattern(pattern);
+    if (!pattern.atBreak) continue;
+    let match;
+    while (match = expression.exec(value)) {
+      let position2 = match.index;
+      if (value.charCodeAt(position2) === 10 && value.charCodeAt(position2 - 1) === 13) {
+        position2--;
+      }
+      value = value.slice(0, position2) + " " + value.slice(match.index + 1);
     }
   }
-  return promise.then((res) => {
-    for (const item of res || []) {
-      if (item.status !== "rejected") continue;
-      handlePreloadError(item.reason);
-    }
-    return baseModule().catch(handlePreloadError);
+  return sequence + value + sequence;
+}
+function inlineCodePeek() {
+  return "`";
+}
+function formatLinkAsAutolink(node2, state) {
+  const raw = toString$1(node2);
+  return Boolean(
+    !state.options.resourceLink && // If there’s a url…
+    node2.url && // And there’s no title…
+    !node2.title && // And the content of `node` is a single text node…
+    node2.children && node2.children.length === 1 && node2.children[0].type === "text" && // And if the url is the same as the content…
+    (raw === node2.url || "mailto:" + raw === node2.url) && // And that starts w/ a protocol…
+    /^[a-z][+\-.a-z]+:/i.test(node2.url) && // And that doesn’t contain ASCII control codes (character escapes and
+    // references don’t work), space, or angle brackets…
+    !/[\0- <>\u007F]/.test(node2.url)
+  );
+}
+link.peek = linkPeek;
+function link(node2, _, state, info) {
+  const quote = checkQuote(state);
+  const suffix = quote === '"' ? "Quote" : "Apostrophe";
+  const tracker = state.createTracker(info);
+  if (formatLinkAsAutolink(node2, state)) {
+    const stack = state.stack;
+    state.stack = stack.filter(function(d) {
+      return d !== "phrasing";
+    });
+    const exit3 = state.enter("autolink");
+    let value2 = tracker.move("<");
+    value2 += tracker.move(
+      state.containerPhrasing(node2, {
+        before: value2,
+        after: ">",
+        ...tracker.current()
+      })
+    );
+    value2 += tracker.move(">");
+    exit3();
+    state.stack = stack;
+    return value2;
+  }
+  const exit2 = state.enter("link");
+  let subexit = state.enter("label");
+  let value = tracker.move("[");
+  value += tracker.move(
+    state.containerPhrasing(node2, {
+      before: value,
+      after: "](",
+      ...tracker.current()
+    })
+  );
+  value += tracker.move("](");
+  subexit();
+  if (
+    // If there’s no url but there is a title…
+    !node2.url && node2.title || // If there are control characters or whitespace.
+    /[\0- \u007F]/.test(node2.url)
+  ) {
+    subexit = state.enter("destinationLiteral");
+    value += tracker.move("<");
+    value += tracker.move(
+      state.safe(node2.url, { before: value, after: ">", ...tracker.current() })
+    );
+    value += tracker.move(">");
+  } else {
+    subexit = state.enter("destinationRaw");
+    value += tracker.move(
+      state.safe(node2.url, {
+        before: value,
+        after: node2.title ? " " : ")",
+        ...tracker.current()
+      })
+    );
+  }
+  subexit();
+  if (node2.title) {
+    subexit = state.enter(`title${suffix}`);
+    value += tracker.move(" " + quote);
+    value += tracker.move(
+      state.safe(node2.title, {
+        before: value,
+        after: quote,
+        ...tracker.current()
+      })
+    );
+    value += tracker.move(quote);
+    subexit();
+  }
+  value += tracker.move(")");
+  exit2();
+  return value;
+}
+function linkPeek(node2, _, state) {
+  return formatLinkAsAutolink(node2, state) ? "<" : "[";
+}
+linkReference.peek = linkReferencePeek;
+function linkReference(node2, _, state, info) {
+  const type = node2.referenceType;
+  const exit2 = state.enter("linkReference");
+  let subexit = state.enter("label");
+  const tracker = state.createTracker(info);
+  let value = tracker.move("[");
+  const text2 = state.containerPhrasing(node2, {
+    before: value,
+    after: "]",
+    ...tracker.current()
   });
+  value += tracker.move(text2 + "][");
+  subexit();
+  const stack = state.stack;
+  state.stack = stack.filter(function(d) {
+    return d !== "phrasing";
+  });
+  subexit = state.enter("reference");
+  const reference = state.safe(state.associationId(node2), {
+    before: value,
+    after: "]",
+    ...tracker.current()
+  });
+  subexit();
+  state.stack = stack;
+  exit2();
+  if (type === "full" || !text2 || text2 !== reference) {
+    value += tracker.move(reference + "]");
+  } else if (type === "shortcut") {
+    value = value.slice(0, -1);
+  } else {
+    value += tracker.move("]");
+  }
+  return value;
+}
+function linkReferencePeek() {
+  return "[";
+}
+function checkBullet(state) {
+  const marker = state.options.bullet || "*";
+  if (marker !== "*" && marker !== "+" && marker !== "-") {
+    throw new Error(
+      "Cannot serialize items with `" + marker + "` for `options.bullet`, expected `*`, `+`, or `-`"
+    );
+  }
+  return marker;
+}
+function checkBulletOther(state) {
+  const bullet = checkBullet(state);
+  const bulletOther = state.options.bulletOther;
+  if (!bulletOther) {
+    return bullet === "*" ? "-" : "*";
+  }
+  if (bulletOther !== "*" && bulletOther !== "+" && bulletOther !== "-") {
+    throw new Error(
+      "Cannot serialize items with `" + bulletOther + "` for `options.bulletOther`, expected `*`, `+`, or `-`"
+    );
+  }
+  if (bulletOther === bullet) {
+    throw new Error(
+      "Expected `bullet` (`" + bullet + "`) and `bulletOther` (`" + bulletOther + "`) to be different"
+    );
+  }
+  return bulletOther;
+}
+function checkBulletOrdered(state) {
+  const marker = state.options.bulletOrdered || ".";
+  if (marker !== "." && marker !== ")") {
+    throw new Error(
+      "Cannot serialize items with `" + marker + "` for `options.bulletOrdered`, expected `.` or `)`"
+    );
+  }
+  return marker;
+}
+function checkRule(state) {
+  const marker = state.options.rule || "*";
+  if (marker !== "*" && marker !== "-" && marker !== "_") {
+    throw new Error(
+      "Cannot serialize rules with `" + marker + "` for `options.rule`, expected `*`, `-`, or `_`"
+    );
+  }
+  return marker;
+}
+function list(node2, parent, state, info) {
+  const exit2 = state.enter("list");
+  const bulletCurrent = state.bulletCurrent;
+  let bullet = node2.ordered ? checkBulletOrdered(state) : checkBullet(state);
+  const bulletOther = node2.ordered ? bullet === "." ? ")" : "." : checkBulletOther(state);
+  let useDifferentMarker = parent && state.bulletLastUsed ? bullet === state.bulletLastUsed : false;
+  if (!node2.ordered) {
+    const firstListItem = node2.children ? node2.children[0] : void 0;
+    if (
+      // Bullet could be used as a thematic break marker:
+      (bullet === "*" || bullet === "-") && // Empty first list item:
+      firstListItem && (!firstListItem.children || !firstListItem.children[0]) && // Directly in two other list items:
+      state.stack[state.stack.length - 1] === "list" && state.stack[state.stack.length - 2] === "listItem" && state.stack[state.stack.length - 3] === "list" && state.stack[state.stack.length - 4] === "listItem" && // That are each the first child.
+      state.indexStack[state.indexStack.length - 1] === 0 && state.indexStack[state.indexStack.length - 2] === 0 && state.indexStack[state.indexStack.length - 3] === 0
+    ) {
+      useDifferentMarker = true;
+    }
+    if (checkRule(state) === bullet && firstListItem) {
+      let index2 = -1;
+      while (++index2 < node2.children.length) {
+        const item = node2.children[index2];
+        if (item && item.type === "listItem" && item.children && item.children[0] && item.children[0].type === "thematicBreak") {
+          useDifferentMarker = true;
+          break;
+        }
+      }
+    }
+  }
+  if (useDifferentMarker) {
+    bullet = bulletOther;
+  }
+  state.bulletCurrent = bullet;
+  const value = state.containerFlow(node2, info);
+  state.bulletLastUsed = bullet;
+  state.bulletCurrent = bulletCurrent;
+  exit2();
+  return value;
+}
+function checkListItemIndent(state) {
+  const style = state.options.listItemIndent || "one";
+  if (style !== "tab" && style !== "one" && style !== "mixed") {
+    throw new Error(
+      "Cannot serialize items with `" + style + "` for `options.listItemIndent`, expected `tab`, `one`, or `mixed`"
+    );
+  }
+  return style;
+}
+function listItem(node2, parent, state, info) {
+  const listItemIndent = checkListItemIndent(state);
+  let bullet = state.bulletCurrent || checkBullet(state);
+  if (parent && parent.type === "list" && parent.ordered) {
+    bullet = (typeof parent.start === "number" && parent.start > -1 ? parent.start : 1) + (state.options.incrementListMarker === false ? 0 : parent.children.indexOf(node2)) + bullet;
+  }
+  let size = bullet.length + 1;
+  if (listItemIndent === "tab" || listItemIndent === "mixed" && (parent && parent.type === "list" && parent.spread || node2.spread)) {
+    size = Math.ceil(size / 4) * 4;
+  }
+  const tracker = state.createTracker(info);
+  tracker.move(bullet + " ".repeat(size - bullet.length));
+  tracker.shift(size);
+  const exit2 = state.enter("listItem");
+  const value = state.indentLines(
+    state.containerFlow(node2, tracker.current()),
+    map2
+  );
+  exit2();
+  return value;
+  function map2(line, index2, blank) {
+    if (index2) {
+      return (blank ? "" : " ".repeat(size)) + line;
+    }
+    return (blank ? bullet : bullet + " ".repeat(size - bullet.length)) + line;
+  }
+}
+function paragraph(node2, _, state, info) {
+  const exit2 = state.enter("paragraph");
+  const subexit = state.enter("phrasing");
+  const value = state.containerPhrasing(node2, info);
+  subexit();
+  exit2();
+  return value;
+}
+function root(node2, _, state, info) {
+  const hasPhrasing = node2.children.some(function(d) {
+    return phrasing(d);
+  });
+  if (!hasPhrasing) return state.containerFlow(node2, info);
+  const exit2 = state.enter("phrasing");
+  const value = state.containerPhrasing(node2, info);
+  exit2();
+  return value;
+}
+function checkStrong(state) {
+  const marker = state.options.strong || "*";
+  if (marker !== "*" && marker !== "_") {
+    throw new Error(
+      "Cannot serialize strong with `" + marker + "` for `options.strong`, expected `*`, or `_`"
+    );
+  }
+  return marker;
+}
+strong.attention = attention;
+strong.peek = peek;
+function strong(node2, _, state, info) {
+  const exit2 = state.enter("phrasing");
+  const value = state.containerPhrasing({ type: "root", children: [node2] }, info);
+  exit2();
+  return value;
+}
+function attention(_, state) {
+  const marker = checkStrong(state);
+  return {
+    construct: "strong",
+    markers: marker === "*" ? ["*", "_"] : ["_", "*"],
+    sizes: [2]
+  };
+}
+function peek(_, _1, state) {
+  return state.options.strong || "*";
+}
+function text$1(node2, _, state, info) {
+  return state.safe(node2.value, info);
+}
+function checkRuleRepetition(state) {
+  const repetition = state.options.ruleRepetition || 3;
+  if (repetition < 3) {
+    throw new Error(
+      "Cannot serialize rules with repetition `" + repetition + "` for `options.ruleRepetition`, expected `3` or more"
+    );
+  }
+  return repetition;
+}
+function thematicBreak(_, _1, state) {
+  const value = (checkRule(state) + (state.options.ruleSpaces ? " " : "")).repeat(checkRuleRepetition(state));
+  return state.options.ruleSpaces ? value.slice(0, -1) : value;
+}
+const handle = {
+  blockquote,
+  break: hardBreak,
+  code: code$1,
+  definition,
+  emphasis,
+  hardBreak,
+  heading,
+  html,
+  image,
+  imageReference,
+  inlineCode,
+  link,
+  linkReference,
+  list,
+  listItem,
+  paragraph,
+  root,
+  strong,
+  text: text$1,
+  thematicBreak
 };
+function gfmTableFromMarkdown() {
+  return {
+    enter: {
+      table: enterTable,
+      tableData: enterCell,
+      tableHeader: enterCell,
+      tableRow: enterRow
+    },
+    exit: {
+      codeText: exitCodeText,
+      table: exitTable,
+      tableData: exit,
+      tableHeader: exit,
+      tableRow: exit
+    }
+  };
+}
+function enterTable(token) {
+  const align = token._align;
+  this.enter(
+    {
+      type: "table",
+      align: align.map(function(d) {
+        return d === "none" ? null : d;
+      }),
+      children: []
+    },
+    token
+  );
+  this.data.inTable = true;
+}
+function exitTable(token) {
+  this.exit(token);
+  this.data.inTable = void 0;
+}
+function enterRow(token) {
+  this.enter({ type: "tableRow", children: [] }, token);
+}
+function exit(token) {
+  this.exit(token);
+}
+function enterCell(token) {
+  this.enter({ type: "tableCell", children: [] }, token);
+}
+function exitCodeText(token) {
+  let value = this.resume();
+  if (this.data.inTable) {
+    value = value.replace(/\\([\\|])/g, replace);
+  }
+  const node2 = this.stack[this.stack.length - 1];
+  ok$1(node2.type === "inlineCode");
+  node2.value = value;
+  this.exit(token);
+}
+function replace($0, $1) {
+  return $1 === "|" ? $1 : $0;
+}
+function gfmTableToMarkdown(options) {
+  const settings = options || {};
+  const padding = settings.tableCellPadding;
+  const alignDelimiters = settings.tablePipeAlign;
+  const stringLength = settings.stringLength;
+  const around = padding ? " " : "|";
+  return {
+    unsafe: [
+      { character: "\r", inConstruct: "tableCell" },
+      { character: "\n", inConstruct: "tableCell" },
+      // A pipe, when followed by a tab or space (padding), or a dash or colon
+      // (unpadded delimiter row), could result in a table.
+      { atBreak: true, character: "|", after: "[	 :-]" },
+      // A pipe in a cell must be encoded.
+      { character: "|", inConstruct: "tableCell" },
+      // A colon must be followed by a dash, in which case it could start a
+      // delimiter row.
+      { atBreak: true, character: ":", after: "-" },
+      // A delimiter row can also start with a dash, when followed by more
+      // dashes, a colon, or a pipe.
+      // This is a stricter version than the built in check for lists, thematic
+      // breaks, and setex heading underlines though:
+      // <https://github.com/syntax-tree/mdast-util-to-markdown/blob/51a2038/lib/unsafe.js#L57>
+      { atBreak: true, character: "-", after: "[:|-]" }
+    ],
+    handlers: {
+      inlineCode: inlineCodeWithTable,
+      table: handleTable,
+      tableCell: handleTableCell,
+      tableRow: handleTableRow
+    }
+  };
+  function handleTable(node2, _, state, info) {
+    return serializeData(handleTableAsData(node2, state, info), node2.align);
+  }
+  function handleTableRow(node2, _, state, info) {
+    const row = handleTableRowAsData(node2, state, info);
+    const value = serializeData([row]);
+    return value.slice(0, value.indexOf("\n"));
+  }
+  function handleTableCell(node2, _, state, info) {
+    const exit2 = state.enter("tableCell");
+    const subexit = state.enter("phrasing");
+    const value = state.containerPhrasing(node2, {
+      ...info,
+      before: around,
+      after: around
+    });
+    subexit();
+    exit2();
+    return value;
+  }
+  function serializeData(matrix, align) {
+    return markdownTable(matrix, {
+      align,
+      // @ts-expect-error: `markdown-table` types should support `null`.
+      alignDelimiters,
+      // @ts-expect-error: `markdown-table` types should support `null`.
+      padding,
+      // @ts-expect-error: `markdown-table` types should support `null`.
+      stringLength
+    });
+  }
+  function handleTableAsData(node2, state, info) {
+    const children = node2.children;
+    let index2 = -1;
+    const result = [];
+    const subexit = state.enter("table");
+    while (++index2 < children.length) {
+      result[index2] = handleTableRowAsData(children[index2], state, info);
+    }
+    subexit();
+    return result;
+  }
+  function handleTableRowAsData(node2, state, info) {
+    const children = node2.children;
+    let index2 = -1;
+    const result = [];
+    const subexit = state.enter("tableRow");
+    while (++index2 < children.length) {
+      result[index2] = handleTableCell(children[index2], node2, state, info);
+    }
+    subexit();
+    return result;
+  }
+  function inlineCodeWithTable(node2, parent, state) {
+    let value = handle.inlineCode(node2, parent, state);
+    if (state.stack.includes("tableCell")) {
+      value = value.replace(/\|/g, "\\$&");
+    }
+    return value;
+  }
+}
+function gfmTaskListItemFromMarkdown() {
+  return {
+    exit: {
+      taskListCheckValueChecked: exitCheck,
+      taskListCheckValueUnchecked: exitCheck,
+      paragraph: exitParagraphWithTaskListItem
+    }
+  };
+}
+function gfmTaskListItemToMarkdown() {
+  return {
+    unsafe: [{ atBreak: true, character: "-", after: "[:|-]" }],
+    handlers: { listItem: listItemWithTaskListItem }
+  };
+}
+function exitCheck(token) {
+  const node2 = this.stack[this.stack.length - 2];
+  ok$1(node2.type === "listItem");
+  node2.checked = token.type === "taskListCheckValueChecked";
+}
+function exitParagraphWithTaskListItem(token) {
+  const parent = this.stack[this.stack.length - 2];
+  if (parent && parent.type === "listItem" && typeof parent.checked === "boolean") {
+    const node2 = this.stack[this.stack.length - 1];
+    ok$1(node2.type === "paragraph");
+    const head = node2.children[0];
+    if (head && head.type === "text") {
+      const siblings = parent.children;
+      let index2 = -1;
+      let firstParaghraph;
+      while (++index2 < siblings.length) {
+        const sibling = siblings[index2];
+        if (sibling.type === "paragraph") {
+          firstParaghraph = sibling;
+          break;
+        }
+      }
+      if (firstParaghraph === node2) {
+        head.value = head.value.slice(1);
+        if (head.value.length === 0) {
+          node2.children.shift();
+        } else if (node2.position && head.position && typeof head.position.start.offset === "number") {
+          head.position.start.column++;
+          head.position.start.offset++;
+          node2.position.start = Object.assign({}, head.position.start);
+        }
+      }
+    }
+  }
+  this.exit(token);
+}
+function listItemWithTaskListItem(node2, parent, state, info) {
+  const head = node2.children[0];
+  const checkable = typeof node2.checked === "boolean" && head && head.type === "paragraph";
+  const checkbox = "[" + (node2.checked ? "x" : " ") + "] ";
+  const tracker = state.createTracker(info);
+  if (checkable) {
+    tracker.move(checkbox);
+  }
+  let value = handle.listItem(node2, parent, state, {
+    ...info,
+    ...tracker.current()
+  });
+  if (checkable) {
+    value = value.replace(/^(?:[*+-]|\d+\.)([\r\n]| {1,3})/, check);
+  }
+  return value;
+  function check($0) {
+    return $0 + checkbox;
+  }
+}
+function gfmFromMarkdown() {
+  return [
+    gfmAutolinkLiteralFromMarkdown(),
+    gfmFootnoteFromMarkdown(),
+    gfmStrikethroughFromMarkdown(),
+    gfmTableFromMarkdown(),
+    gfmTaskListItemFromMarkdown()
+  ];
+}
+function gfmToMarkdown(options) {
+  return {
+    extensions: [
+      gfmAutolinkLiteralToMarkdown(),
+      gfmFootnoteToMarkdown(options),
+      gfmStrikethroughToMarkdown(),
+      gfmTableToMarkdown(options),
+      gfmTaskListItemToMarkdown()
+    ]
+  };
+}
+const wwwPrefix = {
+  tokenize: tokenizeWwwPrefix,
+  partial: true
+};
+const domain = {
+  tokenize: tokenizeDomain,
+  partial: true
+};
+const path = {
+  tokenize: tokenizePath,
+  partial: true
+};
+const trail = {
+  tokenize: tokenizeTrail,
+  partial: true
+};
+const emailDomainDotTrail = {
+  tokenize: tokenizeEmailDomainDotTrail,
+  partial: true
+};
+const wwwAutolink = {
+  name: "wwwAutolink",
+  tokenize: tokenizeWwwAutolink,
+  previous: previousWww
+};
+const protocolAutolink = {
+  name: "protocolAutolink",
+  tokenize: tokenizeProtocolAutolink,
+  previous: previousProtocol
+};
+const emailAutolink = {
+  name: "emailAutolink",
+  tokenize: tokenizeEmailAutolink,
+  previous: previousEmail
+};
+const text = {};
+function gfmAutolinkLiteral() {
+  return {
+    text
+  };
+}
+let code = 48;
+while (code < 123) {
+  text[code] = emailAutolink;
+  code++;
+  if (code === 58) code = 65;
+  else if (code === 91) code = 97;
+}
+text[43] = emailAutolink;
+text[45] = emailAutolink;
+text[46] = emailAutolink;
+text[95] = emailAutolink;
+text[72] = [emailAutolink, protocolAutolink];
+text[104] = [emailAutolink, protocolAutolink];
+text[87] = [emailAutolink, wwwAutolink];
+text[119] = [emailAutolink, wwwAutolink];
+function tokenizeEmailAutolink(effects, ok2, nok) {
+  const self2 = this;
+  let dot;
+  let data;
+  return start;
+  function start(code2) {
+    if (!gfmAtext(code2) || !previousEmail.call(self2, self2.previous) || previousUnbalanced(self2.events)) {
+      return nok(code2);
+    }
+    effects.enter("literalAutolink");
+    effects.enter("literalAutolinkEmail");
+    return atext(code2);
+  }
+  function atext(code2) {
+    if (gfmAtext(code2)) {
+      effects.consume(code2);
+      return atext;
+    }
+    if (code2 === 64) {
+      effects.consume(code2);
+      return emailDomain;
+    }
+    return nok(code2);
+  }
+  function emailDomain(code2) {
+    if (code2 === 46) {
+      return effects.check(emailDomainDotTrail, emailDomainAfter, emailDomainDot)(code2);
+    }
+    if (code2 === 45 || code2 === 95 || asciiAlphanumeric(code2)) {
+      data = true;
+      effects.consume(code2);
+      return emailDomain;
+    }
+    return emailDomainAfter(code2);
+  }
+  function emailDomainDot(code2) {
+    effects.consume(code2);
+    dot = true;
+    return emailDomain;
+  }
+  function emailDomainAfter(code2) {
+    if (data && dot && asciiAlpha(self2.previous)) {
+      effects.exit("literalAutolinkEmail");
+      effects.exit("literalAutolink");
+      return ok2(code2);
+    }
+    return nok(code2);
+  }
+}
+function tokenizeWwwAutolink(effects, ok2, nok) {
+  const self2 = this;
+  return wwwStart;
+  function wwwStart(code2) {
+    if (code2 !== 87 && code2 !== 119 || !previousWww.call(self2, self2.previous) || previousUnbalanced(self2.events)) {
+      return nok(code2);
+    }
+    effects.enter("literalAutolink");
+    effects.enter("literalAutolinkWww");
+    return effects.check(wwwPrefix, effects.attempt(domain, effects.attempt(path, wwwAfter), nok), nok)(code2);
+  }
+  function wwwAfter(code2) {
+    effects.exit("literalAutolinkWww");
+    effects.exit("literalAutolink");
+    return ok2(code2);
+  }
+}
+function tokenizeProtocolAutolink(effects, ok2, nok) {
+  const self2 = this;
+  let buffer = "";
+  let seen = false;
+  return protocolStart;
+  function protocolStart(code2) {
+    if ((code2 === 72 || code2 === 104) && previousProtocol.call(self2, self2.previous) && !previousUnbalanced(self2.events)) {
+      effects.enter("literalAutolink");
+      effects.enter("literalAutolinkHttp");
+      buffer += String.fromCodePoint(code2);
+      effects.consume(code2);
+      return protocolPrefixInside;
+    }
+    return nok(code2);
+  }
+  function protocolPrefixInside(code2) {
+    if (asciiAlpha(code2) && buffer.length < 5) {
+      buffer += String.fromCodePoint(code2);
+      effects.consume(code2);
+      return protocolPrefixInside;
+    }
+    if (code2 === 58) {
+      const protocol = buffer.toLowerCase();
+      if (protocol === "http" || protocol === "https") {
+        effects.consume(code2);
+        return protocolSlashesInside;
+      }
+    }
+    return nok(code2);
+  }
+  function protocolSlashesInside(code2) {
+    if (code2 === 47) {
+      effects.consume(code2);
+      if (seen) {
+        return afterProtocol;
+      }
+      seen = true;
+      return protocolSlashesInside;
+    }
+    return nok(code2);
+  }
+  function afterProtocol(code2) {
+    return code2 === null || asciiControl(code2) || markdownLineEndingOrSpace(code2) || unicodeWhitespace(code2) || unicodePunctuation(code2) ? nok(code2) : effects.attempt(domain, effects.attempt(path, protocolAfter), nok)(code2);
+  }
+  function protocolAfter(code2) {
+    effects.exit("literalAutolinkHttp");
+    effects.exit("literalAutolink");
+    return ok2(code2);
+  }
+}
+function tokenizeWwwPrefix(effects, ok2, nok) {
+  let size = 0;
+  return wwwPrefixInside;
+  function wwwPrefixInside(code2) {
+    if ((code2 === 87 || code2 === 119) && size < 3) {
+      size++;
+      effects.consume(code2);
+      return wwwPrefixInside;
+    }
+    if (code2 === 46 && size === 3) {
+      effects.consume(code2);
+      return wwwPrefixAfter;
+    }
+    return nok(code2);
+  }
+  function wwwPrefixAfter(code2) {
+    return code2 === null ? nok(code2) : ok2(code2);
+  }
+}
+function tokenizeDomain(effects, ok2, nok) {
+  let underscoreInLastSegment;
+  let underscoreInLastLastSegment;
+  let seen;
+  return domainInside;
+  function domainInside(code2) {
+    if (code2 === 46 || code2 === 95) {
+      return effects.check(trail, domainAfter, domainAtPunctuation)(code2);
+    }
+    if (code2 === null || markdownLineEndingOrSpace(code2) || unicodeWhitespace(code2) || code2 !== 45 && unicodePunctuation(code2)) {
+      return domainAfter(code2);
+    }
+    seen = true;
+    effects.consume(code2);
+    return domainInside;
+  }
+  function domainAtPunctuation(code2) {
+    if (code2 === 95) {
+      underscoreInLastSegment = true;
+    } else {
+      underscoreInLastLastSegment = underscoreInLastSegment;
+      underscoreInLastSegment = void 0;
+    }
+    effects.consume(code2);
+    return domainInside;
+  }
+  function domainAfter(code2) {
+    if (underscoreInLastLastSegment || underscoreInLastSegment || !seen) {
+      return nok(code2);
+    }
+    return ok2(code2);
+  }
+}
+function tokenizePath(effects, ok2) {
+  let sizeOpen = 0;
+  let sizeClose = 0;
+  return pathInside;
+  function pathInside(code2) {
+    if (code2 === 40) {
+      sizeOpen++;
+      effects.consume(code2);
+      return pathInside;
+    }
+    if (code2 === 41 && sizeClose < sizeOpen) {
+      return pathAtPunctuation(code2);
+    }
+    if (code2 === 33 || code2 === 34 || code2 === 38 || code2 === 39 || code2 === 41 || code2 === 42 || code2 === 44 || code2 === 46 || code2 === 58 || code2 === 59 || code2 === 60 || code2 === 63 || code2 === 93 || code2 === 95 || code2 === 126) {
+      return effects.check(trail, ok2, pathAtPunctuation)(code2);
+    }
+    if (code2 === null || markdownLineEndingOrSpace(code2) || unicodeWhitespace(code2)) {
+      return ok2(code2);
+    }
+    effects.consume(code2);
+    return pathInside;
+  }
+  function pathAtPunctuation(code2) {
+    if (code2 === 41) {
+      sizeClose++;
+    }
+    effects.consume(code2);
+    return pathInside;
+  }
+}
+function tokenizeTrail(effects, ok2, nok) {
+  return trail2;
+  function trail2(code2) {
+    if (code2 === 33 || code2 === 34 || code2 === 39 || code2 === 41 || code2 === 42 || code2 === 44 || code2 === 46 || code2 === 58 || code2 === 59 || code2 === 63 || code2 === 95 || code2 === 126) {
+      effects.consume(code2);
+      return trail2;
+    }
+    if (code2 === 38) {
+      effects.consume(code2);
+      return trailCharacterReferenceStart;
+    }
+    if (code2 === 93) {
+      effects.consume(code2);
+      return trailBracketAfter;
+    }
+    if (
+      // `<` is an end.
+      code2 === 60 || // So is whitespace.
+      code2 === null || markdownLineEndingOrSpace(code2) || unicodeWhitespace(code2)
+    ) {
+      return ok2(code2);
+    }
+    return nok(code2);
+  }
+  function trailBracketAfter(code2) {
+    if (code2 === null || code2 === 40 || code2 === 91 || markdownLineEndingOrSpace(code2) || unicodeWhitespace(code2)) {
+      return ok2(code2);
+    }
+    return trail2(code2);
+  }
+  function trailCharacterReferenceStart(code2) {
+    return asciiAlpha(code2) ? trailCharacterReferenceInside(code2) : nok(code2);
+  }
+  function trailCharacterReferenceInside(code2) {
+    if (code2 === 59) {
+      effects.consume(code2);
+      return trail2;
+    }
+    if (asciiAlpha(code2)) {
+      effects.consume(code2);
+      return trailCharacterReferenceInside;
+    }
+    return nok(code2);
+  }
+}
+function tokenizeEmailDomainDotTrail(effects, ok2, nok) {
+  return start;
+  function start(code2) {
+    effects.consume(code2);
+    return after;
+  }
+  function after(code2) {
+    return asciiAlphanumeric(code2) ? nok(code2) : ok2(code2);
+  }
+}
+function previousWww(code2) {
+  return code2 === null || code2 === 40 || code2 === 42 || code2 === 95 || code2 === 91 || code2 === 93 || code2 === 126 || markdownLineEndingOrSpace(code2);
+}
+function previousProtocol(code2) {
+  return !asciiAlpha(code2);
+}
+function previousEmail(code2) {
+  return !(code2 === 47 || gfmAtext(code2));
+}
+function gfmAtext(code2) {
+  return code2 === 43 || code2 === 45 || code2 === 46 || code2 === 95 || asciiAlphanumeric(code2);
+}
+function previousUnbalanced(events) {
+  let index2 = events.length;
+  let result = false;
+  while (index2--) {
+    const token = events[index2][1];
+    if ((token.type === "labelLink" || token.type === "labelImage") && !token._balanced) {
+      result = true;
+      break;
+    }
+    if (token._gfmAutolinkLiteralWalkedInto) {
+      result = false;
+      break;
+    }
+  }
+  if (events.length > 0 && !result) {
+    events[events.length - 1][1]._gfmAutolinkLiteralWalkedInto = true;
+  }
+  return result;
+}
+const indent = {
+  tokenize: tokenizeIndent,
+  partial: true
+};
+function gfmFootnote() {
+  return {
+    document: {
+      [91]: {
+        name: "gfmFootnoteDefinition",
+        tokenize: tokenizeDefinitionStart,
+        continuation: {
+          tokenize: tokenizeDefinitionContinuation
+        },
+        exit: gfmFootnoteDefinitionEnd
+      }
+    },
+    text: {
+      [91]: {
+        name: "gfmFootnoteCall",
+        tokenize: tokenizeGfmFootnoteCall
+      },
+      [93]: {
+        name: "gfmPotentialFootnoteCall",
+        add: "after",
+        tokenize: tokenizePotentialGfmFootnoteCall,
+        resolveTo: resolveToPotentialGfmFootnoteCall
+      }
+    }
+  };
+}
+function tokenizePotentialGfmFootnoteCall(effects, ok2, nok) {
+  const self2 = this;
+  let index2 = self2.events.length;
+  const defined = self2.parser.gfmFootnotes || (self2.parser.gfmFootnotes = []);
+  let labelStart;
+  while (index2--) {
+    const token = self2.events[index2][1];
+    if (token.type === "labelImage") {
+      labelStart = token;
+      break;
+    }
+    if (token.type === "gfmFootnoteCall" || token.type === "labelLink" || token.type === "label" || token.type === "image" || token.type === "link") {
+      break;
+    }
+  }
+  return start;
+  function start(code2) {
+    if (!labelStart || !labelStart._balanced) {
+      return nok(code2);
+    }
+    const id = normalizeIdentifier(self2.sliceSerialize({
+      start: labelStart.end,
+      end: self2.now()
+    }));
+    if (id.codePointAt(0) !== 94 || !defined.includes(id.slice(1))) {
+      return nok(code2);
+    }
+    effects.enter("gfmFootnoteCallLabelMarker");
+    effects.consume(code2);
+    effects.exit("gfmFootnoteCallLabelMarker");
+    return ok2(code2);
+  }
+}
+function resolveToPotentialGfmFootnoteCall(events, context) {
+  let index2 = events.length;
+  while (index2--) {
+    if (events[index2][1].type === "labelImage" && events[index2][0] === "enter") {
+      events[index2][1];
+      break;
+    }
+  }
+  events[index2 + 1][1].type = "data";
+  events[index2 + 3][1].type = "gfmFootnoteCallLabelMarker";
+  const call = {
+    type: "gfmFootnoteCall",
+    start: Object.assign({}, events[index2 + 3][1].start),
+    end: Object.assign({}, events[events.length - 1][1].end)
+  };
+  const marker = {
+    type: "gfmFootnoteCallMarker",
+    start: Object.assign({}, events[index2 + 3][1].end),
+    end: Object.assign({}, events[index2 + 3][1].end)
+  };
+  marker.end.column++;
+  marker.end.offset++;
+  marker.end._bufferIndex++;
+  const string2 = {
+    type: "gfmFootnoteCallString",
+    start: Object.assign({}, marker.end),
+    end: Object.assign({}, events[events.length - 1][1].start)
+  };
+  const chunk = {
+    type: "chunkString",
+    contentType: "string",
+    start: Object.assign({}, string2.start),
+    end: Object.assign({}, string2.end)
+  };
+  const replacement = [
+    // Take the `labelImageMarker` (now `data`, the `!`)
+    events[index2 + 1],
+    events[index2 + 2],
+    ["enter", call, context],
+    // The `[`
+    events[index2 + 3],
+    events[index2 + 4],
+    // The `^`.
+    ["enter", marker, context],
+    ["exit", marker, context],
+    // Everything in between.
+    ["enter", string2, context],
+    ["enter", chunk, context],
+    ["exit", chunk, context],
+    ["exit", string2, context],
+    // The ending (`]`, properly parsed and labelled).
+    events[events.length - 2],
+    events[events.length - 1],
+    ["exit", call, context]
+  ];
+  events.splice(index2, events.length - index2 + 1, ...replacement);
+  return events;
+}
+function tokenizeGfmFootnoteCall(effects, ok2, nok) {
+  const self2 = this;
+  const defined = self2.parser.gfmFootnotes || (self2.parser.gfmFootnotes = []);
+  let size = 0;
+  let data;
+  return start;
+  function start(code2) {
+    effects.enter("gfmFootnoteCall");
+    effects.enter("gfmFootnoteCallLabelMarker");
+    effects.consume(code2);
+    effects.exit("gfmFootnoteCallLabelMarker");
+    return callStart;
+  }
+  function callStart(code2) {
+    if (code2 !== 94) return nok(code2);
+    effects.enter("gfmFootnoteCallMarker");
+    effects.consume(code2);
+    effects.exit("gfmFootnoteCallMarker");
+    effects.enter("gfmFootnoteCallString");
+    effects.enter("chunkString").contentType = "string";
+    return callData;
+  }
+  function callData(code2) {
+    if (
+      // Too long.
+      size > 999 || // Closing brace with nothing.
+      code2 === 93 && !data || // Space or tab is not supported by GFM for some reason.
+      // `\n` and `[` not being supported makes sense.
+      code2 === null || code2 === 91 || markdownLineEndingOrSpace(code2)
+    ) {
+      return nok(code2);
+    }
+    if (code2 === 93) {
+      effects.exit("chunkString");
+      const token = effects.exit("gfmFootnoteCallString");
+      if (!defined.includes(normalizeIdentifier(self2.sliceSerialize(token)))) {
+        return nok(code2);
+      }
+      effects.enter("gfmFootnoteCallLabelMarker");
+      effects.consume(code2);
+      effects.exit("gfmFootnoteCallLabelMarker");
+      effects.exit("gfmFootnoteCall");
+      return ok2;
+    }
+    if (!markdownLineEndingOrSpace(code2)) {
+      data = true;
+    }
+    size++;
+    effects.consume(code2);
+    return code2 === 92 ? callEscape : callData;
+  }
+  function callEscape(code2) {
+    if (code2 === 91 || code2 === 92 || code2 === 93) {
+      effects.consume(code2);
+      size++;
+      return callData;
+    }
+    return callData(code2);
+  }
+}
+function tokenizeDefinitionStart(effects, ok2, nok) {
+  const self2 = this;
+  const defined = self2.parser.gfmFootnotes || (self2.parser.gfmFootnotes = []);
+  let identifier;
+  let size = 0;
+  let data;
+  return start;
+  function start(code2) {
+    effects.enter("gfmFootnoteDefinition")._container = true;
+    effects.enter("gfmFootnoteDefinitionLabel");
+    effects.enter("gfmFootnoteDefinitionLabelMarker");
+    effects.consume(code2);
+    effects.exit("gfmFootnoteDefinitionLabelMarker");
+    return labelAtMarker;
+  }
+  function labelAtMarker(code2) {
+    if (code2 === 94) {
+      effects.enter("gfmFootnoteDefinitionMarker");
+      effects.consume(code2);
+      effects.exit("gfmFootnoteDefinitionMarker");
+      effects.enter("gfmFootnoteDefinitionLabelString");
+      effects.enter("chunkString").contentType = "string";
+      return labelInside;
+    }
+    return nok(code2);
+  }
+  function labelInside(code2) {
+    if (
+      // Too long.
+      size > 999 || // Closing brace with nothing.
+      code2 === 93 && !data || // Space or tab is not supported by GFM for some reason.
+      // `\n` and `[` not being supported makes sense.
+      code2 === null || code2 === 91 || markdownLineEndingOrSpace(code2)
+    ) {
+      return nok(code2);
+    }
+    if (code2 === 93) {
+      effects.exit("chunkString");
+      const token = effects.exit("gfmFootnoteDefinitionLabelString");
+      identifier = normalizeIdentifier(self2.sliceSerialize(token));
+      effects.enter("gfmFootnoteDefinitionLabelMarker");
+      effects.consume(code2);
+      effects.exit("gfmFootnoteDefinitionLabelMarker");
+      effects.exit("gfmFootnoteDefinitionLabel");
+      return labelAfter;
+    }
+    if (!markdownLineEndingOrSpace(code2)) {
+      data = true;
+    }
+    size++;
+    effects.consume(code2);
+    return code2 === 92 ? labelEscape : labelInside;
+  }
+  function labelEscape(code2) {
+    if (code2 === 91 || code2 === 92 || code2 === 93) {
+      effects.consume(code2);
+      size++;
+      return labelInside;
+    }
+    return labelInside(code2);
+  }
+  function labelAfter(code2) {
+    if (code2 === 58) {
+      effects.enter("definitionMarker");
+      effects.consume(code2);
+      effects.exit("definitionMarker");
+      if (!defined.includes(identifier)) {
+        defined.push(identifier);
+      }
+      return factorySpace(effects, whitespaceAfter, "gfmFootnoteDefinitionWhitespace");
+    }
+    return nok(code2);
+  }
+  function whitespaceAfter(code2) {
+    return ok2(code2);
+  }
+}
+function tokenizeDefinitionContinuation(effects, ok2, nok) {
+  return effects.check(blankLine, ok2, effects.attempt(indent, ok2, nok));
+}
+function gfmFootnoteDefinitionEnd(effects) {
+  effects.exit("gfmFootnoteDefinition");
+}
+function tokenizeIndent(effects, ok2, nok) {
+  const self2 = this;
+  return factorySpace(effects, afterPrefix, "gfmFootnoteDefinitionIndent", 4 + 1);
+  function afterPrefix(code2) {
+    const tail = self2.events[self2.events.length - 1];
+    return tail && tail[1].type === "gfmFootnoteDefinitionIndent" && tail[2].sliceSerialize(tail[1], true).length === 4 ? ok2(code2) : nok(code2);
+  }
+}
+function gfmStrikethrough(options) {
+  const options_ = options || {};
+  let single = options_.singleTilde;
+  const tokenizer = {
+    name: "strikethrough",
+    tokenize: tokenizeStrikethrough,
+    resolveAll: resolveAllStrikethrough
+  };
+  if (single === null || single === void 0) {
+    single = true;
+  }
+  return {
+    text: {
+      [126]: tokenizer
+    },
+    insideSpan: {
+      null: [tokenizer]
+    },
+    attentionMarkers: {
+      null: [126]
+    }
+  };
+  function resolveAllStrikethrough(events, context) {
+    let index2 = -1;
+    while (++index2 < events.length) {
+      if (events[index2][0] === "enter" && events[index2][1].type === "strikethroughSequenceTemporary" && events[index2][1]._close) {
+        let open = index2;
+        while (open--) {
+          if (events[open][0] === "exit" && events[open][1].type === "strikethroughSequenceTemporary" && events[open][1]._open && // If the sizes are the same:
+          events[index2][1].end.offset - events[index2][1].start.offset === events[open][1].end.offset - events[open][1].start.offset) {
+            events[index2][1].type = "strikethroughSequence";
+            events[open][1].type = "strikethroughSequence";
+            const strikethrough2 = {
+              type: "strikethrough",
+              start: Object.assign({}, events[open][1].start),
+              end: Object.assign({}, events[index2][1].end)
+            };
+            const text2 = {
+              type: "strikethroughText",
+              start: Object.assign({}, events[open][1].end),
+              end: Object.assign({}, events[index2][1].start)
+            };
+            const nextEvents = [["enter", strikethrough2, context], ["enter", events[open][1], context], ["exit", events[open][1], context], ["enter", text2, context]];
+            const insideSpan2 = context.parser.constructs.insideSpan.null;
+            if (insideSpan2) {
+              splice(nextEvents, nextEvents.length, 0, resolveAll(insideSpan2, events.slice(open + 1, index2), context));
+            }
+            splice(nextEvents, nextEvents.length, 0, [["exit", text2, context], ["enter", events[index2][1], context], ["exit", events[index2][1], context], ["exit", strikethrough2, context]]);
+            splice(events, open - 1, index2 - open + 3, nextEvents);
+            index2 = open + nextEvents.length - 2;
+            break;
+          }
+        }
+      }
+    }
+    index2 = -1;
+    while (++index2 < events.length) {
+      if (events[index2][1].type === "strikethroughSequenceTemporary") {
+        events[index2][1].type = "data";
+      }
+    }
+    return events;
+  }
+  function tokenizeStrikethrough(effects, ok2, nok) {
+    const previous2 = this.previous;
+    const events = this.events;
+    let size = 0;
+    return start;
+    function start(code2) {
+      if (previous2 === 126 && events[events.length - 1][1].type !== "characterEscape") {
+        return nok(code2);
+      }
+      effects.enter("strikethroughSequenceTemporary");
+      return more(code2);
+    }
+    function more(code2) {
+      const before = classifyCharacter(previous2);
+      if (code2 === 126) {
+        if (size > 1) return nok(code2);
+        effects.consume(code2);
+        size++;
+        return more;
+      }
+      if (size < 2 && !single) return nok(code2);
+      const token = effects.exit("strikethroughSequenceTemporary");
+      const after = classifyCharacter(code2);
+      token._open = !after || after === 2 && Boolean(before);
+      token._close = !before || before === 2 && Boolean(after);
+      return ok2(code2);
+    }
+  }
+}
+class EditMap2 {
+  /**
+   * Create a new edit map.
+   */
+  constructor() {
+    this.map = [];
+    this.index = /* @__PURE__ */ new Map();
+  }
+  /**
+   * Create an edit: a remove and/or add at a certain place.
+   *
+   * @param {number} index
+   *   Index at which to apply the edit.
+   * @param {number} remove
+   *   Count of items to remove at the index.
+   * @param {Array<Event>} add
+   *   Items to add at the index.
+   * @returns {undefined}
+   *   Nothing.
+   */
+  add(index2, remove, add) {
+    addImplementation(this, index2, remove, add);
+  }
+  // To do: add this when moving to `micromark`.
+  // /**
+  //  * Create an edit: but insert `add` before existing additions.
+  //  *
+  //  * @param {number} index
+  //  * @param {number} remove
+  //  * @param {Array<Event>} add
+  //  * @returns {undefined}
+  //  */
+  // addBefore(index, remove, add) {
+  //   addImplementation(this, index, remove, add, true)
+  // }
+  /**
+   * Done, change the events.
+   *
+   * @param {Array<Event>} events
+   *   List of events to apply the edits to.
+   * @returns {undefined}
+   *   Nothing.
+   */
+  consume(events) {
+    this.map.sort(function(a, b) {
+      return a[0] - b[0];
+    });
+    if (this.map.length === 0) {
+      return;
+    }
+    let index2 = this.map.length;
+    const vecs = [];
+    while (index2 > 0) {
+      index2 -= 1;
+      vecs.push(events.slice(this.map[index2][0] + this.map[index2][1]), this.map[index2][2]);
+      events.length = this.map[index2][0];
+    }
+    vecs.push(events.slice());
+    events.length = 0;
+    let slice = vecs.pop();
+    while (slice) {
+      for (const element2 of slice) {
+        events.push(element2);
+      }
+      slice = vecs.pop();
+    }
+    this.map.length = 0;
+    this.index.clear();
+  }
+}
+function addImplementation(editMap, at, remove, add) {
+  if (remove === 0 && add.length === 0) {
+    return;
+  }
+  const existing = editMap.index.get(at);
+  if (existing) {
+    existing[1] += remove;
+    existing[2].push(...add);
+    return;
+  }
+  const change = [at, remove, add];
+  editMap.map.push(change);
+  editMap.index.set(at, change);
+}
+function gfmTableAlign(events, index2) {
+  let inDelimiterRow = false;
+  const align = [];
+  while (index2 < events.length) {
+    const event = events[index2];
+    if (inDelimiterRow) {
+      if (event[0] === "enter") {
+        if (event[1].type === "tableContent") {
+          align.push(events[index2 + 1][1].type === "tableDelimiterMarker" ? "left" : "none");
+        }
+      } else if (event[1].type === "tableContent") {
+        if (events[index2 - 1][1].type === "tableDelimiterMarker") {
+          const alignIndex = align.length - 1;
+          align[alignIndex] = align[alignIndex] === "left" ? "center" : "right";
+        }
+      } else if (event[1].type === "tableDelimiterRow") {
+        break;
+      }
+    } else if (event[0] === "enter" && event[1].type === "tableDelimiterRow") {
+      inDelimiterRow = true;
+    }
+    index2 += 1;
+  }
+  return align;
+}
+function gfmTable() {
+  return {
+    flow: {
+      null: {
+        name: "table",
+        tokenize: tokenizeTable,
+        resolveAll: resolveTable
+      }
+    }
+  };
+}
+function tokenizeTable(effects, ok2, nok) {
+  const self2 = this;
+  let size = 0;
+  let sizeB = 0;
+  let seen;
+  return start;
+  function start(code2) {
+    let index2 = self2.events.length - 1;
+    while (index2 > -1) {
+      const {
+        type
+      } = self2.events[index2][1];
+      if (type === "lineEnding" || // Note: markdown-rs uses `whitespace` instead of `linePrefix`
+      type === "linePrefix") {
+        index2--;
+      } else {
+        break;
+      }
+    }
+    const tail = index2 > -1 ? self2.events[index2][1].type : null;
+    const next = tail === "tableHead" || tail === "tableRow" ? bodyRowStart : headRowBefore;
+    if (next === bodyRowStart && self2.parser.lazy[self2.now().line]) {
+      return nok(code2);
+    }
+    return next(code2);
+  }
+  function headRowBefore(code2) {
+    effects.enter("tableHead");
+    effects.enter("tableRow");
+    return headRowStart(code2);
+  }
+  function headRowStart(code2) {
+    if (code2 === 124) {
+      return headRowBreak(code2);
+    }
+    seen = true;
+    sizeB += 1;
+    return headRowBreak(code2);
+  }
+  function headRowBreak(code2) {
+    if (code2 === null) {
+      return nok(code2);
+    }
+    if (markdownLineEnding(code2)) {
+      if (sizeB > 1) {
+        sizeB = 0;
+        self2.interrupt = true;
+        effects.exit("tableRow");
+        effects.enter("lineEnding");
+        effects.consume(code2);
+        effects.exit("lineEnding");
+        return headDelimiterStart;
+      }
+      return nok(code2);
+    }
+    if (markdownSpace(code2)) {
+      return factorySpace(effects, headRowBreak, "whitespace")(code2);
+    }
+    sizeB += 1;
+    if (seen) {
+      seen = false;
+      size += 1;
+    }
+    if (code2 === 124) {
+      effects.enter("tableCellDivider");
+      effects.consume(code2);
+      effects.exit("tableCellDivider");
+      seen = true;
+      return headRowBreak;
+    }
+    effects.enter("data");
+    return headRowData(code2);
+  }
+  function headRowData(code2) {
+    if (code2 === null || code2 === 124 || markdownLineEndingOrSpace(code2)) {
+      effects.exit("data");
+      return headRowBreak(code2);
+    }
+    effects.consume(code2);
+    return code2 === 92 ? headRowEscape : headRowData;
+  }
+  function headRowEscape(code2) {
+    if (code2 === 92 || code2 === 124) {
+      effects.consume(code2);
+      return headRowData;
+    }
+    return headRowData(code2);
+  }
+  function headDelimiterStart(code2) {
+    self2.interrupt = false;
+    if (self2.parser.lazy[self2.now().line]) {
+      return nok(code2);
+    }
+    effects.enter("tableDelimiterRow");
+    seen = false;
+    if (markdownSpace(code2)) {
+      return factorySpace(effects, headDelimiterBefore, "linePrefix", self2.parser.constructs.disable.null.includes("codeIndented") ? void 0 : 4)(code2);
+    }
+    return headDelimiterBefore(code2);
+  }
+  function headDelimiterBefore(code2) {
+    if (code2 === 45 || code2 === 58) {
+      return headDelimiterValueBefore(code2);
+    }
+    if (code2 === 124) {
+      seen = true;
+      effects.enter("tableCellDivider");
+      effects.consume(code2);
+      effects.exit("tableCellDivider");
+      return headDelimiterCellBefore;
+    }
+    return headDelimiterNok(code2);
+  }
+  function headDelimiterCellBefore(code2) {
+    if (markdownSpace(code2)) {
+      return factorySpace(effects, headDelimiterValueBefore, "whitespace")(code2);
+    }
+    return headDelimiterValueBefore(code2);
+  }
+  function headDelimiterValueBefore(code2) {
+    if (code2 === 58) {
+      sizeB += 1;
+      seen = true;
+      effects.enter("tableDelimiterMarker");
+      effects.consume(code2);
+      effects.exit("tableDelimiterMarker");
+      return headDelimiterLeftAlignmentAfter;
+    }
+    if (code2 === 45) {
+      sizeB += 1;
+      return headDelimiterLeftAlignmentAfter(code2);
+    }
+    if (code2 === null || markdownLineEnding(code2)) {
+      return headDelimiterCellAfter(code2);
+    }
+    return headDelimiterNok(code2);
+  }
+  function headDelimiterLeftAlignmentAfter(code2) {
+    if (code2 === 45) {
+      effects.enter("tableDelimiterFiller");
+      return headDelimiterFiller(code2);
+    }
+    return headDelimiterNok(code2);
+  }
+  function headDelimiterFiller(code2) {
+    if (code2 === 45) {
+      effects.consume(code2);
+      return headDelimiterFiller;
+    }
+    if (code2 === 58) {
+      seen = true;
+      effects.exit("tableDelimiterFiller");
+      effects.enter("tableDelimiterMarker");
+      effects.consume(code2);
+      effects.exit("tableDelimiterMarker");
+      return headDelimiterRightAlignmentAfter;
+    }
+    effects.exit("tableDelimiterFiller");
+    return headDelimiterRightAlignmentAfter(code2);
+  }
+  function headDelimiterRightAlignmentAfter(code2) {
+    if (markdownSpace(code2)) {
+      return factorySpace(effects, headDelimiterCellAfter, "whitespace")(code2);
+    }
+    return headDelimiterCellAfter(code2);
+  }
+  function headDelimiterCellAfter(code2) {
+    if (code2 === 124) {
+      return headDelimiterBefore(code2);
+    }
+    if (code2 === null || markdownLineEnding(code2)) {
+      if (!seen || size !== sizeB) {
+        return headDelimiterNok(code2);
+      }
+      effects.exit("tableDelimiterRow");
+      effects.exit("tableHead");
+      return ok2(code2);
+    }
+    return headDelimiterNok(code2);
+  }
+  function headDelimiterNok(code2) {
+    return nok(code2);
+  }
+  function bodyRowStart(code2) {
+    effects.enter("tableRow");
+    return bodyRowBreak(code2);
+  }
+  function bodyRowBreak(code2) {
+    if (code2 === 124) {
+      effects.enter("tableCellDivider");
+      effects.consume(code2);
+      effects.exit("tableCellDivider");
+      return bodyRowBreak;
+    }
+    if (code2 === null || markdownLineEnding(code2)) {
+      effects.exit("tableRow");
+      return ok2(code2);
+    }
+    if (markdownSpace(code2)) {
+      return factorySpace(effects, bodyRowBreak, "whitespace")(code2);
+    }
+    effects.enter("data");
+    return bodyRowData(code2);
+  }
+  function bodyRowData(code2) {
+    if (code2 === null || code2 === 124 || markdownLineEndingOrSpace(code2)) {
+      effects.exit("data");
+      return bodyRowBreak(code2);
+    }
+    effects.consume(code2);
+    return code2 === 92 ? bodyRowEscape : bodyRowData;
+  }
+  function bodyRowEscape(code2) {
+    if (code2 === 92 || code2 === 124) {
+      effects.consume(code2);
+      return bodyRowData;
+    }
+    return bodyRowData(code2);
+  }
+}
+function resolveTable(events, context) {
+  let index2 = -1;
+  let inFirstCellAwaitingPipe = true;
+  let rowKind = 0;
+  let lastCell = [0, 0, 0, 0];
+  let cell = [0, 0, 0, 0];
+  let afterHeadAwaitingFirstBodyRow = false;
+  let lastTableEnd = 0;
+  let currentTable;
+  let currentBody;
+  let currentCell;
+  const map2 = new EditMap2();
+  while (++index2 < events.length) {
+    const event = events[index2];
+    const token = event[1];
+    if (event[0] === "enter") {
+      if (token.type === "tableHead") {
+        afterHeadAwaitingFirstBodyRow = false;
+        if (lastTableEnd !== 0) {
+          flushTableEnd(map2, context, lastTableEnd, currentTable, currentBody);
+          currentBody = void 0;
+          lastTableEnd = 0;
+        }
+        currentTable = {
+          type: "table",
+          start: Object.assign({}, token.start),
+          // Note: correct end is set later.
+          end: Object.assign({}, token.end)
+        };
+        map2.add(index2, 0, [["enter", currentTable, context]]);
+      } else if (token.type === "tableRow" || token.type === "tableDelimiterRow") {
+        inFirstCellAwaitingPipe = true;
+        currentCell = void 0;
+        lastCell = [0, 0, 0, 0];
+        cell = [0, index2 + 1, 0, 0];
+        if (afterHeadAwaitingFirstBodyRow) {
+          afterHeadAwaitingFirstBodyRow = false;
+          currentBody = {
+            type: "tableBody",
+            start: Object.assign({}, token.start),
+            // Note: correct end is set later.
+            end: Object.assign({}, token.end)
+          };
+          map2.add(index2, 0, [["enter", currentBody, context]]);
+        }
+        rowKind = token.type === "tableDelimiterRow" ? 2 : currentBody ? 3 : 1;
+      } else if (rowKind && (token.type === "data" || token.type === "tableDelimiterMarker" || token.type === "tableDelimiterFiller")) {
+        inFirstCellAwaitingPipe = false;
+        if (cell[2] === 0) {
+          if (lastCell[1] !== 0) {
+            cell[0] = cell[1];
+            currentCell = flushCell(map2, context, lastCell, rowKind, void 0, currentCell);
+            lastCell = [0, 0, 0, 0];
+          }
+          cell[2] = index2;
+        }
+      } else if (token.type === "tableCellDivider") {
+        if (inFirstCellAwaitingPipe) {
+          inFirstCellAwaitingPipe = false;
+        } else {
+          if (lastCell[1] !== 0) {
+            cell[0] = cell[1];
+            currentCell = flushCell(map2, context, lastCell, rowKind, void 0, currentCell);
+          }
+          lastCell = cell;
+          cell = [lastCell[1], index2, 0, 0];
+        }
+      }
+    } else if (token.type === "tableHead") {
+      afterHeadAwaitingFirstBodyRow = true;
+      lastTableEnd = index2;
+    } else if (token.type === "tableRow" || token.type === "tableDelimiterRow") {
+      lastTableEnd = index2;
+      if (lastCell[1] !== 0) {
+        cell[0] = cell[1];
+        currentCell = flushCell(map2, context, lastCell, rowKind, index2, currentCell);
+      } else if (cell[1] !== 0) {
+        currentCell = flushCell(map2, context, cell, rowKind, index2, currentCell);
+      }
+      rowKind = 0;
+    } else if (rowKind && (token.type === "data" || token.type === "tableDelimiterMarker" || token.type === "tableDelimiterFiller")) {
+      cell[3] = index2;
+    }
+  }
+  if (lastTableEnd !== 0) {
+    flushTableEnd(map2, context, lastTableEnd, currentTable, currentBody);
+  }
+  map2.consume(context.events);
+  index2 = -1;
+  while (++index2 < context.events.length) {
+    const event = context.events[index2];
+    if (event[0] === "enter" && event[1].type === "table") {
+      event[1]._align = gfmTableAlign(context.events, index2);
+    }
+  }
+  return events;
+}
+function flushCell(map2, context, range, rowKind, rowEnd, previousCell) {
+  const groupName = rowKind === 1 ? "tableHeader" : rowKind === 2 ? "tableDelimiter" : "tableData";
+  const valueName = "tableContent";
+  if (range[0] !== 0) {
+    previousCell.end = Object.assign({}, getPoint(context.events, range[0]));
+    map2.add(range[0], 0, [["exit", previousCell, context]]);
+  }
+  const now = getPoint(context.events, range[1]);
+  previousCell = {
+    type: groupName,
+    start: Object.assign({}, now),
+    // Note: correct end is set later.
+    end: Object.assign({}, now)
+  };
+  map2.add(range[1], 0, [["enter", previousCell, context]]);
+  if (range[2] !== 0) {
+    const relatedStart = getPoint(context.events, range[2]);
+    const relatedEnd = getPoint(context.events, range[3]);
+    const valueToken = {
+      type: valueName,
+      start: Object.assign({}, relatedStart),
+      end: Object.assign({}, relatedEnd)
+    };
+    map2.add(range[2], 0, [["enter", valueToken, context]]);
+    if (rowKind !== 2) {
+      const start = context.events[range[2]];
+      const end = context.events[range[3]];
+      start[1].end = Object.assign({}, end[1].end);
+      start[1].type = "chunkText";
+      start[1].contentType = "text";
+      if (range[3] > range[2] + 1) {
+        const a = range[2] + 1;
+        const b = range[3] - range[2] - 1;
+        map2.add(a, b, []);
+      }
+    }
+    map2.add(range[3] + 1, 0, [["exit", valueToken, context]]);
+  }
+  if (rowEnd !== void 0) {
+    previousCell.end = Object.assign({}, getPoint(context.events, rowEnd));
+    map2.add(rowEnd, 0, [["exit", previousCell, context]]);
+    previousCell = void 0;
+  }
+  return previousCell;
+}
+function flushTableEnd(map2, context, index2, table2, tableBody) {
+  const exits = [];
+  const related = getPoint(context.events, index2);
+  if (tableBody) {
+    tableBody.end = Object.assign({}, related);
+    exits.push(["exit", tableBody, context]);
+  }
+  table2.end = Object.assign({}, related);
+  exits.push(["exit", table2, context]);
+  map2.add(index2 + 1, 0, exits);
+}
+function getPoint(events, index2) {
+  const event = events[index2];
+  const side = event[0] === "enter" ? "start" : "end";
+  return event[1][side];
+}
+const tasklistCheck = {
+  name: "tasklistCheck",
+  tokenize: tokenizeTasklistCheck
+};
+function gfmTaskListItem() {
+  return {
+    text: {
+      [91]: tasklistCheck
+    }
+  };
+}
+function tokenizeTasklistCheck(effects, ok2, nok) {
+  const self2 = this;
+  return open;
+  function open(code2) {
+    if (
+      // Exit if there’s stuff before.
+      self2.previous !== null || // Exit if not in the first content that is the first child of a list
+      // item.
+      !self2._gfmTasklistFirstContentOfListItem
+    ) {
+      return nok(code2);
+    }
+    effects.enter("taskListCheck");
+    effects.enter("taskListCheckMarker");
+    effects.consume(code2);
+    effects.exit("taskListCheckMarker");
+    return inside;
+  }
+  function inside(code2) {
+    if (markdownLineEndingOrSpace(code2)) {
+      effects.enter("taskListCheckValueUnchecked");
+      effects.consume(code2);
+      effects.exit("taskListCheckValueUnchecked");
+      return close;
+    }
+    if (code2 === 88 || code2 === 120) {
+      effects.enter("taskListCheckValueChecked");
+      effects.consume(code2);
+      effects.exit("taskListCheckValueChecked");
+      return close;
+    }
+    return nok(code2);
+  }
+  function close(code2) {
+    if (code2 === 93) {
+      effects.enter("taskListCheckMarker");
+      effects.consume(code2);
+      effects.exit("taskListCheckMarker");
+      effects.exit("taskListCheck");
+      return after;
+    }
+    return nok(code2);
+  }
+  function after(code2) {
+    if (markdownLineEnding(code2)) {
+      return ok2(code2);
+    }
+    if (markdownSpace(code2)) {
+      return effects.check({
+        tokenize: spaceThenNonSpace
+      }, ok2, nok)(code2);
+    }
+    return nok(code2);
+  }
+}
+function spaceThenNonSpace(effects, ok2, nok) {
+  return factorySpace(effects, after, "whitespace");
+  function after(code2) {
+    return code2 === null ? nok(code2) : ok2(code2);
+  }
+}
+function gfm(options) {
+  return combineExtensions([
+    gfmAutolinkLiteral(),
+    gfmFootnote(),
+    gfmStrikethrough(options),
+    gfmTable(),
+    gfmTaskListItem()
+  ]);
+}
+const emptyOptions = {};
+function remarkGfm(options) {
+  const self2 = (
+    /** @type {Processor<Root>} */
+    this
+  );
+  const settings = options || emptyOptions;
+  const data = self2.data();
+  const micromarkExtensions = data.micromarkExtensions || (data.micromarkExtensions = []);
+  const fromMarkdownExtensions = data.fromMarkdownExtensions || (data.fromMarkdownExtensions = []);
+  const toMarkdownExtensions = data.toMarkdownExtensions || (data.toMarkdownExtensions = []);
+  micromarkExtensions.push(gfm(settings));
+  fromMarkdownExtensions.push(gfmFromMarkdown());
+  toMarkdownExtensions.push(gfmToMarkdown(settings));
+}
 function AtomChunkCard({
   chunk,
   onUpdated,
@@ -1327,7 +23133,7 @@ function AtomChunkCard({
   const [errorMsg, setErrorMsg] = reactExports.useState("");
   const [editorHeight, setEditorHeight] = reactExports.useState(200);
   const previewContainerRef = reactExports.useRef(null);
-  React.useEffect(() => {
+  React$1.useEffect(() => {
     if (!isEditing) {
       setEditContent(chunk.content);
     }
@@ -1351,11 +23157,7 @@ function AtomChunkCard({
       if (res.ok) {
         setSaveSuccess(true);
         setIsEditing(false);
-        const { useIdeStore: useIdeStore2 } = await __vitePreload(async () => {
-          const { useIdeStore: useIdeStore3 } = await Promise.resolve().then(() => ideStore);
-          return { useIdeStore: useIdeStore3 };
-        }, true ? void 0 : void 0);
-        useIdeStore2.getState().clearSnapshot(`atom:${chunk.id}`);
+        useIdeStore.getState().clearSnapshot(`atom:${chunk.id}`);
         window.dispatchEvent(
           new CustomEvent("aca:atom-updated", {
             detail: { atomId: chunk.id, content: editContent }
@@ -1546,7 +23348,7 @@ function PromptViewer({
   isHookActive = false,
   onToggleHook
 }) {
-  var _a, _b, _c, _d;
+  var _a2, _b2, _c2, _d2;
   const [copied, setCopied] = reactExports.useState(false);
   const [showBreakdown, setShowBreakdown] = reactExports.useState(false);
   const [displayMode, setDisplayMode] = reactExports.useState("chunks");
@@ -1570,10 +23372,10 @@ function PromptViewer({
   const lineCount = currentDisplayPrompt ? currentDisplayPrompt.split("\n").length : 0;
   const charCount = currentDisplayPrompt ? currentDisplayPrompt.length : 0;
   const estimatedTokens = (profile == null ? void 0 : profile.total_tokens) ?? Math.round(charCount / 3.8);
-  const d3Tokens = ((_a = profile == null ? void 0 : profile.by_pillar) == null ? void 0 : _a.d3) || 0;
-  const d2Tokens = ((_b = profile == null ? void 0 : profile.by_pillar) == null ? void 0 : _b.d2) || 0;
-  const d1Tokens = ((_c = profile == null ? void 0 : profile.by_pillar) == null ? void 0 : _c.d1) || 0;
-  const kernelTokens = ((_d = profile == null ? void 0 : profile.by_pillar) == null ? void 0 : _d.kernel) || 0;
+  const d3Tokens = ((_a2 = profile == null ? void 0 : profile.by_pillar) == null ? void 0 : _a2.d3) || 0;
+  const d2Tokens = ((_b2 = profile == null ? void 0 : profile.by_pillar) == null ? void 0 : _b2.d2) || 0;
+  const d1Tokens = ((_c2 = profile == null ? void 0 : profile.by_pillar) == null ? void 0 : _c2.d1) || 0;
+  const kernelTokens = ((_d2 = profile == null ? void 0 : profile.by_pillar) == null ? void 0 : _d2.kernel) || 0;
   const totalProfileTokens = Math.max(1, (profile == null ? void 0 : profile.total_tokens) || 1);
   const d3Pct = Math.round(d3Tokens / totalProfileTokens * 100);
   const d2Pct = Math.round(d2Tokens / totalProfileTokens * 100);
@@ -1824,100 +23626,2135 @@ function PromptViewer({
     ] }) })
   ] });
 }
+const PanelGroupContext = reactExports.createContext(null);
+PanelGroupContext.displayName = "PanelGroupContext";
+const DATA_ATTRIBUTES = {
+  group: "data-panel-group",
+  groupDirection: "data-panel-group-direction",
+  groupId: "data-panel-group-id",
+  panel: "data-panel",
+  panelCollapsible: "data-panel-collapsible",
+  panelId: "data-panel-id",
+  panelSize: "data-panel-size",
+  resizeHandle: "data-resize-handle",
+  resizeHandleActive: "data-resize-handle-active",
+  resizeHandleEnabled: "data-panel-resize-handle-enabled",
+  resizeHandleId: "data-panel-resize-handle-id",
+  resizeHandleState: "data-resize-handle-state"
+};
+const PRECISION = 10;
+const useIsomorphicLayoutEffect = reactExports.useLayoutEffect;
+const useId = React["useId".toString()];
+const wrappedUseId = typeof useId === "function" ? useId : () => null;
+let counter = 0;
+function useUniqueId(idFromParams = null) {
+  const idFromUseId = wrappedUseId();
+  const idRef = reactExports.useRef(idFromParams || idFromUseId || null);
+  if (idRef.current === null) {
+    idRef.current = "" + counter++;
+  }
+  return idFromParams !== null && idFromParams !== void 0 ? idFromParams : idRef.current;
+}
+function PanelWithForwardedRef({
+  children,
+  className: classNameFromProps = "",
+  collapsedSize,
+  collapsible,
+  defaultSize,
+  forwardedRef,
+  id: idFromProps,
+  maxSize,
+  minSize,
+  onCollapse,
+  onExpand,
+  onResize,
+  order: order2,
+  style: styleFromProps,
+  tagName: Type = "div",
+  ...rest
+}) {
+  const context = reactExports.useContext(PanelGroupContext);
+  if (context === null) {
+    throw Error(`Panel components must be rendered within a PanelGroup container`);
+  }
+  const {
+    collapsePanel,
+    expandPanel,
+    getPanelSize,
+    getPanelStyle,
+    groupId,
+    isPanelCollapsed,
+    reevaluatePanelConstraints,
+    registerPanel,
+    resizePanel: resizePanel2,
+    unregisterPanel
+  } = context;
+  const panelId = useUniqueId(idFromProps);
+  const panelDataRef = reactExports.useRef({
+    callbacks: {
+      onCollapse,
+      onExpand,
+      onResize
+    },
+    constraints: {
+      collapsedSize,
+      collapsible,
+      defaultSize,
+      maxSize,
+      minSize
+    },
+    id: panelId,
+    idIsFromProps: idFromProps !== void 0,
+    order: order2
+  });
+  reactExports.useRef({
+    didLogMissingDefaultSizeWarning: false
+  });
+  useIsomorphicLayoutEffect(() => {
+    const {
+      callbacks,
+      constraints
+    } = panelDataRef.current;
+    const prevConstraints = {
+      ...constraints
+    };
+    panelDataRef.current.id = panelId;
+    panelDataRef.current.idIsFromProps = idFromProps !== void 0;
+    panelDataRef.current.order = order2;
+    callbacks.onCollapse = onCollapse;
+    callbacks.onExpand = onExpand;
+    callbacks.onResize = onResize;
+    constraints.collapsedSize = collapsedSize;
+    constraints.collapsible = collapsible;
+    constraints.defaultSize = defaultSize;
+    constraints.maxSize = maxSize;
+    constraints.minSize = minSize;
+    if (prevConstraints.collapsedSize !== constraints.collapsedSize || prevConstraints.collapsible !== constraints.collapsible || prevConstraints.maxSize !== constraints.maxSize || prevConstraints.minSize !== constraints.minSize) {
+      reevaluatePanelConstraints(panelDataRef.current, prevConstraints);
+    }
+  });
+  useIsomorphicLayoutEffect(() => {
+    const panelData = panelDataRef.current;
+    registerPanel(panelData);
+    return () => {
+      unregisterPanel(panelData);
+    };
+  }, [order2, panelId, registerPanel, unregisterPanel]);
+  reactExports.useImperativeHandle(forwardedRef, () => ({
+    collapse: () => {
+      collapsePanel(panelDataRef.current);
+    },
+    expand: (minSize2) => {
+      expandPanel(panelDataRef.current, minSize2);
+    },
+    getId() {
+      return panelId;
+    },
+    getSize() {
+      return getPanelSize(panelDataRef.current);
+    },
+    isCollapsed() {
+      return isPanelCollapsed(panelDataRef.current);
+    },
+    isExpanded() {
+      return !isPanelCollapsed(panelDataRef.current);
+    },
+    resize: (size) => {
+      resizePanel2(panelDataRef.current, size);
+    }
+  }), [collapsePanel, expandPanel, getPanelSize, isPanelCollapsed, panelId, resizePanel2]);
+  const style = getPanelStyle(panelDataRef.current, defaultSize);
+  return reactExports.createElement(Type, {
+    ...rest,
+    children,
+    className: classNameFromProps,
+    id: panelId,
+    style: {
+      ...style,
+      ...styleFromProps
+    },
+    // CSS selectors
+    [DATA_ATTRIBUTES.groupId]: groupId,
+    [DATA_ATTRIBUTES.panel]: "",
+    [DATA_ATTRIBUTES.panelCollapsible]: collapsible || void 0,
+    [DATA_ATTRIBUTES.panelId]: panelId,
+    [DATA_ATTRIBUTES.panelSize]: parseFloat("" + style.flexGrow).toFixed(1)
+  });
+}
+const Panel = reactExports.forwardRef((props2, ref) => reactExports.createElement(PanelWithForwardedRef, {
+  ...props2,
+  forwardedRef: ref
+}));
+PanelWithForwardedRef.displayName = "Panel";
+Panel.displayName = "forwardRef(Panel)";
+let currentCursorStyle = null;
+let prevRuleIndex = -1;
+let styleElement = null;
+function getCursorStyle(state, constraintFlags) {
+  if (constraintFlags) {
+    const horizontalMin = (constraintFlags & EXCEEDED_HORIZONTAL_MIN) !== 0;
+    const horizontalMax = (constraintFlags & EXCEEDED_HORIZONTAL_MAX) !== 0;
+    const verticalMin = (constraintFlags & EXCEEDED_VERTICAL_MIN) !== 0;
+    const verticalMax = (constraintFlags & EXCEEDED_VERTICAL_MAX) !== 0;
+    if (horizontalMin) {
+      if (verticalMin) {
+        return "se-resize";
+      } else if (verticalMax) {
+        return "ne-resize";
+      } else {
+        return "e-resize";
+      }
+    } else if (horizontalMax) {
+      if (verticalMin) {
+        return "sw-resize";
+      } else if (verticalMax) {
+        return "nw-resize";
+      } else {
+        return "w-resize";
+      }
+    } else if (verticalMin) {
+      return "s-resize";
+    } else if (verticalMax) {
+      return "n-resize";
+    }
+  }
+  switch (state) {
+    case "horizontal":
+      return "ew-resize";
+    case "intersection":
+      return "move";
+    case "vertical":
+      return "ns-resize";
+  }
+}
+function resetGlobalCursorStyle() {
+  if (styleElement !== null) {
+    document.head.removeChild(styleElement);
+    currentCursorStyle = null;
+    styleElement = null;
+    prevRuleIndex = -1;
+  }
+}
+function setGlobalCursorStyle(state, constraintFlags) {
+  var _styleElement$sheet$i, _styleElement$sheet2;
+  const style = getCursorStyle(state, constraintFlags);
+  if (currentCursorStyle === style) {
+    return;
+  }
+  currentCursorStyle = style;
+  if (styleElement === null) {
+    styleElement = document.createElement("style");
+    document.head.appendChild(styleElement);
+  }
+  if (prevRuleIndex >= 0) {
+    var _styleElement$sheet;
+    (_styleElement$sheet = styleElement.sheet) === null || _styleElement$sheet === void 0 ? void 0 : _styleElement$sheet.removeRule(prevRuleIndex);
+  }
+  prevRuleIndex = (_styleElement$sheet$i = (_styleElement$sheet2 = styleElement.sheet) === null || _styleElement$sheet2 === void 0 ? void 0 : _styleElement$sheet2.insertRule(`*{cursor: ${style} !important;}`)) !== null && _styleElement$sheet$i !== void 0 ? _styleElement$sheet$i : -1;
+}
+function isKeyDown(event) {
+  return event.type === "keydown";
+}
+function isPointerEvent(event) {
+  return event.type.startsWith("pointer");
+}
+function isMouseEvent(event) {
+  return event.type.startsWith("mouse");
+}
+function getResizeEventCoordinates(event) {
+  if (isPointerEvent(event)) {
+    if (event.isPrimary) {
+      return {
+        x: event.clientX,
+        y: event.clientY
+      };
+    }
+  } else if (isMouseEvent(event)) {
+    return {
+      x: event.clientX,
+      y: event.clientY
+    };
+  }
+  return {
+    x: Infinity,
+    y: Infinity
+  };
+}
+function getInputType() {
+  if (typeof matchMedia === "function") {
+    return matchMedia("(pointer:coarse)").matches ? "coarse" : "fine";
+  }
+}
+function intersects(rectOne, rectTwo, strict) {
+  {
+    return rectOne.x < rectTwo.x + rectTwo.width && rectOne.x + rectOne.width > rectTwo.x && rectOne.y < rectTwo.y + rectTwo.height && rectOne.y + rectOne.height > rectTwo.y;
+  }
+}
+function compare(a, b) {
+  if (a === b) throw new Error("Cannot compare node with itself");
+  const ancestors = {
+    a: get_ancestors(a),
+    b: get_ancestors(b)
+  };
+  let common_ancestor;
+  while (ancestors.a.at(-1) === ancestors.b.at(-1)) {
+    a = ancestors.a.pop();
+    b = ancestors.b.pop();
+    common_ancestor = a;
+  }
+  assert(common_ancestor, "Stacking order can only be calculated for elements with a common ancestor");
+  const z_indexes = {
+    a: get_z_index(find_stacking_context(ancestors.a)),
+    b: get_z_index(find_stacking_context(ancestors.b))
+  };
+  if (z_indexes.a === z_indexes.b) {
+    const children = common_ancestor.childNodes;
+    const furthest_ancestors = {
+      a: ancestors.a.at(-1),
+      b: ancestors.b.at(-1)
+    };
+    let i = children.length;
+    while (i--) {
+      const child = children[i];
+      if (child === furthest_ancestors.a) return 1;
+      if (child === furthest_ancestors.b) return -1;
+    }
+  }
+  return Math.sign(z_indexes.a - z_indexes.b);
+}
+const props = /\b(?:position|zIndex|opacity|transform|webkitTransform|mixBlendMode|filter|webkitFilter|isolation)\b/;
+function is_flex_item(node2) {
+  var _get_parent;
+  const display = getComputedStyle((_get_parent = get_parent(node2)) !== null && _get_parent !== void 0 ? _get_parent : node2).display;
+  return display === "flex" || display === "inline-flex";
+}
+function creates_stacking_context(node2) {
+  const style = getComputedStyle(node2);
+  if (style.position === "fixed") return true;
+  if (style.zIndex !== "auto" && (style.position !== "static" || is_flex_item(node2))) return true;
+  if (+style.opacity < 1) return true;
+  if ("transform" in style && style.transform !== "none") return true;
+  if ("webkitTransform" in style && style.webkitTransform !== "none") return true;
+  if ("mixBlendMode" in style && style.mixBlendMode !== "normal") return true;
+  if ("filter" in style && style.filter !== "none") return true;
+  if ("webkitFilter" in style && style.webkitFilter !== "none") return true;
+  if ("isolation" in style && style.isolation === "isolate") return true;
+  if (props.test(style.willChange)) return true;
+  if (style.webkitOverflowScrolling === "touch") return true;
+  return false;
+}
+function find_stacking_context(nodes) {
+  let i = nodes.length;
+  while (i--) {
+    const node2 = nodes[i];
+    assert(node2, "Missing node");
+    if (creates_stacking_context(node2)) return node2;
+  }
+  return null;
+}
+function get_z_index(node2) {
+  return node2 && Number(getComputedStyle(node2).zIndex) || 0;
+}
+function get_ancestors(node2) {
+  const ancestors = [];
+  while (node2) {
+    ancestors.push(node2);
+    node2 = get_parent(node2);
+  }
+  return ancestors;
+}
+function get_parent(node2) {
+  const {
+    parentNode
+  } = node2;
+  if (parentNode && parentNode instanceof ShadowRoot) {
+    return parentNode.host;
+  }
+  return parentNode;
+}
+const EXCEEDED_HORIZONTAL_MIN = 1;
+const EXCEEDED_HORIZONTAL_MAX = 2;
+const EXCEEDED_VERTICAL_MIN = 4;
+const EXCEEDED_VERTICAL_MAX = 8;
+const isCoarsePointer = getInputType() === "coarse";
+let intersectingHandles = [];
+let isPointerDown = false;
+let ownerDocumentCounts = /* @__PURE__ */ new Map();
+let panelConstraintFlags = /* @__PURE__ */ new Map();
+const registeredResizeHandlers = /* @__PURE__ */ new Set();
+function registerResizeHandle(resizeHandleId, element2, direction, hitAreaMargins, setResizeHandlerState) {
+  var _ownerDocumentCounts$;
+  const {
+    ownerDocument
+  } = element2;
+  const data = {
+    direction,
+    element: element2,
+    hitAreaMargins,
+    setResizeHandlerState
+  };
+  const count2 = (_ownerDocumentCounts$ = ownerDocumentCounts.get(ownerDocument)) !== null && _ownerDocumentCounts$ !== void 0 ? _ownerDocumentCounts$ : 0;
+  ownerDocumentCounts.set(ownerDocument, count2 + 1);
+  registeredResizeHandlers.add(data);
+  updateListeners();
+  return function unregisterResizeHandle() {
+    var _ownerDocumentCounts$2;
+    panelConstraintFlags.delete(resizeHandleId);
+    registeredResizeHandlers.delete(data);
+    const count3 = (_ownerDocumentCounts$2 = ownerDocumentCounts.get(ownerDocument)) !== null && _ownerDocumentCounts$2 !== void 0 ? _ownerDocumentCounts$2 : 1;
+    ownerDocumentCounts.set(ownerDocument, count3 - 1);
+    updateListeners();
+    if (count3 === 1) {
+      ownerDocumentCounts.delete(ownerDocument);
+    }
+    if (intersectingHandles.includes(data)) {
+      const index2 = intersectingHandles.indexOf(data);
+      if (index2 >= 0) {
+        intersectingHandles.splice(index2, 1);
+      }
+      updateCursor();
+      setResizeHandlerState("up", true, null);
+    }
+  };
+}
+function handlePointerDown(event) {
+  const {
+    target
+  } = event;
+  const {
+    x,
+    y
+  } = getResizeEventCoordinates(event);
+  isPointerDown = true;
+  recalculateIntersectingHandles({
+    target,
+    x,
+    y
+  });
+  updateListeners();
+  if (intersectingHandles.length > 0) {
+    updateResizeHandlerStates("down", event);
+    event.preventDefault();
+    if (!isWithinResizeHandle(target)) {
+      event.stopImmediatePropagation();
+    }
+  }
+}
+function handlePointerMove(event) {
+  const {
+    x,
+    y
+  } = getResizeEventCoordinates(event);
+  if (isPointerDown && event.buttons === 0) {
+    isPointerDown = false;
+    updateResizeHandlerStates("up", event);
+  }
+  if (!isPointerDown) {
+    const {
+      target
+    } = event;
+    recalculateIntersectingHandles({
+      target,
+      x,
+      y
+    });
+  }
+  updateResizeHandlerStates("move", event);
+  updateCursor();
+  if (intersectingHandles.length > 0) {
+    event.preventDefault();
+  }
+}
+function handlePointerUp(event) {
+  const {
+    target
+  } = event;
+  const {
+    x,
+    y
+  } = getResizeEventCoordinates(event);
+  panelConstraintFlags.clear();
+  isPointerDown = false;
+  if (intersectingHandles.length > 0) {
+    event.preventDefault();
+    if (!isWithinResizeHandle(target)) {
+      event.stopImmediatePropagation();
+    }
+  }
+  updateResizeHandlerStates("up", event);
+  recalculateIntersectingHandles({
+    target,
+    x,
+    y
+  });
+  updateCursor();
+  updateListeners();
+}
+function isWithinResizeHandle(element2) {
+  let currentElement = element2;
+  while (currentElement) {
+    if (currentElement.hasAttribute(DATA_ATTRIBUTES.resizeHandle)) {
+      return true;
+    }
+    currentElement = currentElement.parentElement;
+  }
+  return false;
+}
+function recalculateIntersectingHandles({
+  target,
+  x,
+  y
+}) {
+  intersectingHandles.splice(0);
+  let targetElement = null;
+  if (target instanceof HTMLElement || target instanceof SVGElement) {
+    targetElement = target;
+  }
+  registeredResizeHandlers.forEach((data) => {
+    const {
+      element: dragHandleElement,
+      hitAreaMargins
+    } = data;
+    const dragHandleRect = dragHandleElement.getBoundingClientRect();
+    const {
+      bottom,
+      left,
+      right,
+      top
+    } = dragHandleRect;
+    const margin = isCoarsePointer ? hitAreaMargins.coarse : hitAreaMargins.fine;
+    const eventIntersects = x >= left - margin && x <= right + margin && y >= top - margin && y <= bottom + margin;
+    if (eventIntersects) {
+      if (targetElement !== null && document.contains(targetElement) && dragHandleElement !== targetElement && !dragHandleElement.contains(targetElement) && !targetElement.contains(dragHandleElement) && // Calculating stacking order has a cost, so we should avoid it if possible
+      // That is why we only check potentially intersecting handles,
+      // and why we skip if the event target is within the handle's DOM
+      compare(targetElement, dragHandleElement) > 0) {
+        let currentElement = targetElement;
+        let didIntersect = false;
+        while (currentElement) {
+          if (currentElement.contains(dragHandleElement)) {
+            break;
+          } else if (intersects(currentElement.getBoundingClientRect(), dragHandleRect)) {
+            didIntersect = true;
+            break;
+          }
+          currentElement = currentElement.parentElement;
+        }
+        if (didIntersect) {
+          return;
+        }
+      }
+      intersectingHandles.push(data);
+    }
+  });
+}
+function reportConstraintsViolation(resizeHandleId, flag) {
+  panelConstraintFlags.set(resizeHandleId, flag);
+}
+function updateCursor() {
+  let intersectsHorizontal = false;
+  let intersectsVertical = false;
+  intersectingHandles.forEach((data) => {
+    const {
+      direction
+    } = data;
+    if (direction === "horizontal") {
+      intersectsHorizontal = true;
+    } else {
+      intersectsVertical = true;
+    }
+  });
+  let constraintFlags = 0;
+  panelConstraintFlags.forEach((flag) => {
+    constraintFlags |= flag;
+  });
+  if (intersectsHorizontal && intersectsVertical) {
+    setGlobalCursorStyle("intersection", constraintFlags);
+  } else if (intersectsHorizontal) {
+    setGlobalCursorStyle("horizontal", constraintFlags);
+  } else if (intersectsVertical) {
+    setGlobalCursorStyle("vertical", constraintFlags);
+  } else {
+    resetGlobalCursorStyle();
+  }
+}
+let listenersAbortController = new AbortController();
+function updateListeners() {
+  listenersAbortController.abort();
+  listenersAbortController = new AbortController();
+  const options = {
+    capture: true,
+    signal: listenersAbortController.signal
+  };
+  if (!registeredResizeHandlers.size) {
+    return;
+  }
+  if (isPointerDown) {
+    if (intersectingHandles.length > 0) {
+      ownerDocumentCounts.forEach((count2, ownerDocument) => {
+        const {
+          body
+        } = ownerDocument;
+        if (count2 > 0) {
+          body.addEventListener("contextmenu", handlePointerUp, options);
+          body.addEventListener("pointerleave", handlePointerMove, options);
+          body.addEventListener("pointermove", handlePointerMove, options);
+        }
+      });
+    }
+    window.addEventListener("pointerup", handlePointerUp, options);
+    window.addEventListener("pointercancel", handlePointerUp, options);
+  } else {
+    ownerDocumentCounts.forEach((count2, ownerDocument) => {
+      const {
+        body
+      } = ownerDocument;
+      if (count2 > 0) {
+        body.addEventListener("pointerdown", handlePointerDown, options);
+        body.addEventListener("pointermove", handlePointerMove, options);
+      }
+    });
+  }
+}
+function updateResizeHandlerStates(action, event) {
+  registeredResizeHandlers.forEach((data) => {
+    const {
+      setResizeHandlerState
+    } = data;
+    const isActive = intersectingHandles.includes(data);
+    setResizeHandlerState(action, isActive, event);
+  });
+}
+function useForceUpdate() {
+  const [_, setCount] = reactExports.useState(0);
+  return reactExports.useCallback(() => setCount((prevCount) => prevCount + 1), []);
+}
+function assert(expectedCondition, message) {
+  if (!expectedCondition) {
+    console.error(message);
+    throw Error(message);
+  }
+}
+function fuzzyCompareNumbers(actual, expected, fractionDigits = PRECISION) {
+  if (actual.toFixed(fractionDigits) === expected.toFixed(fractionDigits)) {
+    return 0;
+  } else {
+    return actual > expected ? 1 : -1;
+  }
+}
+function fuzzyNumbersEqual$1(actual, expected, fractionDigits = PRECISION) {
+  return fuzzyCompareNumbers(actual, expected, fractionDigits) === 0;
+}
+function fuzzyNumbersEqual(actual, expected, fractionDigits) {
+  return fuzzyCompareNumbers(actual, expected, fractionDigits) === 0;
+}
+function fuzzyLayoutsEqual(actual, expected, fractionDigits) {
+  if (actual.length !== expected.length) {
+    return false;
+  }
+  for (let index2 = 0; index2 < actual.length; index2++) {
+    const actualSize = actual[index2];
+    const expectedSize = expected[index2];
+    if (!fuzzyNumbersEqual(actualSize, expectedSize, fractionDigits)) {
+      return false;
+    }
+  }
+  return true;
+}
+function resizePanel({
+  panelConstraints: panelConstraintsArray,
+  panelIndex,
+  size
+}) {
+  const panelConstraints = panelConstraintsArray[panelIndex];
+  assert(panelConstraints != null, `Panel constraints not found for index ${panelIndex}`);
+  let {
+    collapsedSize = 0,
+    collapsible,
+    maxSize = 100,
+    minSize = 0
+  } = panelConstraints;
+  if (fuzzyCompareNumbers(size, minSize) < 0) {
+    if (collapsible) {
+      const halfwayPoint = (collapsedSize + minSize) / 2;
+      if (fuzzyCompareNumbers(size, halfwayPoint) < 0) {
+        size = collapsedSize;
+      } else {
+        size = minSize;
+      }
+    } else {
+      size = minSize;
+    }
+  }
+  size = Math.min(maxSize, size);
+  size = parseFloat(size.toFixed(PRECISION));
+  return size;
+}
+function adjustLayoutByDelta({
+  delta,
+  initialLayout,
+  panelConstraints: panelConstraintsArray,
+  pivotIndices,
+  prevLayout,
+  trigger
+}) {
+  if (fuzzyNumbersEqual(delta, 0)) {
+    return initialLayout;
+  }
+  const nextLayout = [...initialLayout];
+  const [firstPivotIndex, secondPivotIndex] = pivotIndices;
+  assert(firstPivotIndex != null, "Invalid first pivot index");
+  assert(secondPivotIndex != null, "Invalid second pivot index");
+  let deltaApplied = 0;
+  {
+    if (trigger === "keyboard") {
+      {
+        const index2 = delta < 0 ? secondPivotIndex : firstPivotIndex;
+        const panelConstraints = panelConstraintsArray[index2];
+        assert(panelConstraints, `Panel constraints not found for index ${index2}`);
+        const {
+          collapsedSize = 0,
+          collapsible,
+          minSize = 0
+        } = panelConstraints;
+        if (collapsible) {
+          const prevSize = initialLayout[index2];
+          assert(prevSize != null, `Previous layout not found for panel index ${index2}`);
+          if (fuzzyNumbersEqual(prevSize, collapsedSize)) {
+            const localDelta = minSize - prevSize;
+            if (fuzzyCompareNumbers(localDelta, Math.abs(delta)) > 0) {
+              delta = delta < 0 ? 0 - localDelta : localDelta;
+            }
+          }
+        }
+      }
+      {
+        const index2 = delta < 0 ? firstPivotIndex : secondPivotIndex;
+        const panelConstraints = panelConstraintsArray[index2];
+        assert(panelConstraints, `No panel constraints found for index ${index2}`);
+        const {
+          collapsedSize = 0,
+          collapsible,
+          minSize = 0
+        } = panelConstraints;
+        if (collapsible) {
+          const prevSize = initialLayout[index2];
+          assert(prevSize != null, `Previous layout not found for panel index ${index2}`);
+          if (fuzzyNumbersEqual(prevSize, minSize)) {
+            const localDelta = prevSize - collapsedSize;
+            if (fuzzyCompareNumbers(localDelta, Math.abs(delta)) > 0) {
+              delta = delta < 0 ? 0 - localDelta : localDelta;
+            }
+          }
+        }
+      }
+    }
+  }
+  {
+    const increment2 = delta < 0 ? 1 : -1;
+    let index2 = delta < 0 ? secondPivotIndex : firstPivotIndex;
+    let maxAvailableDelta = 0;
+    while (true) {
+      const prevSize = initialLayout[index2];
+      assert(prevSize != null, `Previous layout not found for panel index ${index2}`);
+      const maxSafeSize = resizePanel({
+        panelConstraints: panelConstraintsArray,
+        panelIndex: index2,
+        size: 100
+      });
+      const delta2 = maxSafeSize - prevSize;
+      maxAvailableDelta += delta2;
+      index2 += increment2;
+      if (index2 < 0 || index2 >= panelConstraintsArray.length) {
+        break;
+      }
+    }
+    const minAbsDelta = Math.min(Math.abs(delta), Math.abs(maxAvailableDelta));
+    delta = delta < 0 ? 0 - minAbsDelta : minAbsDelta;
+  }
+  {
+    const pivotIndex = delta < 0 ? firstPivotIndex : secondPivotIndex;
+    let index2 = pivotIndex;
+    while (index2 >= 0 && index2 < panelConstraintsArray.length) {
+      const deltaRemaining = Math.abs(delta) - Math.abs(deltaApplied);
+      const prevSize = initialLayout[index2];
+      assert(prevSize != null, `Previous layout not found for panel index ${index2}`);
+      const unsafeSize = prevSize - deltaRemaining;
+      const safeSize = resizePanel({
+        panelConstraints: panelConstraintsArray,
+        panelIndex: index2,
+        size: unsafeSize
+      });
+      if (!fuzzyNumbersEqual(prevSize, safeSize)) {
+        deltaApplied += prevSize - safeSize;
+        nextLayout[index2] = safeSize;
+        if (deltaApplied.toPrecision(3).localeCompare(Math.abs(delta).toPrecision(3), void 0, {
+          numeric: true
+        }) >= 0) {
+          break;
+        }
+      }
+      if (delta < 0) {
+        index2--;
+      } else {
+        index2++;
+      }
+    }
+  }
+  if (fuzzyLayoutsEqual(prevLayout, nextLayout)) {
+    return prevLayout;
+  }
+  {
+    const pivotIndex = delta < 0 ? secondPivotIndex : firstPivotIndex;
+    const prevSize = initialLayout[pivotIndex];
+    assert(prevSize != null, `Previous layout not found for panel index ${pivotIndex}`);
+    const unsafeSize = prevSize + deltaApplied;
+    const safeSize = resizePanel({
+      panelConstraints: panelConstraintsArray,
+      panelIndex: pivotIndex,
+      size: unsafeSize
+    });
+    nextLayout[pivotIndex] = safeSize;
+    if (!fuzzyNumbersEqual(safeSize, unsafeSize)) {
+      let deltaRemaining = unsafeSize - safeSize;
+      const pivotIndex2 = delta < 0 ? secondPivotIndex : firstPivotIndex;
+      let index2 = pivotIndex2;
+      while (index2 >= 0 && index2 < panelConstraintsArray.length) {
+        const prevSize2 = nextLayout[index2];
+        assert(prevSize2 != null, `Previous layout not found for panel index ${index2}`);
+        const unsafeSize2 = prevSize2 + deltaRemaining;
+        const safeSize2 = resizePanel({
+          panelConstraints: panelConstraintsArray,
+          panelIndex: index2,
+          size: unsafeSize2
+        });
+        if (!fuzzyNumbersEqual(prevSize2, safeSize2)) {
+          deltaRemaining -= safeSize2 - prevSize2;
+          nextLayout[index2] = safeSize2;
+        }
+        if (fuzzyNumbersEqual(deltaRemaining, 0)) {
+          break;
+        }
+        if (delta > 0) {
+          index2--;
+        } else {
+          index2++;
+        }
+      }
+    }
+  }
+  const totalSize = nextLayout.reduce((total, size) => size + total, 0);
+  if (!fuzzyNumbersEqual(totalSize, 100)) {
+    return prevLayout;
+  }
+  return nextLayout;
+}
+function calculateAriaValues({
+  layout,
+  panelsArray,
+  pivotIndices
+}) {
+  let currentMinSize = 0;
+  let currentMaxSize = 100;
+  let totalMinSize = 0;
+  let totalMaxSize = 0;
+  const firstIndex = pivotIndices[0];
+  assert(firstIndex != null, "No pivot index found");
+  panelsArray.forEach((panelData, index2) => {
+    const {
+      constraints
+    } = panelData;
+    const {
+      maxSize = 100,
+      minSize = 0
+    } = constraints;
+    if (index2 === firstIndex) {
+      currentMinSize = minSize;
+      currentMaxSize = maxSize;
+    } else {
+      totalMinSize += minSize;
+      totalMaxSize += maxSize;
+    }
+  });
+  const valueMax = Math.min(currentMaxSize, 100 - totalMinSize);
+  const valueMin = Math.max(currentMinSize, 100 - totalMaxSize);
+  const valueNow = layout[firstIndex];
+  return {
+    valueMax,
+    valueMin,
+    valueNow
+  };
+}
+function getResizeHandleElementsForGroup(groupId, scope = document) {
+  return Array.from(scope.querySelectorAll(`[${DATA_ATTRIBUTES.resizeHandleId}][data-panel-group-id="${groupId}"]`));
+}
+function getResizeHandleElementIndex(groupId, id, scope = document) {
+  const handles = getResizeHandleElementsForGroup(groupId, scope);
+  const index2 = handles.findIndex((handle2) => handle2.getAttribute(DATA_ATTRIBUTES.resizeHandleId) === id);
+  return index2 !== null && index2 !== void 0 ? index2 : null;
+}
+function determinePivotIndices(groupId, dragHandleId, panelGroupElement) {
+  const index2 = getResizeHandleElementIndex(groupId, dragHandleId, panelGroupElement);
+  return index2 != null ? [index2, index2 + 1] : [-1, -1];
+}
+function getPanelGroupElement(id, rootElement = document) {
+  var _dataset;
+  if (rootElement instanceof HTMLElement && (rootElement === null || rootElement === void 0 ? void 0 : (_dataset = rootElement.dataset) === null || _dataset === void 0 ? void 0 : _dataset.panelGroupId) == id) {
+    return rootElement;
+  }
+  const element2 = rootElement.querySelector(`[data-panel-group][data-panel-group-id="${id}"]`);
+  if (element2) {
+    return element2;
+  }
+  return null;
+}
+function getResizeHandleElement(id, scope = document) {
+  const element2 = scope.querySelector(`[${DATA_ATTRIBUTES.resizeHandleId}="${id}"]`);
+  if (element2) {
+    return element2;
+  }
+  return null;
+}
+function getResizeHandlePanelIds(groupId, handleId, panelsArray, scope = document) {
+  var _panelsArray$index$id, _panelsArray$index, _panelsArray$id, _panelsArray;
+  const handle2 = getResizeHandleElement(handleId, scope);
+  const handles = getResizeHandleElementsForGroup(groupId, scope);
+  const index2 = handle2 ? handles.indexOf(handle2) : -1;
+  const idBefore = (_panelsArray$index$id = (_panelsArray$index = panelsArray[index2]) === null || _panelsArray$index === void 0 ? void 0 : _panelsArray$index.id) !== null && _panelsArray$index$id !== void 0 ? _panelsArray$index$id : null;
+  const idAfter = (_panelsArray$id = (_panelsArray = panelsArray[index2 + 1]) === null || _panelsArray === void 0 ? void 0 : _panelsArray.id) !== null && _panelsArray$id !== void 0 ? _panelsArray$id : null;
+  return [idBefore, idAfter];
+}
+function useWindowSplitterPanelGroupBehavior({
+  committedValuesRef,
+  eagerValuesRef,
+  groupId,
+  layout,
+  panelDataArray,
+  panelGroupElement,
+  setLayout
+}) {
+  reactExports.useRef({
+    didWarnAboutMissingResizeHandle: false
+  });
+  useIsomorphicLayoutEffect(() => {
+    if (!panelGroupElement) {
+      return;
+    }
+    const resizeHandleElements = getResizeHandleElementsForGroup(groupId, panelGroupElement);
+    for (let index2 = 0; index2 < panelDataArray.length - 1; index2++) {
+      const {
+        valueMax,
+        valueMin,
+        valueNow
+      } = calculateAriaValues({
+        layout,
+        panelsArray: panelDataArray,
+        pivotIndices: [index2, index2 + 1]
+      });
+      const resizeHandleElement = resizeHandleElements[index2];
+      if (resizeHandleElement == null) ;
+      else {
+        const panelData = panelDataArray[index2];
+        assert(panelData, `No panel data found for index "${index2}"`);
+        resizeHandleElement.setAttribute("aria-controls", panelData.id);
+        resizeHandleElement.setAttribute("aria-valuemax", "" + Math.round(valueMax));
+        resizeHandleElement.setAttribute("aria-valuemin", "" + Math.round(valueMin));
+        resizeHandleElement.setAttribute("aria-valuenow", valueNow != null ? "" + Math.round(valueNow) : "");
+      }
+    }
+    return () => {
+      resizeHandleElements.forEach((resizeHandleElement, index2) => {
+        resizeHandleElement.removeAttribute("aria-controls");
+        resizeHandleElement.removeAttribute("aria-valuemax");
+        resizeHandleElement.removeAttribute("aria-valuemin");
+        resizeHandleElement.removeAttribute("aria-valuenow");
+      });
+    };
+  }, [groupId, layout, panelDataArray, panelGroupElement]);
+  reactExports.useEffect(() => {
+    if (!panelGroupElement) {
+      return;
+    }
+    const eagerValues = eagerValuesRef.current;
+    assert(eagerValues, `Eager values not found`);
+    const {
+      panelDataArray: panelDataArray2
+    } = eagerValues;
+    const groupElement = getPanelGroupElement(groupId, panelGroupElement);
+    assert(groupElement != null, `No group found for id "${groupId}"`);
+    const handles = getResizeHandleElementsForGroup(groupId, panelGroupElement);
+    assert(handles, `No resize handles found for group id "${groupId}"`);
+    const cleanupFunctions = handles.map((handle2) => {
+      const handleId = handle2.getAttribute(DATA_ATTRIBUTES.resizeHandleId);
+      assert(handleId, `Resize handle element has no handle id attribute`);
+      const [idBefore, idAfter] = getResizeHandlePanelIds(groupId, handleId, panelDataArray2, panelGroupElement);
+      if (idBefore == null || idAfter == null) {
+        return () => {
+        };
+      }
+      const onKeyDown = (event) => {
+        if (event.defaultPrevented) {
+          return;
+        }
+        switch (event.key) {
+          case "Enter": {
+            event.preventDefault();
+            const index2 = panelDataArray2.findIndex((panelData) => panelData.id === idBefore);
+            if (index2 >= 0) {
+              const panelData = panelDataArray2[index2];
+              assert(panelData, `No panel data found for index ${index2}`);
+              const size = layout[index2];
+              const {
+                collapsedSize = 0,
+                collapsible,
+                minSize = 0
+              } = panelData.constraints;
+              if (size != null && collapsible) {
+                const nextLayout = adjustLayoutByDelta({
+                  delta: fuzzyNumbersEqual(size, collapsedSize) ? minSize - collapsedSize : collapsedSize - size,
+                  initialLayout: layout,
+                  panelConstraints: panelDataArray2.map((panelData2) => panelData2.constraints),
+                  pivotIndices: determinePivotIndices(groupId, handleId, panelGroupElement),
+                  prevLayout: layout,
+                  trigger: "keyboard"
+                });
+                if (layout !== nextLayout) {
+                  setLayout(nextLayout);
+                }
+              }
+            }
+            break;
+          }
+        }
+      };
+      handle2.addEventListener("keydown", onKeyDown);
+      return () => {
+        handle2.removeEventListener("keydown", onKeyDown);
+      };
+    });
+    return () => {
+      cleanupFunctions.forEach((cleanupFunction) => cleanupFunction());
+    };
+  }, [panelGroupElement, committedValuesRef, eagerValuesRef, groupId, layout, panelDataArray, setLayout]);
+}
+function areEqual(arrayA, arrayB) {
+  if (arrayA.length !== arrayB.length) {
+    return false;
+  }
+  for (let index2 = 0; index2 < arrayA.length; index2++) {
+    if (arrayA[index2] !== arrayB[index2]) {
+      return false;
+    }
+  }
+  return true;
+}
+function getResizeEventCursorPosition(direction, event) {
+  const isHorizontal = direction === "horizontal";
+  const {
+    x,
+    y
+  } = getResizeEventCoordinates(event);
+  return isHorizontal ? x : y;
+}
+function calculateDragOffsetPercentage(event, dragHandleId, direction, initialDragState, panelGroupElement) {
+  const isHorizontal = direction === "horizontal";
+  const handleElement = getResizeHandleElement(dragHandleId, panelGroupElement);
+  assert(handleElement, `No resize handle element found for id "${dragHandleId}"`);
+  const groupId = handleElement.getAttribute(DATA_ATTRIBUTES.groupId);
+  assert(groupId, `Resize handle element has no group id attribute`);
+  let {
+    initialCursorPosition
+  } = initialDragState;
+  const cursorPosition = getResizeEventCursorPosition(direction, event);
+  const groupElement = getPanelGroupElement(groupId, panelGroupElement);
+  assert(groupElement, `No group element found for id "${groupId}"`);
+  const groupRect = groupElement.getBoundingClientRect();
+  const groupSizeInPixels = isHorizontal ? groupRect.width : groupRect.height;
+  const offsetPixels = cursorPosition - initialCursorPosition;
+  const offsetPercentage = offsetPixels / groupSizeInPixels * 100;
+  return offsetPercentage;
+}
+function calculateDeltaPercentage(event, dragHandleId, direction, initialDragState, keyboardResizeBy, panelGroupElement) {
+  if (isKeyDown(event)) {
+    const isHorizontal = direction === "horizontal";
+    let delta = 0;
+    if (event.shiftKey) {
+      delta = 100;
+    } else if (keyboardResizeBy != null) {
+      delta = keyboardResizeBy;
+    } else {
+      delta = 10;
+    }
+    let movement = 0;
+    switch (event.key) {
+      case "ArrowDown":
+        movement = isHorizontal ? 0 : delta;
+        break;
+      case "ArrowLeft":
+        movement = isHorizontal ? -delta : 0;
+        break;
+      case "ArrowRight":
+        movement = isHorizontal ? delta : 0;
+        break;
+      case "ArrowUp":
+        movement = isHorizontal ? 0 : -delta;
+        break;
+      case "End":
+        movement = 100;
+        break;
+      case "Home":
+        movement = -100;
+        break;
+    }
+    return movement;
+  } else {
+    if (initialDragState == null) {
+      return 0;
+    }
+    return calculateDragOffsetPercentage(event, dragHandleId, direction, initialDragState, panelGroupElement);
+  }
+}
+function calculateUnsafeDefaultLayout({
+  panelDataArray
+}) {
+  const layout = Array(panelDataArray.length);
+  const panelConstraintsArray = panelDataArray.map((panelData) => panelData.constraints);
+  let numPanelsWithSizes = 0;
+  let remainingSize = 100;
+  for (let index2 = 0; index2 < panelDataArray.length; index2++) {
+    const panelConstraints = panelConstraintsArray[index2];
+    assert(panelConstraints, `Panel constraints not found for index ${index2}`);
+    const {
+      defaultSize
+    } = panelConstraints;
+    if (defaultSize != null) {
+      numPanelsWithSizes++;
+      layout[index2] = defaultSize;
+      remainingSize -= defaultSize;
+    }
+  }
+  for (let index2 = 0; index2 < panelDataArray.length; index2++) {
+    const panelConstraints = panelConstraintsArray[index2];
+    assert(panelConstraints, `Panel constraints not found for index ${index2}`);
+    const {
+      defaultSize
+    } = panelConstraints;
+    if (defaultSize != null) {
+      continue;
+    }
+    const numRemainingPanels = panelDataArray.length - numPanelsWithSizes;
+    const size = remainingSize / numRemainingPanels;
+    numPanelsWithSizes++;
+    layout[index2] = size;
+    remainingSize -= size;
+  }
+  return layout;
+}
+function callPanelCallbacks(panelsArray, layout, panelIdToLastNotifiedSizeMap) {
+  layout.forEach((size, index2) => {
+    const panelData = panelsArray[index2];
+    assert(panelData, `Panel data not found for index ${index2}`);
+    const {
+      callbacks,
+      constraints,
+      id: panelId
+    } = panelData;
+    const {
+      collapsedSize = 0,
+      collapsible
+    } = constraints;
+    const lastNotifiedSize = panelIdToLastNotifiedSizeMap[panelId];
+    if (lastNotifiedSize == null || size !== lastNotifiedSize) {
+      panelIdToLastNotifiedSizeMap[panelId] = size;
+      const {
+        onCollapse,
+        onExpand,
+        onResize
+      } = callbacks;
+      if (onResize) {
+        onResize(size, lastNotifiedSize);
+      }
+      if (collapsible && (onCollapse || onExpand)) {
+        if (onExpand && (lastNotifiedSize == null || fuzzyNumbersEqual$1(lastNotifiedSize, collapsedSize)) && !fuzzyNumbersEqual$1(size, collapsedSize)) {
+          onExpand();
+        }
+        if (onCollapse && (lastNotifiedSize == null || !fuzzyNumbersEqual$1(lastNotifiedSize, collapsedSize)) && fuzzyNumbersEqual$1(size, collapsedSize)) {
+          onCollapse();
+        }
+      }
+    }
+  });
+}
+function compareLayouts(a, b) {
+  if (a.length !== b.length) {
+    return false;
+  } else {
+    for (let index2 = 0; index2 < a.length; index2++) {
+      if (a[index2] != b[index2]) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+function computePanelFlexBoxStyle({
+  defaultSize,
+  dragState,
+  layout,
+  panelData,
+  panelIndex,
+  precision = 3
+}) {
+  const size = layout[panelIndex];
+  let flexGrow;
+  if (size == null) {
+    flexGrow = defaultSize != void 0 ? defaultSize.toPrecision(precision) : "1";
+  } else if (panelData.length === 1) {
+    flexGrow = "1";
+  } else {
+    flexGrow = size.toPrecision(precision);
+  }
+  return {
+    flexBasis: 0,
+    flexGrow,
+    flexShrink: 1,
+    // Without this, Panel sizes may be unintentionally overridden by their content
+    overflow: "hidden",
+    // Disable pointer events inside of a panel during resize
+    // This avoid edge cases like nested iframes
+    pointerEvents: dragState !== null ? "none" : void 0
+  };
+}
+function debounce(callback, durationMs = 10) {
+  let timeoutId = null;
+  let callable = (...args) => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => {
+      callback(...args);
+    }, durationMs);
+  };
+  return callable;
+}
+function initializeDefaultStorage(storageObject) {
+  try {
+    if (typeof localStorage !== "undefined") {
+      storageObject.getItem = (name2) => {
+        return localStorage.getItem(name2);
+      };
+      storageObject.setItem = (name2, value) => {
+        localStorage.setItem(name2, value);
+      };
+    } else {
+      throw new Error("localStorage not supported in this environment");
+    }
+  } catch (error) {
+    console.error(error);
+    storageObject.getItem = () => null;
+    storageObject.setItem = () => {
+    };
+  }
+}
+function getPanelGroupKey(autoSaveId) {
+  return `react-resizable-panels:${autoSaveId}`;
+}
+function getPanelKey(panels) {
+  return panels.map((panel) => {
+    const {
+      constraints,
+      id,
+      idIsFromProps,
+      order: order2
+    } = panel;
+    if (idIsFromProps) {
+      return id;
+    } else {
+      return order2 ? `${order2}:${JSON.stringify(constraints)}` : JSON.stringify(constraints);
+    }
+  }).sort((a, b) => a.localeCompare(b)).join(",");
+}
+function loadSerializedPanelGroupState(autoSaveId, storage) {
+  try {
+    const panelGroupKey = getPanelGroupKey(autoSaveId);
+    const serialized = storage.getItem(panelGroupKey);
+    if (serialized) {
+      const parsed = JSON.parse(serialized);
+      if (typeof parsed === "object" && parsed != null) {
+        return parsed;
+      }
+    }
+  } catch (error) {
+  }
+  return null;
+}
+function loadPanelGroupState(autoSaveId, panels, storage) {
+  var _loadSerializedPanelG, _state$panelKey;
+  const state = (_loadSerializedPanelG = loadSerializedPanelGroupState(autoSaveId, storage)) !== null && _loadSerializedPanelG !== void 0 ? _loadSerializedPanelG : {};
+  const panelKey = getPanelKey(panels);
+  return (_state$panelKey = state[panelKey]) !== null && _state$panelKey !== void 0 ? _state$panelKey : null;
+}
+function savePanelGroupState(autoSaveId, panels, panelSizesBeforeCollapse, sizes, storage) {
+  var _loadSerializedPanelG2;
+  const panelGroupKey = getPanelGroupKey(autoSaveId);
+  const panelKey = getPanelKey(panels);
+  const state = (_loadSerializedPanelG2 = loadSerializedPanelGroupState(autoSaveId, storage)) !== null && _loadSerializedPanelG2 !== void 0 ? _loadSerializedPanelG2 : {};
+  state[panelKey] = {
+    expandToSizes: Object.fromEntries(panelSizesBeforeCollapse.entries()),
+    layout: sizes
+  };
+  try {
+    storage.setItem(panelGroupKey, JSON.stringify(state));
+  } catch (error) {
+    console.error(error);
+  }
+}
+function validatePanelGroupLayout({
+  layout: prevLayout,
+  panelConstraints
+}) {
+  const nextLayout = [...prevLayout];
+  const nextLayoutTotalSize = nextLayout.reduce((accumulated, current) => accumulated + current, 0);
+  if (nextLayout.length !== panelConstraints.length) {
+    throw Error(`Invalid ${panelConstraints.length} panel layout: ${nextLayout.map((size) => `${size}%`).join(", ")}`);
+  } else if (!fuzzyNumbersEqual(nextLayoutTotalSize, 100) && nextLayout.length > 0) {
+    for (let index2 = 0; index2 < panelConstraints.length; index2++) {
+      const unsafeSize = nextLayout[index2];
+      assert(unsafeSize != null, `No layout data found for index ${index2}`);
+      const safeSize = 100 / nextLayoutTotalSize * unsafeSize;
+      nextLayout[index2] = safeSize;
+    }
+  }
+  let remainingSize = 0;
+  for (let index2 = 0; index2 < panelConstraints.length; index2++) {
+    const unsafeSize = nextLayout[index2];
+    assert(unsafeSize != null, `No layout data found for index ${index2}`);
+    const safeSize = resizePanel({
+      panelConstraints,
+      panelIndex: index2,
+      size: unsafeSize
+    });
+    if (unsafeSize != safeSize) {
+      remainingSize += unsafeSize - safeSize;
+      nextLayout[index2] = safeSize;
+    }
+  }
+  if (!fuzzyNumbersEqual(remainingSize, 0)) {
+    for (let index2 = 0; index2 < panelConstraints.length; index2++) {
+      const prevSize = nextLayout[index2];
+      assert(prevSize != null, `No layout data found for index ${index2}`);
+      const unsafeSize = prevSize + remainingSize;
+      const safeSize = resizePanel({
+        panelConstraints,
+        panelIndex: index2,
+        size: unsafeSize
+      });
+      if (prevSize !== safeSize) {
+        remainingSize -= safeSize - prevSize;
+        nextLayout[index2] = safeSize;
+        if (fuzzyNumbersEqual(remainingSize, 0)) {
+          break;
+        }
+      }
+    }
+  }
+  return nextLayout;
+}
+const LOCAL_STORAGE_DEBOUNCE_INTERVAL = 100;
+const defaultStorage = {
+  getItem: (name2) => {
+    initializeDefaultStorage(defaultStorage);
+    return defaultStorage.getItem(name2);
+  },
+  setItem: (name2, value) => {
+    initializeDefaultStorage(defaultStorage);
+    defaultStorage.setItem(name2, value);
+  }
+};
+const debounceMap = {};
+function PanelGroupWithForwardedRef({
+  autoSaveId = null,
+  children,
+  className: classNameFromProps = "",
+  direction,
+  forwardedRef,
+  id: idFromProps = null,
+  onLayout = null,
+  keyboardResizeBy = null,
+  storage = defaultStorage,
+  style: styleFromProps,
+  tagName: Type = "div",
+  ...rest
+}) {
+  const groupId = useUniqueId(idFromProps);
+  const panelGroupElementRef = reactExports.useRef(null);
+  const [dragState, setDragState] = reactExports.useState(null);
+  const [layout, setLayout] = reactExports.useState([]);
+  const forceUpdate = useForceUpdate();
+  const panelIdToLastNotifiedSizeMapRef = reactExports.useRef({});
+  const panelSizeBeforeCollapseRef = reactExports.useRef(/* @__PURE__ */ new Map());
+  const prevDeltaRef = reactExports.useRef(0);
+  const committedValuesRef = reactExports.useRef({
+    autoSaveId,
+    direction,
+    dragState,
+    id: groupId,
+    keyboardResizeBy,
+    onLayout,
+    storage
+  });
+  const eagerValuesRef = reactExports.useRef({
+    layout,
+    panelDataArray: [],
+    panelDataArrayChanged: false
+  });
+  reactExports.useRef({
+    didLogIdAndOrderWarning: false,
+    didLogPanelConstraintsWarning: false,
+    prevPanelIds: []
+  });
+  reactExports.useImperativeHandle(forwardedRef, () => ({
+    getId: () => committedValuesRef.current.id,
+    getLayout: () => {
+      const {
+        layout: layout2
+      } = eagerValuesRef.current;
+      return layout2;
+    },
+    setLayout: (unsafeLayout) => {
+      const {
+        onLayout: onLayout2
+      } = committedValuesRef.current;
+      const {
+        layout: prevLayout,
+        panelDataArray
+      } = eagerValuesRef.current;
+      const safeLayout = validatePanelGroupLayout({
+        layout: unsafeLayout,
+        panelConstraints: panelDataArray.map((panelData) => panelData.constraints)
+      });
+      if (!areEqual(prevLayout, safeLayout)) {
+        setLayout(safeLayout);
+        eagerValuesRef.current.layout = safeLayout;
+        if (onLayout2) {
+          onLayout2(safeLayout);
+        }
+        callPanelCallbacks(panelDataArray, safeLayout, panelIdToLastNotifiedSizeMapRef.current);
+      }
+    }
+  }), []);
+  useIsomorphicLayoutEffect(() => {
+    committedValuesRef.current.autoSaveId = autoSaveId;
+    committedValuesRef.current.direction = direction;
+    committedValuesRef.current.dragState = dragState;
+    committedValuesRef.current.id = groupId;
+    committedValuesRef.current.onLayout = onLayout;
+    committedValuesRef.current.storage = storage;
+  });
+  useWindowSplitterPanelGroupBehavior({
+    committedValuesRef,
+    eagerValuesRef,
+    groupId,
+    layout,
+    panelDataArray: eagerValuesRef.current.panelDataArray,
+    setLayout,
+    panelGroupElement: panelGroupElementRef.current
+  });
+  reactExports.useEffect(() => {
+    const {
+      panelDataArray
+    } = eagerValuesRef.current;
+    if (autoSaveId) {
+      if (layout.length === 0 || layout.length !== panelDataArray.length) {
+        return;
+      }
+      let debouncedSave = debounceMap[autoSaveId];
+      if (debouncedSave == null) {
+        debouncedSave = debounce(savePanelGroupState, LOCAL_STORAGE_DEBOUNCE_INTERVAL);
+        debounceMap[autoSaveId] = debouncedSave;
+      }
+      const clonedPanelDataArray = [...panelDataArray];
+      const clonedPanelSizesBeforeCollapse = new Map(panelSizeBeforeCollapseRef.current);
+      debouncedSave(autoSaveId, clonedPanelDataArray, clonedPanelSizesBeforeCollapse, layout, storage);
+    }
+  }, [autoSaveId, layout, storage]);
+  reactExports.useEffect(() => {
+  });
+  const collapsePanel = reactExports.useCallback((panelData) => {
+    const {
+      onLayout: onLayout2
+    } = committedValuesRef.current;
+    const {
+      layout: prevLayout,
+      panelDataArray
+    } = eagerValuesRef.current;
+    if (panelData.constraints.collapsible) {
+      const panelConstraintsArray = panelDataArray.map((panelData2) => panelData2.constraints);
+      const {
+        collapsedSize = 0,
+        panelSize,
+        pivotIndices
+      } = panelDataHelper(panelDataArray, panelData, prevLayout);
+      assert(panelSize != null, `Panel size not found for panel "${panelData.id}"`);
+      if (!fuzzyNumbersEqual$1(panelSize, collapsedSize)) {
+        panelSizeBeforeCollapseRef.current.set(panelData.id, panelSize);
+        const isLastPanel = findPanelDataIndex(panelDataArray, panelData) === panelDataArray.length - 1;
+        const delta = isLastPanel ? panelSize - collapsedSize : collapsedSize - panelSize;
+        const nextLayout = adjustLayoutByDelta({
+          delta,
+          initialLayout: prevLayout,
+          panelConstraints: panelConstraintsArray,
+          pivotIndices,
+          prevLayout,
+          trigger: "imperative-api"
+        });
+        if (!compareLayouts(prevLayout, nextLayout)) {
+          setLayout(nextLayout);
+          eagerValuesRef.current.layout = nextLayout;
+          if (onLayout2) {
+            onLayout2(nextLayout);
+          }
+          callPanelCallbacks(panelDataArray, nextLayout, panelIdToLastNotifiedSizeMapRef.current);
+        }
+      }
+    }
+  }, []);
+  const expandPanel = reactExports.useCallback((panelData, minSizeOverride) => {
+    const {
+      onLayout: onLayout2
+    } = committedValuesRef.current;
+    const {
+      layout: prevLayout,
+      panelDataArray
+    } = eagerValuesRef.current;
+    if (panelData.constraints.collapsible) {
+      const panelConstraintsArray = panelDataArray.map((panelData2) => panelData2.constraints);
+      const {
+        collapsedSize = 0,
+        panelSize = 0,
+        minSize: minSizeFromProps = 0,
+        pivotIndices
+      } = panelDataHelper(panelDataArray, panelData, prevLayout);
+      const minSize = minSizeOverride !== null && minSizeOverride !== void 0 ? minSizeOverride : minSizeFromProps;
+      if (fuzzyNumbersEqual$1(panelSize, collapsedSize)) {
+        const prevPanelSize = panelSizeBeforeCollapseRef.current.get(panelData.id);
+        const baseSize = prevPanelSize != null && prevPanelSize >= minSize ? prevPanelSize : minSize;
+        const isLastPanel = findPanelDataIndex(panelDataArray, panelData) === panelDataArray.length - 1;
+        const delta = isLastPanel ? panelSize - baseSize : baseSize - panelSize;
+        const nextLayout = adjustLayoutByDelta({
+          delta,
+          initialLayout: prevLayout,
+          panelConstraints: panelConstraintsArray,
+          pivotIndices,
+          prevLayout,
+          trigger: "imperative-api"
+        });
+        if (!compareLayouts(prevLayout, nextLayout)) {
+          setLayout(nextLayout);
+          eagerValuesRef.current.layout = nextLayout;
+          if (onLayout2) {
+            onLayout2(nextLayout);
+          }
+          callPanelCallbacks(panelDataArray, nextLayout, panelIdToLastNotifiedSizeMapRef.current);
+        }
+      }
+    }
+  }, []);
+  const getPanelSize = reactExports.useCallback((panelData) => {
+    const {
+      layout: layout2,
+      panelDataArray
+    } = eagerValuesRef.current;
+    const {
+      panelSize
+    } = panelDataHelper(panelDataArray, panelData, layout2);
+    assert(panelSize != null, `Panel size not found for panel "${panelData.id}"`);
+    return panelSize;
+  }, []);
+  const getPanelStyle = reactExports.useCallback((panelData, defaultSize) => {
+    const {
+      panelDataArray
+    } = eagerValuesRef.current;
+    const panelIndex = findPanelDataIndex(panelDataArray, panelData);
+    return computePanelFlexBoxStyle({
+      defaultSize,
+      dragState,
+      layout,
+      panelData: panelDataArray,
+      panelIndex
+    });
+  }, [dragState, layout]);
+  const isPanelCollapsed = reactExports.useCallback((panelData) => {
+    const {
+      layout: layout2,
+      panelDataArray
+    } = eagerValuesRef.current;
+    const {
+      collapsedSize = 0,
+      collapsible,
+      panelSize
+    } = panelDataHelper(panelDataArray, panelData, layout2);
+    assert(panelSize != null, `Panel size not found for panel "${panelData.id}"`);
+    return collapsible === true && fuzzyNumbersEqual$1(panelSize, collapsedSize);
+  }, []);
+  const isPanelExpanded = reactExports.useCallback((panelData) => {
+    const {
+      layout: layout2,
+      panelDataArray
+    } = eagerValuesRef.current;
+    const {
+      collapsedSize = 0,
+      collapsible,
+      panelSize
+    } = panelDataHelper(panelDataArray, panelData, layout2);
+    assert(panelSize != null, `Panel size not found for panel "${panelData.id}"`);
+    return !collapsible || fuzzyCompareNumbers(panelSize, collapsedSize) > 0;
+  }, []);
+  const registerPanel = reactExports.useCallback((panelData) => {
+    const {
+      panelDataArray
+    } = eagerValuesRef.current;
+    panelDataArray.push(panelData);
+    panelDataArray.sort((panelA, panelB) => {
+      const orderA = panelA.order;
+      const orderB = panelB.order;
+      if (orderA == null && orderB == null) {
+        return 0;
+      } else if (orderA == null) {
+        return -1;
+      } else if (orderB == null) {
+        return 1;
+      } else {
+        return orderA - orderB;
+      }
+    });
+    eagerValuesRef.current.panelDataArrayChanged = true;
+    forceUpdate();
+  }, [forceUpdate]);
+  useIsomorphicLayoutEffect(() => {
+    if (eagerValuesRef.current.panelDataArrayChanged) {
+      eagerValuesRef.current.panelDataArrayChanged = false;
+      const {
+        autoSaveId: autoSaveId2,
+        onLayout: onLayout2,
+        storage: storage2
+      } = committedValuesRef.current;
+      const {
+        layout: prevLayout,
+        panelDataArray
+      } = eagerValuesRef.current;
+      let unsafeLayout = null;
+      if (autoSaveId2) {
+        const state = loadPanelGroupState(autoSaveId2, panelDataArray, storage2);
+        if (state) {
+          panelSizeBeforeCollapseRef.current = new Map(Object.entries(state.expandToSizes));
+          unsafeLayout = state.layout;
+        }
+      }
+      if (unsafeLayout == null) {
+        unsafeLayout = calculateUnsafeDefaultLayout({
+          panelDataArray
+        });
+      }
+      const nextLayout = validatePanelGroupLayout({
+        layout: unsafeLayout,
+        panelConstraints: panelDataArray.map((panelData) => panelData.constraints)
+      });
+      if (!areEqual(prevLayout, nextLayout)) {
+        setLayout(nextLayout);
+        eagerValuesRef.current.layout = nextLayout;
+        if (onLayout2) {
+          onLayout2(nextLayout);
+        }
+        callPanelCallbacks(panelDataArray, nextLayout, panelIdToLastNotifiedSizeMapRef.current);
+      }
+    }
+  });
+  useIsomorphicLayoutEffect(() => {
+    const eagerValues = eagerValuesRef.current;
+    return () => {
+      eagerValues.layout = [];
+    };
+  }, []);
+  const registerResizeHandle2 = reactExports.useCallback((dragHandleId) => {
+    let isRTL = false;
+    const panelGroupElement = panelGroupElementRef.current;
+    if (panelGroupElement) {
+      const style2 = window.getComputedStyle(panelGroupElement, null);
+      if (style2.getPropertyValue("direction") === "rtl") {
+        isRTL = true;
+      }
+    }
+    return function resizeHandler(event) {
+      event.preventDefault();
+      const panelGroupElement2 = panelGroupElementRef.current;
+      if (!panelGroupElement2) {
+        return () => null;
+      }
+      const {
+        direction: direction2,
+        dragState: dragState2,
+        id: groupId2,
+        keyboardResizeBy: keyboardResizeBy2,
+        onLayout: onLayout2
+      } = committedValuesRef.current;
+      const {
+        layout: prevLayout,
+        panelDataArray
+      } = eagerValuesRef.current;
+      const {
+        initialLayout
+      } = dragState2 !== null && dragState2 !== void 0 ? dragState2 : {};
+      const pivotIndices = determinePivotIndices(groupId2, dragHandleId, panelGroupElement2);
+      let delta = calculateDeltaPercentage(event, dragHandleId, direction2, dragState2, keyboardResizeBy2, panelGroupElement2);
+      const isHorizontal = direction2 === "horizontal";
+      if (isHorizontal && isRTL) {
+        delta = -delta;
+      }
+      const panelConstraints = panelDataArray.map((panelData) => panelData.constraints);
+      const nextLayout = adjustLayoutByDelta({
+        delta,
+        initialLayout: initialLayout !== null && initialLayout !== void 0 ? initialLayout : prevLayout,
+        panelConstraints,
+        pivotIndices,
+        prevLayout,
+        trigger: isKeyDown(event) ? "keyboard" : "mouse-or-touch"
+      });
+      const layoutChanged = !compareLayouts(prevLayout, nextLayout);
+      if (isPointerEvent(event) || isMouseEvent(event)) {
+        if (prevDeltaRef.current != delta) {
+          prevDeltaRef.current = delta;
+          if (!layoutChanged && delta !== 0) {
+            if (isHorizontal) {
+              reportConstraintsViolation(dragHandleId, delta < 0 ? EXCEEDED_HORIZONTAL_MIN : EXCEEDED_HORIZONTAL_MAX);
+            } else {
+              reportConstraintsViolation(dragHandleId, delta < 0 ? EXCEEDED_VERTICAL_MIN : EXCEEDED_VERTICAL_MAX);
+            }
+          } else {
+            reportConstraintsViolation(dragHandleId, 0);
+          }
+        }
+      }
+      if (layoutChanged) {
+        setLayout(nextLayout);
+        eagerValuesRef.current.layout = nextLayout;
+        if (onLayout2) {
+          onLayout2(nextLayout);
+        }
+        callPanelCallbacks(panelDataArray, nextLayout, panelIdToLastNotifiedSizeMapRef.current);
+      }
+    };
+  }, []);
+  const resizePanel2 = reactExports.useCallback((panelData, unsafePanelSize) => {
+    const {
+      onLayout: onLayout2
+    } = committedValuesRef.current;
+    const {
+      layout: prevLayout,
+      panelDataArray
+    } = eagerValuesRef.current;
+    const panelConstraintsArray = panelDataArray.map((panelData2) => panelData2.constraints);
+    const {
+      panelSize,
+      pivotIndices
+    } = panelDataHelper(panelDataArray, panelData, prevLayout);
+    assert(panelSize != null, `Panel size not found for panel "${panelData.id}"`);
+    const isLastPanel = findPanelDataIndex(panelDataArray, panelData) === panelDataArray.length - 1;
+    const delta = isLastPanel ? panelSize - unsafePanelSize : unsafePanelSize - panelSize;
+    const nextLayout = adjustLayoutByDelta({
+      delta,
+      initialLayout: prevLayout,
+      panelConstraints: panelConstraintsArray,
+      pivotIndices,
+      prevLayout,
+      trigger: "imperative-api"
+    });
+    if (!compareLayouts(prevLayout, nextLayout)) {
+      setLayout(nextLayout);
+      eagerValuesRef.current.layout = nextLayout;
+      if (onLayout2) {
+        onLayout2(nextLayout);
+      }
+      callPanelCallbacks(panelDataArray, nextLayout, panelIdToLastNotifiedSizeMapRef.current);
+    }
+  }, []);
+  const reevaluatePanelConstraints = reactExports.useCallback((panelData, prevConstraints) => {
+    const {
+      layout: layout2,
+      panelDataArray
+    } = eagerValuesRef.current;
+    const {
+      collapsedSize: prevCollapsedSize = 0,
+      collapsible: prevCollapsible
+    } = prevConstraints;
+    const {
+      collapsedSize: nextCollapsedSize = 0,
+      collapsible: nextCollapsible,
+      maxSize: nextMaxSize = 100,
+      minSize: nextMinSize = 0
+    } = panelData.constraints;
+    const {
+      panelSize: prevPanelSize
+    } = panelDataHelper(panelDataArray, panelData, layout2);
+    if (prevPanelSize == null) {
+      return;
+    }
+    if (prevCollapsible && nextCollapsible && fuzzyNumbersEqual$1(prevPanelSize, prevCollapsedSize)) {
+      if (!fuzzyNumbersEqual$1(prevCollapsedSize, nextCollapsedSize)) {
+        resizePanel2(panelData, nextCollapsedSize);
+      }
+    } else if (prevPanelSize < nextMinSize) {
+      resizePanel2(panelData, nextMinSize);
+    } else if (prevPanelSize > nextMaxSize) {
+      resizePanel2(panelData, nextMaxSize);
+    }
+  }, [resizePanel2]);
+  const startDragging = reactExports.useCallback((dragHandleId, event) => {
+    const {
+      direction: direction2
+    } = committedValuesRef.current;
+    const {
+      layout: layout2
+    } = eagerValuesRef.current;
+    if (!panelGroupElementRef.current) {
+      return;
+    }
+    const handleElement = getResizeHandleElement(dragHandleId, panelGroupElementRef.current);
+    assert(handleElement, `Drag handle element not found for id "${dragHandleId}"`);
+    const initialCursorPosition = getResizeEventCursorPosition(direction2, event);
+    setDragState({
+      dragHandleId,
+      dragHandleRect: handleElement.getBoundingClientRect(),
+      initialCursorPosition,
+      initialLayout: layout2
+    });
+  }, []);
+  const stopDragging = reactExports.useCallback(() => {
+    setDragState(null);
+  }, []);
+  const unregisterPanel = reactExports.useCallback((panelData) => {
+    const {
+      panelDataArray
+    } = eagerValuesRef.current;
+    const index2 = findPanelDataIndex(panelDataArray, panelData);
+    if (index2 >= 0) {
+      panelDataArray.splice(index2, 1);
+      delete panelIdToLastNotifiedSizeMapRef.current[panelData.id];
+      eagerValuesRef.current.panelDataArrayChanged = true;
+      forceUpdate();
+    }
+  }, [forceUpdate]);
+  const context = reactExports.useMemo(() => ({
+    collapsePanel,
+    direction,
+    dragState,
+    expandPanel,
+    getPanelSize,
+    getPanelStyle,
+    groupId,
+    isPanelCollapsed,
+    isPanelExpanded,
+    reevaluatePanelConstraints,
+    registerPanel,
+    registerResizeHandle: registerResizeHandle2,
+    resizePanel: resizePanel2,
+    startDragging,
+    stopDragging,
+    unregisterPanel,
+    panelGroupElement: panelGroupElementRef.current
+  }), [collapsePanel, dragState, direction, expandPanel, getPanelSize, getPanelStyle, groupId, isPanelCollapsed, isPanelExpanded, reevaluatePanelConstraints, registerPanel, registerResizeHandle2, resizePanel2, startDragging, stopDragging, unregisterPanel]);
+  const style = {
+    display: "flex",
+    flexDirection: direction === "horizontal" ? "row" : "column",
+    height: "100%",
+    overflow: "hidden",
+    width: "100%"
+  };
+  return reactExports.createElement(PanelGroupContext.Provider, {
+    value: context
+  }, reactExports.createElement(Type, {
+    ...rest,
+    children,
+    className: classNameFromProps,
+    id: idFromProps,
+    ref: panelGroupElementRef,
+    style: {
+      ...style,
+      ...styleFromProps
+    },
+    // CSS selectors
+    [DATA_ATTRIBUTES.group]: "",
+    [DATA_ATTRIBUTES.groupDirection]: direction,
+    [DATA_ATTRIBUTES.groupId]: groupId
+  }));
+}
+const PanelGroup = reactExports.forwardRef((props2, ref) => reactExports.createElement(PanelGroupWithForwardedRef, {
+  ...props2,
+  forwardedRef: ref
+}));
+PanelGroupWithForwardedRef.displayName = "PanelGroup";
+PanelGroup.displayName = "forwardRef(PanelGroup)";
+function findPanelDataIndex(panelDataArray, panelData) {
+  return panelDataArray.findIndex((prevPanelData) => prevPanelData === panelData || prevPanelData.id === panelData.id);
+}
+function panelDataHelper(panelDataArray, panelData, layout) {
+  const panelIndex = findPanelDataIndex(panelDataArray, panelData);
+  const isLastPanel = panelIndex === panelDataArray.length - 1;
+  const pivotIndices = isLastPanel ? [panelIndex - 1, panelIndex] : [panelIndex, panelIndex + 1];
+  const panelSize = layout[panelIndex];
+  return {
+    ...panelData.constraints,
+    panelSize,
+    pivotIndices
+  };
+}
+function useWindowSplitterResizeHandlerBehavior({
+  disabled,
+  handleId,
+  resizeHandler,
+  panelGroupElement
+}) {
+  reactExports.useEffect(() => {
+    if (disabled || resizeHandler == null || panelGroupElement == null) {
+      return;
+    }
+    const handleElement = getResizeHandleElement(handleId, panelGroupElement);
+    if (handleElement == null) {
+      return;
+    }
+    const onKeyDown = (event) => {
+      if (event.defaultPrevented) {
+        return;
+      }
+      switch (event.key) {
+        case "ArrowDown":
+        case "ArrowLeft":
+        case "ArrowRight":
+        case "ArrowUp":
+        case "End":
+        case "Home": {
+          event.preventDefault();
+          resizeHandler(event);
+          break;
+        }
+        case "F6": {
+          event.preventDefault();
+          const groupId = handleElement.getAttribute(DATA_ATTRIBUTES.groupId);
+          assert(groupId, `No group element found for id "${groupId}"`);
+          const handles = getResizeHandleElementsForGroup(groupId, panelGroupElement);
+          const index2 = getResizeHandleElementIndex(groupId, handleId, panelGroupElement);
+          assert(index2 !== null, `No resize element found for id "${handleId}"`);
+          const nextIndex = event.shiftKey ? index2 > 0 ? index2 - 1 : handles.length - 1 : index2 + 1 < handles.length ? index2 + 1 : 0;
+          const nextHandle = handles[nextIndex];
+          nextHandle.focus();
+          break;
+        }
+      }
+    };
+    handleElement.addEventListener("keydown", onKeyDown);
+    return () => {
+      handleElement.removeEventListener("keydown", onKeyDown);
+    };
+  }, [panelGroupElement, disabled, handleId, resizeHandler]);
+}
+function PanelResizeHandle({
+  children = null,
+  className: classNameFromProps = "",
+  disabled = false,
+  hitAreaMargins,
+  id: idFromProps,
+  onBlur,
+  onClick,
+  onDragging,
+  onFocus,
+  onPointerDown,
+  onPointerUp,
+  style: styleFromProps = {},
+  tabIndex = 0,
+  tagName: Type = "div",
+  ...rest
+}) {
+  var _hitAreaMargins$coars, _hitAreaMargins$fine;
+  const elementRef = reactExports.useRef(null);
+  const callbacksRef = reactExports.useRef({
+    onClick,
+    onDragging,
+    onPointerDown,
+    onPointerUp
+  });
+  reactExports.useEffect(() => {
+    callbacksRef.current.onClick = onClick;
+    callbacksRef.current.onDragging = onDragging;
+    callbacksRef.current.onPointerDown = onPointerDown;
+    callbacksRef.current.onPointerUp = onPointerUp;
+  });
+  const panelGroupContext = reactExports.useContext(PanelGroupContext);
+  if (panelGroupContext === null) {
+    throw Error(`PanelResizeHandle components must be rendered within a PanelGroup container`);
+  }
+  const {
+    direction,
+    groupId,
+    registerResizeHandle: registerResizeHandleWithParentGroup,
+    startDragging,
+    stopDragging,
+    panelGroupElement
+  } = panelGroupContext;
+  const resizeHandleId = useUniqueId(idFromProps);
+  const [state, setState] = reactExports.useState("inactive");
+  const [isFocused, setIsFocused] = reactExports.useState(false);
+  const [resizeHandler, setResizeHandler] = reactExports.useState(null);
+  const committedValuesRef = reactExports.useRef({
+    state
+  });
+  useIsomorphicLayoutEffect(() => {
+    committedValuesRef.current.state = state;
+  });
+  reactExports.useEffect(() => {
+    if (disabled) {
+      setResizeHandler(null);
+    } else {
+      const resizeHandler2 = registerResizeHandleWithParentGroup(resizeHandleId);
+      setResizeHandler(() => resizeHandler2);
+    }
+  }, [disabled, resizeHandleId, registerResizeHandleWithParentGroup]);
+  const coarseHitAreaMargins = (_hitAreaMargins$coars = hitAreaMargins === null || hitAreaMargins === void 0 ? void 0 : hitAreaMargins.coarse) !== null && _hitAreaMargins$coars !== void 0 ? _hitAreaMargins$coars : 15;
+  const fineHitAreaMargins = (_hitAreaMargins$fine = hitAreaMargins === null || hitAreaMargins === void 0 ? void 0 : hitAreaMargins.fine) !== null && _hitAreaMargins$fine !== void 0 ? _hitAreaMargins$fine : 5;
+  reactExports.useEffect(() => {
+    if (disabled || resizeHandler == null) {
+      return;
+    }
+    const element2 = elementRef.current;
+    assert(element2, "Element ref not attached");
+    let didMove = false;
+    const setResizeHandlerState = (action, isActive, event) => {
+      if (!isActive) {
+        setState("inactive");
+        return;
+      }
+      switch (action) {
+        case "down": {
+          setState("drag");
+          didMove = false;
+          assert(event, 'Expected event to be defined for "down" action');
+          startDragging(resizeHandleId, event);
+          const {
+            onDragging: onDragging2,
+            onPointerDown: onPointerDown2
+          } = callbacksRef.current;
+          onDragging2 === null || onDragging2 === void 0 ? void 0 : onDragging2(true);
+          onPointerDown2 === null || onPointerDown2 === void 0 ? void 0 : onPointerDown2();
+          break;
+        }
+        case "move": {
+          const {
+            state: state2
+          } = committedValuesRef.current;
+          didMove = true;
+          if (state2 !== "drag") {
+            setState("hover");
+          }
+          assert(event, 'Expected event to be defined for "move" action');
+          resizeHandler(event);
+          break;
+        }
+        case "up": {
+          setState("hover");
+          stopDragging();
+          const {
+            onClick: onClick2,
+            onDragging: onDragging2,
+            onPointerUp: onPointerUp2
+          } = callbacksRef.current;
+          onDragging2 === null || onDragging2 === void 0 ? void 0 : onDragging2(false);
+          onPointerUp2 === null || onPointerUp2 === void 0 ? void 0 : onPointerUp2();
+          if (!didMove) {
+            onClick2 === null || onClick2 === void 0 ? void 0 : onClick2();
+          }
+          break;
+        }
+      }
+    };
+    return registerResizeHandle(resizeHandleId, element2, direction, {
+      coarse: coarseHitAreaMargins,
+      fine: fineHitAreaMargins
+    }, setResizeHandlerState);
+  }, [coarseHitAreaMargins, direction, disabled, fineHitAreaMargins, registerResizeHandleWithParentGroup, resizeHandleId, resizeHandler, startDragging, stopDragging]);
+  useWindowSplitterResizeHandlerBehavior({
+    disabled,
+    handleId: resizeHandleId,
+    resizeHandler,
+    panelGroupElement
+  });
+  const style = {
+    touchAction: "none",
+    userSelect: "none"
+  };
+  return reactExports.createElement(Type, {
+    ...rest,
+    children,
+    className: classNameFromProps,
+    id: idFromProps,
+    onBlur: () => {
+      setIsFocused(false);
+      onBlur === null || onBlur === void 0 ? void 0 : onBlur();
+    },
+    onFocus: () => {
+      setIsFocused(true);
+      onFocus === null || onFocus === void 0 ? void 0 : onFocus();
+    },
+    ref: elementRef,
+    role: "separator",
+    style: {
+      ...style,
+      ...styleFromProps
+    },
+    tabIndex,
+    // CSS selectors
+    [DATA_ATTRIBUTES.groupDirection]: direction,
+    [DATA_ATTRIBUTES.groupId]: groupId,
+    [DATA_ATTRIBUTES.resizeHandle]: "",
+    [DATA_ATTRIBUTES.resizeHandleActive]: state === "drag" ? "pointer" : isFocused ? "keyboard" : void 0,
+    [DATA_ATTRIBUTES.resizeHandleEnabled]: !disabled,
+    [DATA_ATTRIBUTES.resizeHandleId]: resizeHandleId,
+    [DATA_ATTRIBUTES.resizeHandleState]: state
+  });
+}
+PanelResizeHandle.displayName = "PanelResizeHandle";
 function SplitPane({
   direction = "horizontal",
   initialRatio = 0.5,
-  minPrimarySize = 240,
-  minSecondarySize = 240,
   primary,
   secondary,
   className = "",
   onResize
 }) {
-  const containerRef = reactExports.useRef(null);
-  const [ratio, setRatio] = reactExports.useState(initialRatio);
-  const [isDragging, setIsDragging] = reactExports.useState(false);
   const isHorizontal = direction === "horizontal";
-  const handlePointerDown = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-  const handlePointerMove = reactExports.useCallback(
-    (e) => {
-      if (!isDragging || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      let newRatio;
-      if (isHorizontal) {
-        const offset = e.clientX - rect.left;
-        const total = rect.width;
-        if (offset < minPrimarySize || total - offset < minSecondarySize) return;
-        newRatio = Math.max(0.15, Math.min(0.85, offset / total));
-      } else {
-        const offset = e.clientY - rect.top;
-        const total = rect.height;
-        if (offset < minPrimarySize || total - offset < minSecondarySize) return;
-        newRatio = Math.max(0.15, Math.min(0.85, offset / total));
-      }
-      setRatio(newRatio);
-      onResize == null ? void 0 : onResize(newRatio);
-    },
-    [isDragging, isHorizontal, minPrimarySize, minSecondarySize, onResize]
-  );
-  const handlePointerUp = reactExports.useCallback(() => {
-    setIsDragging(false);
-  }, []);
-  reactExports.useEffect(() => {
-    if (isDragging) {
-      window.addEventListener("pointermove", handlePointerMove);
-      window.addEventListener("pointerup", handlePointerUp);
-    }
-    return () => {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-    };
-  }, [isDragging, handlePointerMove, handlePointerUp]);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-    "div",
+    PanelGroup,
     {
-      ref: containerRef,
-      className: `relative flex h-full w-full overflow-hidden ${isHorizontal ? "flex-row" : "flex-col"} ${className}`,
-      style: { userSelect: isDragging ? "none" : "auto" },
+      direction: isHorizontal ? "horizontal" : "vertical",
+      className: `h-full w-full ${className}`,
+      onLayout: (sizes) => {
+        if (sizes[0] !== void 0 && onResize) {
+          onResize(sizes[0] / 100);
+        }
+      },
       children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Panel, { defaultSize: initialRatio * 100, minSize: 15, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full w-full overflow-hidden", children: primary }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "div",
+          PanelResizeHandle,
           {
-            style: {
-              flex: `0 0 ${ratio * 100}%`,
-              overflow: "hidden"
-            },
-            className: "h-full",
-            children: primary
-          }
-        ),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "div",
-          {
-            onPointerDown: handlePointerDown,
-            className: `relative z-20 shrink-0 group flex items-center justify-center transition-colors ${isHorizontal ? "w-1.5 cursor-col-resize hover:bg-indigo-500/60" : "h-1.5 cursor-row-resize hover:bg-indigo-500/60"} ${isDragging ? "bg-indigo-500" : "bg-slate-800"}`,
+            className: `relative z-20 shrink-0 group flex items-center justify-center transition-colors ${isHorizontal ? "w-1.5 cursor-col-resize hover:bg-indigo-500/60" : "h-1.5 cursor-row-resize hover:bg-indigo-500/60"} bg-slate-800 data-[resize-handle-active]:bg-indigo-500`,
             children: /* @__PURE__ */ jsxRuntimeExports.jsx(
               "div",
               {
-                className: `rounded-full bg-slate-600 group-hover:bg-white transition-colors ${isHorizontal ? "h-8 w-1" : "w-8 h-1"} ${isDragging ? "!bg-white" : ""}`
+                className: `rounded-full bg-slate-600 group-hover:bg-white transition-colors group-data-[resize-handle-active]:!bg-white ${isHorizontal ? "h-8 w-1" : "w-8 h-1"}`
               }
             )
           }
         ),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "div",
-          {
-            style: {
-              flex: `1 1 ${(1 - ratio) * 100}%`,
-              overflow: "hidden"
-            },
-            className: "h-full",
-            children: secondary
-          }
-        )
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Panel, { defaultSize: (1 - initialRatio) * 100, minSize: 15, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full w-full overflow-hidden", children: secondary }) })
       ]
     }
   );
@@ -1937,7 +25774,7 @@ function ManifestNode({ data }) {
   ] });
 }
 function LookupNode({ data }) {
-  var _a;
+  var _a2;
   const isBroken = data.isBroken;
   const isPrivate = data.isPrivate;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
@@ -1950,7 +25787,7 @@ function LookupNode({ data }) {
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 text-xs font-mono", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Box, { className: "h-3.5 w-3.5 text-slate-400" }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-semibold", children: [
-              (_a = data.pillar) == null ? void 0 : _a.toUpperCase(),
+              (_a2 = data.pillar) == null ? void 0 : _a2.toUpperCase(),
               " 查找接口"
             ] })
           ] }),
@@ -1965,8 +25802,8 @@ function LookupNode({ data }) {
             type: "button",
             className: "w-full text-left text-xs font-mono text-slate-100 font-bold truncate cursor-pointer hover:text-indigo-300 hover:underline bg-transparent border-none p-0",
             onClick: () => {
-              var _a2;
-              return (_a2 = data.onEdit) == null ? void 0 : _a2.call(data, data.key);
+              var _a3;
+              return (_a3 = data.onEdit) == null ? void 0 : _a3.call(data, data.key);
             },
             title: "点击编辑查找接口契约",
             children: data.key
@@ -2001,8 +25838,8 @@ function AtomNode({ data }) {
         type: "button",
         className: "text-xs font-mono font-medium text-slate-200 truncate flex-1 text-left cursor-pointer hover:text-indigo-300 hover:underline bg-transparent border-none p-0",
         onClick: () => {
-          var _a;
-          return (_a = data.onEdit) == null ? void 0 : _a.call(data, data.id);
+          var _a2;
+          return (_a2 = data.onEdit) == null ? void 0 : _a2.call(data, data.id);
         },
         title: `点击打开原子 ${data.id} 编辑`,
         children: data.id
@@ -2024,103 +25861,41 @@ const nodeTypes = {
   lookupNode: LookupNode,
   atomNode: AtomNode
 };
-function autoLayoutSafe(nodes, edges) {
-  var _a, _b;
-  if (nodes.length === 0) return { nodes: [], hasCycle: false, cycleNodes: [] };
-  const adj = /* @__PURE__ */ new Map();
-  const inDegree = /* @__PURE__ */ new Map();
-  for (const n of nodes) {
-    adj.set(n.id, []);
-    inDegree.set(n.id, 0);
+function getDagreLayoutedElements(nodes, edges, direction = "LR") {
+  if (nodes.length === 0) return { nodes: [], edges: [] };
+  const dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
+  dagreGraph.setGraph({
+    rankdir: direction,
+    nodesep: 35,
+    ranksep: 70,
+    marginx: 40,
+    marginy: 40
+  });
+  for (const node2 of nodes) {
+    const width = node2.type === "manifestNode" ? 220 : node2.type === "lookupNode" ? 240 : 220;
+    const height = node2.type === "manifestNode" ? 95 : node2.type === "lookupNode" ? 85 : 80;
+    dagreGraph.setNode(node2.id, { width, height });
   }
-  for (const e of edges) {
-    if (adj.has(e.source) && inDegree.has(e.target)) {
-      (_a = adj.get(e.source)) == null ? void 0 : _a.push(e.target);
-      inDegree.set(e.target, (inDegree.get(e.target) || 0) + 1);
-    }
+  for (const edge of edges) {
+    dagreGraph.setEdge(edge.source, edge.target);
   }
-  const rank = /* @__PURE__ */ new Map();
-  const queue = [];
-  const nodeVisitCount = /* @__PURE__ */ new Map();
-  for (const [id, deg] of inDegree.entries()) {
-    if (deg === 0) {
-      rank.set(id, 0);
-      queue.push(id);
-      nodeVisitCount.set(id, 1);
-    }
-  }
-  if (queue.length === 0 && nodes.length > 0) {
-    rank.set(nodes[0].id, 0);
-    queue.push(nodes[0].id);
-    nodeVisitCount.set(nodes[0].id, 1);
-  }
-  let hasCycle = false;
-  const cycleNodesSet = /* @__PURE__ */ new Set();
-  const maxAllowedDepth = nodes.length;
-  let steps = 0;
-  const MAX_STEPS = nodes.length * 5;
-  while (queue.length > 0 && steps < MAX_STEPS) {
-    steps++;
-    const u = queue.shift();
-    if (!u) continue;
-    const currRank = rank.get(u) || 0;
-    for (const v of adj.get(u) || []) {
-      const nextRank = currRank + 1;
-      if (nextRank >= maxAllowedDepth) {
-        hasCycle = true;
-        cycleNodesSet.add(v);
-        continue;
+  dagre.layout(dagreGraph);
+  const layoutedNodes = nodes.map((node2) => {
+    const nodeWithPos = dagreGraph.node(node2.id);
+    const width = node2.type === "manifestNode" ? 220 : node2.type === "lookupNode" ? 240 : 220;
+    const height = node2.type === "manifestNode" ? 95 : node2.type === "lookupNode" ? 85 : 80;
+    return {
+      ...node2,
+      position: {
+        x: nodeWithPos.x - width / 2,
+        y: nodeWithPos.y - height / 2
       }
-      const targetRank = rank.get(v);
-      if (targetRank === void 0 || targetRank < nextRank) {
-        rank.set(v, nextRank);
-        const count = (nodeVisitCount.get(v) || 0) + 1;
-        nodeVisitCount.set(v, count);
-        if (count < 4) {
-          queue.push(v);
-        } else {
-          hasCycle = true;
-          cycleNodesSet.add(v);
-        }
-      }
-    }
-  }
-  for (const n of nodes) {
-    if (!rank.has(n.id)) {
-      rank.set(n.id, 0);
-    }
-  }
-  const layers = /* @__PURE__ */ new Map();
-  for (const node of nodes) {
-    const r = rank.get(node.id) ?? 0;
-    if (!layers.has(r)) layers.set(r, []);
-    (_b = layers.get(r)) == null ? void 0 : _b.push(node);
-  }
-  const COLUMN_WIDTH = 340;
-  const ROW_HEIGHT = 90;
-  const X_OFFSET = 50;
-  const Y_OFFSET = 40;
-  const layoutedNodes = [];
-  const sortedRanks = Array.from(layers.keys()).sort((a, b) => a - b);
-  for (const r of sortedRanks) {
-    const colNodes = layers.get(r) || [];
-    colNodes.forEach((node, idx) => {
-      layoutedNodes.push({
-        ...node,
-        position: {
-          x: X_OFFSET + r * COLUMN_WIDTH,
-          y: Y_OFFSET + idx * ROW_HEIGHT
-        }
-      });
-    });
-  }
-  return {
-    nodes: layoutedNodes,
-    hasCycle,
-    cycleNodes: Array.from(cycleNodesSet)
-  };
+    };
+  });
+  return { nodes: layoutedNodes, edges };
 }
-const TopologyGraph = React.memo(function TopologyGraph2({
+const TopologyGraph = React$1.memo(function TopologyGraph2({
   manifest,
   imports,
   overrides,
@@ -2161,9 +25936,8 @@ const TopologyGraph = React.memo(function TopologyGraph2({
       }).then((data) => {
         if (isCancelled) return;
         const tFetch = performance.now();
-        const layoutRes = autoLayoutSafe(data.nodes || [], data.edges || []);
-        const tLayout = performance.now();
-        const layoutDuration = tLayout - tFetch;
+        const layoutRes = getDagreLayoutedElements(data.nodes || [], data.edges || []);
+        const layoutDuration = performance.now() - tFetch;
         const connectedNodes = layoutRes.nodes.map((n) => {
           if (n.type === "atomNode") {
             return {
@@ -2190,8 +25964,7 @@ const TopologyGraph = React.memo(function TopologyGraph2({
         setTelemetry({
           nodeCount: connectedNodes.length,
           edgeCount: (data.edges || []).length,
-          layoutMs: Math.round(layoutDuration),
-          hasCycle: layoutRes.hasCycle
+          layoutMs: Math.round(layoutDuration)
         });
       }).catch((err) => {
         if (isCancelled) return;
@@ -2230,16 +26003,13 @@ const TopologyGraph = React.memo(function TopologyGraph2({
         telemetry.layoutMs,
         "ms"
       ] }),
-      telemetry.hasCycle ? /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-amber-400 bg-amber-950/60 border border-amber-800/80 px-1.5 py-0.2 rounded font-bold", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(TriangleAlert, { className: "h-3 w-3" }),
-        " 检测到循环依赖"
-      ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-emerald-400", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-emerald-400", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(CircleCheckBig, { className: "h-3 w-3" }),
         " DAG 良好"
       ] })
     ] }) : null }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs(
-      index,
+      index$1,
       {
         nodes,
         edges,
@@ -2264,7 +26034,7 @@ function LookupEditorTab({
   onSaved,
   onDeleted
 }) {
-  var _a, _b;
+  var _a2, _b2;
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const openTab = useIdeStore((state) => state.openTab);
   const replaceTab = useIdeStore((state) => state.replaceTab);
@@ -2274,9 +26044,9 @@ function LookupEditorTab({
   const isDraft = lookupKey.startsWith("draft:");
   const draftParts = isDraft ? lookupKey.split(":") : [];
   const initialPkg = isDraft ? draftParts[1] || "" : "";
-  const initialPublic = isDraft ? !((_a = draftParts[2]) == null ? void 0 : _a.startsWith("private")) : true;
+  const initialPublic = isDraft ? !((_a2 = draftParts[2]) == null ? void 0 : _a2.startsWith("private")) : true;
   const [isReady, setIsReady] = reactExports.useState(false);
-  const [pkgName, setPkgName] = reactExports.useState(initialPkg || ((_b = packages[0]) == null ? void 0 : _b.name) || "");
+  const [pkgName, setPkgName] = reactExports.useState(initialPkg || ((_b2 = packages[0]) == null ? void 0 : _b2.name) || "");
   const [isPublic, setIsPublic] = reactExports.useState(initialPublic);
   const [pillar, setPillar] = reactExports.useState("d1");
   const [rawKeyName, setRawKeyName] = reactExports.useState("");
@@ -2291,23 +26061,25 @@ function LookupEditorTab({
   const [evaluating, setEvaluating] = reactExports.useState(false);
   const [evalError, setEvalError] = reactExports.useState("");
   const [slicePrompt, setSlicePrompt] = reactExports.useState("");
-  const [sliceChunks, setSliceChunks] = reactExports.useState([]);
+  const [sliceChunks2, setSliceChunks] = reactExports.useState([]);
   const [sliceProfile, setProfile] = reactExports.useState(null);
-  const [saving, setSaving] = reactExports.useState(false);
   const [saveStatus, setSaveStatus] = reactExports.useState("");
   const [selectorMode, setSelectorMode] = reactExports.useState("id");
   const [queryIdInput, setQueryIdInput] = reactExports.useState("");
   const [domainInput, setDomainInput] = reactExports.useState("");
   const [refInput, setRefInput] = reactExports.useState("");
+  const saveLookupMutation = useSaveLookupMutation();
+  const deleteLookupMutation = useDeleteLookupMutation();
+  const saving = saveLookupMutation.isPending;
   const candidateLookupRefs = packages.flatMap((pkg) => {
-    const list = [];
+    const list2 = [];
     for (const key of Object.keys(pkg.exports || {})) {
-      list.push(key);
+      list2.push(key);
     }
     for (const key of Object.keys(pkg.internal_lookups || {})) {
-      list.push(key);
+      list2.push(key);
     }
-    return list;
+    return list2;
   });
   const tabId = `lookup:${lookupKey}`;
   const markDirty = () => {
@@ -2317,7 +26089,8 @@ function LookupEditorTab({
     }
   };
   reactExports.useEffect(() => {
-    var _a2, _b2, _c, _d, _e;
+    var _a3, _b3, _c2, _d2, _e3;
+    if (isReady) return;
     const snapshot = getSnapshot(tabId);
     if (snapshot) {
       setPkgName(snapshot.pkgName);
@@ -2336,11 +26109,14 @@ function LookupEditorTab({
       setIsReady(true);
       return;
     }
+    if (!packages || packages.length === 0) {
+      return;
+    }
     const rawKey = lookupKey.includes("::") ? lookupKey.split("::")[1] : lookupKey;
     const targetPkg = lookupKey.includes("::") ? lookupKey.split("::")[0] : null;
     for (const pkg of packages) {
       if (targetPkg && pkg.name !== targetPkg) continue;
-      const exportDef = ((_a2 = pkg.exports) == null ? void 0 : _a2[lookupKey]) || ((_b2 = pkg.exports) == null ? void 0 : _b2[`${pkg.name}::${rawKey}`]) || ((_c = pkg.exports) == null ? void 0 : _c[rawKey]);
+      const exportDef = ((_a3 = pkg.exports) == null ? void 0 : _a3[lookupKey]) || ((_b3 = pkg.exports) == null ? void 0 : _b3[`${pkg.name}::${rawKey}`]) || ((_c2 = pkg.exports) == null ? void 0 : _c2[rawKey]);
       if (exportDef) {
         setPkgName(pkg.name);
         setPillar(exportDef.pillar || "d1");
@@ -2351,7 +26127,7 @@ function LookupEditorTab({
         setIsReady(true);
         return;
       }
-      const internalDef = ((_d = pkg.internal_lookups) == null ? void 0 : _d[lookupKey]) || ((_e = pkg.internal_lookups) == null ? void 0 : _e[rawKey]);
+      const internalDef = ((_d2 = pkg.internal_lookups) == null ? void 0 : _d2[lookupKey]) || ((_e3 = pkg.internal_lookups) == null ? void 0 : _e3[rawKey]);
       if (internalDef) {
         setPkgName(pkg.name);
         setPillar(internalDef.pillar || "d1");
@@ -2363,7 +26139,8 @@ function LookupEditorTab({
         return;
       }
     }
-  }, [lookupKey, packages, isDraft, tabId, getSnapshot, setTabDirty]);
+    setIsReady(true);
+  }, [lookupKey, packages, isDraft, tabId, getSnapshot, setTabDirty, isReady]);
   reactExports.useEffect(() => {
     if (!isReady) return;
     saveSnapshot(tabId, {
@@ -2402,18 +26179,11 @@ function LookupEditorTab({
     setEvalError("");
     const targetKey = `${pillar}l-${rawKeyName.trim() || "adhoc"}`;
     if (rightView === "prompt") {
-      fetch("/api/lookups/compile-adhoc", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: targetKey,
-          selectors,
-          package: pkgName,
-          pillar
-        })
-      }).then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}: 编译切片失败`);
-        return res.json();
+      compileLookupAdhoc({
+        key: targetKey,
+        selectors,
+        package: pkgName,
+        pillar
       }).then((data) => {
         setSlicePrompt(data.prompt || "");
         setSliceChunks(data.chunks || []);
@@ -2422,15 +26192,11 @@ function LookupEditorTab({
         setEvalError(err.message || "编译切片请求异常");
       }).finally(() => setEvaluating(false));
     } else {
-      fetch("/api/lookups/evaluate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          selectors,
-          package: pkgName,
-          pillar
-        })
-      }).then((res) => res.json()).then((data) => {
+      evaluateLookupAdhoc({
+        selectors,
+        package: pkgName,
+        pillar
+      }).then((data) => {
         if (data.error) {
           setEvalError(data.error);
           setMatchedAtoms([]);
@@ -2448,7 +26214,7 @@ function LookupEditorTab({
     }, 200);
     return () => clearTimeout(timer);
   }, [runLiveDebug]);
-  const currentPkgObj = packages.find((p) => p.name === pkgName);
+  const currentPkgObj = packages.find((p2) => p2.name === pkgName);
   const currentPillarAtoms = ((currentPkgObj == null ? void 0 : currentPkgObj.atoms) || []).filter((a) => a.type === pillar);
   const handleAddSelector = () => {
     if (selectorMode === "id" && queryIdInput.trim()) {
@@ -2473,46 +26239,34 @@ function LookupEditorTab({
   const handleSave = reactExports.useCallback(async () => {
     const cleanSuffix = rawKeyName.trim().toLowerCase().replace(/^d[1-3]l-/, "").replace(/[^a-z0-9_-]/g, "-");
     if (!cleanSuffix || selectors.length === 0) return;
-    setSaving(true);
     setSaveStatus("正在写入...");
     try {
-      const res = await fetch("/api/lookups", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          package: pkgName,
-          key: `${pillar}l-${cleanSuffix}`,
-          pillar,
-          is_public: isPublic,
-          description: description.trim(),
-          selectors
-        })
+      await saveLookupMutation.mutateAsync({
+        package: pkgName,
+        key: `${pillar}l-${cleanSuffix}`,
+        pillar,
+        is_public: isPublic,
+        description: description.trim(),
+        selectors
       });
-      const data = await res.json();
-      if (res.ok) {
-        setSaveStatus("已保存");
-        setIsModified(false);
-        setTabDirty(tabId, false);
-        clearSnapshot(tabId);
-        onSaved == null ? void 0 : onSaved();
-        const fullTargetKey = isPublic ? `${pkgName}::${pillar}l-${cleanSuffix}` : `${pillar}l-${cleanSuffix}`;
-        if (isDraft) {
-          replaceTab(tabId, {
-            id: `lookup:${fullTargetKey}`,
-            type: "lookup",
-            title: `${pillar}l-${cleanSuffix}`,
-            closable: true,
-            lookupKey: fullTargetKey
-          });
-        }
-        setTimeout(() => setSaveStatus(""), 2500);
-      } else {
-        setSaveStatus(`保存失败: ${data.detail}`);
+      setSaveStatus("已保存");
+      setIsModified(false);
+      setTabDirty(tabId, false);
+      clearSnapshot(tabId);
+      onSaved == null ? void 0 : onSaved();
+      const fullTargetKey = isPublic ? `${pkgName}::${pillar}l-${cleanSuffix}` : `${pillar}l-${cleanSuffix}`;
+      if (isDraft) {
+        replaceTab(tabId, {
+          id: `lookup:${fullTargetKey}`,
+          type: "lookup",
+          title: `${pillar}l-${cleanSuffix}`,
+          closable: true,
+          lookupKey: fullTargetKey
+        });
       }
-    } catch (_err) {
-      setSaveStatus("保存请求异常");
-    } finally {
-      setSaving(false);
+      setTimeout(() => setSaveStatus(""), 2500);
+    } catch (err) {
+      setSaveStatus(`保存失败: ${err instanceof Error ? err.message : "异常"}`);
     }
   }, [
     rawKeyName,
@@ -2526,7 +26280,8 @@ function LookupEditorTab({
     clearSnapshot,
     onSaved,
     isDraft,
-    replaceTab
+    replaceTab,
+    saveLookupMutation
   ]);
   const handleKeyDown = (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "s") {
@@ -2544,26 +26299,16 @@ function LookupEditorTab({
     window.addEventListener("aca:save-active-tab", handleGlobalSave);
     return () => window.removeEventListener("aca:save-active-tab", handleGlobalSave);
   }, [tabId, saving, selectors.length, handleSave]);
-  const handleDelete = async () => {
+  const handleDelete2 = async () => {
     if (isDraft) return;
     if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？此操作将从包定义中移除。`)) {
       return;
     }
-    setSaving(true);
     try {
-      const res = await fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
-        method: "DELETE"
-      });
-      if (res.ok) {
-        onDeleted == null ? void 0 : onDeleted();
-      } else {
-        const data = await res.json();
-        setSaveStatus(`删除失败: ${data.detail}`);
-      }
-    } catch (_err) {
-      setSaveStatus("删除请求网络异常");
-    } finally {
-      setSaving(false);
+      await deleteLookupMutation.mutateAsync(lookupKey);
+      onDeleted == null ? void 0 : onDeleted();
+    } catch (err) {
+      setSaveStatus(`删除失败: ${err instanceof Error ? err.message : "异常"}`);
     }
   };
   const fullLookupKey = `${pillar}l-${rawKeyName.trim() || "..."}`;
@@ -2589,8 +26334,8 @@ function LookupEditorTab({
               {
                 variant: "outline",
                 size: "sm",
-                onClick: handleDelete,
-                disabled: saving,
+                onClick: handleDelete2,
+                disabled: deleteLookupMutation.isPending,
                 className: "h-7 text-xs flex items-center gap-1 px-2.5 text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700 cursor-pointer",
                 title: "删除此接口契约",
                 children: [
@@ -2640,7 +26385,7 @@ function LookupEditorTab({
                           markDirty();
                         },
                         className: "w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500",
-                        children: packages.map((p) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: p.name, children: p.name }, p.name))
+                        children: packages.map((p2) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: p2.name, children: p2.name }, p2.name))
                       }
                     )
                   ] }),
@@ -2848,7 +26593,7 @@ function LookupEditorTab({
                     " 项):"
                   ] }),
                   selectors.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-slate-600 text-center py-6", children: "尚未配置任何规则，请在上方添加选择器。" }) : selectors.map((sel, idx) => {
-                    var _a2, _b2;
+                    var _a3, _b3;
                     return /* @__PURE__ */ jsxRuntimeExports.jsxs(
                       "div",
                       {
@@ -2859,12 +26604,12 @@ function LookupEditorTab({
                               idx + 1,
                               "."
                             ] }),
-                            ((_a2 = sel.query) == null ? void 0 : _a2.id) && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-indigo-300", children: [
+                            ((_a3 = sel.query) == null ? void 0 : _a3.id) && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-indigo-300", children: [
                               /* @__PURE__ */ jsxRuntimeExports.jsx(Box, { className: "h-3 w-3 text-slate-400" }),
                               "精确 ID: ",
                               /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: sel.query.id })
                             ] }),
-                            ((_b2 = sel.query) == null ? void 0 : _b2.domain) && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-emerald-300", children: [
+                            ((_b3 = sel.query) == null ? void 0 : _b3.domain) && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-emerald-300", children: [
                               /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { className: "h-3 w-3 text-slate-400" }),
                               "Domain 匹配: ",
                               /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: JSON.stringify(sel.query.domain) })
@@ -3031,13 +26776,13 @@ function LookupEditorTab({
                         atomId
                       });
                     },
-                    onSelectLookup: (lookupKey2) => {
+                    onSelectLookup: (lKey) => {
                       openTab({
-                        id: `lookup:${lookupKey2}`,
+                        id: `lookup:${lKey}`,
                         type: "lookup",
-                        title: lookupKey2.split("::").pop() || lookupKey2,
+                        title: lKey.split("::").pop() || lKey,
                         closable: true,
-                        lookupKey: lookupKey2
+                        lookupKey: lKey
                       });
                     }
                   }
@@ -3046,7 +26791,7 @@ function LookupEditorTab({
                   PromptViewer,
                   {
                     value: slicePrompt,
-                    chunks: sliceChunks,
+                    chunks: sliceChunks2,
                     profile: sliceProfile,
                     onSelectAtom: (atomId) => {
                       openTab({
@@ -3057,13 +26802,13 @@ function LookupEditorTab({
                         atomId
                       });
                     },
-                    onOpenLookup: (lookupKey2) => {
+                    onOpenLookup: (lKey) => {
                       openTab({
-                        id: `lookup:${lookupKey2}`,
+                        id: `lookup:${lKey}`,
                         type: "lookup",
-                        title: lookupKey2.split("::").pop() || lookupKey2,
+                        title: lKey.split("::").pop() || lKey,
                         closable: true,
-                        lookupKey: lookupKey2
+                        lookupKey: lKey
                       });
                     },
                     onReload: () => runLiveDebug()
@@ -3076,6 +26821,34 @@ function LookupEditorTab({
       ]
     }
   );
+}
+async function fetchManifestDetail(name2) {
+  return apiFetch(`/api/manifests/${encodeURIComponent(name2)}`);
+}
+async function buildManifest(payload) {
+  return apiFetch("/api/build", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+async function compileAdhocManifest(payload) {
+  return apiFetch("/api/compile-adhoc", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+function useSaveManifestMutation() {
+  const queryClient2 = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) => apiFetch("/api/manifests", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }),
+    onSuccess: () => {
+      queryClient2.invalidateQueries({ queryKey: ["assets"] });
+      queryClient2.invalidateQueries({ queryKey: ["lint"] });
+    }
+  });
 }
 function ManifestEditorTab({
   manifestName,
@@ -3097,7 +26870,7 @@ function ManifestEditorTab({
   const [showRightPanel, setShowRightPanel] = reactExports.useState(true);
   const [manifestIdentifier, setManifestIdentifier] = reactExports.useState(isDraft ? "" : manifestName);
   const [isReady, setIsReady] = reactExports.useState(false);
-  const [name, setName] = reactExports.useState(
+  const [name2, setName] = reactExports.useState(
     !isDraft && manifestName ? manifestName.split("/").pop() || manifestName : ""
   );
   const [version, setVersion] = reactExports.useState("1.0.0");
@@ -3110,13 +26883,14 @@ function ManifestEditorTab({
   const [lookupFilterQuery, setLookupFilterQuery] = reactExports.useState("");
   const [editingOverrideKey, setEditingOverrideKey] = reactExports.useState(null);
   const [overrideQueryId, setOverrideQueryId] = reactExports.useState("");
-  const [isSaving, setIsSaving] = reactExports.useState(false);
   const [saveStatus, setSaveStatus] = reactExports.useState("");
   const [prompt, setPrompt] = reactExports.useState("");
   const [hookedPrompt, setHookedPrompt] = reactExports.useState(null);
   const [chunks, setChunks] = reactExports.useState([]);
   const [profile, setProfile] = reactExports.useState(null);
   const [isHookActive, setIsHookActive] = reactExports.useState(false);
+  const saveManifestMutation = useSaveManifestMutation();
+  const isSaving = saveManifestMutation.isPending;
   const tabId = manifestIdentifier ? `manifest:${manifestIdentifier}` : "manifest:draft";
   const markDirty = () => {
     if (!isModified) {
@@ -3125,11 +26899,11 @@ function ManifestEditorTab({
     }
   };
   const availableExports = reactExports.useMemo(() => {
-    const list = [];
+    const list2 = [];
     for (const pkg of packages) {
       for (const [key, def] of Object.entries(pkg.exports || {})) {
         const exportDef = def;
-        list.push({
+        list2.push({
           key,
           pkg: pkg.name,
           pillar: exportDef.pillar || "d1",
@@ -3137,7 +26911,7 @@ function ManifestEditorTab({
         });
       }
     }
-    return list;
+    return list2;
   }, [packages]);
   reactExports.useEffect(() => {
     const snapshot = getSnapshot(tabId);
@@ -3161,10 +26935,7 @@ function ManifestEditorTab({
       setIsReady(true);
       return;
     }
-    fetch(`/api/manifests/${encodeURIComponent(manifestName)}`).then((res) => {
-      if (!res.ok) throw new Error("加载清单失败");
-      return res.json();
-    }).then((data) => {
+    fetchManifestDetail(manifestName).then((data) => {
       const loadedName = data.name || manifestName;
       const loadedVersion = data.version || "1.0.0";
       const loadedDesc = data.description || "";
@@ -3196,7 +26967,7 @@ function ManifestEditorTab({
   reactExports.useEffect(() => {
     if (!isReady) return;
     saveSnapshot(tabId, {
-      name,
+      name: name2,
       version,
       description,
       items,
@@ -3209,7 +26980,7 @@ function ManifestEditorTab({
   }, [
     isReady,
     tabId,
-    name,
+    name2,
     version,
     description,
     items,
@@ -3222,32 +26993,24 @@ function ManifestEditorTab({
   ]);
   const compileCurrent = reactExports.useCallback(
     (hookFlag = isHookActive) => {
-      const targetQueryKey = manifestIdentifier || name;
+      const targetQueryKey = manifestIdentifier || name2;
       if (manifestIdentifier && !isModified) {
-        fetch("/api/build", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            manifest: targetQueryKey,
-            is_file: false,
-            apply_hook: hookFlag
-          })
-        }).then((res) => res.json()).then((data) => {
+        buildManifest({
+          manifest: targetQueryKey,
+          is_file: false,
+          apply_hook: hookFlag
+        }).then((data) => {
           if (data.prompt) setPrompt(data.prompt);
           setHookedPrompt(data.hooked_prompt || null);
           setChunks(data.chunks || []);
           if (data.profile) setProfile(data.profile);
         }).catch(console.error);
       } else if (items.length > 0) {
-        fetch("/api/compile-adhoc", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            imports: items.map((item) => ({ lookup: item.lookup })),
-            overrides: Object.keys(overrides).length > 0 ? overrides : void 0,
-            apply_hook: hookFlag
-          })
-        }).then((res) => res.json()).then((data) => {
+        compileAdhocManifest({
+          imports: items.map((item) => ({ lookup: item.lookup })),
+          overrides: Object.keys(overrides).length > 0 ? overrides : void 0,
+          apply_hook: hookFlag
+        }).then((data) => {
           if (data.prompt) setPrompt(data.prompt);
           setHookedPrompt(data.hooked_prompt || null);
           setChunks(data.chunks || []);
@@ -3255,7 +27018,7 @@ function ManifestEditorTab({
         }).catch(console.error);
       }
     },
-    [manifestIdentifier, name, isModified, items, overrides, isHookActive]
+    [manifestIdentifier, name2, isModified, items, overrides, isHookActive]
   );
   reactExports.useEffect(() => {
     const timer = setTimeout(() => {
@@ -3282,64 +27045,49 @@ function ManifestEditorTab({
     markDirty();
   };
   const handleSaveManifest = reactExports.useCallback(async () => {
-    const targetIdentifier = manifestIdentifier.trim() || name.trim();
-    if (!name.trim() || !targetIdentifier || items.length === 0) return;
-    setIsSaving(true);
+    const targetIdentifier = manifestIdentifier.trim() || name2.trim();
+    if (!name2.trim() || !targetIdentifier || items.length === 0) return;
     setSaveStatus("正在保存...");
     try {
-      const payload = {
-        name: name.trim(),
+      await saveManifestMutation.mutateAsync({
+        name: name2.trim(),
         version: version.trim(),
         description: description.trim(),
         imports: items.map((i) => ({ lookup: i.lookup })),
         identifier: targetIdentifier,
-        workspace_path: workspacePath
-      };
-      if (Object.keys(overrides).length > 0) {
-        payload.overrides = overrides;
-      }
-      const res = await fetch("/api/manifests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        workspace_path: workspacePath,
+        overrides: Object.keys(overrides).length > 0 ? overrides : void 0
       });
-      const data = await res.json();
-      if (res.ok) {
-        setSaveStatus("已保存");
-        setIsModified(false);
-        setTabDirty(tabId, false);
-        setManifestIdentifier(targetIdentifier);
-        setInitialSnapshot({
-          name: name.trim(),
-          version: version.trim(),
-          description: description.trim(),
-          items: [...items],
-          overrides: { ...overrides }
+      setSaveStatus("已保存");
+      setIsModified(false);
+      setTabDirty(tabId, false);
+      setManifestIdentifier(targetIdentifier);
+      setInitialSnapshot({
+        name: name2.trim(),
+        version: version.trim(),
+        description: description.trim(),
+        items: [...items],
+        overrides: { ...overrides }
+      });
+      clearSnapshot(tabId);
+      onSaved == null ? void 0 : onSaved();
+      if (isDraft) {
+        replaceTab(tabId, {
+          id: `manifest:${targetIdentifier}`,
+          type: "manifest",
+          title: name2.trim(),
+          closable: true,
+          manifestName: targetIdentifier,
+          workspacePath
         });
-        clearSnapshot(tabId);
-        onSaved == null ? void 0 : onSaved();
-        if (isDraft) {
-          replaceTab(tabId, {
-            id: `manifest:${targetIdentifier}`,
-            type: "manifest",
-            title: name.trim(),
-            closable: true,
-            manifestName: targetIdentifier,
-            workspacePath
-          });
-        }
-        setTimeout(() => setSaveStatus(""), 2500);
-      } else {
-        setSaveStatus(`保存失败: ${data.detail}`);
       }
-    } catch (_e) {
-      setSaveStatus("保存请求异常");
-    } finally {
-      setIsSaving(false);
+      setTimeout(() => setSaveStatus(""), 2500);
+    } catch (err) {
+      setSaveStatus(`保存失败: ${err instanceof Error ? err.message : "异常"}`);
     }
   }, [
     manifestIdentifier,
-    name,
+    name2,
     items,
     version,
     description,
@@ -3350,7 +27098,8 @@ function ManifestEditorTab({
     clearSnapshot,
     onSaved,
     isDraft,
-    replaceTab
+    replaceTab,
+    saveManifestMutation
   ]);
   reactExports.useEffect(() => {
     const handleGlobalSave = () => {
@@ -3395,13 +27144,13 @@ function ManifestEditorTab({
     [openTab]
   );
   const handleOpenLookup = reactExports.useCallback(
-    (lookupKey) => {
+    (lKey) => {
       openTab({
-        id: `lookup:${lookupKey}`,
+        id: `lookup:${lKey}`,
         type: "lookup",
-        title: lookupKey.split("::").pop() || lookupKey,
+        title: lKey.split("::").pop() || lKey,
         closable: true,
-        lookupKey
+        lookupKey: lKey
       });
     },
     [openTab]
@@ -3436,7 +27185,7 @@ function ManifestEditorTab({
               {
                 id: "manifest-name-input",
                 type: "text",
-                value: name,
+                value: name2,
                 onChange: (e) => {
                   setName(e.target.value);
                   markDirty();
@@ -3550,11 +27299,11 @@ function ManifestEditorTab({
             { title: "其它", key: "other", variant: "outline" }
           ].map((group) => {
             const groupItems = items.filter((item) => {
-              const p = (item.pillar || (item.lookup.includes("::") ? item.lookup.split("::")[1].slice(0, 2) : item.lookup.slice(0, 2))).toLowerCase();
+              const p2 = (item.pillar || (item.lookup.includes("::") ? item.lookup.split("::")[1].slice(0, 2) : item.lookup.slice(0, 2))).toLowerCase();
               if (group.key === "other") {
-                return p !== "d1" && p !== "d2" && p !== "d3";
+                return p2 !== "d1" && p2 !== "d2" && p2 !== "d3";
               }
-              return p === group.key;
+              return p2 === group.key;
             });
             if (groupItems.length === 0) return null;
             return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5", children: [
@@ -3589,13 +27338,13 @@ function ManifestEditorTab({
                       {
                         type: "button",
                         onClick: () => {
-                          var _a, _b, _c;
+                          var _a2, _b2, _c2;
                           if (editingOverrideKey === item.lookup) {
                             setEditingOverrideKey(null);
                           } else {
                             setEditingOverrideKey(item.lookup);
                             const currentOverride = overrides[item.lookup];
-                            const targetId = (_c = (_b = (_a = currentOverride == null ? void 0 : currentOverride.selectors) == null ? void 0 : _a[0]) == null ? void 0 : _b.query) == null ? void 0 : _c.id;
+                            const targetId = (_c2 = (_b2 = (_a2 = currentOverride == null ? void 0 : currentOverride.selectors) == null ? void 0 : _a2[0]) == null ? void 0 : _b2.query) == null ? void 0 : _c2.id;
                             setOverrideQueryId(typeof targetId === "string" ? targetId : "");
                           }
                         },
@@ -3685,7 +27434,7 @@ function ManifestEditorTab({
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 font-mono text-xs shrink-0", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200", children: name }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200", children: name2 }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-slate-500 font-mono", children: [
             "v",
             version
@@ -3789,7 +27538,7 @@ function ManifestEditorTab({
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-hidden", children: rightView === "graph" ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full w-full bg-slate-950 overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
             TopologyGraph,
             {
-              manifest: manifestIdentifier || name,
+              manifest: manifestIdentifier || name2,
               imports: items.map((i) => ({ lookup: i.lookup })),
               overrides,
               onSelectAtom: handleOpenAtom,
@@ -3901,7 +27650,7 @@ function EmptyTab({
     ] })
   ] }) });
 }
-const useWorkspaceStore = create((set, get) => ({
+const useWorkspaceStore = create$1((set, get) => ({
   workspaces: [],
   activeWorkspaceId: "",
   defaultWorkspaceId: "",
@@ -3988,8 +27737,8 @@ function SettingsTab() {
   }, [wsStore.workspaces, wsStore.activeWorkspaceId]);
   const handleSaveActiveWorkspace = async () => {
     setSaving(true);
-    const newLibPaths = libPaths.split("\n").map((p) => p.trim()).filter(Boolean);
-    const newManPaths = manPaths.split("\n").map((p) => p.trim()).filter(Boolean);
+    const newLibPaths = libPaths.split("\n").map((p2) => p2.trim()).filter(Boolean);
+    const newManPaths = manPaths.split("\n").map((p2) => p2.trim()).filter(Boolean);
     try {
       const res = await fetch("/api/system/config", {
         method: "PUT",
@@ -4225,7 +27974,7 @@ function SettingsTab() {
 }
 const TabPane = reactExports.memo(
   function TabPane2({
-    tab,
+    tab: tab2,
     isActive,
     packages,
     manifestsCount,
@@ -4236,7 +27985,7 @@ const TabPane = reactExports.memo(
     onCreateAtom
   }) {
     return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `h-full w-full ${isActive ? "block" : "hidden"}`, children: [
-      tab.type === "empty" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      tab2.type === "empty" && /* @__PURE__ */ jsxRuntimeExports.jsx(
         EmptyTab,
         {
           manifestsCount,
@@ -4246,37 +27995,37 @@ const TabPane = reactExports.memo(
           onCreateAtom
         }
       ),
-      tab.type === "atom" && tab.atomId && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      tab2.type === "atom" && tab2.atomId && /* @__PURE__ */ jsxRuntimeExports.jsx(
         AtomEditorTab,
         {
-          atomId: tab.atomId,
+          atomId: tab2.atomId,
           packages,
           onSaved,
-          onDeleted: () => onDeleted(tab.id)
+          onDeleted: () => onDeleted(tab2.id)
         },
-        tab.atomId
+        tab2.atomId
       ),
-      tab.type === "manifest" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      tab2.type === "manifest" && /* @__PURE__ */ jsxRuntimeExports.jsx(
         ManifestEditorTab,
         {
-          manifestName: tab.manifestName || "",
-          workspacePath: tab.workspacePath,
+          manifestName: tab2.manifestName || "",
+          workspacePath: tab2.workspacePath,
           packages,
           onSaved
         },
-        tab.id
+        tab2.id
       ),
-      tab.type === "lookup" && tab.lookupKey && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      tab2.type === "lookup" && tab2.lookupKey && /* @__PURE__ */ jsxRuntimeExports.jsx(
         LookupEditorTab,
         {
-          lookupKey: tab.lookupKey,
+          lookupKey: tab2.lookupKey,
           packages,
           onSaved,
-          onDeleted: () => onDeleted(tab.id)
+          onDeleted: () => onDeleted(tab2.id)
         },
-        tab.id
+        tab2.id
       ),
-      tab.type === "settings" && /* @__PURE__ */ jsxRuntimeExports.jsx(SettingsTab, {})
+      tab2.type === "settings" && /* @__PURE__ */ jsxRuntimeExports.jsx(SettingsTab, {})
     ] });
   },
   (prev, next) => {
@@ -4338,7 +28087,7 @@ function CreatePackageModal({
           value: newPkgWs,
           onChange: (e) => setNewPkgWs(e.target.value),
           className: "w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500",
-          children: libraryPaths.map((p) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: p, children: p }, p))
+          children: libraryPaths.map((p2) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: p2, children: p2 }, p2))
         }
       )
     ] }),
@@ -4419,13 +28168,13 @@ function CreateWorkspaceModal({
   ] }) });
 }
 function buildTree(items) {
-  const root = {
+  const root2 = {
     children: /* @__PURE__ */ new Map()
   };
   for (const item of items) {
-    const p = typeof item === "string" ? item : item.name;
-    const parts = p.split("/").filter(Boolean);
-    let curr = root;
+    const p2 = typeof item === "string" ? item : item.name;
+    const parts = p2.split("/").filter(Boolean);
+    let curr = root2;
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       const isLeaf = i === parts.length - 1;
@@ -4434,7 +28183,7 @@ function buildTree(items) {
       if (!nextNode) {
         nextNode = {
           name: part,
-          path: isLeaf ? p : subPath,
+          path: isLeaf ? p2 : subPath,
           isFolder: !isLeaf,
           children: /* @__PURE__ */ new Map()
         };
@@ -4445,26 +28194,26 @@ function buildTree(items) {
       curr = nextNode;
     }
   }
-  function toSortedNodes(node) {
-    const list = [];
-    for (const child of node.children.values()) {
-      list.push({
+  function toSortedNodes(node2) {
+    const list2 = [];
+    for (const child of node2.children.values()) {
+      list2.push({
         name: child.name,
         path: child.path,
         isFolder: child.isFolder,
         children: toSortedNodes(child)
       });
     }
-    return list.sort((a, b) => {
+    return list2.sort((a, b) => {
       if (a.isFolder && !b.isFolder) return -1;
       if (!a.isFolder && b.isFolder) return 1;
       return a.name.localeCompare(b.name);
     });
   }
-  return toSortedNodes(root);
+  return toSortedNodes(root2);
 }
 function ManifestTreeItem({
-  node,
+  node: node2,
   depth,
   activeManifestName,
   onToggleFolder,
@@ -4472,26 +28221,26 @@ function ManifestTreeItem({
   onSelectManifest,
   onDeleteManifest
 }) {
-  const isActive = !node.isFolder && activeManifestName === node.path;
+  const isActive = !node2.isFolder && activeManifestName === node2.path;
   const paddingLeft = `${depth * 14 + 6}px`;
-  if (node.isFolder) {
+  if (node2.isFolder) {
     return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-0.5 mb-1", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs(
         "button",
         {
           type: "button",
-          onClick: () => onToggleFolder(node.path),
+          onClick: () => onToggleFolder(node2.path),
           style: { paddingLeft },
           className: "w-full flex items-center gap-1.5 py-1 pr-2 rounded text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-colors group cursor-pointer text-left",
-          title: node.name,
+          title: node2.name,
           children: [
             isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3.5 w-3.5 text-slate-500 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5 text-slate-500 shrink-0" }),
             isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(FolderOpen, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Folder, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold truncate text-[11px] text-slate-300", title: node.name, children: node.name })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold truncate text-[11px] text-slate-300", title: node2.name, children: node2.name })
           ]
         }
       ),
-      isExpanded && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-0.5 border-l border-slate-800/60 ml-3 pl-1", children: node.children.map((child) => {
+      isExpanded && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-0.5 border-l border-slate-800/60 ml-3 pl-1", children: node2.children.map((child) => {
         const childExpanded = useIdeStore.getState().explorerExpanded[child.path] === true;
         return /* @__PURE__ */ jsxRuntimeExports.jsx(
           ManifestTreeItem,
@@ -4519,12 +28268,12 @@ function ManifestTreeItem({
           "button",
           {
             type: "button",
-            onClick: (e) => onSelectManifest(node.path, e),
+            onClick: (e) => onSelectManifest(node2.path, e),
             className: "flex items-center gap-1.5 flex-1 min-w-0 text-left hover:text-white cursor-pointer",
-            title: node.path,
+            title: node2.path,
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-3.5 w-3.5 text-indigo-400/80 shrink-0" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: node.name })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: node2.name })
             ]
           }
         ),
@@ -4532,7 +28281,7 @@ function ManifestTreeItem({
           "button",
           {
             type: "button",
-            onClick: (e) => onDeleteManifest(node.path, e),
+            onClick: (e) => onDeleteManifest(node2.path, e),
             className: "opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-opacity p-0.5 rounded shrink-0 cursor-pointer ml-1",
             title: "删除清单",
             children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3.5 w-3.5" })
@@ -4554,12 +28303,12 @@ function ManifestExplorer({
   if (manifests.length === 0) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "py-6 text-center text-xs font-mono text-slate-500", children: "暂无清单蓝图" });
   }
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-0.5", children: tree.map((node) => {
-    const isExpanded = explorerExpanded[node.path] === true;
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-0.5", children: tree.map((node2) => {
+    const isExpanded = explorerExpanded[node2.path] === true;
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
       ManifestTreeItem,
       {
-        node,
+        node: node2,
         depth: 0,
         activeManifestName,
         isExpanded,
@@ -4567,7 +28316,7 @@ function ManifestExplorer({
         onSelectManifest,
         onDeleteManifest
       },
-      node.path
+      node2.path
     );
   }) });
 }
@@ -4638,12 +28387,12 @@ function PackageExplorer({
       ] })
     ] }),
     sortedPackages.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "py-6 text-center text-xs font-mono text-slate-500", children: "暂无组件包" }) : sortedPackages.map((pkg) => {
-      var _a;
+      var _a2;
       const pkgKey = `pkg:${pkg.name}`;
       const isExp = explorerExpanded[pkgKey] === true;
       const exportsCount = Object.keys(pkg.exports || {}).length;
       const internalCount = Object.keys(pkg.internal_lookups || {}).length;
-      const atomsCount = ((_a = pkg.atoms) == null ? void 0 : _a.length) || 0;
+      const atomsCount = ((_a2 = pkg.atoms) == null ? void 0 : _a2.length) || 0;
       return /* @__PURE__ */ jsxRuntimeExports.jsxs(
         "div",
         {
@@ -4697,7 +28446,7 @@ function PackageExplorer({
                     }
                   )
                 ] }),
-                exportsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.exports).map(([k, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                exportsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.exports).map(([k2, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
                   "div",
                   {
                     className: "w-full text-left text-xs font-mono text-slate-300 hover:text-emerald-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer",
@@ -4706,11 +28455,11 @@ function PackageExplorer({
                         "button",
                         {
                           type: "button",
-                          onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
+                          onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k2, e),
                           className: "flex-1 text-left truncate flex items-center gap-1 cursor-pointer",
                           title: "点击打开",
                           children: [
-                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k2 }),
                             /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "outline", className: "text-[9px] px-1 py-0", children: def.pillar })
                           ]
                         }
@@ -4719,7 +28468,7 @@ function PackageExplorer({
                         "button",
                         {
                           type: "button",
-                          onClick: (e) => onDeleteLookup(k, e),
+                          onClick: (e) => onDeleteLookup(k2, e),
                           className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
                           title: "删除此公开接口",
                           children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
@@ -4727,7 +28476,7 @@ function PackageExplorer({
                       )
                     ]
                   },
-                  k
+                  k2
                 )) })
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
@@ -4747,7 +28496,7 @@ function PackageExplorer({
                     }
                   )
                 ] }),
-                internalCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.internal_lookups).map(([k, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                internalCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.internal_lookups).map(([k2, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
                   "div",
                   {
                     className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer",
@@ -4756,11 +28505,11 @@ function PackageExplorer({
                         "button",
                         {
                           type: "button",
-                          onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
+                          onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k2, e),
                           className: "flex-1 text-left truncate flex items-center gap-1 cursor-pointer",
                           title: "点击打开",
                           children: [
-                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k2 }),
                             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] text-slate-600", children: def.pillar })
                           ]
                         }
@@ -4769,7 +28518,7 @@ function PackageExplorer({
                         "button",
                         {
                           type: "button",
-                          onClick: (e) => onDeleteLookup(k, e),
+                          onClick: (e) => onDeleteLookup(k2, e),
                           className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
                           title: "删除此内部查找",
                           children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
@@ -4777,7 +28526,7 @@ function PackageExplorer({
                       )
                     ]
                   },
-                  k
+                  k2
                 )) })
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
@@ -4841,85 +28590,59 @@ function PackageExplorer({
     })
   ] });
 }
+const EMPTY_MANIFESTS = [];
+const EMPTY_PACKAGES = [];
 function App() {
-  const ideStore2 = useIdeStore();
+  const ideStore = useIdeStore();
   const wsStore = useWorkspaceStore();
-  const [manifests, setManifests] = reactExports.useState([]);
-  const [packages, setPackages] = reactExports.useState([]);
-  const [kernel, setKernel] = reactExports.useState(null);
+  const queryClient2 = useQueryClient();
   const [status, setStatus] = reactExports.useState("检测中...");
+  const [explorerTab, setExplorerTab] = reactExports.useState("manifests");
   const [isCreatePkgOpen, setIsCreatePkgOpen] = reactExports.useState(false);
   const [newPkgName, setNewPkgName] = reactExports.useState("");
   const [newPkgWs, setNewPkgWs] = reactExports.useState("");
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = reactExports.useState(false);
   const [isWsDropdownOpen, setIsWsDropdownOpen] = reactExports.useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = reactExports.useState(false);
-  const [lintLoading, setLintLoading] = reactExports.useState(false);
-  const [lintErrors, setLintErrors] = reactExports.useState(0);
-  const [lintWarnings, setLintWarnings] = reactExports.useState(0);
-  const [lintIssues, setLintIssues] = reactExports.useState([]);
-  const sidebarWidth = ideStore2.sidebarWidth;
-  const setSidebarWidth = ideStore2.setSidebarWidth;
-  const [isDraggingSidebar, setIsDraggingSidebar] = reactExports.useState(false);
-  const handleSidebarPointerDown = (e) => {
-    e.preventDefault();
-    setIsDraggingSidebar(true);
-  };
-  const handleSidebarPointerMove = reactExports.useCallback(
-    (e) => {
-      if (!isDraggingSidebar) return;
-      const newWidth = e.clientX - 48;
-      if (newWidth >= 180 && newWidth <= 600) {
-        setSidebarWidth(newWidth);
-      }
-    },
-    [isDraggingSidebar, setSidebarWidth]
-  );
-  const handleSidebarPointerUp = reactExports.useCallback(() => {
-    setIsDraggingSidebar(false);
-  }, []);
-  reactExports.useEffect(() => {
-    if (isDraggingSidebar) {
-      window.addEventListener("pointermove", handleSidebarPointerMove);
-      window.addEventListener("pointerup", handleSidebarPointerUp);
+  const { data: assetsData } = useQuery({
+    queryKey: ["assets", wsStore.activeWorkspaceId],
+    queryFn: async () => {
+      const res = await fetch("/api/assets");
+      if (!res.ok) throw new Error("获取工作区资产失败");
+      return res.json();
     }
-    return () => {
-      window.removeEventListener("pointermove", handleSidebarPointerMove);
-      window.removeEventListener("pointerup", handleSidebarPointerUp);
-    };
-  }, [isDraggingSidebar, handleSidebarPointerMove, handleSidebarPointerUp]);
-  const [explorerTab, setExplorerTab] = reactExports.useState("manifests");
-  const fetchAssets = reactExports.useCallback(() => {
-    fetch("/api/assets").then((res) => res.json()).then((data) => {
-      setManifests(data.manifests || []);
-      setPackages(data.packages || []);
-      setKernel(data.kernel || null);
-    }).catch(() => {
-      setManifests([]);
-      setPackages([]);
-      setKernel(null);
-    });
-  }, []);
-  const fetchLintReport = reactExports.useCallback(() => {
-    setLintLoading(true);
-    fetch("/api/lint").then((res) => res.json()).then((data) => {
-      setLintErrors(data.error_count || 0);
-      setLintWarnings(data.warn_count || 0);
-      setLintIssues(data.issues || []);
-    }).catch(console.error).finally(() => setLintLoading(false));
-  }, []);
+  });
+  const manifests = (assetsData == null ? void 0 : assetsData.manifests) ?? EMPTY_MANIFESTS;
+  const packages = (assetsData == null ? void 0 : assetsData.packages) ?? EMPTY_PACKAGES;
+  const kernel = (assetsData == null ? void 0 : assetsData.kernel) || null;
+  const {
+    data: lintData,
+    isFetching: lintLoading,
+    refetch: fetchLintReport
+  } = useQuery({
+    queryKey: ["lint", wsStore.activeWorkspaceId],
+    queryFn: async () => {
+      const res = await fetch("/api/lint");
+      if (!res.ok) throw new Error("获取合规诊断报告失败");
+      return res.json();
+    }
+  });
+  const lintErrors = (lintData == null ? void 0 : lintData.error_count) || 0;
+  const lintWarnings = (lintData == null ? void 0 : lintData.warn_count) || 0;
+  const lintIssues = (lintData == null ? void 0 : lintData.issues) || [];
+  const invalidateAll = reactExports.useCallback(() => {
+    queryClient2.invalidateQueries({ queryKey: ["assets"] });
+    queryClient2.invalidateQueries({ queryKey: ["lint"] });
+  }, [queryClient2]);
   reactExports.useEffect(() => {
     useWorkspaceStore.getState().fetchWorkspaces().then(() => {
       const activeId = useWorkspaceStore.getState().activeWorkspaceId || "default";
       useIdeStore.getState().setCurrentWorkspace(activeId);
     });
     fetch("/api/health").then((res) => res.json()).then((data) => setStatus(data.status === "ok" ? "正常" : data.status)).catch(() => setStatus("离线"));
-    fetchAssets();
-    fetchLintReport();
     const eventSource = new EventSource("/api/events/stream");
     eventSource.addEventListener("change", () => {
-      fetchAssets();
-      fetchLintReport();
+      invalidateAll();
     });
     const handleGlobalKeyDown = (e) => {
       const isMod = e.metaKey || e.ctrlKey;
@@ -4959,18 +28682,17 @@ function App() {
       eventSource.close();
       window.removeEventListener("keydown", handleGlobalKeyDown);
     };
-  }, [fetchAssets, fetchLintReport]);
+  }, [invalidateAll]);
   const handleSelectWorkspace = async (wsId) => {
     setIsWsDropdownOpen(false);
     await wsStore.switchWorkspace(wsId);
-    ideStore2.setCurrentWorkspace(wsId);
-    fetchAssets();
-    fetchLintReport();
+    ideStore.setCurrentWorkspace(wsId);
+    invalidateAll();
   };
   const handleOpenManifestTab = (mName, e, opts) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
     const isPreview = !newTab;
-    ideStore2.openTab(
+    ideStore.openTab(
       {
         id: `manifest:${mName}`,
         type: "manifest",
@@ -4992,7 +28714,7 @@ function App() {
       tabTitle = targetPkg === "kernel" ? "初始化 Kernel" : `新建原子 (${targetPkg || "草稿"})`;
     }
     const isPreview = isDraft ? false : !newTab;
-    ideStore2.openTab(
+    ideStore.openTab(
       {
         id: `atom:${atomId}`,
         type: "atom",
@@ -5008,7 +28730,7 @@ function App() {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
     const isDraft = lookupKey.startsWith("draft:");
     const isPreview = isDraft ? false : !newTab;
-    ideStore2.openTab(
+    ideStore.openTab(
       {
         id: `lookup:${lookupKey}`,
         type: "lookup",
@@ -5020,40 +28742,40 @@ function App() {
       { newTab: isDraft ? true : newTab, isPreview }
     );
   };
-  const handleSafeCloseTab = (tab, e) => {
+  const handleSafeCloseTab = (tab2, e) => {
     if (e) e.stopPropagation();
-    if (!tab.closable) return;
-    if (tab.isDirty) {
+    if (!tab2.closable) return;
+    if (tab2.isDirty) {
       const confirmDiscard = window.confirm(
-        `标签页「${tab.title}」存在尚未保存的更改。确定要放弃修改并关闭吗？`
+        `标签页「${tab2.title}」存在尚未保存的更改。确定要放弃修改并关闭吗？`
       );
       if (!confirmDiscard) return;
     }
-    ideStore2.closeTab(tab.id);
+    ideStore.closeTab(tab2.id);
   };
   const handleProblemClick = (issue) => {
-    const text = `${issue.code} ${issue.message}`;
-    const atomMatch = text.match(/\b(d[1-3]-[a-zA-Z0-9_-]+)\b/);
+    const text2 = `${issue.code} ${issue.message}`;
+    const atomMatch = text2.match(/\b(d[1-3]-[a-zA-Z0-9_-]+)\b/);
     if (atomMatch) {
       handleOpenAtomTab(atomMatch[1]);
       return;
     }
-    const manifestMatch = text.match(/Manifest '([^']+)'/);
+    const manifestMatch = text2.match(/Manifest '([^']+)'/);
     if (manifestMatch) {
       handleOpenManifestTab(manifestMatch[1]);
       return;
     }
-    const lookupMatch = text.match(/Lookup '([^']+)'/);
+    const lookupMatch = text2.match(/Lookup '([^']+)'/);
     if (lookupMatch) {
       const lKey = lookupMatch[1];
       handleOpenLookupTab(lKey);
     }
   };
   const handleCreateNewAtomDraft = () => {
-    var _a;
-    const defaultPkg = ((_a = packages[0]) == null ? void 0 : _a.name) || "";
+    var _a2;
+    const defaultPkg = ((_a2 = packages[0]) == null ? void 0 : _a2.name) || "";
     const draftId = `draft:${defaultPkg}:${Date.now()}`;
-    ideStore2.openTab(
+    ideStore.openTab(
       {
         id: `atom:${draftId}`,
         type: "atom",
@@ -5066,8 +28788,8 @@ function App() {
   };
   const handleCreateKernelDraft = () => {
     const draftId = `draft:kernel:${Date.now()}`;
-    ideStore2.clearSnapshot(`atom:${draftId}`);
-    ideStore2.openTab(
+    ideStore.clearSnapshot(`atom:${draftId}`);
+    ideStore.openTab(
       {
         id: `atom:${draftId}`,
         type: "atom",
@@ -5080,7 +28802,7 @@ function App() {
   };
   const handleCreateNewManifest = () => {
     const draftId = `draft_${Date.now()}`;
-    ideStore2.openTab(
+    ideStore.openTab(
       {
         id: `manifest:${draftId}`,
         type: "manifest",
@@ -5093,7 +28815,7 @@ function App() {
   };
   const handleCreateEmptyTab = () => {
     const newTabId = `empty_${Date.now()}`;
-    ideStore2.openTab(
+    ideStore.openTab(
       {
         id: newTabId,
         type: "empty",
@@ -5111,8 +28833,8 @@ function App() {
         method: "DELETE"
       });
       if (res.ok) {
-        fetchAssets();
-        ideStore2.closeTab(`manifest:${mName}`);
+        invalidateAll();
+        ideStore.closeTab(`manifest:${mName}`);
       } else {
         const data = await res.json();
         alert(`删除失败: ${data.detail}`);
@@ -5122,22 +28844,20 @@ function App() {
     }
   };
   const handleTabSaved = reactExports.useCallback(() => {
-    fetchAssets();
-    fetchLintReport();
-  }, [fetchAssets, fetchLintReport]);
+    invalidateAll();
+  }, [invalidateAll]);
   const handleTabDeleted = reactExports.useCallback(
     (tabId) => {
-      ideStore2.closeTab(tabId);
-      fetchAssets();
-      fetchLintReport();
+      ideStore.closeTab(tabId);
+      invalidateAll();
     },
-    [ideStore2, fetchAssets, fetchLintReport]
+    [ideStore, invalidateAll]
   );
   const handleCreatePackage = reactExports.useCallback(() => {
-    var _a;
+    var _a2;
     setNewPkgName("");
     const activeWs = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
-    setNewPkgWs(((_a = activeWs == null ? void 0 : activeWs.library_paths) == null ? void 0 : _a[0]) || "");
+    setNewPkgWs(((_a2 = activeWs == null ? void 0 : activeWs.library_paths) == null ? void 0 : _a2[0]) || "");
     setIsCreatePkgOpen(true);
   }, [wsStore.workspaces, wsStore.activeWorkspaceId]);
   const submitCreatePackage = reactExports.useCallback(() => {
@@ -5152,14 +28872,13 @@ function App() {
       })
     }).then(async (res) => {
       if (res.ok) {
-        fetchAssets();
-        fetchLintReport();
+        invalidateAll();
       } else {
         const data = await res.json();
         alert(`创建组件包失败: ${data.detail}`);
       }
     }).catch(() => alert("创建组件包网络异常"));
-  }, [newPkgName, newPkgWs, fetchAssets, fetchLintReport]);
+  }, [newPkgName, newPkgWs, invalidateAll]);
   const handleDeletePackage = reactExports.useCallback(
     (pkgName, e) => {
       e.stopPropagation();
@@ -5168,15 +28887,14 @@ function App() {
         method: "DELETE"
       }).then(async (res) => {
         if (res.ok) {
-          fetchAssets();
-          fetchLintReport();
+          invalidateAll();
         } else {
           const data = await res.json();
           alert(`删除组件包失败: ${data.detail}`);
         }
       }).catch(() => alert("删除组件包网络异常"));
     },
-    [fetchAssets, fetchLintReport]
+    [invalidateAll]
   );
   const handleDeleteLookup = reactExports.useCallback(
     (lookupKey, e) => {
@@ -5186,16 +28904,15 @@ function App() {
         method: "DELETE"
       }).then(async (res) => {
         if (res.ok) {
-          ideStore2.closeTab(`lookup:${lookupKey}`);
-          fetchAssets();
-          fetchLintReport();
+          ideStore.closeTab(`lookup:${lookupKey}`);
+          invalidateAll();
         } else {
           const data = await res.json();
           alert(`删除接口失败: ${data.detail}`);
         }
       }).catch(() => alert("删除接口网络异常"));
     },
-    [ideStore2, fetchAssets, fetchLintReport]
+    [ideStore, invalidateAll]
   );
   const handleDeleteAtom = reactExports.useCallback(
     (atomId, e) => {
@@ -5205,24 +28922,23 @@ function App() {
         method: "DELETE"
       }).then(async (res) => {
         if (res.ok) {
-          ideStore2.closeTab(`atom:${atomId}`);
-          ideStore2.clearSnapshot(`atom:${atomId}`);
+          ideStore.closeTab(`atom:${atomId}`);
+          ideStore.clearSnapshot(`atom:${atomId}`);
           if (atomId === "kernel") {
-            ideStore2.clearSnapshot("atom:draft:kernel");
+            ideStore.clearSnapshot("atom:draft:kernel");
           }
-          fetchAssets();
-          fetchLintReport();
+          invalidateAll();
         } else {
           const data = await res.json();
           alert(`删除原子失败: ${data.detail}`);
         }
       }).catch(() => alert("删除原子网络异常"));
     },
-    [ideStore2, fetchAssets, fetchLintReport]
+    [ideStore, invalidateAll]
   );
-  const activeTab = ideStore2.tabs.find((t) => t.id === ideStore2.activeTabId);
-  const canGoBack = ideStore2.historyIndex > 0;
-  const canGoForward = ideStore2.historyIndex < ideStore2.navigationHistory.length - 1;
+  const activeTab = ideStore.tabs.find((t) => t.id === ideStore.activeTabId);
+  const canGoBack = ideStore.historyIndex > 0;
+  const canGoForward = ideStore.historyIndex < ideStore.navigationHistory.length - 1;
   const currentWsObj = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-screen flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans select-none", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-1 overflow-hidden", children: [
@@ -5232,14 +28948,14 @@ function App() {
           {
             type: "button",
             onClick: () => {
-              if (ideStore2.sidebarOpen && ideStore2.activeSidebarView === "explorer") {
-                ideStore2.setSidebarOpen(false);
+              if (ideStore.sidebarOpen && ideStore.activeSidebarView === "explorer") {
+                ideStore.setSidebarOpen(false);
               } else {
-                ideStore2.setSidebarOpen(true);
-                ideStore2.setActiveSidebarView("explorer");
+                ideStore.setSidebarOpen(true);
+                ideStore.setActiveSidebarView("explorer");
               }
             },
-            className: `p-2 rounded-lg transition-colors cursor-pointer ${ideStore2.sidebarOpen && ideStore2.activeSidebarView === "explorer" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
+            className: `p-2 rounded-lg transition-colors cursor-pointer ${ideStore.sidebarOpen && ideStore.activeSidebarView === "explorer" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
             title: "资源视图",
             children: /* @__PURE__ */ jsxRuntimeExports.jsx(FolderTree, { className: "h-5 w-5" })
           }
@@ -5249,287 +28965,276 @@ function App() {
           {
             type: "button",
             onClick: () => {
-              ideStore2.openTab({
+              ideStore.openTab({
                 id: "system:settings",
                 type: "settings",
                 title: "设置",
                 closable: true
               });
             },
-            className: `mt-auto p-2 rounded-lg transition-colors cursor-pointer ${ideStore2.activeTabId === "system:settings" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
+            className: `mt-auto p-2 rounded-lg transition-colors cursor-pointer ${ideStore.activeTabId === "system:settings" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
             title: "全局设置与工作区管理",
             children: /* @__PURE__ */ jsxRuntimeExports.jsx(Settings, { className: "h-5 w-5" })
           }
         )
       ] }),
-      ideStore2.sidebarOpen && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "aside",
-          {
-            style: {
-              width: `${sidebarWidth}px`,
-              userSelect: isDraggingSidebar ? "none" : "auto"
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(PanelGroup, { direction: "horizontal", className: "flex-1 overflow-hidden", children: [
+        ideStore.sidebarOpen && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            Panel,
+            {
+              defaultSize: 20,
+              minSize: 14,
+              maxSize: 40,
+              className: "flex flex-col overflow-hidden",
+              children: /* @__PURE__ */ jsxRuntimeExports.jsxs("aside", { className: "h-full border-r border-slate-800 bg-slate-900/40 flex flex-col overflow-hidden", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-3 py-2 border-b border-slate-800/80 bg-slate-950/70", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-mono font-bold text-slate-400 uppercase tracking-wider", children: "资源管理器" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: ideStore.toggleSidebar,
+                      className: "text-slate-400 hover:text-white p-1 cursor-pointer",
+                      title: "折叠侧边栏",
+                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3.5 w-3.5" })
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-2 border-b border-slate-800/60 bg-slate-950/40", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex rounded bg-slate-900 p-0.5 border border-slate-800 text-xs", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => setExplorerTab("manifests"),
+                        className: `flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${explorerTab === "manifests" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"}`,
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-3.5 w-3.5" }),
+                          " 清单蓝图"
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => setExplorerTab("packages"),
+                        className: `flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${explorerTab === "packages" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"}`,
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(Package, { className: "h-3.5 w-3.5" }),
+                          " 组件包"
+                        ]
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2", children: explorerTab === "manifests" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    Button,
+                    {
+                      variant: "outline",
+                      size: "sm",
+                      onClick: handleCreateNewManifest,
+                      className: "w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer",
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(FilePlus2, { className: "h-3.5 w-3.5 text-indigo-400" }),
+                        " 新建清单蓝图"
+                      ]
+                    }
+                  ) : /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    Button,
+                    {
+                      variant: "outline",
+                      size: "sm",
+                      onClick: handleCreatePackage,
+                      className: "w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer",
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5 text-indigo-400" }),
+                        " 新建组件包"
+                      ]
+                    }
+                  ) })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-y-auto p-2 space-y-1", children: explorerTab === "manifests" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  ManifestExplorer,
+                  {
+                    manifests,
+                    activeManifestName: activeTab == null ? void 0 : activeTab.manifestName,
+                    onSelectManifest: (m2, e) => handleOpenManifestTab(m2, e),
+                    onDeleteManifest: (m2, e) => handleDeleteManifest(m2, e)
+                  }
+                ) : /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  PackageExplorer,
+                  {
+                    packages,
+                    kernel,
+                    onSelectAtom: (atomId, e) => handleOpenAtomTab(atomId, e),
+                    onOpenLookup: (lKey, e) => handleOpenLookupTab(lKey, e),
+                    onCreateKernel: handleCreateKernelDraft,
+                    onDeletePackage: handleDeletePackage,
+                    onDeleteLookup: handleDeleteLookup,
+                    onDeleteAtom: handleDeleteAtom
+                  }
+                ) })
+              ] })
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(PanelResizeHandle, { className: "relative z-20 shrink-0 group flex items-center justify-center w-1.5 cursor-col-resize hover:bg-indigo-500/60 bg-slate-800 transition-colors data-[resize-handle-active]:bg-indigo-500", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-full bg-slate-600 group-hover:bg-white h-8 w-1 transition-colors group-data-[resize-handle-active]:!bg-white" }) })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Panel, { className: "flex-1 flex flex-col overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { className: "flex-1 flex flex-col overflow-hidden bg-slate-950", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center border-b border-slate-800 bg-slate-900/60 overflow-x-auto shrink-0 scrollbar-none h-9", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-0.5 px-2 border-r border-slate-800 shrink-0", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: ideStore.goBack,
+                  disabled: !canGoBack,
+                  className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 transition-colors cursor-pointer",
+                  title: "后退",
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowLeft, { className: "h-3.5 w-3.5" })
+                }
+              ),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: ideStore.goForward,
+                  disabled: !canGoForward,
+                  className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 transition-colors cursor-pointer",
+                  title: "前进",
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowRight, { className: "h-3.5 w-3.5" })
+                }
+              )
+            ] }),
+            ideStore.tabs.map((tab2) => {
+              const isActive = tab2.id === ideStore.activeTabId;
+              return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "div",
+                {
+                  onClick: () => ideStore.setActiveTab(tab2.id),
+                  onDoubleClick: () => ideStore.pinTab(tab2.id),
+                  onKeyDown: (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      ideStore.setActiveTab(tab2.id);
+                    }
+                  },
+                  onAuxClick: (e) => {
+                    if (e.button === 1) {
+                      e.preventDefault();
+                      handleSafeCloseTab(tab2, e);
+                    }
+                  },
+                  className: `group flex items-center gap-2 px-3.5 py-2 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 ${isActive ? "bg-slate-950 text-indigo-300 border-t-2 border-t-indigo-500 font-semibold" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent"}`,
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "span",
+                      {
+                        className: `truncate max-w-[140px] ${tab2.isPreview ? "italic text-slate-300/80" : ""}`,
+                        children: tab2.title
+                      }
+                    ),
+                    tab2.isDirty && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" }),
+                    tab2.closable && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: (e) => handleSafeCloseTab(tab2, e),
+                        className: "opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded cursor-pointer transition-opacity",
+                        title: "关闭标签页",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3 w-3" })
+                      }
+                    )
+                  ]
+                },
+                tab2.id
+              );
+            }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                type: "button",
+                onClick: handleCreateEmptyTab,
+                className: "flex items-center justify-center p-1.5 ml-1.5 mr-2 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded transition-colors shrink-0 cursor-pointer",
+                title: "新建标签页",
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5" })
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-hidden relative", children: ideStore.tabs.map((tab2) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+            TabPane,
+            {
+              tab: tab2,
+              isActive: tab2.id === ideStore.activeTabId,
+              packages,
+              manifestsCount: manifests.length,
+              onSaved: handleTabSaved,
+              onDeleted: handleTabDeleted,
+              onOpenCommandPalette: () => setIsCommandPaletteOpen(true),
+              onCreateManifest: handleCreateNewManifest,
+              onCreateAtom: handleCreateNewAtomDraft
             },
-            className: "border-r border-slate-800 bg-slate-900/40 flex flex-col shrink-0 overflow-hidden",
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-3 py-2 border-b border-slate-800/80 bg-slate-950/70", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-mono font-bold text-slate-400 uppercase tracking-wider", children: "资源管理器" }),
+            tab2.id
+          )) }),
+          ideStore.bottomPanelOpen && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "h-56 border-t border-slate-800 bg-slate-900/95 flex flex-col shrink-0 font-mono text-xs", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-3 py-1.5 border-b border-slate-800 bg-slate-950 text-slate-300", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1.5 font-bold text-indigo-400", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-3.5 w-3.5" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+                    "工作区合规诊断 (",
+                    lintIssues.length,
+                    ")"
+                  ] })
+                ] }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx(
                   "button",
                   {
                     type: "button",
-                    onClick: ideStore2.toggleSidebar,
-                    className: "text-slate-400 hover:text-white p-1 cursor-pointer",
-                    title: "折叠侧边栏",
-                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3.5 w-3.5" })
+                    onClick: () => fetchLintReport(),
+                    disabled: lintLoading,
+                    className: "text-slate-400 hover:text-indigo-400 p-1 cursor-pointer",
+                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefreshCw, { className: `h-3 w-3 ${lintLoading ? "animate-spin" : ""}` })
                   }
                 )
-              ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-2 border-b border-slate-800/60 bg-slate-950/40", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex rounded bg-slate-900 p-0.5 border border-slate-800 text-xs", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                    "button",
-                    {
-                      type: "button",
-                      onClick: () => setExplorerTab("manifests"),
-                      className: `flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${explorerTab === "manifests" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"}`,
-                      children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-3.5 w-3.5" }),
-                        " 清单蓝图"
-                      ]
-                    }
-                  ),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                    "button",
-                    {
-                      type: "button",
-                      onClick: () => setExplorerTab("packages"),
-                      className: `flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${explorerTab === "packages" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"}`,
-                      children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(Package, { className: "h-3.5 w-3.5" }),
-                        " 组件包"
-                      ]
-                    }
-                  )
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2", children: explorerTab === "manifests" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  Button,
-                  {
-                    variant: "outline",
-                    size: "sm",
-                    onClick: handleCreateNewManifest,
-                    className: "w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer",
-                    children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(FilePlus2, { className: "h-3.5 w-3.5 text-indigo-400" }),
-                      " 新建清单蓝图"
-                    ]
-                  }
-                ) : /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  Button,
-                  {
-                    variant: "outline",
-                    size: "sm",
-                    onClick: handleCreatePackage,
-                    className: "w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer",
-                    children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5 text-indigo-400" }),
-                      " 新建组件包"
-                    ]
-                  }
-                ) })
-              ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-y-auto p-2 space-y-1", children: explorerTab === "manifests" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-                ManifestExplorer,
-                {
-                  manifests,
-                  activeManifestName: activeTab == null ? void 0 : activeTab.manifestName,
-                  onSelectManifest: (m, e) => handleOpenManifestTab(m, e),
-                  onDeleteManifest: (m, e) => handleDeleteManifest(m, e)
-                }
-              ) : /* @__PURE__ */ jsxRuntimeExports.jsx(
-                PackageExplorer,
-                {
-                  packages,
-                  kernel,
-                  onSelectAtom: (atomId, e) => handleOpenAtomTab(atomId, e),
-                  onOpenLookup: (lKey, e) => handleOpenLookupTab(lKey, e),
-                  onCreateKernel: handleCreateKernelDraft,
-                  onDeletePackage: handleDeletePackage,
-                  onDeleteLookup: handleDeleteLookup,
-                  onDeleteAtom: handleDeleteAtom
-                }
-              ) })
-            ]
-          }
-        ),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "div",
-          {
-            onPointerDown: handleSidebarPointerDown,
-            className: `relative z-20 shrink-0 group flex items-center justify-center w-1.5 cursor-col-resize hover:bg-indigo-500/60 transition-colors ${isDraggingSidebar ? "bg-indigo-500" : "bg-slate-800"}`,
-            children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "div",
-              {
-                className: `rounded-full bg-slate-600 group-hover:bg-white h-8 w-1 transition-colors ${isDraggingSidebar ? "!bg-white" : ""}`
-              }
-            )
-          }
-        )
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { className: "flex-1 flex flex-col overflow-hidden bg-slate-950", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center border-b border-slate-800 bg-slate-900/60 overflow-x-auto shrink-0 scrollbar-none h-9", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-0.5 px-2 border-r border-slate-800 shrink-0", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "button",
-              {
-                type: "button",
-                onClick: ideStore2.goBack,
-                disabled: !canGoBack,
-                className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 transition-colors cursor-pointer",
-                title: "后退",
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowLeft, { className: "h-3.5 w-3.5" })
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "button",
-              {
-                type: "button",
-                onClick: ideStore2.goForward,
-                disabled: !canGoForward,
-                className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 transition-colors cursor-pointer",
-                title: "前进",
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowRight, { className: "h-3.5 w-3.5" })
-              }
-            )
-          ] }),
-          ideStore2.tabs.map((tab) => {
-            const isActive = tab.id === ideStore2.activeTabId;
-            return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "div",
-              {
-                onClick: () => ideStore2.setActiveTab(tab.id),
-                onDoubleClick: () => ideStore2.pinTab(tab.id),
-                onKeyDown: (e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    ideStore2.setActiveTab(tab.id);
-                  }
-                },
-                onAuxClick: (e) => {
-                  if (e.button === 1) {
-                    e.preventDefault();
-                    handleSafeCloseTab(tab, e);
-                  }
-                },
-                className: `group flex items-center gap-2 px-3.5 py-2 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 ${isActive ? "bg-slate-950 text-indigo-300 border-t-2 border-t-indigo-500 font-semibold" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent"}`,
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "span",
-                    {
-                      className: `truncate max-w-[140px] ${tab.isPreview ? "italic text-slate-300/80" : ""}`,
-                      children: tab.title
-                    }
-                  ),
-                  tab.isDirty && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" }),
-                  tab.closable && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "button",
-                    {
-                      type: "button",
-                      onClick: (e) => handleSafeCloseTab(tab, e),
-                      className: "opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded cursor-pointer transition-opacity",
-                      title: "关闭标签页",
-                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3 w-3" })
-                    }
-                  )
-                ]
-              },
-              tab.id
-            );
-          }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              type: "button",
-              onClick: handleCreateEmptyTab,
-              className: "flex items-center justify-center p-1.5 ml-1.5 mr-2 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded transition-colors shrink-0 cursor-pointer",
-              title: "新建标签页",
-              children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5" })
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-hidden relative", children: ideStore2.tabs.map((tab) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-          TabPane,
-          {
-            tab,
-            isActive: tab.id === ideStore2.activeTabId,
-            packages,
-            manifestsCount: manifests.length,
-            onSaved: handleTabSaved,
-            onDeleted: handleTabDeleted,
-            onOpenCommandPalette: () => setIsCommandPaletteOpen(true),
-            onCreateManifest: handleCreateNewManifest,
-            onCreateAtom: handleCreateNewAtomDraft
-          },
-          tab.id
-        )) }),
-        ideStore2.bottomPanelOpen && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "h-56 border-t border-slate-800 bg-slate-900/95 flex flex-col shrink-0 font-mono text-xs", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-3 py-1.5 border-b border-slate-800 bg-slate-950 text-slate-300", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1.5 font-bold text-indigo-400", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-3.5 w-3.5" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
-                  "工作区合规诊断 (",
-                  lintIssues.length,
-                  ")"
-                ] })
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "button",
                 {
                   type: "button",
-                  onClick: fetchLintReport,
-                  disabled: lintLoading,
-                  className: "text-slate-400 hover:text-indigo-400 p-1 cursor-pointer",
-                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefreshCw, { className: `h-3 w-3 ${lintLoading ? "animate-spin" : ""}` })
+                  onClick: ideStore.toggleBottomPanel,
+                  className: "text-slate-400 hover:text-white p-1 cursor-pointer",
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3.5 w-3.5" })
                 }
               )
             ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "button",
-              {
-                type: "button",
-                onClick: ideStore2.toggleBottomPanel,
-                className: "text-slate-400 hover:text-white p-1 cursor-pointer",
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3.5 w-3.5" })
-              }
-            )
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-y-auto p-3 space-y-1.5 select-text", children: lintIssues.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 text-emerald-400 py-4 justify-center", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(ShieldCheck, { className: "h-4 w-4" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "当前工作区下的知识库、Lookup 接口与 Manifest 清单均严格合规" })
-          ] }) : lintIssues.map((issue) => {
-            const isErr = issue.level === "错误";
-            return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "button",
-              {
-                type: "button",
-                onClick: () => handleProblemClick(issue),
-                className: `w-full text-left flex items-start justify-between p-2 rounded border cursor-pointer group transition-colors ${isErr ? "border-rose-900/50 bg-rose-950/20 text-rose-200 hover:bg-rose-950/40" : "border-amber-900/50 bg-amber-950/20 text-amber-200 hover:bg-amber-950/40"}`,
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start gap-2 flex-1", children: [
-                    isErr ? /* @__PURE__ */ jsxRuntimeExports.jsx(OctagonAlert, { className: "h-3.5 w-3.5 text-rose-400 mt-0.5 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(TriangleAlert, { className: "h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-sans leading-relaxed flex-1", children: issue.message })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 shrink-0 ml-3", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 font-mono", children: issue.code }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "h-3 w-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-400" })
-                  ] })
-                ]
-              },
-              `${issue.level}-${issue.code}-${issue.message}`
-            );
-          }) })
-        ] })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-y-auto p-3 space-y-1.5 select-text", children: lintIssues.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 text-emerald-400 py-4 justify-center", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(ShieldCheck, { className: "h-4 w-4" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "当前工作区下的知识库、Lookup 接口与 Manifest 清单均严格合规" })
+            ] }) : lintIssues.map((issue) => {
+              const isErr = issue.level === "错误";
+              return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => handleProblemClick(issue),
+                  className: `w-full text-left flex items-start justify-between p-2 rounded border cursor-pointer group transition-colors ${isErr ? "border-rose-900/50 bg-rose-950/20 text-rose-200 hover:bg-rose-950/40" : "border-amber-900/50 bg-amber-950/20 text-amber-200 hover:bg-amber-950/40"}`,
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start gap-2 flex-1", children: [
+                      isErr ? /* @__PURE__ */ jsxRuntimeExports.jsx(OctagonAlert, { className: "h-3.5 w-3.5 text-rose-400 mt-0.5 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(TriangleAlert, { className: "h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-sans leading-relaxed flex-1", children: issue.message })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 shrink-0 ml-3", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 font-mono", children: issue.code }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "h-3 w-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-400" })
+                    ] })
+                  ]
+                },
+                `${issue.level}-${issue.code}-${issue.message}`
+              );
+            }) })
+          ] })
+        ] }) })
       ] })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("footer", { className: "h-6 border-t border-slate-800 bg-slate-950 px-3 flex items-center justify-between text-[11px] font-mono text-slate-400 shrink-0 select-none z-20", children: [
@@ -5615,7 +29320,7 @@ function App() {
           "button",
           {
             type: "button",
-            onClick: ideStore2.toggleBottomPanel,
+            onClick: ideStore.toggleBottomPanel,
             className: `flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors cursor-pointer ${lintErrors > 0 ? "text-rose-400 hover:bg-rose-950/60 font-semibold" : lintWarnings > 0 ? "text-amber-400 hover:bg-amber-950/60" : "text-slate-400 hover:text-emerald-300"}`,
             children: [
               lintErrors > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-3 w-3 text-rose-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ShieldCheck, { className: "h-3 w-3 text-emerald-400" }),
@@ -5683,6 +29388,14 @@ function App() {
     )
   ] });
 }
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 5e3
+    }
+  }
+});
 ReactDOM.createRoot(document.getElementById("root")).render(
-  /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
+  /* @__PURE__ */ jsxRuntimeExports.jsx(React$1.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(QueryClientProvider, { client: queryClient, children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) }) })
 );

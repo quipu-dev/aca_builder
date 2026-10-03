@@ -1,3 +1,10 @@
+import {
+  fetchAtomDetail,
+  useCreateAtomMutation,
+  useDeleteAtomMutation,
+  useUpdateAtomMutation,
+} from '@/api/atoms';
+import { openInObsidian } from '@/api/system';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useIdeStore } from '@/stores/ide-store';
@@ -45,7 +52,6 @@ export function AtomEditorTab({
 
   const [isReady, setIsReady] = useState(false);
   const [loading, setLoading] = useState(!isDraft);
-  const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -78,8 +84,13 @@ export function AtomEditorTab({
   );
   const [isModified, setIsModified] = useState(false);
 
+  // Mutations
+  const createAtomMutation = useCreateAtomMutation();
+  const updateAtomMutation = useUpdateAtomMutation();
+  const deleteAtomMutation = useDeleteAtomMutation();
+  const saving = createAtomMutation.isPending || updateAtomMutation.isPending;
+
   useEffect(() => {
-    // 优先读取快照恢复现场
     const snapshot = getSnapshot<{
       currentId: string;
       pkgName: string;
@@ -120,21 +131,17 @@ export function AtomEditorTab({
 
     setLoading(true);
     setErrorMsg('');
-    fetch(`/api/atoms/${encodeURIComponent(atomId)}`)
-      .then((res) => {
-        if (!res.ok) throw new Error('加载原子失败');
-        return res.json();
-      })
+    fetchAtomDetail(atomId)
       .then((data) => {
         const meta = data.meta || {};
         setCurrentId(atomId);
         setPkgName(data.package || '全局');
         setSourceFile(data.source_file || '');
-        setAtomType(meta.type || 'd1');
-        setDescription(meta.description || '');
-        setPriority(meta.priority !== undefined ? meta.priority : 1);
-        setDomainList(Array.isArray(meta.domain) ? meta.domain : []);
-        setUsesList(Array.isArray(meta.uses) ? meta.uses : []);
+        setAtomType(String(meta.type || 'd1'));
+        setDescription(String(meta.description || ''));
+        setPriority(meta.priority !== undefined ? Number(meta.priority) : 1);
+        setDomainList(Array.isArray(meta.domain) ? (meta.domain as string[]) : []);
+        setUsesList(Array.isArray(meta.uses) ? (meta.uses as string[]) : []);
         setContent(data.content || '');
         setIsModified(false);
         setTabDirty(tabId, false);
@@ -146,7 +153,6 @@ export function AtomEditorTab({
       .finally(() => setLoading(false));
   }, [atomId, isDraft, setTabDirty, tabId, getSnapshot]);
 
-  // 监听外部（就地编辑或外部更新）事件并静默同步常驻 Tab 状态
   useEffect(() => {
     const handleExternalUpdate = (e: Event) => {
       const customEvent = e as CustomEvent<{ atomId: string; content?: string }>;
@@ -154,8 +160,7 @@ export function AtomEditorTab({
         if (customEvent.detail.content !== undefined) {
           setContent(customEvent.detail.content);
         } else {
-          fetch(`/api/atoms/${encodeURIComponent(atomId)}`)
-            .then((res) => res.json())
+          fetchAtomDetail(atomId)
             .then((data) => {
               if (data.content !== undefined) {
                 setContent(data.content);
@@ -170,7 +175,6 @@ export function AtomEditorTab({
     return () => window.removeEventListener('aca:atom-updated', handleExternalUpdate);
   }, [atomId, isModified]);
 
-  // 持续外置同步最新编辑快照 (必须就绪后才允许持久化)
   useEffect(() => {
     if (!isReady) return;
     saveSnapshot(tabId, {
@@ -213,58 +217,40 @@ export function AtomEditorTab({
   const handleOpenObsidian = async () => {
     if (!sourceFile) return;
     try {
-      await fetch('/api/system/open-obsidian', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_path: sourceFile }),
-      });
-    } catch (_err) {
-      // 忽略调起异常
+      await openInObsidian(sourceFile);
+    } catch {
+      // 忽略外部调起错误
     }
   };
 
   const handleSave = useCallback(async () => {
-    setSaving(true);
     setErrorMsg('');
 
     if (isDraft) {
-      // 草稿原子新建持久化逻辑
       if (isKernel) {
         if (!content.trim()) {
           setErrorMsg('Kernel 协议正文不可为空');
-          setSaving(false);
           return;
         }
         try {
-          const res = await fetch('/api/atoms', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'kernel',
-              content: content,
-            }),
+          await createAtomMutation.mutateAsync({
+            type: 'kernel',
+            content: content,
           });
-          const data = await res.json();
-          if (res.ok) {
-            setSaveSuccess(true);
-            setIsModified(false);
-            setTabDirty(tabId, false);
-            clearSnapshot(tabId);
-            onSaved?.();
-            replaceTab(tabId, {
-              id: 'atom:kernel',
-              type: 'atom',
-              title: 'kernel',
-              closable: true,
-              atomId: 'kernel',
-            });
-          } else {
-            setErrorMsg(data.detail || '创建 Kernel 失败');
-          }
-        } catch (_err) {
-          setErrorMsg('创建 Kernel 网络异常');
-        } finally {
-          setSaving(false);
+          setSaveSuccess(true);
+          setIsModified(false);
+          setTabDirty(tabId, false);
+          clearSnapshot(tabId);
+          onSaved?.();
+          replaceTab(tabId, {
+            id: 'atom:kernel',
+            type: 'atom',
+            title: 'kernel',
+            closable: true,
+            atomId: 'kernel',
+          });
+        } catch (err: unknown) {
+          setErrorMsg(err instanceof Error ? err.message : '创建 Kernel 失败');
         }
         return;
       }
@@ -277,53 +263,39 @@ export function AtomEditorTab({
 
       if (!pkgName || !cleanSuffix || !content.trim()) {
         setErrorMsg('请填写完整的所属包、标识后缀与正文');
-        setSaving(false);
         return;
       }
 
       try {
-        const res = await fetch('/api/atoms', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            package: pkgName,
-            id: generatedId,
-            type: atomType,
-            priority: atomType === 'd3' ? priority : undefined,
-            description: description.trim() || undefined,
-            domain: domainList,
-            uses: atomType === 'd2' ? usesList : [],
-            content: content,
-          }),
+        await createAtomMutation.mutateAsync({
+          package: pkgName,
+          id: generatedId,
+          type: atomType,
+          priority: atomType === 'd3' ? priority : undefined,
+          description: description.trim() || undefined,
+          domain: domainList,
+          uses: atomType === 'd2' ? usesList : [],
+          content: content,
         });
 
-        const data = await res.json();
-        if (res.ok) {
-          setSaveSuccess(true);
-          setIsModified(false);
-          setTabDirty(`atom:${atomId}`, false);
-          clearSnapshot(tabId);
-          onSaved?.();
-          // 保存成功后原地替换草稿 Tab 为正式 Tab
-          replaceTab(tabId, {
-            id: `atom:${generatedId}`,
-            type: 'atom',
-            title: generatedId,
-            closable: true,
-            atomId: generatedId,
-          });
-        } else {
-          setErrorMsg(data.detail || '创建原子失败');
-        }
-      } catch (_err) {
-        setErrorMsg('创建请求异常');
-      } finally {
-        setSaving(false);
+        setSaveSuccess(true);
+        setIsModified(false);
+        setTabDirty(`atom:${atomId}`, false);
+        clearSnapshot(tabId);
+        onSaved?.();
+        replaceTab(tabId, {
+          id: `atom:${generatedId}`,
+          type: 'atom',
+          title: generatedId,
+          closable: true,
+          atomId: generatedId,
+        });
+      } catch (err: unknown) {
+        setErrorMsg(err instanceof Error ? err.message : '创建原子失败');
       }
       return;
     }
 
-    // 已有原子更新逻辑
     const newMeta: Record<string, unknown> = {
       id: currentId,
       type: atomType,
@@ -342,29 +314,21 @@ export function AtomEditorTab({
     }
 
     try {
-      const res = await fetch(`/api/atoms/${encodeURIComponent(currentId)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      await updateAtomMutation.mutateAsync({
+        atomId: currentId,
+        payload: {
           meta: newMeta,
           content: content,
-        }),
+        },
       });
 
-      if (res.ok) {
-        setSaveSuccess(true);
-        setIsModified(false);
-        setTabDirty(`atom:${atomId}`, false);
-        onSaved?.();
-        setTimeout(() => setSaveSuccess(false), 2000);
-      } else {
-        const data = await res.json();
-        setErrorMsg(data.detail || '保存原子失败');
-      }
-    } catch (_err) {
-      setErrorMsg('网络请求异常');
-    } finally {
-      setSaving(false);
+      setSaveSuccess(true);
+      setIsModified(false);
+      setTabDirty(`atom:${atomId}`, false);
+      onSaved?.();
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : '保存原子失败');
     }
   }, [
     isDraft,
@@ -384,6 +348,8 @@ export function AtomEditorTab({
     currentId,
     setTabDirty,
     atomId,
+    createAtomMutation,
+    updateAtomMutation,
   ]);
 
   const handleDelete = async () => {
@@ -391,25 +357,14 @@ export function AtomEditorTab({
     if (!window.confirm(`确定要永久删除原子组件 "${currentId}" 吗？此操作将物理删除文件。`)) {
       return;
     }
-    setSaving(true);
     try {
-      const res = await fetch(`/api/atoms/${encodeURIComponent(currentId)}`, {
-        method: 'DELETE',
-      });
-      if (res.ok) {
-        onDeleted?.();
-      } else {
-        const data = await res.json();
-        setErrorMsg(data.detail || '删除原子失败');
-      }
-    } catch (_err) {
-      setErrorMsg('删除请求网络异常');
-    } finally {
-      setSaving(false);
+      await deleteAtomMutation.mutateAsync(currentId);
+      onDeleted?.();
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : '删除原子失败');
     }
   };
 
-  // 支持键盘快捷键 Ctrl+S / Cmd+S
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
       e.preventDefault();
@@ -417,7 +372,6 @@ export function AtomEditorTab({
     }
   };
 
-  // 监听全局保存总线 (Ctrl+S / Cmd+S)
   useEffect(() => {
     const handleGlobalSave = () => {
       const activeTabId = useIdeStore.getState().activeTabId;
@@ -471,7 +425,6 @@ export function AtomEditorTab({
       className="flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden"
       onKeyDown={handleKeyDown}
     >
-      {/* 顶部工具栏与状态 */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 font-mono text-xs">
         <div className="flex items-center gap-2 truncate">
           <Badge
@@ -515,7 +468,7 @@ export function AtomEditorTab({
               variant="outline"
               size="sm"
               onClick={handleDelete}
-              disabled={saving}
+              disabled={deleteAtomMutation.isPending}
               className="h-7 text-xs flex items-center gap-1 px-2 text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700 cursor-pointer"
               title="物理删除该原子 Markdown 文件"
             >
@@ -541,7 +494,6 @@ export function AtomEditorTab({
         </div>
       </div>
 
-      {/* 草稿模式：定义所属包、构造类别与生成标识符 */}
       {isDraft && !isKernel && (
         <div className="px-4 py-2.5 border-b border-slate-800 bg-indigo-950/20 grid grid-cols-3 gap-3 text-xs font-mono">
           <div>
@@ -617,11 +569,9 @@ export function AtomEditorTab({
         </div>
       )}
 
-      {/* 可视化 Frontmatter 属性编辑条 (无需手写 YAML，Kernel 自动隐藏) */}
       {!isKernel && (
         <div className="px-4 py-3 border-b border-slate-800/80 bg-slate-900/30 space-y-2.5 text-xs font-mono">
           <div className="flex items-center gap-6">
-            {/* D3 专属：绝对优先级单选 */}
             {atomType === 'd3' && (
               <div className="flex items-center gap-2">
                 <span className="text-slate-400 flex items-center gap-1">
@@ -658,7 +608,6 @@ export function AtomEditorTab({
               </div>
             )}
 
-            {/* 业务描述说明 */}
             <div className="flex-1 flex items-center gap-2">
               <span className="text-slate-400 flex items-center gap-1 shrink-0">
                 <FileText className="h-3.5 w-3.5 text-cyan-400" /> 描述说明:
@@ -677,7 +626,6 @@ export function AtomEditorTab({
           </div>
 
           <div className="flex items-center gap-2 pt-1 border-t border-slate-800/40">
-            {/* 领域 Domain 标签设定 */}
             <span className="text-slate-400 flex items-center gap-1 shrink-0">
               <Tag className="h-3.5 w-3.5 text-indigo-400" /> 领域标签:
             </span>
@@ -713,7 +661,6 @@ export function AtomEditorTab({
             </div>
           </div>
 
-          {/* D2 专属：Uses 依赖查找接口列表 */}
           {atomType === 'd2' && (
             <div className="flex items-center gap-2 pt-1 border-t border-slate-800/40">
               <span className="text-slate-400 flex items-center gap-1 shrink-0">
@@ -754,7 +701,6 @@ export function AtomEditorTab({
         </div>
       )}
 
-      {/* Markdown 正文沉浸式编辑区 */}
       <div className="flex-1 overflow-hidden p-2 bg-slate-950">
         <CodeMirror
           value={content}

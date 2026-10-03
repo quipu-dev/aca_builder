@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useIdeStore } from '@/stores/ide-store';
 import { markdown } from '@codemirror/lang-markdown';
 import CodeMirror from '@uiw/react-codemirror';
 import {
@@ -103,7 +104,6 @@ function AtomChunkCard({
         setSaveSuccess(true);
         setIsEditing(false);
         // 清除全局持久快照，避免点击原子 Tab 打开时还原旧内容
-        const { useIdeStore } = await import('@/stores/ide-store');
         useIdeStore.getState().clearSnapshot(`atom:${chunk.id}`);
         // 派发全局事件通知已打开的对应 Atom Tab 静默更新正文
         window.dispatchEvent(

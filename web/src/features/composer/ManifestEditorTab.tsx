@@ -1,4 +1,10 @@
 import {
+  buildManifest,
+  compileAdhocManifest,
+  fetchManifestDetail,
+  useSaveManifestMutation,
+} from '@/api/manifests';
+import {
   type ProfileSummary,
   type PromptChunk,
   PromptViewer,
@@ -43,7 +49,7 @@ export function ManifestEditorTab({
   packages,
   onSaved,
 }: {
-  manifestName: string; // 若为空字符串则代表新建草稿
+  manifestName: string;
   workspacePath?: string;
   packages: PackageItem[];
   onSaved?: () => void;
@@ -58,16 +64,12 @@ export function ManifestEditorTab({
 
   const isDraft = !manifestName || manifestName.startsWith('draft_');
 
-  // 右侧辅助视口：'graph' (白板拓扑图) | 'prompt' (实时编译文本)
   const [rightView, setRightView] = useState<'graph' | 'prompt'>(
     preferences?.defaultRightPanel === 'prompt' ? 'prompt' : 'graph',
   );
   const [showRightPanel, setShowRightPanel] = useState(true);
 
-  // 稳定标识：manifestIdentifier 对应文件相对路径或逻辑标识
   const [manifestIdentifier, setManifestIdentifier] = useState(isDraft ? '' : manifestName);
-
-  // 清单元数据与就绪守卫
   const [isReady, setIsReady] = useState(false);
   const [name, setName] = useState(
     !isDraft && manifestName ? manifestName.split('/').pop() || manifestName : '',
@@ -78,7 +80,6 @@ export function ManifestEditorTab({
   const [overrides, setOverrides] = useState<Record<string, { selectors: unknown[] }>>({});
   const [isModified, setIsModified] = useState(false);
 
-  // 初始/最近保存的快照基准数据（用于一键重置）
   const [initialSnapshot, setInitialSnapshot] = useState<{
     name: string;
     version: string;
@@ -87,20 +88,20 @@ export function ManifestEditorTab({
     overrides: Record<string, { selectors: unknown[] }>;
   } | null>(null);
 
-  // 操作交互
   const [selectedLookup, setSelectedLookup] = useState<string>('');
   const [lookupFilterQuery, setLookupFilterQuery] = useState<string>('');
   const [editingOverrideKey, setEditingOverrideKey] = useState<string | null>(null);
   const [overrideQueryId, setOverrideQueryId] = useState<string>('');
-  const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
 
-  // 实时编译数据
   const [prompt, setPrompt] = useState<string>('');
   const [hookedPrompt, setHookedPrompt] = useState<string | null>(null);
   const [chunks, setChunks] = useState<PromptChunk[]>([]);
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [isHookActive, setIsHookActive] = useState(false);
+
+  const saveManifestMutation = useSaveManifestMutation();
+  const isSaving = saveManifestMutation.isPending;
 
   const tabId = manifestIdentifier ? `manifest:${manifestIdentifier}` : 'manifest:draft';
 
@@ -111,7 +112,6 @@ export function ManifestEditorTab({
     }
   };
 
-  // 提取所有可用公开 Lookup (使用 useMemo 缓存，防止随渲染周期空转)
   const availableExports = useMemo(() => {
     const list: Array<{ key: string; pkg: string; pillar: string; desc: string }> = [];
     for (const pkg of packages) {
@@ -128,7 +128,6 @@ export function ManifestEditorTab({
     return list;
   }, [packages]);
 
-  // 1. 初始化优先水合内存快照，无快照时再发起网络请求
   useEffect(() => {
     const snapshot = getSnapshot<{
       name: string;
@@ -166,16 +165,11 @@ export function ManifestEditorTab({
     }
 
     if (!manifestName) {
-      // 全新草稿清单，直接就绪
       setIsReady(true);
       return;
     }
 
-    fetch(`/api/manifests/${encodeURIComponent(manifestName)}`)
-      .then((res) => {
-        if (!res.ok) throw new Error('加载清单失败');
-        return res.json();
-      })
+    fetchManifestDetail(manifestName)
       .then((data) => {
         const loadedName = data.name || manifestName;
         const loadedVersion = data.version || '1.0.0';
@@ -211,7 +205,6 @@ export function ManifestEditorTab({
       });
   }, [manifestName, tabId, setTabDirty, getSnapshot]);
 
-  // 2. 持续外置同步最新交互快照至 Store (必须在 isReady 就绪后才允许写入)
   useEffect(() => {
     if (!isReady) return;
     saveSnapshot(tabId, {
@@ -240,22 +233,15 @@ export function ManifestEditorTab({
     saveSnapshot,
   ]);
 
-  // 实时编译当前清单
   const compileCurrent = useCallback(
     (hookFlag = isHookActive) => {
       const targetQueryKey = manifestIdentifier || name;
       if (manifestIdentifier && !isModified) {
-        // 直接编译已保存清单，使用路径标识符
-        fetch('/api/build', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            manifest: targetQueryKey,
-            is_file: false,
-            apply_hook: hookFlag,
-          }),
+        buildManifest({
+          manifest: targetQueryKey,
+          is_file: false,
+          apply_hook: hookFlag,
         })
-          .then((res) => res.json())
           .then((data) => {
             if (data.prompt) setPrompt(data.prompt);
             setHookedPrompt(data.hooked_prompt || null);
@@ -264,17 +250,11 @@ export function ManifestEditorTab({
           })
           .catch(console.error);
       } else if (items.length > 0) {
-        // 即席草稿编译
-        fetch('/api/compile-adhoc', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            imports: items.map((item) => ({ lookup: item.lookup })),
-            overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
-            apply_hook: hookFlag,
-          }),
+        compileAdhocManifest({
+          imports: items.map((item) => ({ lookup: item.lookup })),
+          overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
+          apply_hook: hookFlag,
         })
-          .then((res) => res.json())
           .then((data) => {
             if (data.prompt) setPrompt(data.prompt);
             setHookedPrompt(data.hooked_prompt || null);
@@ -318,60 +298,46 @@ export function ManifestEditorTab({
   const handleSaveManifest = useCallback(async () => {
     const targetIdentifier = manifestIdentifier.trim() || name.trim();
     if (!name.trim() || !targetIdentifier || items.length === 0) return;
-    setIsSaving(true);
+
     setSaveStatus('正在保存...');
     try {
-      const payload: Record<string, unknown> = {
+      await saveManifestMutation.mutateAsync({
         name: name.trim(),
         version: version.trim(),
         description: description.trim(),
         imports: items.map((i) => ({ lookup: i.lookup })),
         identifier: targetIdentifier,
         workspace_path: workspacePath,
-      };
-      if (Object.keys(overrides).length > 0) {
-        payload.overrides = overrides;
-      }
-      const res = await fetch('/api/manifests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
       });
-      const data = await res.json();
-      if (res.ok) {
-        setSaveStatus('已保存');
-        setIsModified(false);
-        setTabDirty(tabId, false);
-        setManifestIdentifier(targetIdentifier);
-        // 更新快照基准为最新保存状态
-        setInitialSnapshot({
-          name: name.trim(),
-          version: version.trim(),
-          description: description.trim(),
-          items: [...items],
-          overrides: { ...overrides },
-        });
-        clearSnapshot(tabId);
-        onSaved?.();
 
-        if (isDraft) {
-          replaceTab(tabId, {
-            id: `manifest:${targetIdentifier}`,
-            type: 'manifest',
-            title: name.trim(),
-            closable: true,
-            manifestName: targetIdentifier,
-            workspacePath,
-          });
-        }
-        setTimeout(() => setSaveStatus(''), 2500);
-      } else {
-        setSaveStatus(`保存失败: ${data.detail}`);
+      setSaveStatus('已保存');
+      setIsModified(false);
+      setTabDirty(tabId, false);
+      setManifestIdentifier(targetIdentifier);
+      setInitialSnapshot({
+        name: name.trim(),
+        version: version.trim(),
+        description: description.trim(),
+        items: [...items],
+        overrides: { ...overrides },
+      });
+      clearSnapshot(tabId);
+      onSaved?.();
+
+      if (isDraft) {
+        replaceTab(tabId, {
+          id: `manifest:${targetIdentifier}`,
+          type: 'manifest',
+          title: name.trim(),
+          closable: true,
+          manifestName: targetIdentifier,
+          workspacePath,
+        });
       }
-    } catch (_e) {
-      setSaveStatus('保存请求异常');
-    } finally {
-      setIsSaving(false);
+      setTimeout(() => setSaveStatus(''), 2500);
+    } catch (err: unknown) {
+      setSaveStatus(`保存失败: ${err instanceof Error ? err.message : '异常'}`);
     }
   }, [
     manifestIdentifier,
@@ -387,9 +353,9 @@ export function ManifestEditorTab({
     onSaved,
     isDraft,
     replaceTab,
+    saveManifestMutation,
   ]);
 
-  // 监听全局保存总线 (Ctrl+S / Cmd+S)
   useEffect(() => {
     const handleGlobalSave = () => {
       const activeTabId = useIdeStore.getState().activeTabId;
@@ -412,7 +378,6 @@ export function ManifestEditorTab({
       setItems([...initialSnapshot.items]);
       setOverrides({ ...initialSnapshot.overrides });
     } else {
-      // 草稿初始状态清空
       setName(manifestName ? manifestName.split('/').pop() || manifestName : 'new_agent');
       setVersion('1.0.0');
       setDescription('');
@@ -439,26 +404,24 @@ export function ManifestEditorTab({
   );
 
   const handleOpenLookup = useCallback(
-    (lookupKey: string) => {
+    (lKey: string) => {
       openTab({
-        id: `lookup:${lookupKey}`,
+        id: `lookup:${lKey}`,
         type: 'lookup',
-        title: lookupKey.split('::').pop() || lookupKey,
+        title: lKey.split('::').pop() || lKey,
         closable: true,
-        lookupKey,
+        lookupKey: lKey,
       });
     },
     [openTab],
   );
 
-  // 蓝图列表主配置面板（可在双栏或全宽单栏复用）
   const renderBlueprintContent = (isFullWidth = false) => (
     <div
       className={`h-full flex flex-col p-4 space-y-3 overflow-y-auto ${
         isFullWidth ? 'max-w-4xl mx-auto w-full' : ''
       }`}
     >
-      {/* 元数据表单 */}
       <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-2 text-xs font-mono">
         <div className="grid grid-cols-4 gap-2">
           <div>
@@ -526,7 +489,6 @@ export function ManifestEditorTab({
         </div>
       </div>
 
-      {/* 挑选 Lookup 区域 (带过滤搜索) */}
       <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-2">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
@@ -572,7 +534,6 @@ export function ManifestEditorTab({
         </div>
       </div>
 
-      {/* 已选组件列表 (按 D3 控制 / D2 程序 / D1 陈述 基质分类呈现) */}
       <div className="flex-1 rounded-lg border border-slate-800 bg-slate-900/20 p-3 space-y-3 overflow-y-auto">
         <div className="flex items-center justify-between text-xs font-mono text-slate-400">
           <span>已注入组件清单 ({items.length})</span>
@@ -737,7 +698,6 @@ export function ManifestEditorTab({
 
   return (
     <div className="flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none">
-      {/* 顶部工具栏：蓝图状态、重置与保存 */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 font-mono text-xs shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
@@ -785,7 +745,6 @@ export function ManifestEditorTab({
         </div>
       </div>
 
-      {/* 主视口工作区 (左侧蓝图装配，右侧拓扑/Prompt 伴生面板) */}
       <div className="flex-1 overflow-hidden">
         {showRightPanel ? (
           <SplitPane
@@ -796,7 +755,6 @@ export function ManifestEditorTab({
             primary={renderBlueprintContent(false)}
             secondary={
               <div className="h-full flex flex-col bg-slate-900/30 overflow-hidden">
-                {/* 伴生面板专属 Header：视角切换与折叠控制 */}
                 <div className="flex items-center justify-between px-3.5 py-1.5 border-b border-slate-800 bg-slate-950/70 shrink-0">
                   <div className="flex rounded bg-slate-950 border border-slate-800 p-0.5 text-[11px]">
                     <button

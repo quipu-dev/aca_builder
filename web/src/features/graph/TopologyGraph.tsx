@@ -1,3 +1,4 @@
+import dagre from '@dagrejs/dagre';
 import {
   Background,
   BackgroundVariant,
@@ -19,128 +20,46 @@ const nodeTypes = {
   atomNode: AtomNode,
 };
 
-interface LayoutResult {
-  nodes: Node[];
-  hasCycle: boolean;
-  cycleNodes: string[];
-}
+function getDagreLayoutedElements(nodes: Node[], edges: Edge[], direction = 'LR') {
+  if (nodes.length === 0) return { nodes: [], edges: [] };
 
-function autoLayoutSafe(nodes: Node[], edges: Edge[]): LayoutResult {
-  if (nodes.length === 0) return { nodes: [], hasCycle: false, cycleNodes: [] };
+  const dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
+  dagreGraph.setGraph({
+    rankdir: direction,
+    nodesep: 35,
+    ranksep: 70,
+    marginx: 40,
+    marginy: 40,
+  });
 
-  const adj = new Map<string, string[]>();
-  const inDegree = new Map<string, number>();
-
-  for (const n of nodes) {
-    adj.set(n.id, []);
-    inDegree.set(n.id, 0);
-  }
-
-  for (const e of edges) {
-    if (adj.has(e.source) && inDegree.has(e.target)) {
-      adj.get(e.source)?.push(e.target);
-      inDegree.set(e.target, (inDegree.get(e.target) || 0) + 1);
-    }
-  }
-
-  const rank = new Map<string, number>();
-  const queue: string[] = [];
-  const nodeVisitCount = new Map<string, number>();
-
-  // 入度为 0 的节点作为初始源点 (如 Manifest)
-  for (const [id, deg] of inDegree.entries()) {
-    if (deg === 0) {
-      rank.set(id, 0);
-      queue.push(id);
-      nodeVisitCount.set(id, 1);
-    }
-  }
-
-  if (queue.length === 0 && nodes.length > 0) {
-    rank.set(nodes[0].id, 0);
-    queue.push(nodes[0].id);
-    nodeVisitCount.set(nodes[0].id, 1);
-  }
-
-  let hasCycle = false;
-  const cycleNodesSet = new Set<string>();
-  const maxAllowedDepth = nodes.length; // 任何 DAG 的深度不可能超过总节点数
-  let steps = 0;
-  const MAX_STEPS = nodes.length * 5;
-
-  while (queue.length > 0 && steps < MAX_STEPS) {
-    steps++;
-    const u = queue.shift();
-    if (!u) continue;
-    const currRank = rank.get(u) || 0;
-
-    for (const v of adj.get(u) || []) {
-      const nextRank = currRank + 1;
-
-      // 环路死循环熔断保护：深度超过节点总数说明已陷入循环回路
-      if (nextRank >= maxAllowedDepth) {
-        hasCycle = true;
-        cycleNodesSet.add(v);
-        continue;
-      }
-
-      const targetRank = rank.get(v);
-      if (targetRank === undefined || targetRank < nextRank) {
-        rank.set(v, nextRank);
-        const count = (nodeVisitCount.get(v) || 0) + 1;
-        nodeVisitCount.set(v, count);
-
-        // 如果单个节点被回推入队次数过多，熔断以保护浏览器主线程
-        if (count < 4) {
-          queue.push(v);
-        } else {
-          hasCycle = true;
-          cycleNodesSet.add(v);
-        }
-      }
-    }
-  }
-
-  // 处理未连通或孤立节点
-  for (const n of nodes) {
-    if (!rank.has(n.id)) {
-      rank.set(n.id, 0);
-    }
-  }
-
-  const layers = new Map<number, Node[]>();
   for (const node of nodes) {
-    const r = rank.get(node.id) ?? 0;
-    if (!layers.has(r)) layers.set(r, []);
-    layers.get(r)?.push(node);
+    const width = node.type === 'manifestNode' ? 220 : node.type === 'lookupNode' ? 240 : 220;
+    const height = node.type === 'manifestNode' ? 95 : node.type === 'lookupNode' ? 85 : 80;
+    dagreGraph.setNode(node.id, { width, height });
   }
 
-  const COLUMN_WIDTH = 340;
-  const ROW_HEIGHT = 90;
-  const X_OFFSET = 50;
-  const Y_OFFSET = 40;
-
-  const layoutedNodes: Node[] = [];
-  const sortedRanks = Array.from(layers.keys()).sort((a, b) => a - b);
-
-  for (const r of sortedRanks) {
-    const colNodes = layers.get(r) || [];
-    colNodes.forEach((node, idx) => {
-      layoutedNodes.push({
-        ...node,
-        position: {
-          x: X_OFFSET + r * COLUMN_WIDTH,
-          y: Y_OFFSET + idx * ROW_HEIGHT,
-        },
-      });
-    });
+  for (const edge of edges) {
+    dagreGraph.setEdge(edge.source, edge.target);
   }
 
-  return {
-    nodes: layoutedNodes,
-    hasCycle,
-    cycleNodes: Array.from(cycleNodesSet),
-  };
+  dagre.layout(dagreGraph);
+
+  const layoutedNodes = nodes.map((node) => {
+    const nodeWithPos = dagreGraph.node(node.id);
+    const width = node.type === 'manifestNode' ? 220 : node.type === 'lookupNode' ? 240 : 220;
+    const height = node.type === 'manifestNode' ? 95 : node.type === 'lookupNode' ? 85 : 80;
+
+    return {
+      ...node,
+      position: {
+        x: nodeWithPos.x - width / 2,
+        y: nodeWithPos.y - height / 2,
+      },
+    };
+  });
+
+  return { nodes: layoutedNodes, edges };
 }
 
 export interface LookupAdhocParam {
@@ -173,13 +92,11 @@ export const TopologyGraph = React.memo(function TopologyGraph({
     nodeCount: number;
     edgeCount: number;
     layoutMs: number;
-    hasCycle: boolean;
   } | null>(null);
 
   useEffect(() => {
     let isCancelled = false;
 
-    // 设立 200ms 防抖，当用户连续拖拽增删或快速输入覆盖选择器时避免密集运算
     const timer = setTimeout(() => {
       setLoading(true);
       setErrorMsg('');
@@ -219,10 +136,8 @@ export const TopologyGraph = React.memo(function TopologyGraph({
           if (isCancelled) return;
           const tFetch = performance.now();
 
-          // 执行防死循环布局
-          const layoutRes = autoLayoutSafe(data.nodes || [], data.edges || []);
-          const tLayout = performance.now();
-          const layoutDuration = tLayout - tFetch;
+          const layoutRes = getDagreLayoutedElements(data.nodes || [], data.edges || []);
+          const layoutDuration = performance.now() - tFetch;
 
           const connectedNodes = layoutRes.nodes.map((n) => {
             if (n.type === 'atomNode') {
@@ -252,7 +167,6 @@ export const TopologyGraph = React.memo(function TopologyGraph({
             nodeCount: connectedNodes.length,
             edgeCount: (data.edges || []).length,
             layoutMs: Math.round(layoutDuration),
-            hasCycle: layoutRes.hasCycle,
           });
         })
         .catch((err) => {
@@ -280,7 +194,6 @@ export const TopologyGraph = React.memo(function TopologyGraph({
 
   return (
     <div className="h-full w-full bg-slate-950 relative overflow-hidden">
-      {/* 顶部遥测与健康状态监视条 */}
       <div className="absolute top-3 right-3 z-10 flex items-center gap-2 bg-slate-900/90 border border-slate-800 backdrop-blur px-3 py-1.5 rounded-md font-mono text-[11px] shadow-lg">
         {loading ? (
           <span className="flex items-center gap-1.5 text-indigo-400">
@@ -300,15 +213,9 @@ export const TopologyGraph = React.memo(function TopologyGraph({
               边: <strong className="text-slate-100">{telemetry.edgeCount}</strong>
             </span>
             <span className="text-slate-500">{telemetry.layoutMs}ms</span>
-            {telemetry.hasCycle ? (
-              <span className="flex items-center gap-1 text-amber-400 bg-amber-950/60 border border-amber-800/80 px-1.5 py-0.2 rounded font-bold">
-                <AlertTriangle className="h-3 w-3" /> 检测到循环依赖
-              </span>
-            ) : (
-              <span className="flex items-center gap-1 text-emerald-400">
-                <CheckCircle className="h-3 w-3" /> DAG 良好
-              </span>
-            )}
+            <span className="flex items-center gap-1 text-emerald-400">
+              <CheckCircle className="h-3 w-3" /> DAG 良好
+            </span>
           </div>
         ) : null}
       </div>

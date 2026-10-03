@@ -32,17 +32,31 @@ export default defineConfig({
         chunkFileNames: 'assets/[name].js',
         assetFileNames: 'assets/[name].[ext]',
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('zustand')) {
-              return 'vendor-react';
-            }
-            if (id.includes('@xyflow')) {
-              return 'vendor-xyflow';
-            }
-            if (id.includes('codemirror') || id.includes('@uiw')) {
-              return 'vendor-codemirror';
-            }
-            return 'vendor-others';
+          if (!id.includes('node_modules')) return;
+
+          // 核心代码编辑器完整生态
+          if (
+            id.includes('/node_modules/@codemirror/') ||
+            id.includes('/node_modules/@uiw/') ||
+            id.includes('/node_modules/@lezer/') ||
+            id.includes('/node_modules/codemirror/')
+          ) {
+            return 'vendor-codemirror';
+          }
+
+          // 拓扑图与 DAG 完整生态
+          if (id.includes('/node_modules/@xyflow/') || id.includes('/node_modules/@dagrejs/')) {
+            return 'vendor-xyflow';
+          }
+
+          // React 核心基础运行时
+          if (
+            id.includes('/node_modules/react/') ||
+            id.includes('/node_modules/react-dom/') ||
+            id.includes('/node_modules/scheduler/') ||
+            id.includes('/node_modules/zustand/')
+          ) {
+            return 'vendor-react';
           }
         },
       },
