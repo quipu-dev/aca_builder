@@ -50,10 +50,13 @@ export function ManifestEditorTab({
 }) {
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const openTab = useIdeStore((state) => state.openTab);
+  const replaceTab = useIdeStore((state) => state.replaceTab);
   const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
   const getSnapshot = useIdeStore((state) => state.getSnapshot);
   const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
   const preferences = useIdeStore((state) => state.preferences);
+
+  const isDraft = !manifestName || manifestName.startsWith('draft_');
 
   // 右侧辅助视口：'graph' (白板拓扑图) | 'prompt' (实时编译文本)
   const [rightView, setRightView] = useState<'graph' | 'prompt'>(
@@ -61,13 +64,13 @@ export function ManifestEditorTab({
   );
   const [showRightPanel, setShowRightPanel] = useState(true);
 
-  // 稳定标识：manifestIdentifier 对应文件相对路径或逻辑标识，不可被 YAML 内部 name 覆写
-  const [manifestIdentifier, setManifestIdentifier] = useState(manifestName);
+  // 稳定标识：manifestIdentifier 对应文件相对路径或逻辑标识
+  const [manifestIdentifier, setManifestIdentifier] = useState(isDraft ? '' : manifestName);
 
   // 清单元数据与就绪守卫
   const [isReady, setIsReady] = useState(false);
   const [name, setName] = useState(
-    manifestName ? manifestName.split('/').pop() || manifestName : 'new_agent',
+    !isDraft && manifestName ? manifestName.split('/').pop() || manifestName : '',
   );
   const [version, setVersion] = useState('1.0.0');
   const [description, setDescription] = useState('');
@@ -312,8 +315,9 @@ export function ManifestEditorTab({
     markDirty();
   };
 
-  const handleSaveManifest = async () => {
-    if (!name.trim() || items.length === 0) return;
+  const handleSaveManifest = useCallback(async () => {
+    const targetIdentifier = manifestIdentifier.trim() || name.trim();
+    if (!name.trim() || !targetIdentifier || items.length === 0) return;
     setIsSaving(true);
     setSaveStatus('正在保存...');
     try {
@@ -322,7 +326,7 @@ export function ManifestEditorTab({
         version: version.trim(),
         description: description.trim(),
         imports: items.map((i) => ({ lookup: i.lookup })),
-        identifier: manifestIdentifier || name.trim(),
+        identifier: targetIdentifier,
         workspace_path: workspacePath,
       };
       if (Object.keys(overrides).length > 0) {
@@ -338,9 +342,7 @@ export function ManifestEditorTab({
         setSaveStatus('已保存');
         setIsModified(false);
         setTabDirty(tabId, false);
-        if (!manifestIdentifier) {
-          setManifestIdentifier(name.trim());
-        }
+        setManifestIdentifier(targetIdentifier);
         // 更新快照基准为最新保存状态
         setInitialSnapshot({
           name: name.trim(),
@@ -351,6 +353,17 @@ export function ManifestEditorTab({
         });
         clearSnapshot(tabId);
         onSaved?.();
+
+        if (isDraft) {
+          replaceTab(tabId, {
+            id: `manifest:${targetIdentifier}`,
+            type: 'manifest',
+            title: name.trim(),
+            closable: true,
+            manifestName: targetIdentifier,
+            workspacePath,
+          });
+        }
         setTimeout(() => setSaveStatus(''), 2500);
       } else {
         setSaveStatus(`保存失败: ${data.detail}`);
@@ -360,7 +373,33 @@ export function ManifestEditorTab({
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [
+    manifestIdentifier,
+    name,
+    items,
+    version,
+    description,
+    workspacePath,
+    overrides,
+    tabId,
+    setTabDirty,
+    clearSnapshot,
+    onSaved,
+    isDraft,
+    replaceTab,
+  ]);
+
+  // 监听全局保存总线 (Ctrl+S / Cmd+S)
+  useEffect(() => {
+    const handleGlobalSave = () => {
+      const activeTabId = useIdeStore.getState().activeTabId;
+      if (activeTabId === tabId && isModified && !isSaving) {
+        handleSaveManifest();
+      }
+    };
+    window.addEventListener('aca:save-active-tab', handleGlobalSave);
+    return () => window.removeEventListener('aca:save-active-tab', handleGlobalSave);
+  }, [tabId, isModified, isSaving, handleSaveManifest]);
 
   const handleResetManifest = () => {
     if (!isModified) return;
@@ -421,10 +460,26 @@ export function ManifestEditorTab({
     >
       {/* 元数据表单 */}
       <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-2 text-xs font-mono">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
+          <div>
+            <label htmlFor="manifest-id-input" className="text-slate-400 block mb-1">
+              清单标识符 / 路径
+            </label>
+            <input
+              id="manifest-id-input"
+              type="text"
+              value={manifestIdentifier}
+              onChange={(e) => {
+                setManifestIdentifier(e.target.value);
+                markDirty();
+              }}
+              placeholder="例如: smart-contract-auditor"
+              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
           <div>
             <label htmlFor="manifest-name-input" className="text-slate-400 block mb-1">
-              名称
+              显示名称
             </label>
             <input
               id="manifest-name-input"
@@ -434,6 +489,7 @@ export function ManifestEditorTab({
                 setName(e.target.value);
                 markDirty();
               }}
+              placeholder="智能体装配名称"
               className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
             />
           </div>
@@ -532,10 +588,10 @@ export function ManifestEditorTab({
           </div>
         ) : (
           [
-            { title: 'D3 控制基质 (Directives)', key: 'd3', variant: 'd3' as const },
-            { title: 'D2 程序基质 (Skills & ISA)', key: 'd2', variant: 'd2' as const },
-            { title: 'D1 陈述基质 (Knowledge & Memory)', key: 'd1', variant: 'd1' as const },
-            { title: '其它接口 / 未识别基质', key: 'other', variant: 'outline' as const },
+            { title: 'D3', key: 'd3', variant: 'd3' as const },
+            { title: 'D2', key: 'd2', variant: 'd2' as const },
+            { title: 'D1', key: 'd1', variant: 'd1' as const },
+            { title: '其它', key: 'other', variant: 'outline' as const },
           ].map((group) => {
             const groupItems = items.filter((item) => {
               const p = (

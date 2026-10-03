@@ -7244,6 +7244,25 @@ const Database = createLucideIcon("Database", [
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
+const Dna = createLucideIcon("Dna", [
+  ["path", { d: "m10 16 1.5 1.5", key: "11lckj" }],
+  ["path", { d: "m14 8-1.5-1.5", key: "1ohn8i" }],
+  ["path", { d: "M15 2c-1.798 1.998-2.518 3.995-2.807 5.993", key: "80uv8i" }],
+  ["path", { d: "m16.5 10.5 1 1", key: "696xn5" }],
+  ["path", { d: "m17 6-2.891-2.891", key: "xu6p2f" }],
+  ["path", { d: "M2 15c6.667-6 13.333 0 20-6", key: "1pyr53" }],
+  ["path", { d: "m20 9 .891.891", key: "3xwk7g" }],
+  ["path", { d: "M3.109 14.109 4 15", key: "q76aoh" }],
+  ["path", { d: "m6.5 12.5 1 1", key: "cs35ky" }],
+  ["path", { d: "m7 18 2.891 2.891", key: "1sisit" }],
+  ["path", { d: "M9 22c1.798-1.998 2.518-3.995 2.807-5.993", key: "q3hbxp" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
 const ExternalLink = createLucideIcon("ExternalLink", [
   ["path", { d: "M15 3h6v6", key: "1q9fwt" }],
   ["path", { d: "M10 14 21 3", key: "gplh6r" }],
@@ -7312,6 +7331,19 @@ const FilePlus2 = createLucideIcon("FilePlus2", [
   ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
   ["path", { d: "M3 15h6", key: "4e2qda" }],
   ["path", { d: "M6 12v6", key: "1u72j0" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const FileText = createLucideIcon("FileText", [
+  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "M10 9H8", key: "b1mrlr" }],
+  ["path", { d: "M16 13H8", key: "t4e002" }],
+  ["path", { d: "M16 17H8", key: "z1uh3a" }]
 ]);
 /**
  * @license lucide-react v0.468.0 - ISC
@@ -11823,46 +11855,48 @@ function ResizeControl({ nodeId, position, variant = ResizeControlVariant.Handle
 }
 reactExports.memo(ResizeControl);
 export {
-  FolderOpen as $,
+  Database as $,
   Controls as A,
   Box as B,
   CircleAlert as C,
-  Plus as D,
+  Dna as D,
   ExternalLink as E,
-  Filter as F,
-  Link2 as G,
+  FileText as F,
+  Filter as G,
   Handle as H,
-  Eye as I,
-  RotateCcw as J,
-  EyeOff as K,
+  Plus as I,
+  Link2 as J,
+  Eye as K,
   Layers as L,
   Markdown as M,
   Network as N,
-  SlidersVertical as O,
+  RotateCcw as O,
   PenLine as P,
-  FilePlus2 as Q,
+  EyeOff as Q,
   React as R,
   Search as S,
   Trash2 as T,
-  MousePointerClick as U,
-  Settings as V,
+  SlidersVertical as U,
+  FilePlus2 as V,
   WandSparkles as W,
   X,
-  FolderTree as Y,
-  Database as Z,
-  ChevronRight as _,
+  MousePointerClick as Y,
+  Settings as Z,
+  FolderTree as _,
   Sparkles as a,
-  Folder as a0,
-  Package as a1,
-  Globe as a2,
-  Lock as a3,
-  FileCode as a4,
-  ArrowLeft as a5,
-  ArrowRight as a6,
-  RefreshCw as a7,
-  ShieldCheck as a8,
-  OctagonAlert as a9,
-  ReactDOM as aa,
+  ChevronRight as a0,
+  FolderOpen as a1,
+  Folder as a2,
+  Package as a3,
+  Globe as a4,
+  Lock as a5,
+  FileCode as a6,
+  ArrowLeft as a7,
+  ArrowRight as a8,
+  RefreshCw as a9,
+  ShieldCheck as aa,
+  OctagonAlert as ab,
+  ReactDOM as ac,
   LoaderCircle as b,
   create as c,
   Check as d,

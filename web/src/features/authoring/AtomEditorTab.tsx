@@ -1,12 +1,15 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useIdeStore } from '@/stores/ide-store';
+import { generateIdSuffix } from '@/utils/ulid';
 import { markdown } from '@codemirror/lang-markdown';
 import CodeMirror from '@uiw/react-codemirror';
 import {
   AlertCircle,
   Check,
+  Dna,
   ExternalLink,
+  FileText,
   Layers,
   Loader2,
   Save,
@@ -15,7 +18,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export function AtomEditorTab({
   atomId,
@@ -29,14 +32,16 @@ export function AtomEditorTab({
   onDeleted?: () => void;
 }) {
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
-  const openTab = useIdeStore((state) => state.openTab);
+  const replaceTab = useIdeStore((state) => state.replaceTab);
   const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
   const getSnapshot = useIdeStore((state) => state.getSnapshot);
+  const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
 
   const tabId = `atom:${atomId}`;
-  const isKernel = atomId === 'kernel' || atomId === 'draft:kernel';
+  const isKernel = atomId === 'kernel' || atomId.startsWith('draft:kernel');
   const isDraft = atomId.startsWith('draft:') || atomId === 'new_atom';
-  const draftInitialPkg = isDraft ? atomId.replace('draft:', '') : '';
+  const draftParts = isDraft ? atomId.split(':') : [];
+  const draftInitialPkg = isDraft && draftParts[1] !== 'kernel' ? draftParts[1] : '';
 
   const [isReady, setIsReady] = useState(false);
   const [loading, setLoading] = useState(!isDraft);
@@ -46,7 +51,9 @@ export function AtomEditorTab({
 
   // 基础数据与草稿字段
   const [currentId, setCurrentId] = useState(isDraft ? (isKernel ? 'kernel' : '') : atomId);
-  const [draftSuffix, setDraftSuffix] = useState(isKernel ? 'kernel' : '');
+  const [draftSuffix, setDraftSuffix] = useState(() =>
+    isKernel ? 'kernel' : isDraft ? generateIdSuffix() : '',
+  );
   const [pkgName, setPkgName] = useState<string>(
     isKernel ? '全局' : draftInitialPkg || packages[0]?.name || '',
   );
@@ -54,6 +61,7 @@ export function AtomEditorTab({
   const [atomType, setAtomType] = useState<string>(isKernel ? 'kernel' : 'd3');
 
   // 可视化元数据状态
+  const [description, setDescription] = useState<string>('');
   const [priority, setPriority] = useState<number>(1);
   const [domainList, setDomainList] = useState<string[]>([]);
   const [domainInput, setDomainInput] = useState<string>('');
@@ -77,6 +85,7 @@ export function AtomEditorTab({
       pkgName: string;
       sourceFile: string;
       atomType: string;
+      description?: string;
       priority: number;
       domainList: string[];
       usesList: string[];
@@ -90,6 +99,7 @@ export function AtomEditorTab({
       setPkgName(snapshot.pkgName);
       setSourceFile(snapshot.sourceFile);
       setAtomType(snapshot.atomType);
+      setDescription(snapshot.description || '');
       setPriority(snapshot.priority);
       setDomainList(snapshot.domainList);
       setUsesList(snapshot.usesList);
@@ -121,6 +131,7 @@ export function AtomEditorTab({
         setPkgName(data.package || '全局');
         setSourceFile(data.source_file || '');
         setAtomType(meta.type || 'd1');
+        setDescription(meta.description || '');
         setPriority(meta.priority !== undefined ? meta.priority : 1);
         setDomainList(Array.isArray(meta.domain) ? meta.domain : []);
         setUsesList(Array.isArray(meta.uses) ? meta.uses : []);
@@ -135,6 +146,30 @@ export function AtomEditorTab({
       .finally(() => setLoading(false));
   }, [atomId, isDraft, setTabDirty, tabId, getSnapshot]);
 
+  // 监听外部（就地编辑或外部更新）事件并静默同步常驻 Tab 状态
+  useEffect(() => {
+    const handleExternalUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<{ atomId: string; content?: string }>;
+      if (customEvent.detail?.atomId === atomId && !isModified) {
+        if (customEvent.detail.content !== undefined) {
+          setContent(customEvent.detail.content);
+        } else {
+          fetch(`/api/atoms/${encodeURIComponent(atomId)}`)
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.content !== undefined) {
+                setContent(data.content);
+              }
+            })
+            .catch(() => {});
+        }
+      }
+    };
+
+    window.addEventListener('aca:atom-updated', handleExternalUpdate);
+    return () => window.removeEventListener('aca:atom-updated', handleExternalUpdate);
+  }, [atomId, isModified]);
+
   // 持续外置同步最新编辑快照 (必须就绪后才允许持久化)
   useEffect(() => {
     if (!isReady) return;
@@ -143,6 +178,7 @@ export function AtomEditorTab({
       pkgName,
       sourceFile,
       atomType,
+      description,
       priority,
       domainList,
       usesList,
@@ -157,6 +193,7 @@ export function AtomEditorTab({
     pkgName,
     sourceFile,
     atomType,
+    description,
     priority,
     domainList,
     usesList,
@@ -186,7 +223,7 @@ export function AtomEditorTab({
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setSaving(true);
     setErrorMsg('');
 
@@ -212,8 +249,9 @@ export function AtomEditorTab({
             setSaveSuccess(true);
             setIsModified(false);
             setTabDirty(tabId, false);
+            clearSnapshot(tabId);
             onSaved?.();
-            openTab({
+            replaceTab(tabId, {
               id: 'atom:kernel',
               type: 'atom',
               title: 'kernel',
@@ -252,6 +290,7 @@ export function AtomEditorTab({
             id: generatedId,
             type: atomType,
             priority: atomType === 'd3' ? priority : undefined,
+            description: description.trim() || undefined,
             domain: domainList,
             uses: atomType === 'd2' ? usesList : [],
             content: content,
@@ -263,9 +302,10 @@ export function AtomEditorTab({
           setSaveSuccess(true);
           setIsModified(false);
           setTabDirty(`atom:${atomId}`, false);
+          clearSnapshot(tabId);
           onSaved?.();
-          // 保存成功后无缝跳转到正式编辑 Tab
-          openTab({
+          // 保存成功后原地替换草稿 Tab 为正式 Tab
+          replaceTab(tabId, {
             id: `atom:${generatedId}`,
             type: 'atom',
             title: generatedId,
@@ -291,6 +331,9 @@ export function AtomEditorTab({
       status: 'stable',
     };
 
+    if (description.trim()) {
+      newMeta.description = description.trim();
+    }
     if (atomType === 'd3') {
       newMeta.priority = priority;
     }
@@ -323,7 +366,25 @@ export function AtomEditorTab({
     } finally {
       setSaving(false);
     }
-  };
+  }, [
+    isDraft,
+    isKernel,
+    content,
+    tabId,
+    clearSnapshot,
+    onSaved,
+    replaceTab,
+    draftSuffix,
+    atomType,
+    pkgName,
+    description,
+    domainList,
+    usesList,
+    priority,
+    currentId,
+    setTabDirty,
+    atomId,
+  ]);
 
   const handleDelete = async () => {
     if (isDraft) return;
@@ -355,6 +416,18 @@ export function AtomEditorTab({
       handleSave();
     }
   };
+
+  // 监听全局保存总线 (Ctrl+S / Cmd+S)
+  useEffect(() => {
+    const handleGlobalSave = () => {
+      const activeTabId = useIdeStore.getState().activeTabId;
+      if (activeTabId === tabId && isModified && !saving) {
+        handleSave();
+      }
+    };
+    window.addEventListener('aca:save-active-tab', handleGlobalSave);
+    return () => window.removeEventListener('aca:save-active-tab', handleGlobalSave);
+  }, [tabId, isModified, saving, handleSave]);
 
   const addDomainTag = () => {
     const trimmed = domainInput.trim().toLowerCase();
@@ -504,26 +577,42 @@ export function AtomEditorTab({
               }}
               className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
             >
-              <option value="d3">D3 控制基质</option>
-              <option value="d2">D2 程序基质</option>
-              <option value="d1">D1 陈述基质</option>
+              <option value="d3">D3</option>
+              <option value="d2">D2</option>
+              <option value="d1">D1</option>
             </select>
           </div>
           <div>
-            <label htmlFor="atom-draft-suffix" className="text-slate-400 block mb-1">
-              标识后缀 (将自动生成: {atomType}-{draftSuffix || '...'})
-            </label>
-            <input
-              id="atom-draft-suffix"
-              type="text"
-              value={draftSuffix}
-              onChange={(e) => {
-                setDraftSuffix(e.target.value);
-                markDirty();
-              }}
-              placeholder="例如: core-operations"
-              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label htmlFor="atom-draft-suffix" className="text-slate-400 block">
+                标识后缀 ({atomType}-{draftSuffix || '...'})
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setDraftSuffix(generateIdSuffix());
+                  markDirty();
+                }}
+                className="flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300 cursor-pointer"
+                title="生成新 ULID 标识"
+              >
+                <Dna className="h-3 w-3" />
+                <span>ULID</span>
+              </button>
+            </div>
+            <div className="flex items-center gap-1">
+              <input
+                id="atom-draft-suffix"
+                type="text"
+                value={draftSuffix}
+                onChange={(e) => {
+                  setDraftSuffix(e.target.value);
+                  markDirty();
+                }}
+                placeholder="例如: 01k47... 或业务词"
+                className="flex-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs"
+              />
+            </div>
           </div>
         </div>
       )}
@@ -569,41 +658,58 @@ export function AtomEditorTab({
               </div>
             )}
 
-            {/* 领域 Domain 标签设定 */}
+            {/* 业务描述说明 */}
             <div className="flex-1 flex items-center gap-2">
               <span className="text-slate-400 flex items-center gap-1 shrink-0">
-                <Tag className="h-3.5 w-3.5 text-indigo-400" /> 领域标签:
+                <FileText className="h-3.5 w-3.5 text-cyan-400" /> 描述说明:
               </span>
-              <div className="flex flex-wrap items-center gap-1.5 flex-1">
-                {domainList.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full text-[11px] border border-slate-700"
+              <input
+                type="text"
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  markDirty();
+                }}
+                placeholder="简明业务描述（将在白板拓扑节点卡片中直观呈现）"
+                className="flex-1 bg-slate-950 border border-slate-800/80 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-cyan-500 font-sans"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 pt-1 border-t border-slate-800/40">
+            {/* 领域 Domain 标签设定 */}
+            <span className="text-slate-400 flex items-center gap-1 shrink-0">
+              <Tag className="h-3.5 w-3.5 text-indigo-400" /> 领域标签:
+            </span>
+            <div className="flex flex-wrap items-center gap-1.5 flex-1">
+              {domainList.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full text-[11px] border border-slate-700"
+                >
+                  <span>{tag}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeDomainTag(tag)}
+                    className="hover:text-rose-400"
                   >
-                    <span>{tag}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeDomainTag(tag)}
-                      className="hover:text-rose-400"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-                <input
-                  type="text"
-                  value={domainInput}
-                  onChange={(e) => setDomainInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addDomainTag();
-                    }
-                  }}
-                  placeholder="+ 添加标签 (回车)"
-                  className="bg-slate-950 border border-slate-800/80 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-indigo-500 w-32"
-                />
-              </div>
+                    ×
+                  </button>
+                </span>
+              ))}
+              <input
+                type="text"
+                value={domainInput}
+                onChange={(e) => setDomainInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addDomainTag();
+                  }
+                }}
+                placeholder="+ 添加标签 (回车)"
+                className="bg-slate-950 border border-slate-800/80 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-indigo-500 w-32"
+              />
             </div>
           </div>
 

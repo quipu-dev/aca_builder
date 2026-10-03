@@ -20,9 +20,16 @@ export function CreatePackageModal({
   libraryPaths?: string[];
   onSubmit: () => void;
 }) {
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (newPkgName.trim()) {
+      onSubmit();
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="新建组件包 (Package)">
-      <div className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="modal-pkg-name" className="block text-xs font-mono text-slate-400 mb-1">
             包名称 (需在全局范围内唯一)
@@ -56,14 +63,14 @@ export function CreatePackageModal({
           </div>
         )}
         <div className="pt-2 flex justify-end gap-2">
-          <Button variant="ghost" onClick={onClose}>
+          <Button type="button" variant="ghost" onClick={onClose}>
             取消
           </Button>
-          <Button onClick={onSubmit} disabled={!newPkgName.trim()}>
+          <Button type="submit" disabled={!newPkgName.trim()}>
             确定创建
           </Button>
         </div>
-      </div>
+      </form>
     </Modal>
   );
 }

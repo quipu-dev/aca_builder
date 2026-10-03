@@ -1,6 +1,5 @@
 import { CommandPalette } from '@/components/CommandPalette';
 import { TabPane } from '@/components/layout/TabPane';
-import { CreateManifestModal } from '@/components/modals/CreateManifestModal';
 import { CreatePackageModal } from '@/components/modals/CreatePackageModal';
 import { CreateWorkspaceModal } from '@/components/modals/CreateWorkspaceModal';
 import { Button } from '@/components/ui/button';
@@ -57,10 +56,6 @@ export function App() {
   const [isCreatePkgOpen, setIsCreatePkgOpen] = useState(false);
   const [newPkgName, setNewPkgName] = useState('');
   const [newPkgWs, setNewPkgWs] = useState('');
-
-  const [isCreateManOpen, setIsCreateManOpen] = useState(false);
-  const [newManName, setNewManName] = useState('');
-  const [newManWs, setNewManWs] = useState('');
 
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
   const [isWsDropdownOpen, setIsWsDropdownOpen] = useState(false);
@@ -166,7 +161,10 @@ export function App() {
 
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       const isMod = e.metaKey || e.ctrlKey;
-      if (isMod && e.key.toLowerCase() === 'p') {
+      if (isMod && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('aca:save-active-tab'));
+      } else if (isMod && e.key.toLowerCase() === 'p') {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
       } else if (isMod && e.key.toLowerCase() === 't') {
@@ -183,7 +181,7 @@ export function App() {
       } else if (isMod && e.key === '[') {
         e.preventDefault();
         useIdeStore.getState().goBack();
-      } else if (isMod && e.key === ']') {
+      } else if (e.key === ']') {
         e.preventDefault();
         useIdeStore.getState().goForward();
       } else if (e.altKey && e.key === 'ArrowLeft') {
@@ -239,7 +237,12 @@ export function App() {
   ) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
     const isDraft = atomId.startsWith('draft:');
-    const tabTitle = isDraft ? `新建原子 (${atomId.replace('draft:', '')})` : atomId;
+    let tabTitle = atomId;
+    if (isDraft) {
+      const parts = atomId.split(':');
+      const targetPkg = parts[1] || '';
+      tabTitle = targetPkg === 'kernel' ? '初始化 Kernel' : `新建原子 (${targetPkg || '草稿'})`;
+    }
     const isPreview = isDraft ? false : (opts?.isPreview ?? !newTab);
     ideStore.openTab(
       {
@@ -308,49 +311,43 @@ export function App() {
 
   const handleCreateNewAtomDraft = () => {
     const defaultPkg = packages[0]?.name || '';
+    const draftId = `draft:${defaultPkg}:${Date.now()}`;
     ideStore.openTab(
       {
-        id: `atom:draft_${Date.now()}`,
+        id: `atom:${draftId}`,
         type: 'atom',
-        title: '新建原子草稿',
+        title: `新建原子 (${defaultPkg || '草稿'})`,
         closable: true,
-        atomId: `draft:${defaultPkg}`,
+        atomId: draftId,
       },
       { newTab: true },
     );
   };
 
   const handleCreateKernelDraft = () => {
+    const draftId = `draft:kernel:${Date.now()}`;
+    ideStore.clearSnapshot(`atom:${draftId}`);
     ideStore.openTab(
       {
-        id: 'atom:draft:kernel',
+        id: `atom:${draftId}`,
         type: 'atom',
         title: '初始化 Kernel 协议',
         closable: true,
-        atomId: 'draft:kernel',
+        atomId: draftId,
       },
       { newTab: true },
     );
   };
 
   const handleCreateNewManifest = () => {
-    setNewManName(`未命名蓝图_${Date.now().toString().slice(-4)}`);
-    const activeWs = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
-    setNewManWs(activeWs?.manifest_paths?.[0] || '');
-    setIsCreateManOpen(true);
-  };
-
-  const submitCreateManifest = () => {
-    if (!newManName.trim()) return;
-    setIsCreateManOpen(false);
+    const draftId = `draft_${Date.now()}`;
     ideStore.openTab(
       {
-        id: `manifest:${newManName.trim()}`,
+        id: `manifest:${draftId}`,
         type: 'manifest',
-        title: newManName.trim(),
+        title: '新建清单',
         closable: true,
-        manifestName: '',
-        workspacePath: newManWs || undefined,
+        manifestName: draftId,
       },
       { newTab: true },
     );
@@ -486,6 +483,10 @@ export function App() {
         .then(async (res) => {
           if (res.ok) {
             ideStore.closeTab(`atom:${atomId}`);
+            ideStore.clearSnapshot(`atom:${atomId}`);
+            if (atomId === 'kernel') {
+              ideStore.clearSnapshot('atom:draft:kernel');
+            }
             fetchAssets();
             fetchLintReport();
           } else {
@@ -512,8 +513,12 @@ export function App() {
           <button
             type="button"
             onClick={() => {
-              if (!ideStore.sidebarOpen) ideStore.setSidebarOpen(true);
-              ideStore.setActiveSidebarView('explorer');
+              if (ideStore.sidebarOpen && ideStore.activeSidebarView === 'explorer') {
+                ideStore.setSidebarOpen(false);
+              } else {
+                ideStore.setSidebarOpen(true);
+                ideStore.setActiveSidebarView('explorer');
+              }
             }}
             className={`p-2 rounded-lg transition-colors cursor-pointer ${
               ideStore.sidebarOpen && ideStore.activeSidebarView === 'explorer'
@@ -971,17 +976,6 @@ export function App() {
         setNewPkgWs={setNewPkgWs}
         libraryPaths={currentWsObj?.library_paths}
         onSubmit={submitCreatePackage}
-      />
-
-      <CreateManifestModal
-        isOpen={isCreateManOpen}
-        onClose={() => setIsCreateManOpen(false)}
-        newManName={newManName}
-        setNewManName={setNewManName}
-        newManWs={newManWs}
-        setNewManWs={setNewManWs}
-        manifestPaths={currentWsObj?.manifest_paths}
-        onSubmit={submitCreateManifest}
       />
 
       <CreateWorkspaceModal

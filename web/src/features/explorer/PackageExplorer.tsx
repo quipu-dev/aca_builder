@@ -63,16 +63,21 @@ export function PackageExplorer({
   const explorerExpanded = useIdeStore((state) => state.explorerExpanded);
   const toggleExplorerExpanded = useIdeStore((state) => state.toggleExplorerExpanded);
 
+  const sortedPackages = [...packages].sort((a, b) => a.name.localeCompare(b.name));
+
   return (
     <div className="space-y-2">
-      {/* 置顶 Kernel 核心协议卡片 */}
-      <div className="rounded-lg border border-amber-800/40 bg-amber-950/20 p-2 font-mono text-xs">
+      {/* 置顶 Kernel 核心协议 */}
+      <div className="rounded border border-slate-800/80 bg-slate-900/40 p-2 font-mono text-xs">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-1.5">
-            <Badge variant="kernel" className="text-[9px] uppercase font-bold px-1.5 py-0">
+            <Badge
+              variant="outline"
+              className="text-[9px] uppercase font-bold px-1.5 py-0 text-amber-400/90 border-amber-700/40 bg-amber-950/20"
+            >
               KERNEL
             </Badge>
-            <span className="font-semibold text-amber-200 text-[11px]">核心协议</span>
+            <span className="font-medium text-slate-400 text-[11px]">核心协议</span>
           </div>
           {kernel && onDeleteAtom && (
             <button
@@ -90,19 +95,19 @@ export function PackageExplorer({
           <button
             type="button"
             onClick={(e) => onSelectAtom?.('kernel', e)}
-            className="w-full flex items-center justify-between px-2 py-1.5 rounded bg-slate-900/80 border border-amber-900/40 hover:border-amber-500/60 hover:text-amber-100 transition-colors text-slate-300 text-left cursor-pointer"
+            className="w-full flex items-center justify-between px-2 py-1 rounded bg-slate-950/60 border border-slate-800 hover:border-slate-700 hover:text-slate-100 transition-colors text-slate-300 text-left cursor-pointer"
             title="点击打开编辑 Kernel 协议"
           >
-            <span className="truncate font-semibold">kernel.md</span>
-            <span className="text-[10px] text-amber-400/80">已就绪</span>
+            <span className="truncate font-medium">kernel</span>
+            <span className="text-[10px] text-slate-500">已就绪</span>
           </button>
         ) : (
           <div className="space-y-1.5 pt-0.5">
-            <div className="text-[11px] text-amber-300/80">当前工作区缺少 kernel.md 协议</div>
+            <div className="text-[11px] text-slate-400">当前工作区缺少 kernel 协议</div>
             <button
               type="button"
               onClick={onCreateKernel}
-              className="w-full py-1 px-2 rounded bg-amber-600/30 hover:bg-amber-600/50 border border-amber-500/50 text-amber-200 text-[11px] flex items-center justify-center gap-1 font-semibold transition-colors cursor-pointer"
+              className="w-full py-1 px-2 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-[11px] flex items-center justify-center gap-1 font-medium transition-colors cursor-pointer"
             >
               <Plus className="h-3.5 w-3.5" /> 初始化 Kernel
             </button>
@@ -110,10 +115,10 @@ export function PackageExplorer({
         )}
       </div>
 
-      {packages.length === 0 ? (
+      {sortedPackages.length === 0 ? (
         <div className="py-6 text-center text-xs font-mono text-slate-500">暂无组件包</div>
       ) : (
-        packages.map((pkg) => {
+        sortedPackages.map((pkg) => {
           const pkgKey = `pkg:${pkg.name}`;
           const isExp = explorerExpanded[pkgKey] === true; // 默认折叠
           const exportsCount = Object.keys(pkg.exports || {}).length;
@@ -164,7 +169,7 @@ export function PackageExplorer({
                       </span>
                       <button
                         type="button"
-                        onClick={() => onOpenLookup?.(`draft:${pkg.name}`)}
+                        onClick={() => onOpenLookup?.(`draft:${pkg.name}:public_${Date.now()}`)}
                         className="text-slate-400 hover:text-emerald-400 p-0.5 rounded cursor-pointer"
                         title="新建公开导出接口"
                       >
@@ -213,7 +218,9 @@ export function PackageExplorer({
                       </span>
                       <button
                         type="button"
-                        onClick={(e) => onOpenLookup?.(`draft:${pkg.name}`, e)}
+                        onClick={(e) =>
+                          onOpenLookup?.(`draft:${pkg.name}:private_${Date.now()}`, e)
+                        }
                         className="text-slate-400 hover:text-indigo-400 p-0.5 rounded cursor-pointer"
                         title="新建内部查找"
                       >
@@ -262,7 +269,7 @@ export function PackageExplorer({
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onSelectAtom?.(`draft:${pkg.name}`, e);
+                          onSelectAtom?.(`draft:${pkg.name}:${Date.now()}`, e);
                         }}
                         className="text-slate-400 hover:text-indigo-400 p-0.5 rounded transition-colors cursor-pointer"
                         title="新建原子组件"

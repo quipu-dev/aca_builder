@@ -73,10 +73,12 @@ function AtomChunkCard({
 
   const previewContainerRef = useRef<HTMLDivElement>(null);
 
-  // 同步正文
+  // 同步正文 (仅在非就地编辑态下同步，避免打断输入法组合状态)
   React.useEffect(() => {
-    setEditContent(chunk.content);
-  }, [chunk.content]);
+    if (!isEditing) {
+      setEditContent(chunk.content);
+    }
+  }, [chunk.content, isEditing]);
 
   // 测量只读视图精确高度以实现进入编辑器无感防跳变
   const handleStartEditing = () => {
@@ -100,6 +102,15 @@ function AtomChunkCard({
       if (res.ok) {
         setSaveSuccess(true);
         setIsEditing(false);
+        // 清除全局持久快照，避免点击原子 Tab 打开时还原旧内容
+        const { useIdeStore } = await import('@/stores/ide-store');
+        useIdeStore.getState().clearSnapshot(`atom:${chunk.id}`);
+        // 派发全局事件通知已打开的对应 Atom Tab 静默更新正文
+        window.dispatchEvent(
+          new CustomEvent('aca:atom-updated', {
+            detail: { atomId: chunk.id, content: editContent },
+          }),
+        );
         onUpdated?.();
         setTimeout(() => setSaveSuccess(false), 2000);
       } else {
@@ -236,19 +247,30 @@ function AtomChunkCard({
       <div className="p-3 text-xs">
         {isEditing ? (
           <div className="rounded border border-slate-800 overflow-hidden bg-slate-950">
-            <CodeMirror
-              value={editContent}
-              height={`${editorHeight}px`}
-              extensions={[markdown()]}
-              theme="dark"
-              onChange={(val) => setEditContent(val)}
-              basicSetup={{
-                lineNumbers: true,
-                foldGutter: true,
-                highlightActiveLine: true,
+            <div
+              onKeyDown={(e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSave();
+                }
               }}
-              className="text-xs font-mono"
-            />
+            >
+              <CodeMirror
+                value={editContent}
+                height={`${editorHeight}px`}
+                extensions={[markdown()]}
+                theme="dark"
+                onChange={(val) => setEditContent(val)}
+                basicSetup={{
+                  lineNumbers: true,
+                  foldGutter: true,
+                  highlightActiveLine: true,
+                  closeBrackets: false,
+                }}
+                className="text-xs font-mono"
+              />
+            </div>
           </div>
         ) : (
           <div
@@ -440,28 +462,28 @@ export function PromptViewer({
               <div
                 style={{ width: `${kernelPct}%` }}
                 className="bg-amber-500 hover:brightness-125 transition-all"
-                title={`Kernel 核心协议: ${kernelTokens} tokens (${kernelPct}%)`}
+                title={`Kernel: ${kernelTokens} tokens (${kernelPct}%)`}
               />
             )}
             {d3Tokens > 0 && (
               <div
                 style={{ width: `${d3Pct}%` }}
                 className="bg-purple-500 hover:brightness-125 transition-all"
-                title={`D3 控制基质: ${d3Tokens} tokens (${d3Pct}%)`}
+                title={`D3: ${d3Tokens} tokens (${d3Pct}%)`}
               />
             )}
             {d2Tokens > 0 && (
               <div
                 style={{ width: `${d2Pct}%` }}
                 className="bg-emerald-500 hover:brightness-125 transition-all"
-                title={`D2 程序基质: ${d2Tokens} tokens (${d2Pct}%)`}
+                title={`D2: ${d2Tokens} tokens (${d2Pct}%)`}
               />
             )}
             {d1Tokens > 0 && (
               <div
                 style={{ width: `${d1Pct}%` }}
                 className="bg-cyan-500 hover:brightness-125 transition-all"
-                title={`D1 陈述基质: ${d1Tokens} tokens (${d1Pct}%)`}
+                title={`D1: ${d1Tokens} tokens (${d1Pct}%)`}
               />
             )}
           </div>

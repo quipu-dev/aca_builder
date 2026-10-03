@@ -56,7 +56,7 @@ export function EmptyTab({
               <span>新建原子</span>
             </div>
             <span className="text-[11px] text-slate-500 font-sans">
-              向组件包追加 D1 / D2 / D3 规范
+              向组件包添加 D1 / D2 / D3 原子
             </span>
           </button>
         </div>

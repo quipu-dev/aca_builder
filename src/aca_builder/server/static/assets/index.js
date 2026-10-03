@@ -1,4 +1,4 @@
-import { j as jsxRuntimeExports, c as create, p as persist, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, T as Trash2, d as Check, e as Save, f as Shield, i as Tag, k as ReactCodeMirror, l as CodeXml, W as WandSparkles, m as ChartColumn, n as ChevronUp, o as ChevronDown, q as Copy, X, P as PenLine, M as Markdown, H as Handle, s as TriangleAlert, u as useNodesState, t as useEdgesState, v as Cpu, w as CircleCheckBig, x as index, y as Background, z as BackgroundVariant, A as Controls, N as Network, F as Filter, D as Plus, G as Link2, I as Eye, J as RotateCcw, K as EyeOff, O as SlidersVertical, Q as FilePlus2, U as MousePointerClick, V as Settings, Y as FolderTree, Z as Database, _ as ChevronRight, $ as FolderOpen, a0 as Folder, a1 as Package, a2 as Globe, a3 as Lock, a4 as FileCode, a5 as ArrowLeft, a6 as ArrowRight, a7 as RefreshCw, a8 as ShieldCheck, a9 as OctagonAlert, aa as ReactDOM } from "./vendor-react.js";
+import { j as jsxRuntimeExports, c as create, p as persist, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, T as Trash2, d as Check, e as Save, D as Dna, f as Shield, F as FileText, i as Tag, k as ReactCodeMirror, l as CodeXml, W as WandSparkles, m as ChartColumn, n as ChevronUp, o as ChevronDown, q as Copy, X, P as PenLine, M as Markdown, H as Handle, s as TriangleAlert, u as useNodesState, t as useEdgesState, v as Cpu, w as CircleCheckBig, x as index, y as Background, z as BackgroundVariant, A as Controls, N as Network, G as Filter, I as Plus, J as Link2, K as Eye, O as RotateCcw, Q as EyeOff, U as SlidersVertical, V as FilePlus2, Y as MousePointerClick, Z as Settings, _ as FolderTree, $ as Database, a0 as ChevronRight, a1 as FolderOpen, a2 as Folder, a3 as Package, a4 as Globe, a5 as Lock, a6 as FileCode, a7 as ArrowLeft, a8 as ArrowRight, a9 as RefreshCw, aa as ShieldCheck, ab as OctagonAlert, ac as ReactDOM } from "./vendor-react.js";
 import { U as twMerge, W as clsx, X as remarkGfm } from "./vendor-others.js";
 import { m as markdown } from "./vendor-codemirror.js";
 import { P as Position } from "./vendor-xyflow.js";
@@ -163,6 +163,24 @@ const useIdeStore = create()(
       pinTab: (tabId) => set((state) => ({
         tabs: state.tabs.map((t) => t.id === tabId ? { ...t, isPreview: false } : t)
       })),
+      replaceTab: (oldTabId, newTab) => {
+        const { tabs, navigationHistory } = get();
+        const tabIndex = tabs.findIndex((t) => t.id === oldTabId);
+        const updatedTabs = [...tabs];
+        if (tabIndex !== -1) {
+          updatedTabs[tabIndex] = newTab;
+        } else {
+          updatedTabs.push(newTab);
+        }
+        const updatedHistory = navigationHistory.map(
+          (entry) => entry.tab.id === oldTabId ? { tab: newTab } : entry
+        );
+        set({
+          tabs: updatedTabs,
+          activeTabId: newTab.id,
+          navigationHistory: updatedHistory
+        });
+      },
       openTab: (tab, options = false) => {
         const { tabs, navigationHistory, historyIndex } = get();
         const newTab = typeof options === "boolean" ? options : !!(options == null ? void 0 : options.newTab);
@@ -280,6 +298,10 @@ const useIdeStore = create()(
     }
   )
 );
+const ideStore = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  useIdeStore
+}, Symbol.toStringTag, { value: "Module" }));
 function CommandPalette({
   isOpen,
   onClose,
@@ -506,6 +528,26 @@ const Button = React.forwardRef(
   }
 );
 Button.displayName = "Button";
+const ENCODING = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+const ENCODING_LEN = ENCODING.length;
+function ulid(seedTime = Date.now()) {
+  let timeStr = "";
+  let time = seedTime;
+  for (let i = 9; i >= 0; i--) {
+    const mod = time % ENCODING_LEN;
+    timeStr = ENCODING.charAt(mod) + timeStr;
+    time = Math.floor(time / ENCODING_LEN);
+  }
+  let randStr = "";
+  for (let i = 0; i < 16; i++) {
+    const rand = Math.floor(Math.random() * ENCODING_LEN);
+    randStr += ENCODING.charAt(rand);
+  }
+  return timeStr + randStr;
+}
+function generateIdSuffix() {
+  return ulid().toLowerCase();
+}
 function AtomEditorTab({
   atomId,
   packages = [],
@@ -514,25 +556,30 @@ function AtomEditorTab({
 }) {
   var _a;
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
-  const openTab = useIdeStore((state) => state.openTab);
+  const replaceTab = useIdeStore((state) => state.replaceTab);
   const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
   const getSnapshot = useIdeStore((state) => state.getSnapshot);
+  const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
   const tabId = `atom:${atomId}`;
-  const isKernel = atomId === "kernel" || atomId === "draft:kernel";
+  const isKernel = atomId === "kernel" || atomId.startsWith("draft:kernel");
   const isDraft = atomId.startsWith("draft:") || atomId === "new_atom";
-  const draftInitialPkg = isDraft ? atomId.replace("draft:", "") : "";
+  const draftParts = isDraft ? atomId.split(":") : [];
+  const draftInitialPkg = isDraft && draftParts[1] !== "kernel" ? draftParts[1] : "";
   const [isReady, setIsReady] = reactExports.useState(false);
   const [loading, setLoading] = reactExports.useState(!isDraft);
   const [saving, setSaving] = reactExports.useState(false);
   const [saveSuccess, setSaveSuccess] = reactExports.useState(false);
   const [errorMsg, setErrorMsg] = reactExports.useState("");
   const [currentId, setCurrentId] = reactExports.useState(isDraft ? isKernel ? "kernel" : "" : atomId);
-  const [draftSuffix, setDraftSuffix] = reactExports.useState(isKernel ? "kernel" : "");
+  const [draftSuffix, setDraftSuffix] = reactExports.useState(
+    () => isKernel ? "kernel" : isDraft ? generateIdSuffix() : ""
+  );
   const [pkgName, setPkgName] = reactExports.useState(
     isKernel ? "全局" : draftInitialPkg || ((_a = packages[0]) == null ? void 0 : _a.name) || ""
   );
   const [sourceFile, setSourceFile] = reactExports.useState("");
   const [atomType, setAtomType] = reactExports.useState(isKernel ? "kernel" : "d3");
+  const [description, setDescription] = reactExports.useState("");
   const [priority, setPriority] = reactExports.useState(1);
   const [domainList, setDomainList] = reactExports.useState([]);
   const [domainInput, setDomainInput] = reactExports.useState("");
@@ -549,6 +596,7 @@ function AtomEditorTab({
       setPkgName(snapshot.pkgName);
       setSourceFile(snapshot.sourceFile);
       setAtomType(snapshot.atomType);
+      setDescription(snapshot.description || "");
       setPriority(snapshot.priority);
       setDomainList(snapshot.domainList);
       setUsesList(snapshot.usesList);
@@ -576,6 +624,7 @@ function AtomEditorTab({
       setPkgName(data.package || "全局");
       setSourceFile(data.source_file || "");
       setAtomType(meta.type || "d1");
+      setDescription(meta.description || "");
       setPriority(meta.priority !== void 0 ? meta.priority : 1);
       setDomainList(Array.isArray(meta.domain) ? meta.domain : []);
       setUsesList(Array.isArray(meta.uses) ? meta.uses : []);
@@ -588,12 +637,33 @@ function AtomEditorTab({
     }).finally(() => setLoading(false));
   }, [atomId, isDraft, setTabDirty, tabId, getSnapshot]);
   reactExports.useEffect(() => {
+    const handleExternalUpdate = (e) => {
+      var _a2;
+      const customEvent = e;
+      if (((_a2 = customEvent.detail) == null ? void 0 : _a2.atomId) === atomId && !isModified) {
+        if (customEvent.detail.content !== void 0) {
+          setContent(customEvent.detail.content);
+        } else {
+          fetch(`/api/atoms/${encodeURIComponent(atomId)}`).then((res) => res.json()).then((data) => {
+            if (data.content !== void 0) {
+              setContent(data.content);
+            }
+          }).catch(() => {
+          });
+        }
+      }
+    };
+    window.addEventListener("aca:atom-updated", handleExternalUpdate);
+    return () => window.removeEventListener("aca:atom-updated", handleExternalUpdate);
+  }, [atomId, isModified]);
+  reactExports.useEffect(() => {
     if (!isReady) return;
     saveSnapshot(tabId, {
       currentId,
       pkgName,
       sourceFile,
       atomType,
+      description,
       priority,
       domainList,
       usesList,
@@ -608,6 +678,7 @@ function AtomEditorTab({
     pkgName,
     sourceFile,
     atomType,
+    description,
     priority,
     domainList,
     usesList,
@@ -633,7 +704,7 @@ function AtomEditorTab({
     } catch (_err) {
     }
   };
-  const handleSave = async () => {
+  const handleSave = reactExports.useCallback(async () => {
     setSaving(true);
     setErrorMsg("");
     if (isDraft) {
@@ -657,8 +728,9 @@ function AtomEditorTab({
             setSaveSuccess(true);
             setIsModified(false);
             setTabDirty(tabId, false);
+            clearSnapshot(tabId);
             onSaved == null ? void 0 : onSaved();
-            openTab({
+            replaceTab(tabId, {
               id: "atom:kernel",
               type: "atom",
               title: "kernel",
@@ -691,6 +763,7 @@ function AtomEditorTab({
             id: generatedId,
             type: atomType,
             priority: atomType === "d3" ? priority : void 0,
+            description: description.trim() || void 0,
             domain: domainList,
             uses: atomType === "d2" ? usesList : [],
             content
@@ -701,8 +774,9 @@ function AtomEditorTab({
           setSaveSuccess(true);
           setIsModified(false);
           setTabDirty(`atom:${atomId}`, false);
+          clearSnapshot(tabId);
           onSaved == null ? void 0 : onSaved();
-          openTab({
+          replaceTab(tabId, {
             id: `atom:${generatedId}`,
             type: "atom",
             title: generatedId,
@@ -725,6 +799,9 @@ function AtomEditorTab({
       domain: domainList,
       status: "stable"
     };
+    if (description.trim()) {
+      newMeta.description = description.trim();
+    }
     if (atomType === "d3") {
       newMeta.priority = priority;
     }
@@ -755,7 +832,25 @@ function AtomEditorTab({
     } finally {
       setSaving(false);
     }
-  };
+  }, [
+    isDraft,
+    isKernel,
+    content,
+    tabId,
+    clearSnapshot,
+    onSaved,
+    replaceTab,
+    draftSuffix,
+    atomType,
+    pkgName,
+    description,
+    domainList,
+    usesList,
+    priority,
+    currentId,
+    setTabDirty,
+    atomId
+  ]);
   const handleDelete = async () => {
     if (isDraft) return;
     if (!window.confirm(`确定要永久删除原子组件 "${currentId}" 吗？此操作将物理删除文件。`)) {
@@ -784,6 +879,16 @@ function AtomEditorTab({
       handleSave();
     }
   };
+  reactExports.useEffect(() => {
+    const handleGlobalSave = () => {
+      const activeTabId = useIdeStore.getState().activeTabId;
+      if (activeTabId === tabId && isModified && !saving) {
+        handleSave();
+      }
+    };
+    window.addEventListener("aca:save-active-tab", handleGlobalSave);
+    return () => window.removeEventListener("aca:save-active-tab", handleGlobalSave);
+  }, [tabId, isModified, saving, handleSave]);
   const addDomainTag = () => {
     const trimmed = domainInput.trim().toLowerCase();
     if (trimmed && !domainList.includes(trimmed)) {
@@ -920,22 +1025,40 @@ function AtomEditorTab({
                 },
                 className: "w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500",
                 children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "d3", children: "D3 控制基质" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "d2", children: "D2 程序基质" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "d1", children: "D1 陈述基质" })
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "d3", children: "D3" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "d2", children: "D2" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "d1", children: "D1" })
                 ]
               }
             )
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: "atom-draft-suffix", className: "text-slate-400 block mb-1", children: [
-              "标识后缀 (将自动生成: ",
-              atomType,
-              "-",
-              draftSuffix || "...",
-              ")"
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { htmlFor: "atom-draft-suffix", className: "text-slate-400 block", children: [
+                "标识后缀 (",
+                atomType,
+                "-",
+                draftSuffix || "...",
+                ")"
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => {
+                    setDraftSuffix(generateIdSuffix());
+                    markDirty();
+                  },
+                  className: "flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300 cursor-pointer",
+                  title: "生成新 ULID 标识",
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(Dna, { className: "h-3 w-3" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "ULID" })
+                  ]
+                }
+              )
             ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
               "input",
               {
                 id: "atom-draft-suffix",
@@ -945,10 +1068,10 @@ function AtomEditorTab({
                   setDraftSuffix(e.target.value);
                   markDirty();
                 },
-                placeholder: "例如: core-operations",
-                className: "w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                placeholder: "例如: 01k47... 或业务词",
+                className: "flex-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs"
               }
-            )
+            ) })
           ] })
         ] }),
         !isKernel && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-4 py-3 border-b border-slate-800/80 bg-slate-900/30 space-y-2.5 text-xs font-mono", children: [
@@ -988,46 +1111,65 @@ function AtomEditorTab({
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 flex items-center gap-2", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-400 flex items-center gap-1 shrink-0", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { className: "h-3.5 w-3.5 text-indigo-400" }),
-                " 领域标签:"
+                /* @__PURE__ */ jsxRuntimeExports.jsx(FileText, { className: "h-3.5 w-3.5 text-cyan-400" }),
+                " 描述说明:"
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-wrap items-center gap-1.5 flex-1", children: [
-                domainList.map((tag) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "span",
-                  {
-                    className: "inline-flex items-center gap-1 bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full text-[11px] border border-slate-700",
-                    children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: tag }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "button",
-                        {
-                          type: "button",
-                          onClick: () => removeDomainTag(tag),
-                          className: "hover:text-rose-400",
-                          children: "×"
-                        }
-                      )
-                    ]
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "input",
+                {
+                  type: "text",
+                  value: description,
+                  onChange: (e) => {
+                    setDescription(e.target.value);
+                    markDirty();
                   },
-                  tag
-                )),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "input",
-                  {
-                    type: "text",
-                    value: domainInput,
-                    onChange: (e) => setDomainInput(e.target.value),
-                    onKeyDown: (e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addDomainTag();
+                  placeholder: "简明业务描述（将在白板拓扑节点卡片中直观呈现）",
+                  className: "flex-1 bg-slate-950 border border-slate-800/80 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-cyan-500 font-sans"
+                }
+              )
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 pt-1 border-t border-slate-800/40", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-400 flex items-center gap-1 shrink-0", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { className: "h-3.5 w-3.5 text-indigo-400" }),
+              " 领域标签:"
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-wrap items-center gap-1.5 flex-1", children: [
+              domainList.map((tag) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "span",
+                {
+                  className: "inline-flex items-center gap-1 bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full text-[11px] border border-slate-700",
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: tag }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => removeDomainTag(tag),
+                        className: "hover:text-rose-400",
+                        children: "×"
                       }
-                    },
-                    placeholder: "+ 添加标签 (回车)",
-                    className: "bg-slate-950 border border-slate-800/80 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-indigo-500 w-32"
-                  }
-                )
-              ] })
+                    )
+                  ]
+                },
+                tag
+              )),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "input",
+                {
+                  type: "text",
+                  value: domainInput,
+                  onChange: (e) => setDomainInput(e.target.value),
+                  onKeyDown: (e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addDomainTag();
+                    }
+                  },
+                  placeholder: "+ 添加标签 (回车)",
+                  className: "bg-slate-950 border border-slate-800/80 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-indigo-500 w-32"
+                }
+              )
             ] })
           ] }),
           atomType === "d2" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 pt-1 border-t border-slate-800/40", children: [
@@ -1097,6 +1239,80 @@ function AtomEditorTab({
     }
   );
 }
+const scriptRel = "modulepreload";
+const assetsURL = function(dep) {
+  return "/" + dep;
+};
+const seen = {};
+const __vitePreload = function preload(baseModule, deps, importerUrl) {
+  let promise = Promise.resolve();
+  if (deps && deps.length > 0) {
+    let allSettled2 = function(promises) {
+      return Promise.all(
+        promises.map(
+          (p) => Promise.resolve(p).then(
+            (value) => ({ status: "fulfilled", value }),
+            (reason) => ({ status: "rejected", reason })
+          )
+        )
+      );
+    };
+    document.getElementsByTagName("link");
+    const cspNonceMeta = document.querySelector(
+      "meta[property=csp-nonce]"
+    );
+    const cspNonce = (cspNonceMeta == null ? void 0 : cspNonceMeta.nonce) || (cspNonceMeta == null ? void 0 : cspNonceMeta.getAttribute("nonce"));
+    promise = allSettled2(
+      deps.map((dep) => {
+        dep = assetsURL(dep);
+        if (dep in seen) return;
+        seen[dep] = true;
+        const isCss = dep.endsWith(".css");
+        const cssSelector = isCss ? '[rel="stylesheet"]' : "";
+        if (document.querySelector(`link[href="${dep}"]${cssSelector}`)) {
+          return;
+        }
+        const link = document.createElement("link");
+        link.rel = isCss ? "stylesheet" : scriptRel;
+        if (!isCss) {
+          link.as = "script";
+        }
+        link.crossOrigin = "";
+        link.href = dep;
+        if (cspNonce) {
+          link.setAttribute("nonce", cspNonce);
+        }
+        document.head.appendChild(link);
+        if (isCss) {
+          return new Promise((res, rej) => {
+            link.addEventListener("load", res);
+            link.addEventListener(
+              "error",
+              () => rej(new Error(`Unable to preload CSS for ${dep}`))
+            );
+          });
+        }
+      })
+    );
+  }
+  function handlePreloadError(err) {
+    const e = new Event("vite:preloadError", {
+      cancelable: true
+    });
+    e.payload = err;
+    window.dispatchEvent(e);
+    if (!e.defaultPrevented) {
+      throw err;
+    }
+  }
+  return promise.then((res) => {
+    for (const item of res || []) {
+      if (item.status !== "rejected") continue;
+      handlePreloadError(item.reason);
+    }
+    return baseModule().catch(handlePreloadError);
+  });
+};
 function AtomChunkCard({
   chunk,
   onUpdated,
@@ -1112,8 +1328,10 @@ function AtomChunkCard({
   const [editorHeight, setEditorHeight] = reactExports.useState(200);
   const previewContainerRef = reactExports.useRef(null);
   React.useEffect(() => {
-    setEditContent(chunk.content);
-  }, [chunk.content]);
+    if (!isEditing) {
+      setEditContent(chunk.content);
+    }
+  }, [chunk.content, isEditing]);
   const handleStartEditing = () => {
     if (previewContainerRef.current) {
       const measuredHeight = previewContainerRef.current.getBoundingClientRect().height;
@@ -1133,6 +1351,16 @@ function AtomChunkCard({
       if (res.ok) {
         setSaveSuccess(true);
         setIsEditing(false);
+        const { useIdeStore: useIdeStore2 } = await __vitePreload(async () => {
+          const { useIdeStore: useIdeStore3 } = await Promise.resolve().then(() => ideStore);
+          return { useIdeStore: useIdeStore3 };
+        }, true ? void 0 : void 0);
+        useIdeStore2.getState().clearSnapshot(`atom:${chunk.id}`);
+        window.dispatchEvent(
+          new CustomEvent("aca:atom-updated", {
+            detail: { atomId: chunk.id, content: editContent }
+          })
+        );
         onUpdated == null ? void 0 : onUpdated();
         setTimeout(() => setSaveSuccess(false), 2e3);
       } else {
@@ -1266,19 +1494,32 @@ function AtomChunkCard({
           ] })
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-3 text-xs", children: isEditing ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded border border-slate-800 overflow-hidden bg-slate-950", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-          ReactCodeMirror,
+          "div",
           {
-            value: editContent,
-            height: `${editorHeight}px`,
-            extensions: [markdown()],
-            theme: "dark",
-            onChange: (val) => setEditContent(val),
-            basicSetup: {
-              lineNumbers: true,
-              foldGutter: true,
-              highlightActiveLine: true
+            onKeyDown: (e) => {
+              if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSave();
+              }
             },
-            className: "text-xs font-mono"
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+              ReactCodeMirror,
+              {
+                value: editContent,
+                height: `${editorHeight}px`,
+                extensions: [markdown()],
+                theme: "dark",
+                onChange: (val) => setEditContent(val),
+                basicSetup: {
+                  lineNumbers: true,
+                  foldGutter: true,
+                  highlightActiveLine: true,
+                  closeBrackets: false
+                },
+                className: "text-xs font-mono"
+              }
+            )
           }
         ) }) : /* @__PURE__ */ jsxRuntimeExports.jsx(
           "div",
@@ -1438,7 +1679,7 @@ function PromptViewer({
           {
             style: { width: `${kernelPct}%` },
             className: "bg-amber-500 hover:brightness-125 transition-all",
-            title: `Kernel 核心协议: ${kernelTokens} tokens (${kernelPct}%)`
+            title: `Kernel: ${kernelTokens} tokens (${kernelPct}%)`
           }
         ),
         d3Tokens > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -1446,7 +1687,7 @@ function PromptViewer({
           {
             style: { width: `${d3Pct}%` },
             className: "bg-purple-500 hover:brightness-125 transition-all",
-            title: `D3 控制基质: ${d3Tokens} tokens (${d3Pct}%)`
+            title: `D3: ${d3Tokens} tokens (${d3Pct}%)`
           }
         ),
         d2Tokens > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -1454,7 +1695,7 @@ function PromptViewer({
           {
             style: { width: `${d2Pct}%` },
             className: "bg-emerald-500 hover:brightness-125 transition-all",
-            title: `D2 程序基质: ${d2Tokens} tokens (${d2Pct}%)`
+            title: `D2: ${d2Tokens} tokens (${d2Pct}%)`
           }
         ),
         d1Tokens > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -1462,7 +1703,7 @@ function PromptViewer({
           {
             style: { width: `${d1Pct}%` },
             className: "bg-cyan-500 hover:brightness-125 transition-all",
-            title: `D1 陈述基质: ${d1Tokens} tokens (${d1Pct}%)`
+            title: `D1: ${d1Tokens} tokens (${d1Pct}%)`
           }
         )
       ] }),
@@ -1767,6 +2008,14 @@ function AtomNode({ data }) {
         children: data.id
       }
     ) }),
+    data.description && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "div",
+      {
+        className: "text-[10px] text-slate-400 mt-1 line-clamp-2 font-sans leading-tight border-t border-slate-800/60 pt-1",
+        title: data.description,
+        children: data.description
+      }
+    ),
     data.type === "d2" && /* @__PURE__ */ jsxRuntimeExports.jsx(Handle, { type: "source", position: Position.Right, className: "!bg-emerald-500 w-2 h-2" })
   ] });
 }
@@ -2015,16 +2264,20 @@ function LookupEditorTab({
   onSaved,
   onDeleted
 }) {
-  var _a;
+  var _a, _b;
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const openTab = useIdeStore((state) => state.openTab);
+  const replaceTab = useIdeStore((state) => state.replaceTab);
   const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
   const getSnapshot = useIdeStore((state) => state.getSnapshot);
+  const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
   const isDraft = lookupKey.startsWith("draft:");
-  const initialPkg = isDraft ? lookupKey.replace("draft:", "") : "";
+  const draftParts = isDraft ? lookupKey.split(":") : [];
+  const initialPkg = isDraft ? draftParts[1] || "" : "";
+  const initialPublic = isDraft ? !((_a = draftParts[2]) == null ? void 0 : _a.startsWith("private")) : true;
   const [isReady, setIsReady] = reactExports.useState(false);
-  const [pkgName, setPkgName] = reactExports.useState(initialPkg || ((_a = packages[0]) == null ? void 0 : _a.name) || "");
-  const [isPublic, setIsPublic] = reactExports.useState(true);
+  const [pkgName, setPkgName] = reactExports.useState(initialPkg || ((_b = packages[0]) == null ? void 0 : _b.name) || "");
+  const [isPublic, setIsPublic] = reactExports.useState(initialPublic);
   const [pillar, setPillar] = reactExports.useState("d1");
   const [rawKeyName, setRawKeyName] = reactExports.useState("");
   const [description, setDescription] = reactExports.useState("");
@@ -2064,7 +2317,7 @@ function LookupEditorTab({
     }
   };
   reactExports.useEffect(() => {
-    var _a2, _b, _c, _d, _e;
+    var _a2, _b2, _c, _d, _e;
     const snapshot = getSnapshot(tabId);
     if (snapshot) {
       setPkgName(snapshot.pkgName);
@@ -2087,7 +2340,7 @@ function LookupEditorTab({
     const targetPkg = lookupKey.includes("::") ? lookupKey.split("::")[0] : null;
     for (const pkg of packages) {
       if (targetPkg && pkg.name !== targetPkg) continue;
-      const exportDef = ((_a2 = pkg.exports) == null ? void 0 : _a2[lookupKey]) || ((_b = pkg.exports) == null ? void 0 : _b[`${pkg.name}::${rawKey}`]) || ((_c = pkg.exports) == null ? void 0 : _c[rawKey]);
+      const exportDef = ((_a2 = pkg.exports) == null ? void 0 : _a2[lookupKey]) || ((_b2 = pkg.exports) == null ? void 0 : _b2[`${pkg.name}::${rawKey}`]) || ((_c = pkg.exports) == null ? void 0 : _c[rawKey]);
       if (exportDef) {
         setPkgName(pkg.name);
         setPillar(exportDef.pillar || "d1");
@@ -2217,7 +2470,7 @@ function LookupEditorTab({
     setSelectors(selectors.filter((_, i) => i !== index2));
     markDirty();
   };
-  const handleSave = async () => {
+  const handleSave = reactExports.useCallback(async () => {
     const cleanSuffix = rawKeyName.trim().toLowerCase().replace(/^d[1-3]l-/, "").replace(/[^a-z0-9_-]/g, "-");
     if (!cleanSuffix || selectors.length === 0) return;
     setSaving(true);
@@ -2240,7 +2493,18 @@ function LookupEditorTab({
         setSaveStatus("已保存");
         setIsModified(false);
         setTabDirty(tabId, false);
+        clearSnapshot(tabId);
         onSaved == null ? void 0 : onSaved();
+        const fullTargetKey = isPublic ? `${pkgName}::${pillar}l-${cleanSuffix}` : `${pillar}l-${cleanSuffix}`;
+        if (isDraft) {
+          replaceTab(tabId, {
+            id: `lookup:${fullTargetKey}`,
+            type: "lookup",
+            title: `${pillar}l-${cleanSuffix}`,
+            closable: true,
+            lookupKey: fullTargetKey
+          });
+        }
         setTimeout(() => setSaveStatus(""), 2500);
       } else {
         setSaveStatus(`保存失败: ${data.detail}`);
@@ -2250,7 +2514,36 @@ function LookupEditorTab({
     } finally {
       setSaving(false);
     }
+  }, [
+    rawKeyName,
+    selectors,
+    pkgName,
+    pillar,
+    isPublic,
+    description,
+    tabId,
+    setTabDirty,
+    clearSnapshot,
+    onSaved,
+    isDraft,
+    replaceTab
+  ]);
+  const handleKeyDown = (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+      e.preventDefault();
+      handleSave();
+    }
   };
+  reactExports.useEffect(() => {
+    const handleGlobalSave = () => {
+      const activeTabId = useIdeStore.getState().activeTabId;
+      if (activeTabId === tabId && !saving && selectors.length > 0) {
+        handleSave();
+      }
+    };
+    window.addEventListener("aca:save-active-tab", handleGlobalSave);
+    return () => window.removeEventListener("aca:save-active-tab", handleGlobalSave);
+  }, [tabId, saving, selectors.length, handleSave]);
   const handleDelete = async () => {
     if (isDraft) return;
     if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？此操作将从包定义中移除。`)) {
@@ -2274,490 +2567,515 @@ function LookupEditorTab({
     }
   };
   const fullLookupKey = `${pillar}l-${rawKeyName.trim() || "..."}`;
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none font-mono", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 text-xs shrink-0", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-1.5", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200", children: fullLookupKey }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "outline", className: "text-[10px] uppercase font-bold px-1.5 py-0", children: pillar }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-500 text-[11px]", children: [
-          "@",
-          pkgName
-        ] })
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-        saveStatus && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs text-indigo-400", children: saveStatus }),
-        !isDraft && /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          Button,
-          {
-            variant: "outline",
-            size: "sm",
-            onClick: handleDelete,
-            disabled: saving,
-            className: "h-7 text-xs flex items-center gap-1 px-2.5 text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700 cursor-pointer",
-            title: "删除此接口契约",
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "删除接口" })
-            ]
-          }
-        ),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          Button,
-          {
-            size: "sm",
-            onClick: handleSave,
-            disabled: saving || selectors.length === 0,
-            className: "h-7 text-xs flex items-center gap-1.5 px-3 bg-indigo-600 hover:bg-indigo-500",
-            children: [
-              saving ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "h-3 w-3 animate-spin" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Save, { className: "h-3 w-3" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "保存接口定义" })
-            ]
-          }
-        )
-      ] })
-    ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-      SplitPane,
-      {
-        direction: "horizontal",
-        initialRatio: 0.52,
-        minPrimarySize: 380,
-        minSecondarySize: 320,
-        primary: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "h-full flex flex-col p-4 space-y-4 overflow-y-auto", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-3 text-xs", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 text-indigo-400 font-semibold mb-1", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "h-4 w-4" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "接口契约规范" })
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-3 gap-3", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "lookup-pkg", className: "text-slate-400 block mb-1", children: "所属组件包" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "select",
-                  {
-                    id: "lookup-pkg",
-                    value: pkgName,
-                    onChange: (e) => {
-                      setPkgName(e.target.value);
-                      markDirty();
-                    },
-                    className: "w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500",
-                    children: packages.map((p) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: p.name, children: p.name }, p.name))
-                  }
-                )
-              ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "lookup-visibility", className: "text-slate-400 block mb-1", children: "可见性契约" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "select",
-                  {
-                    id: "lookup-visibility",
-                    value: isPublic ? "public" : "private",
-                    onChange: (e) => {
-                      setIsPublic(e.target.value === "public");
-                      markDirty();
-                    },
-                    className: "w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500",
-                    children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "public", children: "公开导出 (package.yaml exports)" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "private", children: "内部私有 (d4/lookups.yaml)" })
-                    ]
-                  }
-                )
-              ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "lookup-pillar", className: "text-slate-400 block mb-1", children: "构造类别" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "select",
-                  {
-                    id: "lookup-pillar",
-                    value: pillar,
-                    onChange: (e) => {
-                      setPillar(e.target.value);
-                      markDirty();
-                    },
-                    className: "w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500",
-                    children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "d1", children: "D1 陈述基质 (d1l-*)" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "d2", children: "D2 程序基质 (d2l-*)" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "d3", children: "D3 控制基质 (d3l-*)" })
-                    ]
-                  }
-                )
-              ] })
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-3", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "lookup-key-name", className: "text-slate-400 block mb-1", children: "后缀标识符" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "input",
-                  {
-                    id: "lookup-key-name",
-                    type: "text",
-                    value: rawKeyName,
-                    onChange: (e) => {
-                      setRawKeyName(e.target.value);
-                      markDirty();
-                    },
-                    placeholder: "例如: core-safety",
-                    className: "w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-                  }
-                )
-              ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "lookup-desc", className: "text-slate-400 block mb-1", children: "描述说明" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "input",
-                  {
-                    id: "lookup-desc",
-                    type: "text",
-                    value: description,
-                    onChange: (e) => {
-                      setDescription(e.target.value);
-                      markDirty();
-                    },
-                    placeholder: "导出该模块的基础协议与守则",
-                    className: "w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-                  }
-                )
-              ] })
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      className: "flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none font-mono",
+      onKeyDown: handleKeyDown,
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 text-xs shrink-0", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-1.5", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200", children: fullLookupKey }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "outline", className: "text-[10px] uppercase font-bold px-1.5 py-0", children: pillar }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-500 text-[11px]", children: [
+              "@",
+              pkgName
             ] })
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-3 text-xs", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 text-slate-300 font-semibold", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(Filter, { className: "h-4 w-4 text-indigo-400" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "选择器构建器 (Selectors Builder)" })
-              ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex rounded bg-slate-950 p-0.5 border border-slate-800 text-[11px]", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: () => setSelectorMode("id"),
-                    className: `px-2 py-0.5 rounded transition-colors ${selectorMode === "id" ? "bg-indigo-600 text-white" : "text-slate-400"}`,
-                    children: "按原子 ID 选取"
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: () => setSelectorMode("domain"),
-                    className: `px-2 py-0.5 rounded transition-colors ${selectorMode === "domain" ? "bg-indigo-600 text-white" : "text-slate-400"}`,
-                    children: "按 Domain 领域查询"
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: () => setSelectorMode("ref"),
-                    className: `px-2 py-0.5 rounded transition-colors ${selectorMode === "ref" ? "bg-indigo-600 text-white" : "text-slate-400"}`,
-                    children: "跨 Lookup 引用"
-                  }
-                )
-              ] })
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
-              selectorMode === "id" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 flex gap-2", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "select",
-                  {
-                    value: queryIdInput,
-                    onChange: (e) => setQueryIdInput(e.target.value),
-                    className: "flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500",
-                    children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: "", children: [
-                        "-- 点选当前包内的 ",
-                        pillar.toUpperCase(),
-                        " 原子 --"
-                      ] }),
-                      currentPillarAtoms.map((a) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: a.id, children: a.id }, a.id))
-                    ]
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "input",
-                  {
-                    type: "text",
-                    value: queryIdInput,
-                    onChange: (e) => setQueryIdInput(e.target.value),
-                    placeholder: "或直接手填 ID",
-                    className: "w-40 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-                  }
-                )
-              ] }),
-              selectorMode === "domain" && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "input",
-                {
-                  type: "text",
-                  value: domainInput,
-                  onChange: (e) => setDomainInput(e.target.value),
-                  placeholder: "输入领域标签，用逗号分隔，支持 - 排除，如: reasoning, -experimental",
-                  className: "flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-                }
-              ),
-              selectorMode === "ref" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "input",
-                  {
-                    type: "text",
-                    list: "lookup-ref-candidates",
-                    value: refInput,
-                    onChange: (e) => setRefInput(e.target.value),
-                    placeholder: "输入或选择引用的另一个 lookup，如 pkg::d1l-name",
-                    className: "flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
-                  }
-                ),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("datalist", { id: "lookup-ref-candidates", children: candidateLookupRefs.map((refKey) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: refKey }, refKey)) })
-              ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                Button,
-                {
-                  size: "sm",
-                  onClick: handleAddSelector,
-                  className: "h-7 text-xs flex items-center gap-1 shrink-0",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5" }),
-                    " 追加规则"
-                  ]
-                }
-              )
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5 pt-2 border-t border-slate-800/60", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[11px] text-slate-400", children: [
-                "已配置规则 (",
-                selectors.length,
-                " 项):"
-              ] }),
-              selectors.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-slate-600 text-center py-6", children: "尚未配置任何规则，请在上方添加选择器。" }) : selectors.map((sel, idx) => {
-                var _a2, _b;
-                return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "div",
-                  {
-                    className: "flex items-center justify-between p-2 rounded border border-slate-800 bg-slate-950/80 text-xs",
-                    children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-600 font-bold", children: [
-                          idx + 1,
-                          "."
-                        ] }),
-                        ((_a2 = sel.query) == null ? void 0 : _a2.id) && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-indigo-300", children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(Box, { className: "h-3 w-3 text-slate-400" }),
-                          "精确 ID: ",
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: sel.query.id })
-                        ] }),
-                        ((_b = sel.query) == null ? void 0 : _b.domain) && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-emerald-300", children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { className: "h-3 w-3 text-slate-400" }),
-                          "Domain 匹配: ",
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: JSON.stringify(sel.query.domain) })
-                        ] }),
-                        sel.ref && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-purple-300", children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(Link2, { className: "h-3 w-3 text-slate-400" }),
-                          "跨接口引用: ",
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: sel.ref })
-                        ] })
-                      ] }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "button",
-                        {
-                          type: "button",
-                          onClick: () => handleRemoveSelector(idx),
-                          className: "text-slate-500 hover:text-rose-400 p-1 rounded",
-                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3.5 w-3.5" })
-                        }
-                      )
-                    ]
-                  },
-                  `${JSON.stringify(sel)}-${idx}`
-                );
-              })
-            ] })
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+            saveStatus && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs text-indigo-400", children: saveStatus }),
+            !isDraft && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              Button,
+              {
+                variant: "outline",
+                size: "sm",
+                onClick: handleDelete,
+                disabled: saving,
+                className: "h-7 text-xs flex items-center gap-1 px-2.5 text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700 cursor-pointer",
+                title: "删除此接口契约",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "删除接口" })
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              Button,
+              {
+                size: "sm",
+                onClick: handleSave,
+                disabled: saving || selectors.length === 0,
+                className: "h-7 text-xs flex items-center gap-1.5 px-3 bg-indigo-600 hover:bg-indigo-500",
+                children: [
+                  saving ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "h-3 w-3 animate-spin" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Save, { className: "h-3 w-3" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "保存接口定义" })
+                ]
+              }
+            )
           ] })
         ] }),
-        secondary: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "h-full flex flex-col bg-slate-900/30 overflow-hidden", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-3.5 py-2 border-b border-slate-800 bg-slate-950/70 shrink-0", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1 bg-slate-950 border border-slate-800 p-0.5 rounded text-[11px]", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "button",
-                {
-                  type: "button",
-                  onClick: () => setRightView("atoms"),
-                  className: `flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${rightView === "atoms" ? "bg-indigo-600 text-white font-medium shadow-sm" : "text-slate-400 hover:text-white"}`,
-                  title: "查看一阶命中原子",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-3 w-3" }),
-                    " 命中原子"
-                  ]
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "button",
-                {
-                  type: "button",
-                  onClick: () => setRightView("graph"),
-                  className: `flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${rightView === "graph" ? "bg-indigo-600 text-white font-medium shadow-sm" : "text-slate-400 hover:text-white"}`,
-                  title: "查看以此 Lookup 为根的级联依赖拓扑图",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(Network, { className: "h-3 w-3" }),
-                    " 白板拓扑"
-                  ]
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "button",
-                {
-                  type: "button",
-                  onClick: () => setRightView("prompt"),
-                  className: `flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${rightView === "prompt" ? "bg-indigo-600 text-white font-medium shadow-sm" : "text-slate-400 hover:text-white"}`,
-                  title: "查看此接口传递依赖排序生成的切片 Prompt 文本",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(CodeXml, { className: "h-3 w-3" }),
-                    " 切片编译"
-                  ]
-                }
-              )
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-2", children: evaluating ? /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-indigo-400 text-[11px]", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "h-3 w-3 animate-spin" }),
-              " 计算中..."
-            ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[11px] text-slate-400", children: [
-              "一阶命中: ",
-              /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { className: "text-emerald-400", children: matchedAtoms.length })
-            ] }) })
-          ] }),
-          evalError && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "m-3 mb-0 rounded bg-rose-950/60 border border-rose-800/80 p-2.5 text-xs text-rose-300 flex items-center gap-1.5 shrink-0 font-sans", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-4 w-4 shrink-0" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: evalError })
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 overflow-hidden", children: [
-            rightView === "atoms" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full overflow-y-auto p-4 space-y-2.5", children: matchedAtoms.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center justify-center h-full text-xs text-slate-600 font-mono py-12", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Box, { className: "h-8 w-8 text-slate-700 mb-2" }),
-              "当前规则在组件库中未命中任何有效原子"
-            ] }) : matchedAtoms.map((atom) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "div",
-              {
-                className: "rounded border border-slate-800 bg-slate-950/80 p-2.5 text-xs hover:border-indigo-500/50 transition-colors shadow-sm",
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1.5", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 truncate", children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                        Badge,
-                        {
-                          variant: atom.type === "d1" ? "d1" : atom.type === "d2" ? "d2" : atom.type === "d3" ? "d3" : "kernel",
-                          className: "text-[10px] uppercase font-bold px-1.5 py-0",
-                          children: [
-                            atom.type,
-                            typeof atom.priority === "number" ? `-P${atom.priority}` : ""
-                          ]
-                        }
-                      ),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200 truncate", children: atom.id }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-slate-500 truncate", children: [
-                        "@",
-                        atom.package || "全局"
-                      ] })
-                    ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                      "button",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          SplitPane,
+          {
+            direction: "horizontal",
+            initialRatio: 0.52,
+            minPrimarySize: 380,
+            minSecondarySize: 320,
+            primary: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "h-full flex flex-col p-4 space-y-4 overflow-y-auto", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-3 text-xs", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 text-indigo-400 font-semibold mb-1", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "h-4 w-4" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "接口契约规范" })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-3 gap-3", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "lookup-pkg", className: "text-slate-400 block mb-1", children: "所属组件包" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "select",
                       {
-                        type: "button",
-                        onClick: () => {
-                          openTab({
-                            id: `atom:${atom.id}`,
-                            type: "atom",
-                            title: atom.id,
-                            closable: true,
-                            atomId: atom.id
-                          });
+                        id: "lookup-pkg",
+                        value: pkgName,
+                        onChange: (e) => {
+                          setPkgName(e.target.value);
+                          markDirty();
                         },
-                        className: "flex items-center gap-1 text-[11px] text-slate-400 hover:text-indigo-300 hover:bg-slate-800 px-2 py-0.5 rounded transition-colors shrink-0",
-                        title: "在新 Tab 中打开编辑该原子",
+                        className: "w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500",
+                        children: packages.map((p) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: p.name, children: p.name }, p.name))
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "lookup-visibility", className: "text-slate-400 block mb-1", children: "可见性契约" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "select",
+                      {
+                        id: "lookup-visibility",
+                        value: isPublic ? "public" : "private",
+                        onChange: (e) => {
+                          setIsPublic(e.target.value === "public");
+                          markDirty();
+                        },
+                        className: "w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500",
                         children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "h-3 w-3" }),
-                          " 打开编辑"
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "public", children: "公开导出 (package.yaml exports)" }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "private", children: "内部私有 (d4/lookups.yaml)" })
                         ]
                       }
                     )
                   ] }),
-                  atom.domain && atom.domain.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-1 mb-1.5", children: atom.domain.map((d) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                    "span",
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "lookup-pillar", className: "text-slate-400 block mb-1", children: "构造类别" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "select",
+                      {
+                        id: "lookup-pillar",
+                        value: pillar,
+                        onChange: (e) => {
+                          setPillar(e.target.value);
+                          markDirty();
+                        },
+                        className: "w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500",
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "d1", children: "D1 (d1l-*)" }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "d2", children: "D2 (d2l-*)" }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "d3", children: "D3 (d3l-*)" })
+                        ]
+                      }
+                    )
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-3", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "lookup-key-name", className: "text-slate-400 block", children: "后缀标识符" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        "button",
+                        {
+                          type: "button",
+                          onClick: () => {
+                            setRawKeyName(generateIdSuffix());
+                            markDirty();
+                          },
+                          className: "flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300 cursor-pointer",
+                          title: "生成新 ULID 标识",
+                          children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(Dna, { className: "h-3 w-3" }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "ULID" })
+                          ]
+                        }
+                      )
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "input",
+                      {
+                        id: "lookup-key-name",
+                        type: "text",
+                        value: rawKeyName,
+                        onChange: (e) => {
+                          setRawKeyName(e.target.value);
+                          markDirty();
+                        },
+                        placeholder: "例如: core-safety 或点击 ULID",
+                        className: "w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs"
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "lookup-desc", className: "text-slate-400 block mb-1", children: "描述说明" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "input",
+                      {
+                        id: "lookup-desc",
+                        type: "text",
+                        value: description,
+                        onChange: (e) => {
+                          setDescription(e.target.value);
+                          markDirty();
+                        },
+                        placeholder: "导出该模块的基础协议与守则",
+                        className: "w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                      }
+                    )
+                  ] })
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-3 text-xs", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 text-slate-300 font-semibold", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(Filter, { className: "h-4 w-4 text-indigo-400" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "选择器构建器 (Selectors Builder)" })
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex rounded bg-slate-950 p-0.5 border border-slate-800 text-[11px]", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => setSelectorMode("id"),
+                        className: `px-2 py-0.5 rounded transition-colors ${selectorMode === "id" ? "bg-indigo-600 text-white" : "text-slate-400"}`,
+                        children: "按原子 ID 选取"
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => setSelectorMode("domain"),
+                        className: `px-2 py-0.5 rounded transition-colors ${selectorMode === "domain" ? "bg-indigo-600 text-white" : "text-slate-400"}`,
+                        children: "按 Domain 领域查询"
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => setSelectorMode("ref"),
+                        className: `px-2 py-0.5 rounded transition-colors ${selectorMode === "ref" ? "bg-indigo-600 text-white" : "text-slate-400"}`,
+                        children: "跨 Lookup 引用"
+                      }
+                    )
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
+                  selectorMode === "id" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 flex gap-2", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "select",
+                      {
+                        value: queryIdInput,
+                        onChange: (e) => setQueryIdInput(e.target.value),
+                        className: "flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500",
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: "", children: [
+                            "-- 点选当前包内的 ",
+                            pillar.toUpperCase(),
+                            " 原子 --"
+                          ] }),
+                          currentPillarAtoms.map((a) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: a.id, children: a.id }, a.id))
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "input",
+                      {
+                        type: "text",
+                        value: queryIdInput,
+                        onChange: (e) => setQueryIdInput(e.target.value),
+                        placeholder: "或直接手填 ID",
+                        className: "w-40 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                      }
+                    )
+                  ] }),
+                  selectorMode === "domain" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "input",
                     {
-                      className: "text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded",
+                      type: "text",
+                      value: domainInput,
+                      onChange: (e) => setDomainInput(e.target.value),
+                      placeholder: "输入领域标签，用逗号分隔，支持 - 排除，如: reasoning, -experimental",
+                      className: "flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                    }
+                  ),
+                  selectorMode === "ref" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "input",
+                      {
+                        type: "text",
+                        list: "lookup-ref-candidates",
+                        value: refInput,
+                        onChange: (e) => setRefInput(e.target.value),
+                        placeholder: "输入或选择引用的另一个 lookup，如 pkg::d1l-name",
+                        className: "flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("datalist", { id: "lookup-ref-candidates", children: candidateLookupRefs.map((refKey) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: refKey }, refKey)) })
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    Button,
+                    {
+                      size: "sm",
+                      onClick: handleAddSelector,
+                      className: "h-7 text-xs flex items-center gap-1 shrink-0",
                       children: [
-                        "#",
-                        d
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5" }),
+                        " 追加规则"
                       ]
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5 pt-2 border-t border-slate-800/60", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[11px] text-slate-400", children: [
+                    "已配置规则 (",
+                    selectors.length,
+                    " 项):"
+                  ] }),
+                  selectors.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-slate-600 text-center py-6", children: "尚未配置任何规则，请在上方添加选择器。" }) : selectors.map((sel, idx) => {
+                    var _a2, _b2;
+                    return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "div",
+                      {
+                        className: "flex items-center justify-between p-2 rounded border border-slate-800 bg-slate-950/80 text-xs",
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-600 font-bold", children: [
+                              idx + 1,
+                              "."
+                            ] }),
+                            ((_a2 = sel.query) == null ? void 0 : _a2.id) && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-indigo-300", children: [
+                              /* @__PURE__ */ jsxRuntimeExports.jsx(Box, { className: "h-3 w-3 text-slate-400" }),
+                              "精确 ID: ",
+                              /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: sel.query.id })
+                            ] }),
+                            ((_b2 = sel.query) == null ? void 0 : _b2.domain) && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-emerald-300", children: [
+                              /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { className: "h-3 w-3 text-slate-400" }),
+                              "Domain 匹配: ",
+                              /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: JSON.stringify(sel.query.domain) })
+                            ] }),
+                            sel.ref && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-purple-300", children: [
+                              /* @__PURE__ */ jsxRuntimeExports.jsx(Link2, { className: "h-3 w-3 text-slate-400" }),
+                              "跨接口引用: ",
+                              /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: sel.ref })
+                            ] })
+                          ] }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(
+                            "button",
+                            {
+                              type: "button",
+                              onClick: () => handleRemoveSelector(idx),
+                              className: "text-slate-500 hover:text-rose-400 p-1 rounded",
+                              children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3.5 w-3.5" })
+                            }
+                          )
+                        ]
+                      },
+                      `${JSON.stringify(sel)}-${idx}`
+                    );
+                  })
+                ] })
+              ] })
+            ] }),
+            secondary: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "h-full flex flex-col bg-slate-900/30 overflow-hidden", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-3.5 py-2 border-b border-slate-800 bg-slate-950/70 shrink-0", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1 bg-slate-950 border border-slate-800 p-0.5 rounded text-[11px]", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => setRightView("atoms"),
+                      className: `flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${rightView === "atoms" ? "bg-indigo-600 text-white font-medium shadow-sm" : "text-slate-400 hover:text-white"}`,
+                      title: "查看一阶命中原子",
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-3 w-3" }),
+                        " 命中原子"
+                      ]
+                    }
+                  ),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => setRightView("graph"),
+                      className: `flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${rightView === "graph" ? "bg-indigo-600 text-white font-medium shadow-sm" : "text-slate-400 hover:text-white"}`,
+                      title: "查看以此 Lookup 为根的级联依赖拓扑图",
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(Network, { className: "h-3 w-3" }),
+                        " 白板拓扑"
+                      ]
+                    }
+                  ),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => setRightView("prompt"),
+                      className: `flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${rightView === "prompt" ? "bg-indigo-600 text-white font-medium shadow-sm" : "text-slate-400 hover:text-white"}`,
+                      title: "查看此接口传递依赖排序生成的切片 Prompt 文本",
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(CodeXml, { className: "h-3 w-3" }),
+                        " 切片编译"
+                      ]
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-2", children: evaluating ? /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-indigo-400 text-[11px]", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "h-3 w-3 animate-spin" }),
+                  " 计算中..."
+                ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[11px] text-slate-400", children: [
+                  "一阶命中: ",
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { className: "text-emerald-400", children: matchedAtoms.length })
+                ] }) })
+              ] }),
+              evalError && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "m-3 mb-0 rounded bg-rose-950/60 border border-rose-800/80 p-2.5 text-xs text-rose-300 flex items-center gap-1.5 shrink-0 font-sans", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-4 w-4 shrink-0" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: evalError })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 overflow-hidden", children: [
+                rightView === "atoms" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full overflow-y-auto p-4 space-y-2.5", children: matchedAtoms.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center justify-center h-full text-xs text-slate-600 font-mono py-12", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Box, { className: "h-8 w-8 text-slate-700 mb-2" }),
+                  "当前规则在组件库中未命中任何有效原子"
+                ] }) : matchedAtoms.map((atom) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "div",
+                  {
+                    className: "rounded border border-slate-800 bg-slate-950/80 p-2.5 text-xs hover:border-indigo-500/50 transition-colors shadow-sm",
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1.5", children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 truncate", children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                            Badge,
+                            {
+                              variant: atom.type === "d1" ? "d1" : atom.type === "d2" ? "d2" : atom.type === "d3" ? "d3" : "kernel",
+                              className: "text-[10px] uppercase font-bold px-1.5 py-0",
+                              children: [
+                                atom.type,
+                                typeof atom.priority === "number" ? `-P${atom.priority}` : ""
+                              ]
+                            }
+                          ),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200 truncate", children: atom.id }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-slate-500 truncate", children: [
+                            "@",
+                            atom.package || "全局"
+                          ] })
+                        ] }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                          "button",
+                          {
+                            type: "button",
+                            onClick: () => {
+                              openTab({
+                                id: `atom:${atom.id}`,
+                                type: "atom",
+                                title: atom.id,
+                                closable: true,
+                                atomId: atom.id
+                              });
+                            },
+                            className: "flex items-center gap-1 text-[11px] text-slate-400 hover:text-indigo-300 hover:bg-slate-800 px-2 py-0.5 rounded transition-colors shrink-0",
+                            title: "在新 Tab 中打开编辑该原子",
+                            children: [
+                              /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "h-3 w-3" }),
+                              " 打开编辑"
+                            ]
+                          }
+                        )
+                      ] }),
+                      atom.domain && atom.domain.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-1 mb-1.5", children: atom.domain.map((d) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        "span",
+                        {
+                          className: "text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded",
+                          children: [
+                            "#",
+                            d
+                          ]
+                        },
+                        d
+                      )) }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[11px] text-slate-400 line-clamp-2 bg-slate-900/60 p-1.5 rounded font-sans leading-relaxed", children: atom.preview || "（原子内容为空）" })
+                    ]
+                  },
+                  atom.id
+                )) }),
+                rightView === "graph" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full w-full bg-slate-950", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  TopologyGraph,
+                  {
+                    lookupAdhoc: {
+                      key: fullLookupKey,
+                      selectors,
+                      package: pkgName,
+                      pillar
                     },
-                    d
-                  )) }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[11px] text-slate-400 line-clamp-2 bg-slate-900/60 p-1.5 rounded font-sans leading-relaxed", children: atom.preview || "（原子内容为空）" })
-                ]
-              },
-              atom.id
-            )) }),
-            rightView === "graph" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full w-full bg-slate-950", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-              TopologyGraph,
-              {
-                lookupAdhoc: {
-                  key: fullLookupKey,
-                  selectors,
-                  package: pkgName,
-                  pillar
-                },
-                onSelectAtom: (atomId) => {
-                  openTab({
-                    id: `atom:${atomId}`,
-                    type: "atom",
-                    title: atomId,
-                    closable: true,
-                    atomId
-                  });
-                },
-                onSelectLookup: (lookupKey2) => {
-                  openTab({
-                    id: `lookup:${lookupKey2}`,
-                    type: "lookup",
-                    title: lookupKey2.split("::").pop() || lookupKey2,
-                    closable: true,
-                    lookupKey: lookupKey2
-                  });
-                }
-              }
-            ) }),
-            rightView === "prompt" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full p-3 bg-slate-950", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-              PromptViewer,
-              {
-                value: slicePrompt,
-                chunks: sliceChunks,
-                profile: sliceProfile,
-                onSelectAtom: (atomId) => {
-                  openTab({
-                    id: `atom:${atomId}`,
-                    type: "atom",
-                    title: atomId,
-                    closable: true,
-                    atomId
-                  });
-                },
-                onOpenLookup: (lookupKey2) => {
-                  openTab({
-                    id: `lookup:${lookupKey2}`,
-                    type: "lookup",
-                    title: lookupKey2.split("::").pop() || lookupKey2,
-                    closable: true,
-                    lookupKey: lookupKey2
-                  });
-                },
-                onReload: () => runLiveDebug()
-              }
-            ) })
-          ] })
-        ] })
-      }
-    ) })
-  ] });
+                    onSelectAtom: (atomId) => {
+                      openTab({
+                        id: `atom:${atomId}`,
+                        type: "atom",
+                        title: atomId,
+                        closable: true,
+                        atomId
+                      });
+                    },
+                    onSelectLookup: (lookupKey2) => {
+                      openTab({
+                        id: `lookup:${lookupKey2}`,
+                        type: "lookup",
+                        title: lookupKey2.split("::").pop() || lookupKey2,
+                        closable: true,
+                        lookupKey: lookupKey2
+                      });
+                    }
+                  }
+                ) }),
+                rightView === "prompt" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full p-3 bg-slate-950", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  PromptViewer,
+                  {
+                    value: slicePrompt,
+                    chunks: sliceChunks,
+                    profile: sliceProfile,
+                    onSelectAtom: (atomId) => {
+                      openTab({
+                        id: `atom:${atomId}`,
+                        type: "atom",
+                        title: atomId,
+                        closable: true,
+                        atomId
+                      });
+                    },
+                    onOpenLookup: (lookupKey2) => {
+                      openTab({
+                        id: `lookup:${lookupKey2}`,
+                        type: "lookup",
+                        title: lookupKey2.split("::").pop() || lookupKey2,
+                        closable: true,
+                        lookupKey: lookupKey2
+                      });
+                    },
+                    onReload: () => runLiveDebug()
+                  }
+                ) })
+              ] })
+            ] })
+          }
+        ) })
+      ]
+    }
+  );
 }
 function ManifestEditorTab({
   manifestName,
@@ -2767,18 +3085,20 @@ function ManifestEditorTab({
 }) {
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const openTab = useIdeStore((state) => state.openTab);
+  const replaceTab = useIdeStore((state) => state.replaceTab);
   const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
   const getSnapshot = useIdeStore((state) => state.getSnapshot);
   const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
   const preferences = useIdeStore((state) => state.preferences);
+  const isDraft = !manifestName || manifestName.startsWith("draft_");
   const [rightView, setRightView] = reactExports.useState(
     (preferences == null ? void 0 : preferences.defaultRightPanel) === "prompt" ? "prompt" : "graph"
   );
   const [showRightPanel, setShowRightPanel] = reactExports.useState(true);
-  const [manifestIdentifier, setManifestIdentifier] = reactExports.useState(manifestName);
+  const [manifestIdentifier, setManifestIdentifier] = reactExports.useState(isDraft ? "" : manifestName);
   const [isReady, setIsReady] = reactExports.useState(false);
   const [name, setName] = reactExports.useState(
-    manifestName ? manifestName.split("/").pop() || manifestName : "new_agent"
+    !isDraft && manifestName ? manifestName.split("/").pop() || manifestName : ""
   );
   const [version, setVersion] = reactExports.useState("1.0.0");
   const [description, setDescription] = reactExports.useState("");
@@ -2961,8 +3281,9 @@ function ManifestEditorTab({
     setItems(items.filter((i) => i.id !== id));
     markDirty();
   };
-  const handleSaveManifest = async () => {
-    if (!name.trim() || items.length === 0) return;
+  const handleSaveManifest = reactExports.useCallback(async () => {
+    const targetIdentifier = manifestIdentifier.trim() || name.trim();
+    if (!name.trim() || !targetIdentifier || items.length === 0) return;
     setIsSaving(true);
     setSaveStatus("正在保存...");
     try {
@@ -2971,7 +3292,7 @@ function ManifestEditorTab({
         version: version.trim(),
         description: description.trim(),
         imports: items.map((i) => ({ lookup: i.lookup })),
-        identifier: manifestIdentifier || name.trim(),
+        identifier: targetIdentifier,
         workspace_path: workspacePath
       };
       if (Object.keys(overrides).length > 0) {
@@ -2987,9 +3308,7 @@ function ManifestEditorTab({
         setSaveStatus("已保存");
         setIsModified(false);
         setTabDirty(tabId, false);
-        if (!manifestIdentifier) {
-          setManifestIdentifier(name.trim());
-        }
+        setManifestIdentifier(targetIdentifier);
         setInitialSnapshot({
           name: name.trim(),
           version: version.trim(),
@@ -2999,6 +3318,16 @@ function ManifestEditorTab({
         });
         clearSnapshot(tabId);
         onSaved == null ? void 0 : onSaved();
+        if (isDraft) {
+          replaceTab(tabId, {
+            id: `manifest:${targetIdentifier}`,
+            type: "manifest",
+            title: name.trim(),
+            closable: true,
+            manifestName: targetIdentifier,
+            workspacePath
+          });
+        }
         setTimeout(() => setSaveStatus(""), 2500);
       } else {
         setSaveStatus(`保存失败: ${data.detail}`);
@@ -3008,7 +3337,31 @@ function ManifestEditorTab({
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [
+    manifestIdentifier,
+    name,
+    items,
+    version,
+    description,
+    workspacePath,
+    overrides,
+    tabId,
+    setTabDirty,
+    clearSnapshot,
+    onSaved,
+    isDraft,
+    replaceTab
+  ]);
+  reactExports.useEffect(() => {
+    const handleGlobalSave = () => {
+      const activeTabId = useIdeStore.getState().activeTabId;
+      if (activeTabId === tabId && isModified && !isSaving) {
+        handleSaveManifest();
+      }
+    };
+    window.addEventListener("aca:save-active-tab", handleGlobalSave);
+    return () => window.removeEventListener("aca:save-active-tab", handleGlobalSave);
+  }, [tabId, isModified, isSaving, handleSaveManifest]);
   const handleResetManifest = () => {
     if (!isModified) return;
     if (!window.confirm("确定要放弃所有未保存的修改并恢复吗？")) return;
@@ -3058,9 +3411,26 @@ function ManifestEditorTab({
     {
       className: `h-full flex flex-col p-4 space-y-3 overflow-y-auto ${isFullWidth ? "max-w-4xl mx-auto w-full" : ""}`,
       children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-2 text-xs font-mono", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-3 gap-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-2 text-xs font-mono", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-4 gap-2", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "manifest-name-input", className: "text-slate-400 block mb-1", children: "名称" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "manifest-id-input", className: "text-slate-400 block mb-1", children: "清单标识符 / 路径" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "input",
+              {
+                id: "manifest-id-input",
+                type: "text",
+                value: manifestIdentifier,
+                onChange: (e) => {
+                  setManifestIdentifier(e.target.value);
+                  markDirty();
+                },
+                placeholder: "例如: smart-contract-auditor",
+                className: "w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "manifest-name-input", className: "text-slate-400 block mb-1", children: "显示名称" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
               "input",
               {
@@ -3071,6 +3441,7 @@ function ManifestEditorTab({
                   setName(e.target.value);
                   markDirty();
                 },
+                placeholder: "智能体装配名称",
                 className: "w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
               }
             )
@@ -3173,10 +3544,10 @@ function ManifestEditorTab({
             /* @__PURE__ */ jsxRuntimeExports.jsx(Box, { className: "h-8 w-8 text-slate-700 mb-2" }),
             "尚未添加任何 Lookup 接口。"
           ] }) : [
-            { title: "D3 控制基质 (Directives)", key: "d3", variant: "d3" },
-            { title: "D2 程序基质 (Skills & ISA)", key: "d2", variant: "d2" },
-            { title: "D1 陈述基质 (Knowledge & Memory)", key: "d1", variant: "d1" },
-            { title: "其它接口 / 未识别基质", key: "other", variant: "outline" }
+            { title: "D3", key: "d3", variant: "d3" },
+            { title: "D2", key: "d2", variant: "d2" },
+            { title: "D1", key: "d1", variant: "d1" },
+            { title: "其它", key: "other", variant: "outline" }
           ].map((group) => {
             const groupItems = items.filter((item) => {
               const p = (item.pillar || (item.lookup.includes("::") ? item.lookup.split("::")[1].slice(0, 2) : item.lookup.slice(0, 2))).toLowerCase();
@@ -3483,7 +3854,7 @@ function EmptyTab({
               /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-4 w-4" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "新建原子" })
             ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] text-slate-500 font-sans", children: "向组件包追加 D1 / D2 / D3 规范" })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] text-slate-500 font-sans", children: "向组件包添加 D1 / D2 / D3 原子" })
           ]
         }
       )
@@ -3927,50 +4298,6 @@ function Modal({
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-4", children })
   ] }) });
 }
-function CreateManifestModal({
-  isOpen,
-  onClose,
-  newManName,
-  setNewManName,
-  newManWs,
-  setNewManWs,
-  manifestPaths,
-  onSubmit
-}) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(Modal, { isOpen, onClose, title: "新建蓝图草稿", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-man-name", className: "block text-xs font-mono text-slate-400 mb-1", children: "蓝图名称 (可选带目录层级)" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "input",
-        {
-          id: "modal-man-name",
-          type: "text",
-          value: newManName,
-          onChange: (e) => setNewManName(e.target.value),
-          className: "w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500",
-          placeholder: "例如: project_a/main_agent"
-        }
-      )
-    ] }),
-    manifestPaths && manifestPaths.length > 1 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-man-ws", className: "block text-xs font-mono text-slate-400 mb-1", children: "选择工作区 (Workspace)" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "select",
-        {
-          id: "modal-man-ws",
-          value: newManWs,
-          onChange: (e) => setNewManWs(e.target.value),
-          className: "w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500",
-          children: manifestPaths.map((p) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: p, children: p }, p))
-        }
-      )
-    ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-2 flex justify-end gap-2", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "ghost", onClick: onClose, children: "取消" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: onSubmit, disabled: !newManName.trim(), children: "创建草稿" })
-    ] })
-  ] }) });
-}
 function CreatePackageModal({
   isOpen,
   onClose,
@@ -3981,7 +4308,13 @@ function CreatePackageModal({
   libraryPaths,
   onSubmit
 }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(Modal, { isOpen, onClose, title: "新建组件包 (Package)", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
+  const handleSubmit = (e) => {
+    e == null ? void 0 : e.preventDefault();
+    if (newPkgName.trim()) {
+      onSubmit();
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Modal, { isOpen, onClose, title: "新建组件包 (Package)", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleSubmit, className: "space-y-4", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-pkg-name", className: "block text-xs font-mono text-slate-400 mb-1", children: "包名称 (需在全局范围内唯一)" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -4010,8 +4343,8 @@ function CreatePackageModal({
       )
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-2 flex justify-end gap-2", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "ghost", onClick: onClose, children: "取消" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: onSubmit, disabled: !newPkgName.trim(), children: "确定创建" })
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { type: "button", variant: "ghost", onClick: onClose, children: "取消" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { type: "submit", disabled: !newPkgName.trim(), children: "确定创建" })
     ] })
   ] }) });
 }
@@ -4250,12 +4583,20 @@ function PackageExplorer({
 }) {
   const explorerExpanded = useIdeStore((state) => state.explorerExpanded);
   const toggleExplorerExpanded = useIdeStore((state) => state.toggleExplorerExpanded);
+  const sortedPackages = [...packages].sort((a, b) => a.name.localeCompare(b.name));
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-amber-800/40 bg-amber-950/20 p-2 font-mono text-xs", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded border border-slate-800/80 bg-slate-900/40 p-2 font-mono text-xs", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "kernel", className: "text-[9px] uppercase font-bold px-1.5 py-0", children: "KERNEL" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-amber-200 text-[11px]", children: "核心协议" })
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            Badge,
+            {
+              variant: "outline",
+              className: "text-[9px] uppercase font-bold px-1.5 py-0 text-amber-400/90 border-amber-700/40 bg-amber-950/20",
+              children: "KERNEL"
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium text-slate-400 text-[11px]", children: "核心协议" })
         ] }),
         kernel && onDeleteAtom && /* @__PURE__ */ jsxRuntimeExports.jsx(
           "button",
@@ -4273,21 +4614,21 @@ function PackageExplorer({
         {
           type: "button",
           onClick: (e) => onSelectAtom == null ? void 0 : onSelectAtom("kernel", e),
-          className: "w-full flex items-center justify-between px-2 py-1.5 rounded bg-slate-900/80 border border-amber-900/40 hover:border-amber-500/60 hover:text-amber-100 transition-colors text-slate-300 text-left cursor-pointer",
+          className: "w-full flex items-center justify-between px-2 py-1 rounded bg-slate-950/60 border border-slate-800 hover:border-slate-700 hover:text-slate-100 transition-colors text-slate-300 text-left cursor-pointer",
           title: "点击打开编辑 Kernel 协议",
           children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate font-semibold", children: "kernel.md" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-amber-400/80", children: "已就绪" })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate font-medium", children: "kernel" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500", children: "已就绪" })
           ]
         }
       ) : /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5 pt-0.5", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[11px] text-amber-300/80", children: "当前工作区缺少 kernel.md 协议" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[11px] text-slate-400", children: "当前工作区缺少 kernel 协议" }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs(
           "button",
           {
             type: "button",
             onClick: onCreateKernel,
-            className: "w-full py-1 px-2 rounded bg-amber-600/30 hover:bg-amber-600/50 border border-amber-500/50 text-amber-200 text-[11px] flex items-center justify-center gap-1 font-semibold transition-colors cursor-pointer",
+            className: "w-full py-1 px-2 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-[11px] flex items-center justify-center gap-1 font-medium transition-colors cursor-pointer",
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5" }),
               " 初始化 Kernel"
@@ -4296,7 +4637,7 @@ function PackageExplorer({
         )
       ] })
     ] }),
-    packages.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "py-6 text-center text-xs font-mono text-slate-500", children: "暂无组件包" }) : packages.map((pkg) => {
+    sortedPackages.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "py-6 text-center text-xs font-mono text-slate-500", children: "暂无组件包" }) : sortedPackages.map((pkg) => {
       var _a;
       const pkgKey = `pkg:${pkg.name}`;
       const isExp = explorerExpanded[pkgKey] === true;
@@ -4349,7 +4690,7 @@ function PackageExplorer({
                     "button",
                     {
                       type: "button",
-                      onClick: () => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}`),
+                      onClick: () => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}:public_${Date.now()}`),
                       className: "text-slate-400 hover:text-emerald-400 p-0.5 rounded cursor-pointer",
                       title: "新建公开导出接口",
                       children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
@@ -4399,7 +4740,7 @@ function PackageExplorer({
                     "button",
                     {
                       type: "button",
-                      onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}`, e),
+                      onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}:private_${Date.now()}`, e),
                       className: "text-slate-400 hover:text-indigo-400 p-0.5 rounded cursor-pointer",
                       title: "新建内部查找",
                       children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
@@ -4451,7 +4792,7 @@ function PackageExplorer({
                       type: "button",
                       onClick: (e) => {
                         e.stopPropagation();
-                        onSelectAtom == null ? void 0 : onSelectAtom(`draft:${pkg.name}`, e);
+                        onSelectAtom == null ? void 0 : onSelectAtom(`draft:${pkg.name}:${Date.now()}`, e);
                       },
                       className: "text-slate-400 hover:text-indigo-400 p-0.5 rounded transition-colors cursor-pointer",
                       title: "新建原子组件",
@@ -4501,7 +4842,7 @@ function PackageExplorer({
   ] });
 }
 function App() {
-  const ideStore = useIdeStore();
+  const ideStore2 = useIdeStore();
   const wsStore = useWorkspaceStore();
   const [manifests, setManifests] = reactExports.useState([]);
   const [packages, setPackages] = reactExports.useState([]);
@@ -4510,9 +4851,6 @@ function App() {
   const [isCreatePkgOpen, setIsCreatePkgOpen] = reactExports.useState(false);
   const [newPkgName, setNewPkgName] = reactExports.useState("");
   const [newPkgWs, setNewPkgWs] = reactExports.useState("");
-  const [isCreateManOpen, setIsCreateManOpen] = reactExports.useState(false);
-  const [newManName, setNewManName] = reactExports.useState("");
-  const [newManWs, setNewManWs] = reactExports.useState("");
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = reactExports.useState(false);
   const [isWsDropdownOpen, setIsWsDropdownOpen] = reactExports.useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = reactExports.useState(false);
@@ -4520,8 +4858,8 @@ function App() {
   const [lintErrors, setLintErrors] = reactExports.useState(0);
   const [lintWarnings, setLintWarnings] = reactExports.useState(0);
   const [lintIssues, setLintIssues] = reactExports.useState([]);
-  const sidebarWidth = ideStore.sidebarWidth;
-  const setSidebarWidth = ideStore.setSidebarWidth;
+  const sidebarWidth = ideStore2.sidebarWidth;
+  const setSidebarWidth = ideStore2.setSidebarWidth;
   const [isDraggingSidebar, setIsDraggingSidebar] = reactExports.useState(false);
   const handleSidebarPointerDown = (e) => {
     e.preventDefault();
@@ -4585,7 +4923,10 @@ function App() {
     });
     const handleGlobalKeyDown = (e) => {
       const isMod = e.metaKey || e.ctrlKey;
-      if (isMod && e.key.toLowerCase() === "p") {
+      if (isMod && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("aca:save-active-tab"));
+      } else if (isMod && e.key.toLowerCase() === "p") {
         e.preventDefault();
         setIsCommandPaletteOpen((prev) => !prev);
       } else if (isMod && e.key.toLowerCase() === "t") {
@@ -4602,7 +4943,7 @@ function App() {
       } else if (isMod && e.key === "[") {
         e.preventDefault();
         useIdeStore.getState().goBack();
-      } else if (isMod && e.key === "]") {
+      } else if (e.key === "]") {
         e.preventDefault();
         useIdeStore.getState().goForward();
       } else if (e.altKey && e.key === "ArrowLeft") {
@@ -4622,14 +4963,14 @@ function App() {
   const handleSelectWorkspace = async (wsId) => {
     setIsWsDropdownOpen(false);
     await wsStore.switchWorkspace(wsId);
-    ideStore.setCurrentWorkspace(wsId);
+    ideStore2.setCurrentWorkspace(wsId);
     fetchAssets();
     fetchLintReport();
   };
   const handleOpenManifestTab = (mName, e, opts) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
     const isPreview = !newTab;
-    ideStore.openTab(
+    ideStore2.openTab(
       {
         id: `manifest:${mName}`,
         type: "manifest",
@@ -4644,9 +4985,14 @@ function App() {
   const handleOpenAtomTab = (atomId, e, opts) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
     const isDraft = atomId.startsWith("draft:");
-    const tabTitle = isDraft ? `新建原子 (${atomId.replace("draft:", "")})` : atomId;
+    let tabTitle = atomId;
+    if (isDraft) {
+      const parts = atomId.split(":");
+      const targetPkg = parts[1] || "";
+      tabTitle = targetPkg === "kernel" ? "初始化 Kernel" : `新建原子 (${targetPkg || "草稿"})`;
+    }
     const isPreview = isDraft ? false : !newTab;
-    ideStore.openTab(
+    ideStore2.openTab(
       {
         id: `atom:${atomId}`,
         type: "atom",
@@ -4662,7 +5008,7 @@ function App() {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
     const isDraft = lookupKey.startsWith("draft:");
     const isPreview = isDraft ? false : !newTab;
-    ideStore.openTab(
+    ideStore2.openTab(
       {
         id: `lookup:${lookupKey}`,
         type: "lookup",
@@ -4683,7 +5029,7 @@ function App() {
       );
       if (!confirmDiscard) return;
     }
-    ideStore.closeTab(tab.id);
+    ideStore2.closeTab(tab.id);
   };
   const handleProblemClick = (issue) => {
     const text = `${issue.code} ${issue.message}`;
@@ -4706,54 +5052,48 @@ function App() {
   const handleCreateNewAtomDraft = () => {
     var _a;
     const defaultPkg = ((_a = packages[0]) == null ? void 0 : _a.name) || "";
-    ideStore.openTab(
+    const draftId = `draft:${defaultPkg}:${Date.now()}`;
+    ideStore2.openTab(
       {
-        id: `atom:draft_${Date.now()}`,
+        id: `atom:${draftId}`,
         type: "atom",
-        title: "新建原子草稿",
+        title: `新建原子 (${defaultPkg || "草稿"})`,
         closable: true,
-        atomId: `draft:${defaultPkg}`
+        atomId: draftId
       },
       { newTab: true }
     );
   };
   const handleCreateKernelDraft = () => {
-    ideStore.openTab(
+    const draftId = `draft:kernel:${Date.now()}`;
+    ideStore2.clearSnapshot(`atom:${draftId}`);
+    ideStore2.openTab(
       {
-        id: "atom:draft:kernel",
+        id: `atom:${draftId}`,
         type: "atom",
         title: "初始化 Kernel 协议",
         closable: true,
-        atomId: "draft:kernel"
+        atomId: draftId
       },
       { newTab: true }
     );
   };
   const handleCreateNewManifest = () => {
-    var _a;
-    setNewManName(`未命名蓝图_${Date.now().toString().slice(-4)}`);
-    const activeWs = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
-    setNewManWs(((_a = activeWs == null ? void 0 : activeWs.manifest_paths) == null ? void 0 : _a[0]) || "");
-    setIsCreateManOpen(true);
-  };
-  const submitCreateManifest = () => {
-    if (!newManName.trim()) return;
-    setIsCreateManOpen(false);
-    ideStore.openTab(
+    const draftId = `draft_${Date.now()}`;
+    ideStore2.openTab(
       {
-        id: `manifest:${newManName.trim()}`,
+        id: `manifest:${draftId}`,
         type: "manifest",
-        title: newManName.trim(),
+        title: "新建清单",
         closable: true,
-        manifestName: "",
-        workspacePath: newManWs || void 0
+        manifestName: draftId
       },
       { newTab: true }
     );
   };
   const handleCreateEmptyTab = () => {
     const newTabId = `empty_${Date.now()}`;
-    ideStore.openTab(
+    ideStore2.openTab(
       {
         id: newTabId,
         type: "empty",
@@ -4772,7 +5112,7 @@ function App() {
       });
       if (res.ok) {
         fetchAssets();
-        ideStore.closeTab(`manifest:${mName}`);
+        ideStore2.closeTab(`manifest:${mName}`);
       } else {
         const data = await res.json();
         alert(`删除失败: ${data.detail}`);
@@ -4787,11 +5127,11 @@ function App() {
   }, [fetchAssets, fetchLintReport]);
   const handleTabDeleted = reactExports.useCallback(
     (tabId) => {
-      ideStore.closeTab(tabId);
+      ideStore2.closeTab(tabId);
       fetchAssets();
       fetchLintReport();
     },
-    [ideStore, fetchAssets, fetchLintReport]
+    [ideStore2, fetchAssets, fetchLintReport]
   );
   const handleCreatePackage = reactExports.useCallback(() => {
     var _a;
@@ -4846,7 +5186,7 @@ function App() {
         method: "DELETE"
       }).then(async (res) => {
         if (res.ok) {
-          ideStore.closeTab(`lookup:${lookupKey}`);
+          ideStore2.closeTab(`lookup:${lookupKey}`);
           fetchAssets();
           fetchLintReport();
         } else {
@@ -4855,7 +5195,7 @@ function App() {
         }
       }).catch(() => alert("删除接口网络异常"));
     },
-    [ideStore, fetchAssets, fetchLintReport]
+    [ideStore2, fetchAssets, fetchLintReport]
   );
   const handleDeleteAtom = reactExports.useCallback(
     (atomId, e) => {
@@ -4865,7 +5205,11 @@ function App() {
         method: "DELETE"
       }).then(async (res) => {
         if (res.ok) {
-          ideStore.closeTab(`atom:${atomId}`);
+          ideStore2.closeTab(`atom:${atomId}`);
+          ideStore2.clearSnapshot(`atom:${atomId}`);
+          if (atomId === "kernel") {
+            ideStore2.clearSnapshot("atom:draft:kernel");
+          }
           fetchAssets();
           fetchLintReport();
         } else {
@@ -4874,11 +5218,11 @@ function App() {
         }
       }).catch(() => alert("删除原子网络异常"));
     },
-    [ideStore, fetchAssets, fetchLintReport]
+    [ideStore2, fetchAssets, fetchLintReport]
   );
-  const activeTab = ideStore.tabs.find((t) => t.id === ideStore.activeTabId);
-  const canGoBack = ideStore.historyIndex > 0;
-  const canGoForward = ideStore.historyIndex < ideStore.navigationHistory.length - 1;
+  const activeTab = ideStore2.tabs.find((t) => t.id === ideStore2.activeTabId);
+  const canGoBack = ideStore2.historyIndex > 0;
+  const canGoForward = ideStore2.historyIndex < ideStore2.navigationHistory.length - 1;
   const currentWsObj = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-screen flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans select-none", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-1 overflow-hidden", children: [
@@ -4888,10 +5232,14 @@ function App() {
           {
             type: "button",
             onClick: () => {
-              if (!ideStore.sidebarOpen) ideStore.setSidebarOpen(true);
-              ideStore.setActiveSidebarView("explorer");
+              if (ideStore2.sidebarOpen && ideStore2.activeSidebarView === "explorer") {
+                ideStore2.setSidebarOpen(false);
+              } else {
+                ideStore2.setSidebarOpen(true);
+                ideStore2.setActiveSidebarView("explorer");
+              }
             },
-            className: `p-2 rounded-lg transition-colors cursor-pointer ${ideStore.sidebarOpen && ideStore.activeSidebarView === "explorer" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
+            className: `p-2 rounded-lg transition-colors cursor-pointer ${ideStore2.sidebarOpen && ideStore2.activeSidebarView === "explorer" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
             title: "资源视图",
             children: /* @__PURE__ */ jsxRuntimeExports.jsx(FolderTree, { className: "h-5 w-5" })
           }
@@ -4901,20 +5249,20 @@ function App() {
           {
             type: "button",
             onClick: () => {
-              ideStore.openTab({
+              ideStore2.openTab({
                 id: "system:settings",
                 type: "settings",
                 title: "设置",
                 closable: true
               });
             },
-            className: `mt-auto p-2 rounded-lg transition-colors cursor-pointer ${ideStore.activeTabId === "system:settings" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
+            className: `mt-auto p-2 rounded-lg transition-colors cursor-pointer ${ideStore2.activeTabId === "system:settings" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
             title: "全局设置与工作区管理",
             children: /* @__PURE__ */ jsxRuntimeExports.jsx(Settings, { className: "h-5 w-5" })
           }
         )
       ] }),
-      ideStore.sidebarOpen && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+      ideStore2.sidebarOpen && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs(
           "aside",
           {
@@ -4930,7 +5278,7 @@ function App() {
                   "button",
                   {
                     type: "button",
-                    onClick: ideStore.toggleSidebar,
+                    onClick: ideStore2.toggleSidebar,
                     className: "text-slate-400 hover:text-white p-1 cursor-pointer",
                     title: "折叠侧边栏",
                     children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3.5 w-3.5" })
@@ -5035,7 +5383,7 @@ function App() {
               "button",
               {
                 type: "button",
-                onClick: ideStore.goBack,
+                onClick: ideStore2.goBack,
                 disabled: !canGoBack,
                 className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 transition-colors cursor-pointer",
                 title: "后退",
@@ -5046,7 +5394,7 @@ function App() {
               "button",
               {
                 type: "button",
-                onClick: ideStore.goForward,
+                onClick: ideStore2.goForward,
                 disabled: !canGoForward,
                 className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 transition-colors cursor-pointer",
                 title: "前进",
@@ -5054,17 +5402,17 @@ function App() {
               }
             )
           ] }),
-          ideStore.tabs.map((tab) => {
-            const isActive = tab.id === ideStore.activeTabId;
+          ideStore2.tabs.map((tab) => {
+            const isActive = tab.id === ideStore2.activeTabId;
             return /* @__PURE__ */ jsxRuntimeExports.jsxs(
               "div",
               {
-                onClick: () => ideStore.setActiveTab(tab.id),
-                onDoubleClick: () => ideStore.pinTab(tab.id),
+                onClick: () => ideStore2.setActiveTab(tab.id),
+                onDoubleClick: () => ideStore2.pinTab(tab.id),
                 onKeyDown: (e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    ideStore.setActiveTab(tab.id);
+                    ideStore2.setActiveTab(tab.id);
                   }
                 },
                 onAuxClick: (e) => {
@@ -5109,11 +5457,11 @@ function App() {
             }
           )
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-hidden relative", children: ideStore.tabs.map((tab) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-hidden relative", children: ideStore2.tabs.map((tab) => /* @__PURE__ */ jsxRuntimeExports.jsx(
           TabPane,
           {
             tab,
-            isActive: tab.id === ideStore.activeTabId,
+            isActive: tab.id === ideStore2.activeTabId,
             packages,
             manifestsCount: manifests.length,
             onSaved: handleTabSaved,
@@ -5124,7 +5472,7 @@ function App() {
           },
           tab.id
         )) }),
-        ideStore.bottomPanelOpen && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "h-56 border-t border-slate-800 bg-slate-900/95 flex flex-col shrink-0 font-mono text-xs", children: [
+        ideStore2.bottomPanelOpen && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "h-56 border-t border-slate-800 bg-slate-900/95 flex flex-col shrink-0 font-mono text-xs", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-3 py-1.5 border-b border-slate-800 bg-slate-950 text-slate-300", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1.5 font-bold text-indigo-400", children: [
@@ -5150,7 +5498,7 @@ function App() {
               "button",
               {
                 type: "button",
-                onClick: ideStore.toggleBottomPanel,
+                onClick: ideStore2.toggleBottomPanel,
                 className: "text-slate-400 hover:text-white p-1 cursor-pointer",
                 children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3.5 w-3.5" })
               }
@@ -5267,7 +5615,7 @@ function App() {
           "button",
           {
             type: "button",
-            onClick: ideStore.toggleBottomPanel,
+            onClick: ideStore2.toggleBottomPanel,
             className: `flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors cursor-pointer ${lintErrors > 0 ? "text-rose-400 hover:bg-rose-950/60 font-semibold" : lintWarnings > 0 ? "text-amber-400 hover:bg-amber-950/60" : "text-slate-400 hover:text-emerald-300"}`,
             children: [
               lintErrors > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-3 w-3 text-rose-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ShieldCheck, { className: "h-3 w-3 text-emerald-400" }),
@@ -5320,19 +5668,6 @@ function App() {
         setNewPkgWs,
         libraryPaths: currentWsObj == null ? void 0 : currentWsObj.library_paths,
         onSubmit: submitCreatePackage
-      }
-    ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
-      CreateManifestModal,
-      {
-        isOpen: isCreateManOpen,
-        onClose: () => setIsCreateManOpen(false),
-        newManName,
-        setNewManName,
-        newManWs,
-        setNewManWs,
-        manifestPaths: currentWsObj == null ? void 0 : currentWsObj.manifest_paths,
-        onSubmit: submitCreateManifest
       }
     ),
     /* @__PURE__ */ jsxRuntimeExports.jsx(

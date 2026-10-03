@@ -106,6 +106,33 @@ def get_workspaces(
             post_process_hook=hook,
         )
 
+    # 兼容处理：如果没有配置 workspaces 块，但顶层直接配置了 library_paths / manifest_paths
+    if not result and (
+        "library_paths" in config_data
+        or "libraries" in config_data
+        or "manifest_paths" in config_data
+        or "manifests" in config_data
+    ):
+        raw_libs = (
+            config_data.get("libraries") or config_data.get("library_paths") or []
+        )
+        lib_paths = [_expand_path(p, base_dir) for p in raw_libs]
+
+        raw_mans = (
+            config_data.get("manifests") or config_data.get("manifest_paths") or []
+        )
+        man_paths = [_expand_path(p, base_dir) for p in raw_mans]
+
+        hook = config_data.get("post_process_hook")
+        result["default"] = WorkspaceConfig(
+            id="default",
+            name="Default Workspace",
+            root=None,
+            library_paths=lib_paths,
+            manifest_paths=man_paths,
+            post_process_hook=hook,
+        )
+
     return result
 
 
@@ -129,6 +156,17 @@ def resolve_workspace(
     if workspace_name:
         if workspace_name in workspaces:
             return workspace_name, workspaces[workspace_name]
+        if workspace_name == "default" and not workspaces:
+            current_cwd = Path.cwd().resolve()
+            fallback_ws = WorkspaceConfig(
+                id="default",
+                name="Default Workspace",
+                root=current_cwd,
+                library_paths=[current_cwd],
+                manifest_paths=[current_cwd],
+                post_process_hook=None,
+            )
+            return "default", fallback_ws
         raise ValueError(f"Workspace '{workspace_name}' is not configured.")
 
     # 2. 默认工作区

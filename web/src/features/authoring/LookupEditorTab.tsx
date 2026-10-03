@@ -9,10 +9,12 @@ import { SplitPane } from '@/components/ui/split-pane';
 import type { PackageItem } from '@/features/explorer/PackageExplorer';
 import { TopologyGraph } from '@/features/graph/TopologyGraph';
 import { useIdeStore } from '@/stores/ide-store';
+import { generateIdSuffix } from '@/utils/ulid';
 import {
   AlertCircle,
   Box,
   Code2,
+  Dna,
   ExternalLink,
   Filter,
   Layers,
@@ -59,16 +61,20 @@ export function LookupEditorTab({
 }) {
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const openTab = useIdeStore((state) => state.openTab);
+  const replaceTab = useIdeStore((state) => state.replaceTab);
   const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
   const getSnapshot = useIdeStore((state) => state.getSnapshot);
+  const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
 
   const isDraft = lookupKey.startsWith('draft:');
-  const initialPkg = isDraft ? lookupKey.replace('draft:', '') : '';
+  const draftParts = isDraft ? lookupKey.split(':') : [];
+  const initialPkg = isDraft ? draftParts[1] || '' : '';
+  const initialPublic = isDraft ? !draftParts[2]?.startsWith('private') : true;
 
   // 基础元信息与就绪守卫
   const [isReady, setIsReady] = useState(false);
   const [pkgName, setPkgName] = useState(initialPkg || packages[0]?.name || '');
-  const [isPublic, setIsPublic] = useState(true);
+  const [isPublic, setIsPublic] = useState(initialPublic);
   const [pillar, setPillar] = useState<'d1' | 'd2' | 'd3'>('d1');
   const [rawKeyName, setRawKeyName] = useState('');
   const [description, setDescription] = useState('');
@@ -326,7 +332,7 @@ export function LookupEditorTab({
   };
 
   // 保存查找接口
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     const cleanSuffix = rawKeyName
       .trim()
       .toLowerCase()
@@ -356,7 +362,21 @@ export function LookupEditorTab({
         setSaveStatus('已保存');
         setIsModified(false);
         setTabDirty(tabId, false);
+        clearSnapshot(tabId);
         onSaved?.();
+
+        const fullTargetKey = isPublic
+          ? `${pkgName}::${pillar}l-${cleanSuffix}`
+          : `${pillar}l-${cleanSuffix}`;
+        if (isDraft) {
+          replaceTab(tabId, {
+            id: `lookup:${fullTargetKey}`,
+            type: 'lookup',
+            title: `${pillar}l-${cleanSuffix}`,
+            closable: true,
+            lookupKey: fullTargetKey,
+          });
+        }
         setTimeout(() => setSaveStatus(''), 2500);
       } else {
         setSaveStatus(`保存失败: ${data.detail}`);
@@ -366,7 +386,39 @@ export function LookupEditorTab({
     } finally {
       setSaving(false);
     }
+  }, [
+    rawKeyName,
+    selectors,
+    pkgName,
+    pillar,
+    isPublic,
+    description,
+    tabId,
+    setTabDirty,
+    clearSnapshot,
+    onSaved,
+    isDraft,
+    replaceTab,
+  ]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      handleSave();
+    }
   };
+
+  // 监听全局保存总线 (Ctrl+S / Cmd+S)
+  useEffect(() => {
+    const handleGlobalSave = () => {
+      const activeTabId = useIdeStore.getState().activeTabId;
+      if (activeTabId === tabId && !saving && selectors.length > 0) {
+        handleSave();
+      }
+    };
+    window.addEventListener('aca:save-active-tab', handleGlobalSave);
+    return () => window.removeEventListener('aca:save-active-tab', handleGlobalSave);
+  }, [tabId, saving, selectors.length, handleSave]);
 
   const handleDelete = async () => {
     if (isDraft) return;
@@ -394,7 +446,10 @@ export function LookupEditorTab({
   const fullLookupKey = `${pillar}l-${rawKeyName.trim() || '...'}`;
 
   return (
-    <div className="flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none font-mono">
+    <div
+      className="flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none font-mono"
+      onKeyDown={handleKeyDown}
+    >
       {/* 顶部操作条 */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 text-xs shrink-0">
         <div className="flex items-center gap-3">
@@ -503,18 +558,32 @@ export function LookupEditorTab({
                       }}
                       className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
                     >
-                      <option value="d1">D1 陈述基质 (d1l-*)</option>
-                      <option value="d2">D2 程序基质 (d2l-*)</option>
-                      <option value="d3">D3 控制基质 (d3l-*)</option>
+                      <option value="d1">D1 (d1l-*)</option>
+                      <option value="d2">D2 (d2l-*)</option>
+                      <option value="d3">D3 (d3l-*)</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="lookup-key-name" className="text-slate-400 block mb-1">
-                      后缀标识符
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label htmlFor="lookup-key-name" className="text-slate-400 block">
+                        后缀标识符
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRawKeyName(generateIdSuffix());
+                          markDirty();
+                        }}
+                        className="flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300 cursor-pointer"
+                        title="生成新 ULID 标识"
+                      >
+                        <Dna className="h-3 w-3" />
+                        <span>ULID</span>
+                      </button>
+                    </div>
                     <input
                       id="lookup-key-name"
                       type="text"
@@ -523,8 +592,8 @@ export function LookupEditorTab({
                         setRawKeyName(e.target.value);
                         markDirty();
                       }}
-                      placeholder="例如: core-safety"
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                      placeholder="例如: core-safety 或点击 ULID"
+                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs"
                     />
                   </div>
 

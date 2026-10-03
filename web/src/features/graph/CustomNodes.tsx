@@ -79,6 +79,7 @@ export interface AtomNodeData {
   priority?: number;
   package?: string;
   content?: string;
+  description?: string;
   source_file?: string;
   onEdit?: (atomId: string) => void;
 }
@@ -118,6 +119,15 @@ export function AtomNode({ data }: { data: AtomNodeData }) {
           {data.id}
         </button>
       </div>
+
+      {data.description && (
+        <div
+          className="text-[10px] text-slate-400 mt-1 line-clamp-2 font-sans leading-tight border-t border-slate-800/60 pt-1"
+          title={data.description}
+        >
+          {data.description}
+        </div>
+      )}
 
       {data.type === 'd2' && (
         <Handle type="source" position={Position.Right} className="!bg-emerald-500 w-2 h-2" />

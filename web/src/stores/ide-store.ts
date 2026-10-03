@@ -84,6 +84,7 @@ interface IdeState {
     tab: IdeTab,
     options?: boolean | { newTab?: boolean; fromHistory?: boolean; isPreview?: boolean },
   ) => void;
+  replaceTab: (oldTabId: string, newTab: IdeTab) => void;
   closeTab: (tabId: string) => void;
   pinTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
@@ -217,6 +218,25 @@ export const useIdeStore = create<IdeState>()(
         set((state) => ({
           tabs: state.tabs.map((t) => (t.id === tabId ? { ...t, isPreview: false } : t)),
         })),
+
+      replaceTab: (oldTabId, newTab) => {
+        const { tabs, navigationHistory } = get();
+        const tabIndex = tabs.findIndex((t) => t.id === oldTabId);
+        const updatedTabs = [...tabs];
+        if (tabIndex !== -1) {
+          updatedTabs[tabIndex] = newTab;
+        } else {
+          updatedTabs.push(newTab);
+        }
+        const updatedHistory = navigationHistory.map((entry) =>
+          entry.tab.id === oldTabId ? { tab: newTab } : entry,
+        );
+        set({
+          tabs: updatedTabs,
+          activeTabId: newTab.id,
+          navigationHistory: updatedHistory,
+        });
+      },
 
       openTab: (tab, options = false) => {
         const { tabs, navigationHistory, historyIndex } = get();
