@@ -861,6 +861,15 @@ export function LookupEditorTab({
                           atomId,
                         });
                       }}
+                      onSelectLookup={(lookupKey) => {
+                        openTab({
+                          id: `lookup:${lookupKey}`,
+                          type: 'lookup',
+                          title: lookupKey.split('::').pop() || lookupKey,
+                          closable: true,
+                          lookupKey,
+                        });
+                      }}
                     />
                   </div>
                 )}
@@ -878,6 +887,15 @@ export function LookupEditorTab({
                           title: atomId,
                           closable: true,
                           atomId,
+                        });
+                      }}
+                      onOpenLookup={(lookupKey) => {
+                        openTab({
+                          id: `lookup:${lookupKey}`,
+                          type: 'lookup',
+                          title: lookupKey.split('::').pop() || lookupKey,
+                          closable: true,
+                          lookupKey,
                         });
                       }}
                       onReload={() => runLiveDebug()}

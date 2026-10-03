@@ -1,7 +1,6 @@
 import { type BadgeProps, Badge as UiBadge } from '@/components/ui/badge';
 import { Handle, Position } from '@xyflow/react';
-import { AlertTriangle, Box, ChevronDown, ChevronUp, Edit2, Layers } from 'lucide-react';
-import { useState } from 'react';
+import { AlertTriangle, Box, Layers } from 'lucide-react';
 
 export interface ManifestNodeData {
   label: string;
@@ -29,6 +28,7 @@ export interface LookupNodeData {
   description?: string;
   isBroken?: boolean;
   isPrivate?: boolean;
+  onEdit?: (lookupKey: string) => void;
 }
 
 export function LookupNode({ data }: { data: LookupNodeData }) {
@@ -57,7 +57,14 @@ export function LookupNode({ data }: { data: LookupNodeData }) {
           </span>
         )}
       </div>
-      <div className="text-xs font-mono text-slate-100 font-bold truncate">{data.key}</div>
+      <button
+        type="button"
+        className="w-full text-left text-xs font-mono text-slate-100 font-bold truncate cursor-pointer hover:text-indigo-300 hover:underline bg-transparent border-none p-0"
+        onClick={() => data.onEdit?.(data.key)}
+        title="点击编辑查找接口契约"
+      >
+        {data.key}
+      </button>
       {data.description && (
         <div className="text-[10px] text-slate-400 mt-1 line-clamp-1">{data.description}</div>
       )}
@@ -77,8 +84,6 @@ export interface AtomNodeData {
 }
 
 export function AtomNode({ data }: { data: AtomNodeData }) {
-  const [expanded, setExpanded] = useState(false);
-
   const typeVariantMap: Record<string, BadgeProps['variant']> = {
     kernel: 'kernel',
     d1: 'd1',
@@ -89,11 +94,7 @@ export function AtomNode({ data }: { data: AtomNodeData }) {
   const variant = typeVariantMap[data.type] || 'default';
 
   return (
-    <div
-      className={`rounded-md border border-slate-800 bg-slate-950/90 p-2.5 text-slate-100 shadow-md transition-all ${
-        expanded ? 'w-[320px] max-h-[300px] flex flex-col' : 'min-w-[200px] max-w-[240px]'
-      }`}
-    >
+    <div className="rounded-md border border-slate-800 bg-slate-950/90 p-2.5 text-slate-100 shadow-md transition-all min-w-[200px] max-w-[240px]">
       <Handle type="target" position={Position.Left} className="!bg-slate-500 w-2 h-2" />
       <div className="flex items-center justify-between gap-1 mb-1">
         <UiBadge variant={variant} className="text-[10px] uppercase font-mono px-1.5 py-0">
@@ -104,43 +105,19 @@ export function AtomNode({ data }: { data: AtomNodeData }) {
           <span className="text-[10px] text-slate-500 font-mono truncate max-w-[70px]">
             {data.package || '全局'}
           </span>
-          {data.content && (
-            <button
-              type="button"
-              onClick={() => setExpanded((prev) => !prev)}
-              className="p-0.5 text-slate-400 hover:text-white rounded"
-              title={expanded ? '收起内容' : '展开白板阅读内容'}
-            >
-              {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            </button>
-          )}
         </div>
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <div
-          className="text-xs font-mono font-medium text-slate-200 truncate flex-1"
-          title={data.id}
+        <button
+          type="button"
+          className="text-xs font-mono font-medium text-slate-200 truncate flex-1 text-left cursor-pointer hover:text-indigo-300 hover:underline bg-transparent border-none p-0"
+          onClick={() => data.onEdit?.(data.id)}
+          title={`点击打开原子 ${data.id} 编辑`}
         >
           {data.id}
-        </div>
-        {data.onEdit && (
-          <button
-            type="button"
-            onClick={() => data.onEdit?.(data.id)}
-            className="text-slate-400 hover:text-indigo-300 p-0.5"
-            title="在线编辑原子"
-          >
-            <Edit2 className="h-3 w-3" />
-          </button>
-        )}
+        </button>
       </div>
-
-      {expanded && data.content && (
-        <div className="mt-2 pt-2 border-t border-slate-800/80 overflow-y-auto text-[11px] font-mono text-slate-300 leading-relaxed max-h-[200px] whitespace-pre-wrap select-text bg-slate-900/60 p-1.5 rounded">
-          {data.content}
-        </div>
-      )}
 
       {data.type === 'd2' && (
         <Handle type="source" position={Position.Right} className="!bg-emerald-500 w-2 h-2" />

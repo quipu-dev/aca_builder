@@ -55,10 +55,14 @@ function AtomChunkCard({
   chunk,
   onUpdated,
   onOpenObsidian,
+  onSelectAtom,
+  onOpenLookup,
 }: {
   chunk: PromptChunk;
   onUpdated?: () => void;
   onOpenObsidian?: (path: string) => void;
+  onSelectAtom?: (atomId: string) => void;
+  onOpenLookup?: (lookupKey: string) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(chunk.content);
@@ -144,15 +148,31 @@ function AtomChunkCard({
             {chunk.type}
             {typeof chunk.priority === 'number' ? `-P${chunk.priority}` : ''}
           </Badge>
-          <span className="font-semibold text-slate-200 truncate">{chunk.id}</span>
+          <button
+            type="button"
+            onClick={() => onSelectAtom?.(chunk.id)}
+            className="font-semibold text-slate-200 truncate hover:text-indigo-300 hover:underline cursor-pointer text-left"
+            title="点击打开原子组件编辑"
+          >
+            {chunk.id}
+          </button>
           <span className="text-[10px] text-slate-500 truncate">@{chunk.package || '全局'}</span>
           {chunk.via_lookups && chunk.via_lookups.length > 0 && (
-            <span
-              className="text-[10px] text-indigo-400/80 bg-indigo-950/60 border border-indigo-900/50 px-1.5 py-0.2 rounded truncate max-w-[200px]"
-              title={chunk.via_lookups.join(', ')}
-            >
-              via: {chunk.via_lookups.join(', ')}
-            </span>
+            <div className="flex items-center gap-1 truncate">
+              <span className="text-[10px] text-slate-500">via:</span>
+              {chunk.via_lookups.map((lKey, i) => (
+                <button
+                  key={lKey}
+                  type="button"
+                  onClick={() => onOpenLookup?.(lKey)}
+                  className="text-[10px] text-indigo-400/80 bg-indigo-950/60 border border-indigo-900/50 px-1.5 py-0.2 rounded truncate hover:text-indigo-200 hover:border-indigo-700 cursor-pointer"
+                  title={`点击打开 Lookup 接口: ${lKey}`}
+                >
+                  {lKey}
+                  {i < chunk.via_lookups.length - 1 ? ',' : ''}
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
@@ -257,6 +277,7 @@ export function PromptViewer({
   chunks = [],
   profile,
   onSelectAtom,
+  onOpenLookup,
   onReload,
   isHookActive = false,
   onToggleHook,
@@ -266,6 +287,7 @@ export function PromptViewer({
   chunks?: PromptChunk[];
   profile?: ProfileSummary | null;
   onSelectAtom?: (atomId: string) => void;
+  onOpenLookup?: (lookupKey: string) => void;
   onReload?: () => void;
   isHookActive?: boolean;
   onToggleHook?: (active: boolean) => void;
@@ -518,6 +540,8 @@ export function PromptViewer({
                   chunk={chunk}
                   onUpdated={onReload}
                   onOpenObsidian={handleOpenObsidian}
+                  onSelectAtom={onSelectAtom}
+                  onOpenLookup={onOpenLookup}
                 />
               ))}
             </div>

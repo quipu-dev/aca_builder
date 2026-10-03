@@ -156,12 +156,14 @@ export const TopologyGraph = React.memo(function TopologyGraph({
   overrides,
   lookupAdhoc,
   onSelectAtom,
+  onSelectLookup,
 }: {
   manifest?: string;
   imports?: Array<{ lookup: string }>;
   overrides?: Record<string, unknown>;
   lookupAdhoc?: LookupAdhocParam;
   onSelectAtom?: (atomId: string) => void;
+  onSelectLookup?: (lookupKey: string) => void;
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -232,6 +234,15 @@ export const TopologyGraph = React.memo(function TopologyGraph({
                 },
               };
             }
+            if (n.type === 'lookupNode') {
+              return {
+                ...n,
+                data: {
+                  ...n.data,
+                  onEdit: onSelectLookup,
+                },
+              };
+            }
             return n;
           });
 
@@ -257,7 +268,7 @@ export const TopologyGraph = React.memo(function TopologyGraph({
       isCancelled = true;
       clearTimeout(timer);
     };
-  }, [manifest, imports, overrides, lookupAdhoc, onSelectAtom, setNodes, setEdges]);
+  }, [manifest, imports, overrides, lookupAdhoc, onSelectAtom, onSelectLookup, setNodes, setEdges]);
 
   if (!manifest && (!imports || imports.length === 0) && !lookupAdhoc) {
     return (

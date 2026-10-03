@@ -787,6 +787,7 @@ export function ManifestEditorTab({
                         imports={items.map((i) => ({ lookup: i.lookup }))}
                         overrides={overrides}
                         onSelectAtom={handleOpenAtom}
+                        onSelectLookup={handleOpenLookup}
                       />
                     </div>
                   ) : (
@@ -797,6 +798,7 @@ export function ManifestEditorTab({
                         chunks={chunks}
                         profile={profile}
                         onSelectAtom={handleOpenAtom}
+                        onOpenLookup={handleOpenLookup}
                         onReload={() => compileCurrent()}
                         isHookActive={isHookActive}
                         onToggleHook={(active) => setIsHookActive(active)}

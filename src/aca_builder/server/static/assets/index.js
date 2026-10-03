@@ -1,4 +1,4 @@
-import { j as jsxRuntimeExports, c as create, p as persist, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, T as Trash2, d as Check, e as Save, f as Shield, i as Tag, k as ReactCodeMirror, l as CodeXml, W as WandSparkles, m as ChartColumn, n as ChevronUp, o as ChevronDown, q as Copy, X, P as PenLine, M as Markdown, H as Handle, s as Pen, t as TriangleAlert, u as useNodesState, v as useEdgesState, w as Cpu, x as CircleCheckBig, y as index, z as Background, A as BackgroundVariant, D as Controls, N as Network, F as Filter, G as Plus, I as Link2, J as Eye, K as RotateCcw, O as EyeOff, Q as SlidersVertical, U as FilePlus2, V as MousePointerClick, Y as Settings, Z as FolderTree, _ as Database, $ as ChevronRight, a0 as FolderOpen, a1 as Folder, a2 as Package, a3 as Globe, a4 as Lock, a5 as FileCode, a6 as ArrowLeft, a7 as ArrowRight, a8 as RefreshCw, a9 as ShieldCheck, aa as OctagonAlert, ab as ReactDOM } from "./vendor-react.js";
+import { j as jsxRuntimeExports, c as create, p as persist, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, T as Trash2, d as Check, e as Save, f as Shield, i as Tag, k as ReactCodeMirror, l as CodeXml, W as WandSparkles, m as ChartColumn, n as ChevronUp, o as ChevronDown, q as Copy, X, P as PenLine, M as Markdown, H as Handle, s as TriangleAlert, u as useNodesState, t as useEdgesState, v as Cpu, w as CircleCheckBig, x as index, y as Background, z as BackgroundVariant, A as Controls, N as Network, F as Filter, D as Plus, G as Link2, I as Eye, J as RotateCcw, K as EyeOff, O as SlidersVertical, Q as FilePlus2, U as MousePointerClick, V as Settings, Y as FolderTree, Z as Database, _ as ChevronRight, $ as FolderOpen, a0 as Folder, a1 as Package, a2 as Globe, a3 as Lock, a4 as FileCode, a5 as ArrowLeft, a6 as ArrowRight, a7 as RefreshCw, a8 as ShieldCheck, a9 as OctagonAlert, aa as ReactDOM } from "./vendor-react.js";
 import { U as twMerge, W as clsx, X as remarkGfm } from "./vendor-others.js";
 import { m as markdown } from "./vendor-codemirror.js";
 import { P as Position } from "./vendor-xyflow.js";
@@ -1002,7 +1002,9 @@ function AtomEditorTab({
 function AtomChunkCard({
   chunk,
   onUpdated,
-  onOpenObsidian
+  onOpenObsidian,
+  onSelectAtom,
+  onOpenLookup
 }) {
   const [isEditing, setIsEditing] = reactExports.useState(false);
   const [editContent, setEditContent] = reactExports.useState(chunk.content);
@@ -1077,22 +1079,37 @@ function AtomChunkCard({
                 ]
               }
             ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200 truncate", children: chunk.id }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => onSelectAtom == null ? void 0 : onSelectAtom(chunk.id),
+                className: "font-semibold text-slate-200 truncate hover:text-indigo-300 hover:underline cursor-pointer text-left",
+                title: "点击打开原子组件编辑",
+                children: chunk.id
+              }
+            ),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-slate-500 truncate", children: [
               "@",
               chunk.package || "全局"
             ] }),
-            chunk.via_lookups && chunk.via_lookups.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "span",
-              {
-                className: "text-[10px] text-indigo-400/80 bg-indigo-950/60 border border-indigo-900/50 px-1.5 py-0.2 rounded truncate max-w-[200px]",
-                title: chunk.via_lookups.join(", "),
-                children: [
-                  "via: ",
-                  chunk.via_lookups.join(", ")
-                ]
-              }
-            )
+            chunk.via_lookups && chunk.via_lookups.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1 truncate", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500", children: "via:" }),
+              chunk.via_lookups.map((lKey, i) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => onOpenLookup == null ? void 0 : onOpenLookup(lKey),
+                  className: "text-[10px] text-indigo-400/80 bg-indigo-950/60 border border-indigo-900/50 px-1.5 py-0.2 rounded truncate hover:text-indigo-200 hover:border-indigo-700 cursor-pointer",
+                  title: `点击打开 Lookup 接口: ${lKey}`,
+                  children: [
+                    lKey,
+                    i < chunk.via_lookups.length - 1 ? "," : ""
+                  ]
+                },
+                lKey
+              ))
+            ] })
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 shrink-0", children: [
             errorMsg && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-rose-400 font-sans", children: errorMsg }),
@@ -1185,6 +1202,7 @@ function PromptViewer({
   chunks = [],
   profile,
   onSelectAtom,
+  onOpenLookup,
   onReload,
   isHookActive = false,
   onToggleHook
@@ -1438,7 +1456,9 @@ function PromptViewer({
       {
         chunk,
         onUpdated: onReload,
-        onOpenObsidian: handleOpenObsidian
+        onOpenObsidian: handleOpenObsidian,
+        onSelectAtom,
+        onOpenLookup
       },
       chunk.id
     )) }) : /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "h-full", children: [
@@ -1600,7 +1620,19 @@ function LookupNode({ data }) {
             " 引用断链"
           ] })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-xs font-mono text-slate-100 font-bold truncate", children: data.key }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            className: "w-full text-left text-xs font-mono text-slate-100 font-bold truncate cursor-pointer hover:text-indigo-300 hover:underline bg-transparent border-none p-0",
+            onClick: () => {
+              var _a2;
+              return (_a2 = data.onEdit) == null ? void 0 : _a2.call(data, data.key);
+            },
+            title: "点击编辑查找接口契约",
+            children: data.key
+          }
+        ),
         data.description && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[10px] text-slate-400 mt-1 line-clamp-1", children: data.description }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(Handle, { type: "source", position: Position.Right, className: "!bg-slate-400 w-2 h-2" })
       ]
@@ -1608,7 +1640,6 @@ function LookupNode({ data }) {
   );
 }
 function AtomNode({ data }) {
-  const [expanded, setExpanded] = reactExports.useState(false);
   const typeVariantMap = {
     kernel: "kernel",
     d1: "d1",
@@ -1616,59 +1647,30 @@ function AtomNode({ data }) {
     d3: "d3"
   };
   const variant = typeVariantMap[data.type] || "default";
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-    "div",
-    {
-      className: `rounded-md border border-slate-800 bg-slate-950/90 p-2.5 text-slate-100 shadow-md transition-all ${expanded ? "w-[320px] max-h-[300px] flex flex-col" : "min-w-[200px] max-w-[240px]"}`,
-      children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(Handle, { type: "target", position: Position.Left, className: "!bg-slate-500 w-2 h-2" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between gap-1 mb-1", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(Badge, { variant, className: "text-[10px] uppercase font-mono px-1.5 py-0", children: [
-            data.type,
-            typeof data.priority === "number" && `-P${data.priority}`
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 font-mono truncate max-w-[70px]", children: data.package || "全局" }),
-            data.content && /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "button",
-              {
-                type: "button",
-                onClick: () => setExpanded((prev) => !prev),
-                className: "p-0.5 text-slate-400 hover:text-white rounded",
-                title: expanded ? "收起内容" : "展开白板阅读内容",
-                children: expanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronUp, { className: "h-3 w-3" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3 w-3" })
-              }
-            )
-          ] })
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between gap-2", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "div",
-            {
-              className: "text-xs font-mono font-medium text-slate-200 truncate flex-1",
-              title: data.id,
-              children: data.id
-            }
-          ),
-          data.onEdit && /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              type: "button",
-              onClick: () => {
-                var _a;
-                return (_a = data.onEdit) == null ? void 0 : _a.call(data, data.id);
-              },
-              className: "text-slate-400 hover:text-indigo-300 p-0.5",
-              title: "在线编辑原子",
-              children: /* @__PURE__ */ jsxRuntimeExports.jsx(Pen, { className: "h-3 w-3" })
-            }
-          )
-        ] }),
-        expanded && data.content && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "mt-2 pt-2 border-t border-slate-800/80 overflow-y-auto text-[11px] font-mono text-slate-300 leading-relaxed max-h-[200px] whitespace-pre-wrap select-text bg-slate-900/60 p-1.5 rounded", children: data.content }),
-        data.type === "d2" && /* @__PURE__ */ jsxRuntimeExports.jsx(Handle, { type: "source", position: Position.Right, className: "!bg-emerald-500 w-2 h-2" })
-      ]
-    }
-  );
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-md border border-slate-800 bg-slate-950/90 p-2.5 text-slate-100 shadow-md transition-all min-w-[200px] max-w-[240px]", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(Handle, { type: "target", position: Position.Left, className: "!bg-slate-500 w-2 h-2" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between gap-1 mb-1", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(Badge, { variant, className: "text-[10px] uppercase font-mono px-1.5 py-0", children: [
+        data.type,
+        typeof data.priority === "number" && `-P${data.priority}`
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 font-mono truncate max-w-[70px]", children: data.package || "全局" }) })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center justify-between gap-2", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "button",
+      {
+        type: "button",
+        className: "text-xs font-mono font-medium text-slate-200 truncate flex-1 text-left cursor-pointer hover:text-indigo-300 hover:underline bg-transparent border-none p-0",
+        onClick: () => {
+          var _a;
+          return (_a = data.onEdit) == null ? void 0 : _a.call(data, data.id);
+        },
+        title: `点击打开原子 ${data.id} 编辑`,
+        children: data.id
+      }
+    ) }),
+    data.type === "d2" && /* @__PURE__ */ jsxRuntimeExports.jsx(Handle, { type: "source", position: Position.Right, className: "!bg-emerald-500 w-2 h-2" })
+  ] });
 }
 const nodeTypes = {
   manifestNode: ManifestNode,
@@ -1776,7 +1778,8 @@ const TopologyGraph = React.memo(function TopologyGraph2({
   imports,
   overrides,
   lookupAdhoc,
-  onSelectAtom
+  onSelectAtom,
+  onSelectLookup
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -1824,6 +1827,15 @@ const TopologyGraph = React.memo(function TopologyGraph2({
               }
             };
           }
+          if (n.type === "lookupNode") {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                onEdit: onSelectLookup
+              }
+            };
+          }
           return n;
         });
         setNodes(connectedNodes);
@@ -1845,7 +1857,7 @@ const TopologyGraph = React.memo(function TopologyGraph2({
       isCancelled = true;
       clearTimeout(timer);
     };
-  }, [manifest, imports, overrides, lookupAdhoc, onSelectAtom, setNodes, setEdges]);
+  }, [manifest, imports, overrides, lookupAdhoc, onSelectAtom, onSelectLookup, setNodes, setEdges]);
   if (!manifest && (!imports || imports.length === 0) && !lookupAdhoc) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex h-full items-center justify-center text-xs text-slate-500 font-mono", children: "请选择或添加组件以呈现拓扑关系" });
   }
@@ -2604,6 +2616,15 @@ function LookupEditorTab({
                     closable: true,
                     atomId
                   });
+                },
+                onSelectLookup: (lookupKey2) => {
+                  openTab({
+                    id: `lookup:${lookupKey2}`,
+                    type: "lookup",
+                    title: lookupKey2.split("::").pop() || lookupKey2,
+                    closable: true,
+                    lookupKey: lookupKey2
+                  });
                 }
               }
             ) }),
@@ -2620,6 +2641,15 @@ function LookupEditorTab({
                     title: atomId,
                     closable: true,
                     atomId
+                  });
+                },
+                onOpenLookup: (lookupKey2) => {
+                  openTab({
+                    id: `lookup:${lookupKey2}`,
+                    type: "lookup",
+                    title: lookupKey2.split("::").pop() || lookupKey2,
+                    closable: true,
+                    lookupKey: lookupKey2
                   });
                 },
                 onReload: () => runLiveDebug()
@@ -3293,7 +3323,8 @@ function ManifestEditorTab({
               manifest: manifestIdentifier || name,
               imports: items.map((i) => ({ lookup: i.lookup })),
               overrides,
-              onSelectAtom: handleOpenAtom
+              onSelectAtom: handleOpenAtom,
+              onSelectLookup: handleOpenLookup
             }
           ) }) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "h-full p-3 bg-slate-950 overflow-hidden", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
             PromptViewer,
@@ -3303,6 +3334,7 @@ function ManifestEditorTab({
               chunks,
               profile,
               onSelectAtom: handleOpenAtom,
+              onOpenLookup: handleOpenLookup,
               onReload: () => compileCurrent(),
               isHookActive,
               onToggleHook: (active) => setIsHookActive(active)
