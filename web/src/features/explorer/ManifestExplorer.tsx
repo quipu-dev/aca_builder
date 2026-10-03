@@ -40,29 +40,12 @@ function buildTree(items: Array<string | ManifestItemObj>): ManifestTreeNode[] {
 
   for (const item of items) {
     const p = typeof item === 'string' ? item : item.name;
-    const wsPath =
-      typeof item === 'string'
-        ? '默认工作区'
-        : item.workspace_path || item.workspace || '默认工作区';
-
-    // 1. 顶层根节点为 workspace_path (全长路径名)
-    let wsNode = root.children.get(wsPath);
-    if (!wsNode) {
-      wsNode = {
-        name: wsPath,
-        path: wsPath,
-        isFolder: true,
-        children: new Map(),
-      };
-      root.children.set(wsPath, wsNode);
-    }
-
     const parts = p.split('/').filter(Boolean);
-    let curr = wsNode;
+    let curr = root;
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       const isLeaf = i === parts.length - 1;
-      const subPath = `${wsPath}::${parts.slice(0, i + 1).join('/')}`;
+      const subPath = parts.slice(0, i + 1).join('/');
 
       let nextNode = curr.children.get(part);
       if (!nextNode) {
