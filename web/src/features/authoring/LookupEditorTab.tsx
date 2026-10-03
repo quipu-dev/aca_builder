@@ -77,8 +77,13 @@ export function LookupEditorTab({
   const [selectors, setSelectors] = useState<SelectorRule[]>([]);
   const [isModified, setIsModified] = useState(false);
 
+  // 获取 IDE 偏好设置
+  const preferences = useIdeStore((state) => state.preferences);
+
   // 右侧多维视口切换：'atoms' (命中原子) | 'graph' (白板拓扑) | 'prompt' (切片编译)
-  const [rightView, setRightView] = useState<'atoms' | 'graph' | 'prompt'>('atoms');
+  const [rightView, setRightView] = useState<'atoms' | 'graph' | 'prompt'>(
+    preferences?.defaultRightPanel === 'prompt' ? 'prompt' : 'graph',
+  );
 
   // 实时演算状态 (Atoms 模式)
   const [matchedAtoms, setMatchedAtoms] = useState<MatchedAtom[]>([]);
@@ -141,7 +146,7 @@ export function LookupEditorTab({
       setRawKeyName(snapshot.rawKeyName);
       setDescription(snapshot.description);
       setSelectors(snapshot.selectors);
-      setRightView(snapshot.rightView);
+      if (snapshot.rightView) setRightView(snapshot.rightView);
       setIsModified(snapshot.isModified);
       setTabDirty(tabId, snapshot.isModified);
       setIsReady(true);

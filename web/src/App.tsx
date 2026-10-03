@@ -1,11 +1,11 @@
 import { CommandPalette } from '@/components/CommandPalette';
+import { TabPane } from '@/components/layout/TabPane';
+import { CreateManifestModal } from '@/components/modals/CreateManifestModal';
+import { CreatePackageModal } from '@/components/modals/CreatePackageModal';
 import { Button } from '@/components/ui/button';
-import { AtomEditorTab } from '@/features/authoring/AtomEditorTab';
-import { LookupEditorTab } from '@/features/authoring/LookupEditorTab';
-import { ManifestEditorTab } from '@/features/composer/ManifestEditorTab';
 import { ManifestExplorer } from '@/features/explorer/ManifestExplorer';
 import { PackageExplorer, type PackageItem } from '@/features/explorer/PackageExplorer';
-import { EmptyTab } from '@/features/home/EmptyTab';
+import { useConfigStore } from '@/stores/config-store';
 import { type IdeTab, useIdeStore } from '@/stores/ide-store';
 import {
   AlertCircle,
@@ -22,11 +22,12 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Settings,
   ShieldCheck,
   X,
 } from 'lucide-react';
 import type React from 'react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export interface LintIssue {
   level: string;
@@ -34,89 +35,23 @@ export interface LintIssue {
   message: string;
 }
 
-interface TabPaneProps {
-  tab: IdeTab;
-  isActive: boolean;
-  packages: PackageItem[];
-  manifestsCount: number;
-  onSaved: () => void;
-  onDeleted: (tabId: string) => void;
-  onOpenCommandPalette: () => void;
-  onCreateManifest: () => void;
-  onCreateAtom: () => void;
-}
-
-const TabPane = memo(
-  function TabPane({
-    tab,
-    isActive,
-    packages,
-    manifestsCount,
-    onSaved,
-    onDeleted,
-    onOpenCommandPalette,
-    onCreateManifest,
-    onCreateAtom,
-  }: TabPaneProps) {
-    return (
-      <div className={`h-full w-full ${isActive ? 'block' : 'hidden'}`}>
-        {tab.type === 'empty' && (
-          <EmptyTab
-            manifestsCount={manifestsCount}
-            packagesCount={packages.length}
-            onOpenCommandPalette={onOpenCommandPalette}
-            onCreateManifest={onCreateManifest}
-            onCreateAtom={onCreateAtom}
-          />
-        )}
-        {tab.type === 'atom' && tab.atomId && (
-          <AtomEditorTab
-            key={tab.atomId}
-            atomId={tab.atomId}
-            packages={packages}
-            onSaved={onSaved}
-            onDeleted={() => onDeleted(tab.id)}
-          />
-        )}
-        {tab.type === 'manifest' && (
-          <ManifestEditorTab
-            key={tab.id}
-            manifestName={tab.manifestName || ''}
-            packages={packages}
-            onSaved={onSaved}
-          />
-        )}
-        {tab.type === 'lookup' && tab.lookupKey && (
-          <LookupEditorTab
-            key={tab.id}
-            lookupKey={tab.lookupKey}
-            packages={packages}
-            onSaved={onSaved}
-            onDeleted={() => onDeleted(tab.id)}
-          />
-        )}
-      </div>
-    );
-  },
-  (prev, next) => {
-    // 性能核心拦截：若前后均处于非激活状态，且核心元数据无变动，直接跳过整个组件树的 Diff
-    return (
-      prev.isActive === next.isActive &&
-      prev.tab.id === next.tab.id &&
-      prev.tab.isDirty === next.tab.isDirty &&
-      prev.tab.title === next.tab.title &&
-      prev.packages === next.packages &&
-      prev.manifestsCount === next.manifestsCount &&
-      prev.onSaved === next.onSaved
-    );
-  },
-);
-
 export function App() {
   const ideStore = useIdeStore();
-  const [manifests, setManifests] = useState<string[]>([]);
+  const configStore = useConfigStore();
+  const [manifests, setManifests] = useState<
+    Array<string | { name: string; workspace?: string; workspace_path?: string }>
+  >([]);
   const [packages, setPackages] = useState<PackageItem[]>([]);
   const [status, setStatus] = useState<string>('检测中...');
+
+  // 新建资产的 Modal 状态控制
+  const [isCreatePkgOpen, setIsCreatePkgOpen] = useState(false);
+  const [newPkgName, setNewPkgName] = useState('');
+  const [newPkgWs, setNewPkgWs] = useState('');
+
+  const [isCreateManOpen, setIsCreateManOpen] = useState(false);
+  const [newManName, setNewManName] = useState('');
+  const [newManWs, setNewManWs] = useState('');
 
   // 命令面板
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -126,6 +61,42 @@ export function App() {
   const [lintErrors, setLintErrors] = useState(0);
   const [lintWarnings, setLintWarnings] = useState(0);
   const [lintIssues, setLintIssues] = useState<LintIssue[]>([]);
+
+  // 侧边栏宽度拖拽状态
+  const sidebarWidth = ideStore.sidebarWidth;
+  const setSidebarWidth = ideStore.setSidebarWidth;
+  const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
+
+  const handleSidebarPointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    setIsDraggingSidebar(true);
+  };
+
+  const handleSidebarPointerMove = useCallback(
+    (e: PointerEvent) => {
+      if (!isDraggingSidebar) return;
+      const newWidth = e.clientX - 48; // 48px 是左侧活动栏宽度
+      if (newWidth >= 180 && newWidth <= 600) {
+        setSidebarWidth(newWidth);
+      }
+    },
+    [isDraggingSidebar, setSidebarWidth],
+  );
+
+  const handleSidebarPointerUp = useCallback(() => {
+    setIsDraggingSidebar(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDraggingSidebar) {
+      window.addEventListener('pointermove', handleSidebarPointerMove);
+      window.addEventListener('pointerup', handleSidebarPointerUp);
+    }
+    return () => {
+      window.removeEventListener('pointermove', handleSidebarPointerMove);
+      window.removeEventListener('pointerup', handleSidebarPointerUp);
+    };
+  }, [isDraggingSidebar, handleSidebarPointerMove, handleSidebarPointerUp]);
 
   // 侧边栏子视图
   const [explorerTab, setExplorerTab] = useState<'manifests' | 'packages'>('manifests');
@@ -156,7 +127,10 @@ export function App() {
       .finally(() => setLintLoading(false));
   }, []);
 
+  const { fetchConfig } = configStore;
+
   useEffect(() => {
+    fetchConfig();
     fetch('/api/health')
       .then((res) => res.json())
       .then((data) => setStatus(data.status === 'ok' ? '正常' : data.status))
@@ -171,7 +145,6 @@ export function App() {
       fetchLintReport();
     });
 
-    // 全局快捷键监听: Ctrl+P 唤起命令面板，Ctrl+T 新建标签页，Cmd+[ 后退，Cmd+] 前进
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       const isMod = e.metaKey || e.ctrlKey;
       if (isMod && e.key.toLowerCase() === 'p') {
@@ -195,7 +168,6 @@ export function App() {
       }
     };
 
-    // 鼠标侧键原生后退/前进监听
     const handleMouseUp = (e: MouseEvent) => {
       if (e.button === 3) {
         e.preventDefault();
@@ -214,7 +186,7 @@ export function App() {
       window.removeEventListener('keydown', handleGlobalKeyDown);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [fetchAssets, fetchLintReport, ideStore.goBack, ideStore.goForward]);
+  }, [fetchConfig, fetchAssets, fetchLintReport, ideStore.goBack, ideStore.goForward]);
 
   const handleOpenManifestTab = (
     mName: string,
@@ -291,25 +263,18 @@ export function App() {
     ideStore.closeTab(tab.id);
   };
 
-  // 诊断直通：解析 issue 中的实体并一键在主编辑区打开对应 Tab
   const handleProblemClick = (issue: LintIssue) => {
     const text = `${issue.code} ${issue.message}`;
-
-    // 1. 尝试匹配 Atom ID (如 d1-valid, d2-core)
     const atomMatch = text.match(/\b(d[1-3]-[a-zA-Z0-9_-]+)\b/);
     if (atomMatch) {
       handleOpenAtomTab(atomMatch[1]);
       return;
     }
-
-    // 2. 尝试匹配 Manifest (如 Manifest 'agent_name')
     const manifestMatch = text.match(/Manifest '([^']+)'/);
     if (manifestMatch) {
       handleOpenManifestTab(manifestMatch[1]);
       return;
     }
-
-    // 3. 尝试匹配 Lookup (如 Lookup 'pkg::d1l-name' 或 'd1l-name')
     const lookupMatch = text.match(/Lookup '([^']+)'/);
     if (lookupMatch) {
       const lKey = lookupMatch[1];
@@ -319,10 +284,9 @@ export function App() {
 
   const handleCreateNewAtomDraft = () => {
     const defaultPkg = packages[0]?.name || '';
-    const draftId = `draft_${Date.now().toString().slice(-4)}`;
     ideStore.openTab(
       {
-        id: `atom:${draftId}`,
+        id: `atom:draft_${Date.now()}`,
         type: 'atom',
         title: '新建原子草稿',
         closable: true,
@@ -333,14 +297,22 @@ export function App() {
   };
 
   const handleCreateNewManifest = () => {
-    const draftName = `未命名蓝图_${Date.now().toString().slice(-4)}`;
+    setNewManName(`未命名蓝图_${Date.now().toString().slice(-4)}`);
+    setNewManWs(configStore.config?.manifest_paths?.[0] || '');
+    setIsCreateManOpen(true);
+  };
+
+  const submitCreateManifest = () => {
+    if (!newManName.trim()) return;
+    setIsCreateManOpen(false);
     ideStore.openTab(
       {
-        id: `manifest:${draftName}`,
+        id: `manifest:${newManName.trim()}`,
         type: 'manifest',
-        title: draftName,
+        title: newManName.trim(),
         closable: true,
-        manifestName: '', // 空字符串触发新建草稿
+        manifestName: '',
+        workspacePath: newManWs || undefined,
       },
       { newTab: true },
     );
@@ -361,9 +333,7 @@ export function App() {
 
   const handleDeleteManifest = async (mName: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm(`确定要删除清单 "${mName}" 吗？此操作不可逆。`)) {
-      return;
-    }
+    if (!window.confirm(`确定要删除清单 "${mName}" 吗？此操作不可逆。`)) return;
     try {
       const res = await fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
         method: 'DELETE',
@@ -395,13 +365,22 @@ export function App() {
   );
 
   const handleCreatePackage = useCallback(() => {
-    const pkgName = window.prompt('请输入新建组件包名称（英文字符/下划线）:');
-    if (!pkgName || !pkgName.trim()) return;
+    setNewPkgName('');
+    setNewPkgWs(configStore.config?.library_paths?.[0] || '');
+    setIsCreatePkgOpen(true);
+  }, [configStore.config]);
+
+  const submitCreatePackage = useCallback(() => {
+    if (!newPkgName.trim()) return;
+    setIsCreatePkgOpen(false);
 
     fetch('/api/packages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: pkgName.trim() }),
+      body: JSON.stringify({
+        name: newPkgName.trim(),
+        workspace_path: newPkgWs || undefined,
+      }),
     })
       .then(async (res) => {
         if (res.ok) {
@@ -413,14 +392,13 @@ export function App() {
         }
       })
       .catch(() => alert('创建组件包网络异常'));
-  }, [fetchAssets, fetchLintReport]);
+  }, [newPkgName, newPkgWs, fetchAssets, fetchLintReport]);
 
   const handleDeletePackage = useCallback(
     (pkgName: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!window.confirm(`确定要彻底删除组件包 "${pkgName}" 及其所有文件吗？此操作不可逆。`)) {
+      if (!window.confirm(`确定要彻底删除组件包 "${pkgName}" 及其所有文件吗？此操作不可逆。`))
         return;
-      }
       fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
         method: 'DELETE',
       })
@@ -441,9 +419,7 @@ export function App() {
   const handleDeleteLookup = useCallback(
     (lookupKey: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？`)) {
-        return;
-      }
+      if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？`)) return;
       fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
         method: 'DELETE',
       })
@@ -465,9 +441,7 @@ export function App() {
   const handleDeleteAtom = useCallback(
     (atomId: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!window.confirm(`确定要物理删除原子文件 "${atomId}" 吗？`)) {
-        return;
-      }
+      if (!window.confirm(`确定要物理删除原子文件 "${atomId}" 吗？`)) return;
       fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
         method: 'DELETE',
       })
@@ -492,9 +466,8 @@ export function App() {
 
   return (
     <div className="flex h-screen flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans select-none">
-      {/* 主体视口 */}
       <div className="flex flex-1 overflow-hidden">
-        {/* 最左侧：活动栏 (Activity Bar) */}
+        {/* 最左侧：活动栏 */}
         <div className="w-12 border-r border-slate-800 bg-slate-950 flex flex-col items-center py-3 space-y-4 shrink-0">
           <button
             type="button"
@@ -507,112 +480,151 @@ export function App() {
                 ? 'text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40'
                 : 'text-slate-400 hover:text-white'
             }`}
-            title="资源管理器 (Explorer)"
+            title="资源管理器"
           >
             <FolderTree className="h-5 w-5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              ideStore.openTab({
+                id: 'system:settings',
+                type: 'settings',
+                title: '设置',
+                closable: true,
+              });
+            }}
+            className={`mt-auto p-2 rounded-lg transition-colors cursor-pointer ${
+              ideStore.activeTabId === 'system:settings'
+                ? 'text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40'
+                : 'text-slate-400 hover:text-white'
+            }`}
+            title="全局系统设置"
+          >
+            <Settings className="h-5 w-5" />
           </button>
         </div>
 
         {/* 侧边栏：资源视图 */}
         {ideStore.sidebarOpen && (
-          <aside className="w-72 border-r border-slate-800 bg-slate-900/40 flex flex-col shrink-0 overflow-hidden">
-            <div className="p-3 border-b border-slate-800/80 flex items-center justify-between">
-              <span className="text-xs font-bold font-mono tracking-wider text-slate-300">
-                资源视图
-              </span>
-              <button
-                type="button"
-                onClick={ideStore.toggleSidebar}
-                className="text-slate-400 hover:text-white p-0.5 cursor-pointer"
-                title="折叠侧边栏"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-
-            <div className="p-2 border-b border-slate-800/60 bg-slate-950/40">
-              <div className="flex rounded bg-slate-900 p-0.5 border border-slate-800 text-xs">
+          <>
+            <aside
+              style={{
+                width: `${sidebarWidth}px`,
+                userSelect: isDraggingSidebar ? 'none' : 'auto',
+              }}
+              className="border-r border-slate-800 bg-slate-900/40 flex flex-col shrink-0 overflow-hidden"
+            >
+              <div className="p-3 border-b border-slate-800/80 flex items-center justify-between">
+                <span className="text-xs font-bold font-mono tracking-wider text-slate-300">
+                  资源视图
+                </span>
                 <button
                   type="button"
-                  onClick={() => setExplorerTab('manifests')}
-                  className={`flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${
-                    explorerTab === 'manifests'
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
+                  onClick={ideStore.toggleSidebar}
+                  className="text-slate-400 hover:text-white p-0.5 cursor-pointer"
+                  title="折叠侧边栏"
                 >
-                  <Layers className="h-3.5 w-3.5" /> 清单蓝图
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setExplorerTab('packages')}
-                  className={`flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${
-                    explorerTab === 'packages'
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Package className="h-3.5 w-3.5" /> 组件包
+                  <X className="h-3.5 w-3.5" />
                 </button>
               </div>
 
-              <div className="pt-2">
+              <div className="p-2 border-b border-slate-800/60 bg-slate-950/40">
+                <div className="flex rounded bg-slate-900 p-0.5 border border-slate-800 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setExplorerTab('manifests')}
+                    className={`flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${
+                      explorerTab === 'manifests'
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Layers className="h-3.5 w-3.5" /> 清单蓝图
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExplorerTab('packages')}
+                    className={`flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${
+                      explorerTab === 'packages'
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Package className="h-3.5 w-3.5" /> 组件包
+                  </button>
+                </div>
+
+                <div className="pt-2">
+                  {explorerTab === 'manifests' ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCreateNewManifest}
+                      className="w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer"
+                    >
+                      <FilePlus2 className="h-3.5 w-3.5 text-indigo-400" /> 新建清单蓝图
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCreatePackage}
+                      className="w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer"
+                    >
+                      <Plus className="h-3.5 w-3.5 text-indigo-400" /> 新建组件包
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-2 space-y-1">
                 {explorerTab === 'manifests' ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCreateNewManifest}
-                    className="w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer"
-                  >
-                    <FilePlus2 className="h-3.5 w-3.5 text-indigo-400" /> 新建清单蓝图
-                  </Button>
+                  <ManifestExplorer
+                    manifests={manifests}
+                    activeManifestName={activeTab?.manifestName}
+                    onSelectManifest={(m, e) => handleOpenManifestTab(m, e)}
+                    onDeleteManifest={(m, e) => handleDeleteManifest(m, e)}
+                  />
                 ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCreatePackage}
-                    className="w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer"
-                  >
-                    <Plus className="h-3.5 w-3.5 text-indigo-400" /> 新建组件包
-                  </Button>
+                  <PackageExplorer
+                    packages={packages}
+                    onSelectAtom={(atomId, e) => handleOpenAtomTab(atomId, e)}
+                    onOpenLookup={(lKey, e) => handleOpenLookupTab(lKey, e)}
+                    onDeletePackage={handleDeletePackage}
+                    onDeleteLookup={handleDeleteLookup}
+                    onDeleteAtom={handleDeleteAtom}
+                  />
                 )}
               </div>
+            </aside>
+            {/* 拖动分割手柄 */}
+            <div
+              onPointerDown={handleSidebarPointerDown}
+              className={`relative z-20 shrink-0 group flex items-center justify-center w-1.5 cursor-col-resize hover:bg-indigo-500/60 transition-colors ${
+                isDraggingSidebar ? 'bg-indigo-500' : 'bg-slate-800'
+              }`}
+            >
+              <div
+                className={`rounded-full bg-slate-600 group-hover:bg-white h-8 w-1 transition-colors ${
+                  isDraggingSidebar ? '!bg-white' : ''
+                }`}
+              />
             </div>
-
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-              {explorerTab === 'manifests' ? (
-                <ManifestExplorer
-                  manifests={manifests}
-                  activeManifestName={activeTab?.manifestName}
-                  onSelectManifest={(m, e) => handleOpenManifestTab(m, e)}
-                  onDeleteManifest={(m, e) => handleDeleteManifest(m, e)}
-                />
-              ) : (
-                <PackageExplorer
-                  packages={packages}
-                  onSelectAtom={(atomId, e) => handleOpenAtomTab(atomId, e)}
-                  onOpenLookup={(lKey, e) => handleOpenLookupTab(lKey, e)}
-                  onDeletePackage={handleDeletePackage}
-                  onDeleteLookup={handleDeleteLookup}
-                  onDeleteAtom={handleDeleteAtom}
-                />
-              )}
-            </div>
-          </aside>
+          </>
         )}
 
         {/* 中央主工作区 */}
         <main className="flex-1 flex flex-col overflow-hidden bg-slate-950">
-          {/* Tab 标签栏与历史导航 */}
           <div className="flex items-center border-b border-slate-800 bg-slate-900/60 overflow-x-auto shrink-0 scrollbar-none h-9">
-            {/* 紧凑历史后退/前进导航 */}
             <div className="flex items-center gap-0.5 px-2 border-r border-slate-800 shrink-0">
               <button
                 type="button"
                 onClick={ideStore.goBack}
                 disabled={!canGoBack}
-                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors cursor-pointer"
-                title="后退 (Cmd+[ 或 Alt+←)"
+                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 transition-colors cursor-pointer"
+                title="后退"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
               </button>
@@ -620,8 +632,8 @@ export function App() {
                 type="button"
                 onClick={ideStore.goForward}
                 disabled={!canGoForward}
-                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors cursor-pointer"
-                title="前进 (Cmd+] 或 Alt+→)"
+                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 transition-colors cursor-pointer"
+                title="前进"
               >
                 <ArrowRight className="h-3.5 w-3.5" />
               </button>
@@ -634,29 +646,26 @@ export function App() {
                   key={tab.id}
                   onClick={() => ideStore.setActiveTab(tab.id)}
                   onDoubleClick={() => ideStore.pinTab(tab.id)}
-                  onAuxClick={(e) => {
-                    if (e.button === 1) {
-                      e.preventDefault();
-                      handleSafeCloseTab(tab, e);
-                    }
-                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
                       ideStore.setActiveTab(tab.id);
                     }
                   }}
-                  className={`group flex items-center gap-2 px-3.5 py-2 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 ${
+                  onAuxClick={(e) => {
+                    if (e.button === 1) {
+                      e.preventDefault();
+                      handleSafeCloseTab(tab, e);
+                    }
+                  }}
+                  className={`group flex items-center gap-2 px-3.5 py-2 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 ${
                     isActive
                       ? 'bg-slate-950 text-indigo-300 border-t-2 border-t-indigo-500 font-semibold'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent'
                   }`}
-                  title={`${tab.title}${tab.isPreview ? ' (预览态，双击标签固定)' : ''}`}
                 >
                   <span
-                    className={`truncate max-w-[140px] ${
-                      tab.isPreview ? 'italic text-slate-300/80' : ''
-                    }`}
+                    className={`truncate max-w-[140px] ${tab.isPreview ? 'italic text-slate-300/80' : ''}`}
                   >
                     {tab.title}
                   </span>
@@ -677,43 +686,31 @@ export function App() {
               );
             })}
 
-            {/* 新建标签页按钮 (+) */}
             <button
               type="button"
               onClick={handleCreateEmptyTab}
               className="flex items-center justify-center p-1.5 ml-1.5 mr-2 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded transition-colors shrink-0 cursor-pointer"
-              title="新建标签页 (Ctrl+T)"
+              title="新建标签页"
             >
               <Plus className="h-3.5 w-3.5" />
             </button>
           </div>
 
-          {/* 编辑器视口 */}
           <div className="flex-1 overflow-hidden relative">
-            {ideStore.tabs.length === 0 ? (
-              <EmptyTab
+            {ideStore.tabs.map((tab) => (
+              <TabPane
+                key={tab.id}
+                tab={tab}
+                isActive={tab.id === ideStore.activeTabId}
+                packages={packages}
                 manifestsCount={manifests.length}
-                packagesCount={packages.length}
+                onSaved={handleTabSaved}
+                onDeleted={handleTabDeleted}
                 onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
                 onCreateManifest={handleCreateNewManifest}
                 onCreateAtom={handleCreateNewAtomDraft}
               />
-            ) : (
-              ideStore.tabs.map((tab) => (
-                <TabPane
-                  key={tab.id}
-                  tab={tab}
-                  isActive={tab.id === ideStore.activeTabId}
-                  packages={packages}
-                  manifestsCount={manifests.length}
-                  onSaved={handleTabSaved}
-                  onDeleted={handleTabDeleted}
-                  onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-                  onCreateManifest={handleCreateNewManifest}
-                  onCreateAtom={handleCreateNewAtomDraft}
-                />
-              ))
-            )}
+            ))}
           </div>
 
           {/* 底部控制台：诊断问题 */}
@@ -730,12 +727,10 @@ export function App() {
                     onClick={fetchLintReport}
                     disabled={lintLoading}
                     className="text-slate-400 hover:text-indigo-400 p-1 cursor-pointer"
-                    title="重新运行规范诊断"
                   >
                     <RefreshCw className={`h-3 w-3 ${lintLoading ? 'animate-spin' : ''}`} />
                   </button>
                 </div>
-
                 <button
                   type="button"
                   onClick={ideStore.toggleBottomPanel}
@@ -755,21 +750,15 @@ export function App() {
                   lintIssues.map((issue) => {
                     const isErr = issue.level === '错误';
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={`${issue.level}-${issue.code}-${issue.message}`}
                         onClick={() => handleProblemClick(issue)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleProblemClick(issue);
-                          }
-                        }}
-                        className={`flex items-start justify-between p-2 rounded border cursor-pointer group transition-colors ${
+                        className={`w-full text-left flex items-start justify-between p-2 rounded border cursor-pointer group transition-colors ${
                           isErr
-                            ? 'border-rose-900/50 bg-rose-950/20 text-rose-200 hover:bg-rose-950/40 hover:border-rose-700'
-                            : 'border-amber-900/50 bg-amber-950/20 text-amber-200 hover:bg-amber-950/40 hover:border-amber-700'
+                            ? 'border-rose-900/50 bg-rose-950/20 text-rose-200 hover:bg-rose-950/40'
+                            : 'border-amber-900/50 bg-amber-950/20 text-amber-200 hover:bg-amber-950/40'
                         }`}
-                        title="点击直接在主编辑区打开对应文件定位"
                       >
                         <div className="flex items-start gap-2 flex-1">
                           {isErr ? (
@@ -783,7 +772,7 @@ export function App() {
                           <span className="text-[10px] text-slate-500 font-mono">{issue.code}</span>
                           <ExternalLink className="h-3 w-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-400" />
                         </div>
-                      </div>
+                      </button>
                     );
                   })
                 )}
@@ -793,7 +782,7 @@ export function App() {
         </main>
       </div>
 
-      {/* 底部紧凑状态栏 (Status Bar) */}
+      {/* 底部紧凑状态栏 */}
       <footer className="h-6 border-t border-slate-800 bg-slate-950 px-3 flex items-center justify-between text-[11px] font-mono text-slate-400 shrink-0 select-none z-20">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-slate-300">
@@ -822,7 +811,6 @@ export function App() {
                   ? 'text-amber-400 hover:bg-amber-950/60'
                   : 'text-slate-400 hover:text-emerald-300'
             }`}
-            title="切换架构合规与诊断面板"
           >
             {lintErrors > 0 ? (
               <AlertCircle className="h-3 w-3 text-rose-400" />
@@ -848,7 +836,7 @@ export function App() {
             type="button"
             onClick={() => setIsCommandPaletteOpen(true)}
             className="flex items-center gap-1 px-1.5 py-0.5 rounded text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
-            title="打开命令面板 (Ctrl+P / Cmd+P)"
+            title="打开命令面板 (Ctrl+P)"
           >
             <Search className="h-3 w-3 text-indigo-400" />
             <span className="text-[10px]">Ctrl+P</span>
@@ -856,12 +844,33 @@ export function App() {
         </div>
       </footer>
 
-      {/* 全局命令与搜索面板 (Ctrl+P / Cmd+P) */}
       <CommandPalette
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
         manifests={manifests}
         packages={packages}
+      />
+
+      <CreatePackageModal
+        isOpen={isCreatePkgOpen}
+        onClose={() => setIsCreatePkgOpen(false)}
+        newPkgName={newPkgName}
+        setNewPkgName={setNewPkgName}
+        newPkgWs={newPkgWs}
+        setNewPkgWs={setNewPkgWs}
+        libraryPaths={configStore.config?.library_paths}
+        onSubmit={submitCreatePackage}
+      />
+
+      <CreateManifestModal
+        isOpen={isCreateManOpen}
+        onClose={() => setIsCreateManOpen(false)}
+        newManName={newManName}
+        setNewManName={setNewManName}
+        newManWs={newManWs}
+        setNewManWs={setNewManWs}
+        manifestPaths={configStore.config?.manifest_paths}
+        onSubmit={submitCreateManifest}
       />
     </div>
   );

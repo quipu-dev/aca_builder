@@ -1,4 +1,4 @@
-import { j as jsxRuntimeExports, c as create, p as persist, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, T as Trash2, d as Check, e as Save, f as Shield, i as Tag, k as ReactCodeMirror, l as CodeXml, W as WandSparkles, m as ChartColumn, n as ChevronUp, o as ChevronDown, q as Copy, X, P as PenLine, M as Markdown, H as Handle, s as Pen, t as TriangleAlert, u as useNodesState, v as useEdgesState, w as Cpu, x as CircleCheckBig, y as index, z as Background, A as BackgroundVariant, D as Controls, N as Network, F as Filter, G as Plus, I as Link2, J as Eye, K as RotateCcw, O as EyeOff, Q as SlidersVertical, U as ChevronRight, V as FolderOpen, Y as Folder, Z as Package, _ as Globe, $ as Lock, a0 as FileCode, a1 as FilePlus2, a2 as MousePointerClick, a3 as FolderTree, a4 as ArrowLeft, a5 as ArrowRight, a6 as RefreshCw, a7 as ShieldCheck, a8 as OctagonAlert, a9 as ReactDOM } from "./vendor-react.js";
+import { j as jsxRuntimeExports, c as create, p as persist, r as reactExports, S as Search, L as Layers, a as Sparkles, B as Box, R as React, b as LoaderCircle, C as CircleAlert, E as ExternalLink, T as Trash2, d as Check, e as Save, f as Shield, i as Tag, k as ReactCodeMirror, l as CodeXml, W as WandSparkles, m as ChartColumn, n as ChevronUp, o as ChevronDown, q as Copy, X, P as PenLine, M as Markdown, H as Handle, s as Pen, t as TriangleAlert, u as useNodesState, v as useEdgesState, w as Cpu, x as CircleCheckBig, y as index, z as Background, A as BackgroundVariant, D as Controls, N as Network, F as Filter, G as Plus, I as Link2, J as Eye, K as RotateCcw, O as EyeOff, Q as SlidersVertical, U as FilePlus2, V as MousePointerClick, Y as Settings, Z as FolderTree, _ as Database, $ as ChevronRight, a0 as FolderOpen, a1 as Folder, a2 as Package, a3 as Globe, a4 as Lock, a5 as FileCode, a6 as ArrowLeft, a7 as ArrowRight, a8 as RefreshCw, a9 as ShieldCheck, aa as OctagonAlert, ab as ReactDOM } from "./vendor-react.js";
 import { U as twMerge, W as clsx, X as remarkGfm } from "./vendor-others.js";
 import { m as markdown } from "./vendor-codemirror.js";
 import { P as Position } from "./vendor-xyflow.js";
@@ -92,6 +92,8 @@ const useIdeStore = create()(
         return { tabSnapshots: rest };
       }),
       sidebarOpen: true,
+      sidebarWidth: 288,
+      setSidebarWidth: (width) => set({ sidebarWidth: width }),
       activeSidebarView: "explorer",
       bottomPanelOpen: false,
       activeBottomTab: "problems",
@@ -101,6 +103,18 @@ const useIdeStore = create()(
       setBottomPanelOpen: (open) => set({ bottomPanelOpen: open }),
       toggleBottomPanel: () => set((state) => ({ bottomPanelOpen: !state.bottomPanelOpen })),
       setActiveBottomTab: (tab) => set({ activeBottomTab: tab, bottomPanelOpen: true }),
+      preferences: { defaultRightPanel: "graph" },
+      updatePreferences: (prefs) => set((state) => ({ preferences: { ...state.preferences, ...prefs } })),
+      explorerExpanded: {},
+      setExplorerExpanded: (path, expanded) => set((state) => ({
+        explorerExpanded: { ...state.explorerExpanded, [path]: expanded }
+      })),
+      toggleExplorerExpanded: (path) => set((state) => ({
+        explorerExpanded: {
+          ...state.explorerExpanded,
+          [path]: !state.explorerExpanded[path]
+        }
+      })),
       pinTab: (tabId) => set((state) => ({
         tabs: state.tabs.map((t) => t.id === tabId ? { ...t, isPreview: false } : t)
       })),
@@ -212,7 +226,10 @@ const useIdeStore = create()(
         tabs: state.tabs,
         activeTabId: state.activeTabId,
         tabSnapshots: state.tabSnapshots,
-        sidebarOpen: state.sidebarOpen
+        sidebarOpen: state.sidebarOpen,
+        sidebarWidth: state.sidebarWidth,
+        preferences: state.preferences,
+        explorerExpanded: state.explorerExpanded
       })
     }
   )
@@ -229,14 +246,16 @@ function CommandPalette({
   const inputRef = reactExports.useRef(null);
   const allItems = reactExports.useMemo(() => {
     const list = [];
-    for (const m of manifests) {
+    for (const item of manifests) {
+      const mName = typeof item === "string" ? item : item.name;
+      const mWs = typeof item === "string" ? void 0 : item.workspace;
       list.push({
-        id: `manifest:${m}`,
+        id: `manifest:${mName}`,
         type: "manifest",
-        title: m,
-        subtitle: "清单蓝图",
+        title: mName,
+        subtitle: mWs ? `清单蓝图 (@${mWs})` : "清单蓝图",
         badge: "MANIFEST",
-        manifestName: m
+        manifestName: mName
       });
     }
     for (const pkg of packages) {
@@ -1901,7 +1920,10 @@ function LookupEditorTab({
   const [description, setDescription] = reactExports.useState("");
   const [selectors, setSelectors] = reactExports.useState([]);
   const [isModified, setIsModified] = reactExports.useState(false);
-  const [rightView, setRightView] = reactExports.useState("atoms");
+  const preferences = useIdeStore((state) => state.preferences);
+  const [rightView, setRightView] = reactExports.useState(
+    (preferences == null ? void 0 : preferences.defaultRightPanel) === "prompt" ? "prompt" : "graph"
+  );
   const [matchedAtoms, setMatchedAtoms] = reactExports.useState([]);
   const [evaluating, setEvaluating] = reactExports.useState(false);
   const [evalError, setEvalError] = reactExports.useState("");
@@ -1941,7 +1963,7 @@ function LookupEditorTab({
       setRawKeyName(snapshot.rawKeyName);
       setDescription(snapshot.description);
       setSelectors(snapshot.selectors);
-      setRightView(snapshot.rightView);
+      if (snapshot.rightView) setRightView(snapshot.rightView);
       setIsModified(snapshot.isModified);
       setTabDirty(tabId, snapshot.isModified);
       setIsReady(true);
@@ -2611,6 +2633,7 @@ function LookupEditorTab({
 }
 function ManifestEditorTab({
   manifestName,
+  workspacePath,
   packages,
   onSaved
 }) {
@@ -2619,7 +2642,10 @@ function ManifestEditorTab({
   const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
   const getSnapshot = useIdeStore((state) => state.getSnapshot);
   const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
-  const [rightView, setRightView] = reactExports.useState("graph");
+  const preferences = useIdeStore((state) => state.preferences);
+  const [rightView, setRightView] = reactExports.useState(
+    (preferences == null ? void 0 : preferences.defaultRightPanel) === "prompt" ? "prompt" : "graph"
+  );
   const [showRightPanel, setShowRightPanel] = reactExports.useState(true);
   const [manifestIdentifier, setManifestIdentifier] = reactExports.useState(manifestName);
   const [isReady, setIsReady] = reactExports.useState(false);
@@ -2673,7 +2699,7 @@ function ManifestEditorTab({
       setDescription(snapshot.description);
       setItems(snapshot.items);
       setOverrides(snapshot.overrides);
-      setRightView(snapshot.rightView);
+      if (snapshot.rightView) setRightView(snapshot.rightView);
       setShowRightPanel(snapshot.showRightPanel);
       setIsModified(snapshot.isModified);
       if (snapshot.initialSnapshot) {
@@ -2817,7 +2843,8 @@ function ManifestEditorTab({
         version: version.trim(),
         description: description.trim(),
         imports: items.map((i) => ({ lookup: i.lookup })),
-        identifier: manifestIdentifier || name.trim()
+        identifier: manifestIdentifier || name.trim(),
+        workspace_path: workspacePath
       };
       if (Object.keys(overrides).length > 0) {
         payload.overrides = overrides;
@@ -3286,373 +3313,6 @@ function ManifestEditorTab({
     ) : renderBlueprintContent(true) })
   ] });
 }
-function buildTree(paths) {
-  const root = {
-    children: /* @__PURE__ */ new Map()
-  };
-  for (const p of paths) {
-    const parts = p.split("/").filter(Boolean);
-    let curr = root;
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      const isLeaf = i === parts.length - 1;
-      const subPath = parts.slice(0, i + 1).join("/");
-      let nextNode = curr.children.get(part);
-      if (!nextNode) {
-        nextNode = {
-          name: part,
-          path: subPath,
-          isFolder: !isLeaf,
-          children: /* @__PURE__ */ new Map()
-        };
-        curr.children.set(part, nextNode);
-      } else if (!isLeaf) {
-        nextNode.isFolder = true;
-      }
-      curr = nextNode;
-    }
-  }
-  function toSortedNodes(node) {
-    const list = [];
-    for (const child of node.children.values()) {
-      list.push({
-        name: child.name,
-        path: child.path,
-        isFolder: child.isFolder,
-        children: toSortedNodes(child)
-      });
-    }
-    return list.sort((a, b) => {
-      if (a.isFolder && !b.isFolder) return -1;
-      if (!a.isFolder && b.isFolder) return 1;
-      return a.name.localeCompare(b.name);
-    });
-  }
-  return toSortedNodes(root);
-}
-function ManifestTreeItem({
-  node,
-  depth,
-  activeManifestName,
-  expandedFolders,
-  onToggleFolder,
-  onSelectManifest,
-  onDeleteManifest
-}) {
-  const isExpanded = Boolean(expandedFolders[node.path]);
-  const isActive = !node.isFolder && activeManifestName === node.path;
-  const paddingLeft = `${depth * 14 + 6}px`;
-  if (node.isFolder) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-0.5", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        "button",
-        {
-          type: "button",
-          onClick: () => onToggleFolder(node.path),
-          style: { paddingLeft },
-          className: "w-full flex items-center gap-1.5 py-1 pr-2 rounded text-xs font-mono text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors group cursor-pointer text-left",
-          title: node.path,
-          children: [
-            isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3.5 w-3.5 text-slate-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5 text-slate-400 shrink-0" }),
-            isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(FolderOpen, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Folder, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium truncate", children: node.name }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 ml-auto opacity-0 group-hover:opacity-100", children: node.children.length })
-          ]
-        }
-      ),
-      isExpanded && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-0.5", children: node.children.map((child) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-        ManifestTreeItem,
-        {
-          node: child,
-          depth: depth + 1,
-          activeManifestName,
-          expandedFolders,
-          onToggleFolder,
-          onSelectManifest,
-          onDeleteManifest
-        },
-        child.path
-      )) })
-    ] });
-  }
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-    "div",
-    {
-      style: { paddingLeft },
-      className: `group w-full flex items-center justify-between py-1 pr-1.5 rounded text-xs font-mono transition-colors ${isActive ? "bg-indigo-600/30 text-indigo-200 border border-indigo-500/50" : "text-slate-300 hover:bg-slate-800/60"}`,
-      children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "button",
-          {
-            type: "button",
-            onClick: (e) => onSelectManifest(node.path, e),
-            className: "flex items-center gap-1.5 flex-1 min-w-0 text-left hover:text-white cursor-pointer",
-            title: `${node.path} (点击在当前标签页打开，按住 Ctrl 点击新建标签页)`,
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-3.5 w-3.5 text-indigo-400/80 shrink-0" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: node.name })
-            ]
-          }
-        ),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            type: "button",
-            onClick: (e) => onDeleteManifest(node.path, e),
-            className: "opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-opacity p-0.5 rounded shrink-0 cursor-pointer",
-            title: "删除清单",
-            children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3.5 w-3.5" })
-          }
-        )
-      ]
-    }
-  );
-}
-function ManifestExplorer({
-  manifests,
-  activeManifestName,
-  onSelectManifest,
-  onDeleteManifest
-}) {
-  const [expandedFolders, setExpandedFolders] = reactExports.useState({});
-  const tree = reactExports.useMemo(() => buildTree(manifests), [manifests]);
-  const toggleFolder = (folderPath) => {
-    setExpandedFolders((prev) => ({
-      ...prev,
-      [folderPath]: !prev[folderPath]
-    }));
-  };
-  if (manifests.length === 0) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "py-6 text-center text-xs font-mono text-slate-500", children: "暂无清单蓝图" });
-  }
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-0.5", children: tree.map((node) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-    ManifestTreeItem,
-    {
-      node,
-      depth: 0,
-      activeManifestName,
-      expandedFolders,
-      onToggleFolder: toggleFolder,
-      onSelectManifest,
-      onDeleteManifest
-    },
-    node.path
-  )) });
-}
-function PackageExplorer({
-  packages,
-  onSelectAtom,
-  onOpenLookup,
-  onDeletePackage,
-  onDeleteLookup,
-  onDeleteAtom
-}) {
-  const [expandedPkg, setExpandedPkg] = reactExports.useState({});
-  const toggle = (pkgName) => {
-    setExpandedPkg((prev) => ({ ...prev, [pkgName]: !prev[pkgName] }));
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1", children: packages.map((pkg) => {
-    var _a;
-    const isExp = !!expandedPkg[pkg.name];
-    const exportsCount = Object.keys(pkg.exports || {}).length;
-    const internalCount = Object.keys(pkg.internal_lookups || {}).length;
-    const atomsCount = ((_a = pkg.atoms) == null ? void 0 : _a.length) || 0;
-    return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-      "div",
-      {
-        className: "rounded border border-slate-800/60 bg-slate-900/30 overflow-hidden",
-        children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between w-full px-3 py-2 text-left hover:bg-slate-800/40 text-xs font-mono transition-colors group", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "button",
-              {
-                type: "button",
-                onClick: () => toggle(pkg.name),
-                className: "flex items-center gap-2 flex-1 text-left cursor-pointer",
-                children: [
-                  isExp ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3.5 w-3.5 text-slate-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5 text-slate-400" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Package, { className: "h-3.5 w-3.5 text-indigo-400" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200", children: pkg.name }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-slate-500 ml-1", children: [
-                    "(",
-                    atomsCount,
-                    ")"
-                  ] })
-                ]
-              }
-            ),
-            onDeletePackage && /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "button",
-              {
-                type: "button",
-                onClick: (e) => onDeletePackage(pkg.name, e),
-                className: "opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-rose-400 transition-opacity rounded cursor-pointer",
-                title: `删除组件包 ${pkg.name}`,
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3.5 w-3.5" })
-              }
-            )
-          ] }),
-          isExp && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-3 pb-2.5 pt-1 space-y-2 border-t border-slate-800/40 bg-slate-950/40", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-emerald-400 flex items-center justify-between mb-1", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Globe, { className: "h-3 w-3" }),
-                  " 公开导出接口"
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: () => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}`),
-                    className: "text-slate-400 hover:text-emerald-400 p-0.5 rounded",
-                    title: "新建公开导出接口",
-                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
-                  }
-                )
-              ] }),
-              exportsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.exports).map(([k, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "div",
-                {
-                  className: "w-full text-left text-xs font-mono text-slate-300 hover:text-emerald-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
-                        className: "flex-1 text-left truncate flex items-center gap-1 cursor-pointer",
-                        title: "点击打开，按住 Ctrl 点击新建标签页",
-                        children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "outline", className: "text-[9px] px-1 py-0", children: def.pillar })
-                        ]
-                      }
-                    ),
-                    onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: (e) => onDeleteLookup(k, e),
-                        className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
-                        title: "删除此公开接口",
-                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
-                      }
-                    )
-                  ]
-                },
-                k
-              )) })
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-slate-400 flex items-center justify-between mb-1", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Lock, { className: "h-3 w-3" }),
-                  " 内部私有查找"
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}`, e),
-                    className: "text-slate-400 hover:text-indigo-400 p-0.5 rounded cursor-pointer",
-                    title: "新建内部查找",
-                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
-                  }
-                )
-              ] }),
-              internalCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.internal_lookups).map(([k, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "div",
-                {
-                  className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
-                        className: "flex-1 text-left truncate flex items-center gap-1 cursor-pointer",
-                        title: "点击打开，按住 Ctrl 点击新建标签页",
-                        children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] text-slate-600", children: def.pillar })
-                        ]
-                      }
-                    ),
-                    onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: (e) => onDeleteLookup(k, e),
-                        className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
-                        title: "删除此内部查找",
-                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
-                      }
-                    )
-                  ]
-                },
-                k
-              )) })
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-slate-400 flex items-center justify-between mb-1", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(FileCode, { className: "h-3 w-3" }),
-                  " 包含原子清单"
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: (e) => {
-                      e.stopPropagation();
-                      onSelectAtom == null ? void 0 : onSelectAtom(`draft:${pkg.name}`, e);
-                    },
-                    className: "text-slate-400 hover:text-indigo-400 p-0.5 rounded transition-colors cursor-pointer",
-                    title: `在包 ${pkg.name} 中新建原子组件`,
-                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
-                  }
-                )
-              ] }),
-              atomsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: pkg.atoms.map((atom) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "div",
-                {
-                  className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60 rounded px-1.5 py-1 truncate flex items-center justify-between transition-colors group cursor-pointer",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: (e) => onSelectAtom == null ? void 0 : onSelectAtom(atom.id, e),
-                        className: "flex items-center gap-1.5 flex-1 min-w-0 text-left cursor-pointer",
-                        title: "点击就地打开，按住 Ctrl 点击新建标签页",
-                        children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-indigo-400 shrink-0" }),
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: atom.id })
-                        ]
-                      }
-                    ),
-                    onDeleteAtom && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: (e) => onDeleteAtom(atom.id, e),
-                        className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
-                        title: "删除此原子组件",
-                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
-                      }
-                    )
-                  ]
-                },
-                atom.id
-              )) })
-            ] })
-          ] })
-        ]
-      },
-      pkg.name
-    );
-  }) });
-}
 function EmptyTab({
   manifestsCount,
   packagesCount,
@@ -3740,6 +3400,191 @@ function EmptyTab({
     ] })
   ] }) });
 }
+const useConfigStore = create((set) => ({
+  config: null,
+  loading: false,
+  fetchConfig: async () => {
+    set({ loading: true });
+    try {
+      const res = await fetch("/api/system/config");
+      const data = await res.json();
+      set({ config: data });
+    } catch (err) {
+      console.error("获取系统配置失败", err);
+    } finally {
+      set({ loading: false });
+    }
+  },
+  updateConfig: async (newConfig) => {
+    const res = await fetch("/api/system/config", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newConfig)
+    });
+    if (res.ok) {
+      set((state) => ({
+        config: state.config ? { ...state.config, ...newConfig } : newConfig
+      }));
+    } else {
+      throw new Error("更新配置失败");
+    }
+  }
+}));
+function SettingsTab() {
+  const { config, fetchConfig, updateConfig } = useConfigStore();
+  const { preferences, updatePreferences } = useIdeStore();
+  const [libPaths, setLibPaths] = reactExports.useState("");
+  const [manPaths, setManPaths] = reactExports.useState("");
+  const [hookCommand, setHookCommand] = reactExports.useState("");
+  const [saving, setSaving] = reactExports.useState(false);
+  reactExports.useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
+  reactExports.useEffect(() => {
+    var _a, _b;
+    if (config) {
+      setLibPaths(((_a = config.library_paths) == null ? void 0 : _a.join("\n")) || "");
+      setManPaths(((_b = config.manifest_paths) == null ? void 0 : _b.join("\n")) || "");
+      setHookCommand(config.post_process_hook || "");
+    }
+  }, [config]);
+  const handleSaveConfig = async () => {
+    setSaving(true);
+    const newLibPaths = libPaths.split("\n").map((p) => p.trim()).filter(Boolean);
+    const newManPaths = manPaths.split("\n").map((p) => p.trim()).filter(Boolean);
+    try {
+      await updateConfig({
+        library_paths: newLibPaths,
+        manifest_paths: newManPaths,
+        post_process_hook: hookCommand.trim() || void 0
+      });
+      alert("系统配置已保存！可能会触发工作空间重载。");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "保存失败";
+      alert(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-full flex-col bg-slate-950 text-slate-100 overflow-y-auto", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/60 sticky top-0 z-10", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Settings, { className: "h-5 w-5 text-indigo-400" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("h2", { className: "text-sm font-semibold", children: "系统设置" })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(Button, { size: "sm", onClick: handleSaveConfig, disabled: saving, className: "h-8 text-xs", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(Save, { className: "h-4 w-4 mr-1.5" }),
+        " 保存配置"
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-4xl p-6 space-y-8 font-sans", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "space-y-4", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("h3", { className: "text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(SlidersVertical, { className: "h-4 w-4" }),
+          " IDE 偏好设置"
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "rounded-xl border border-slate-800 bg-slate-900/40 p-5 space-y-4 text-sm", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "font-medium", children: "蓝图编辑器默认伴生视图" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-xs text-slate-500 mt-1", children: "选择打开 Manifest 或 Lookup 编辑器时，右侧默认展开的视图。" })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "select",
+            {
+              value: preferences.defaultRightPanel,
+              onChange: (e) => updatePreferences({ defaultRightPanel: e.target.value }),
+              className: "bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "graph", children: "依赖白板拓扑 (Graph)" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "prompt", children: "实时切片编译 (Prompt)" })
+              ]
+            }
+          )
+        ] }) })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "space-y-4", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("h3", { className: "text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(FolderTree, { className: "h-4 w-4" }),
+          " 多工作区配置 (config.yaml)"
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-xl border border-slate-800 bg-slate-900/40 p-5 space-y-6 text-sm", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "label",
+              {
+                htmlFor: "settings-lib-paths",
+                className: "font-medium block mb-1 flex items-center gap-2",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Database, { className: "h-4 w-4 text-indigo-400" }),
+                  " 知识库挂载点 (Library Paths)"
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-xs text-slate-500 mb-2", children: "每一行填写一个绝对路径，首个路径将作为默认新建组件包的目标位置。" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "textarea",
+              {
+                id: "settings-lib-paths",
+                value: libPaths,
+                onChange: (e) => setLibPaths(e.target.value),
+                rows: 3,
+                className: "w-full font-mono bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 focus:outline-none focus:border-indigo-500",
+                placeholder: "/home/user/workspace/aca_library"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "label",
+              {
+                htmlFor: "settings-man-paths",
+                className: "font-medium block mb-1 flex items-center gap-2",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Database, { className: "h-4 w-4 text-emerald-400" }),
+                  " 清单蓝图存放点 (Manifest Paths)"
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-xs text-slate-500 mb-2", children: "每一行填写一个绝对路径，定义了系统中智能体组装图谱的存放位置。" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "textarea",
+              {
+                id: "settings-man-paths",
+                value: manPaths,
+                onChange: (e) => setManPaths(e.target.value),
+                rows: 3,
+                className: "w-full font-mono bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 focus:outline-none focus:border-emerald-500",
+                placeholder: "/home/user/workspace/manifests"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "label",
+              {
+                htmlFor: "settings-hook-command",
+                className: "font-medium block mb-1 flex items-center gap-2",
+                children: "后处理钩子 (Post-Process Hook)"
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-xs text-slate-500 mb-2", children: "一段将被管道调用的 Shell 命令，编译生成的 Prompt 会通过 STDIN 传入。" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "input",
+              {
+                id: "settings-hook-command",
+                type: "text",
+                value: hookCommand,
+                onChange: (e) => setHookCommand(e.target.value),
+                className: "w-full font-mono bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 focus:outline-none focus:border-purple-500",
+                placeholder: "例如: pbcopy 或者 cat"
+              }
+            )
+          ] })
+        ] })
+      ] })
+    ] })
+  ] });
+}
 const TabPane = reactExports.memo(
   function TabPane2({
     tab,
@@ -3777,6 +3622,7 @@ const TabPane = reactExports.memo(
         ManifestEditorTab,
         {
           manifestName: tab.manifestName || "",
+          workspacePath: tab.workspacePath,
           packages,
           onSaved
         },
@@ -3791,23 +3637,587 @@ const TabPane = reactExports.memo(
           onDeleted: () => onDeleted(tab.id)
         },
         tab.id
-      )
+      ),
+      tab.type === "settings" && /* @__PURE__ */ jsxRuntimeExports.jsx(SettingsTab, {})
     ] });
   },
   (prev, next) => {
     return prev.isActive === next.isActive && prev.tab.id === next.tab.id && prev.tab.isDirty === next.tab.isDirty && prev.tab.title === next.tab.title && prev.packages === next.packages && prev.manifestsCount === next.manifestsCount && prev.onSaved === next.onSaved;
   }
 );
+function Modal({
+  isOpen,
+  onClose,
+  title,
+  children
+}) {
+  if (!isOpen) return null;
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-between items-center px-4 py-3 border-b border-slate-800 bg-slate-950/50", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-sm font-semibold text-slate-100", children: title }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: onClose, className: "text-slate-500 hover:text-slate-300", children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" }) })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-4", children })
+  ] }) });
+}
+function CreateManifestModal({
+  isOpen,
+  onClose,
+  newManName,
+  setNewManName,
+  newManWs,
+  setNewManWs,
+  manifestPaths,
+  onSubmit
+}) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Modal, { isOpen, onClose, title: "新建蓝图草稿", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-man-name", className: "block text-xs font-mono text-slate-400 mb-1", children: "蓝图名称 (可选带目录层级)" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "input",
+        {
+          id: "modal-man-name",
+          type: "text",
+          value: newManName,
+          onChange: (e) => setNewManName(e.target.value),
+          className: "w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500",
+          placeholder: "例如: project_a/main_agent"
+        }
+      )
+    ] }),
+    manifestPaths && manifestPaths.length > 1 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-man-ws", className: "block text-xs font-mono text-slate-400 mb-1", children: "选择工作区 (Workspace)" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "select",
+        {
+          id: "modal-man-ws",
+          value: newManWs,
+          onChange: (e) => setNewManWs(e.target.value),
+          className: "w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500",
+          children: manifestPaths.map((p) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: p, children: p }, p))
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-2 flex justify-end gap-2", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "ghost", onClick: onClose, children: "取消" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: onSubmit, disabled: !newManName.trim(), children: "创建草稿" })
+    ] })
+  ] }) });
+}
+function CreatePackageModal({
+  isOpen,
+  onClose,
+  newPkgName,
+  setNewPkgName,
+  newPkgWs,
+  setNewPkgWs,
+  libraryPaths,
+  onSubmit
+}) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Modal, { isOpen, onClose, title: "新建组件包 (Package)", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-pkg-name", className: "block text-xs font-mono text-slate-400 mb-1", children: "包名称 (需在全局范围内唯一)" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "input",
+        {
+          id: "modal-pkg-name",
+          type: "text",
+          value: newPkgName,
+          onChange: (e) => setNewPkgName(e.target.value),
+          className: "w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500",
+          placeholder: "例如: core_agent"
+        }
+      )
+    ] }),
+    libraryPaths && libraryPaths.length > 1 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-pkg-ws", className: "block text-xs font-mono text-slate-400 mb-1", children: "选择工作区 (Workspace)" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "select",
+        {
+          id: "modal-pkg-ws",
+          value: newPkgWs,
+          onChange: (e) => setNewPkgWs(e.target.value),
+          className: "w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500",
+          children: libraryPaths.map((p) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: p, children: p }, p))
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-2 flex justify-end gap-2", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "ghost", onClick: onClose, children: "取消" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: onSubmit, disabled: !newPkgName.trim(), children: "确定创建" })
+    ] })
+  ] }) });
+}
+function buildTree(items) {
+  const root = {
+    children: /* @__PURE__ */ new Map()
+  };
+  for (const item of items) {
+    const p = typeof item === "string" ? item : item.name;
+    const wsPath = typeof item === "string" ? "默认工作区" : item.workspace_path || item.workspace || "默认工作区";
+    let wsNode = root.children.get(wsPath);
+    if (!wsNode) {
+      wsNode = {
+        name: wsPath,
+        path: wsPath,
+        isFolder: true,
+        children: /* @__PURE__ */ new Map()
+      };
+      root.children.set(wsPath, wsNode);
+    }
+    const parts = p.split("/").filter(Boolean);
+    let curr = wsNode;
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      const isLeaf = i === parts.length - 1;
+      const subPath = `${wsPath}::${parts.slice(0, i + 1).join("/")}`;
+      let nextNode = curr.children.get(part);
+      if (!nextNode) {
+        nextNode = {
+          name: part,
+          path: isLeaf ? p : subPath,
+          isFolder: !isLeaf,
+          children: /* @__PURE__ */ new Map()
+        };
+        curr.children.set(part, nextNode);
+      } else if (!isLeaf) {
+        nextNode.isFolder = true;
+      }
+      curr = nextNode;
+    }
+  }
+  function toSortedNodes(node) {
+    const list = [];
+    for (const child of node.children.values()) {
+      list.push({
+        name: child.name,
+        path: child.path,
+        isFolder: child.isFolder,
+        children: toSortedNodes(child)
+      });
+    }
+    return list.sort((a, b) => {
+      if (a.isFolder && !b.isFolder) return -1;
+      if (!a.isFolder && b.isFolder) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  }
+  return toSortedNodes(root);
+}
+function ManifestTreeItem({
+  node,
+  depth,
+  activeManifestName,
+  onToggleFolder,
+  isExpanded,
+  onSelectManifest,
+  onDeleteManifest
+}) {
+  const isActive = !node.isFolder && activeManifestName === node.path;
+  const paddingLeft = `${depth * 14 + 6}px`;
+  if (node.isFolder) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-0.5 mb-1", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "button",
+        {
+          type: "button",
+          onClick: () => onToggleFolder(node.path),
+          style: { paddingLeft },
+          className: "w-full flex items-center gap-1.5 py-1 pr-2 rounded text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-colors group cursor-pointer text-left",
+          title: node.name,
+          children: [
+            isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3.5 w-3.5 text-slate-500 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5 text-slate-500 shrink-0" }),
+            isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(FolderOpen, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Folder, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold truncate text-[11px] text-slate-300", title: node.name, children: node.name })
+          ]
+        }
+      ),
+      isExpanded && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-0.5 border-l border-slate-800/60 ml-3 pl-1", children: node.children.map((child) => {
+        const childExpanded = useIdeStore.getState().explorerExpanded[child.path] === true;
+        return /* @__PURE__ */ jsxRuntimeExports.jsx(
+          ManifestTreeItem,
+          {
+            node: child,
+            depth: depth + 1,
+            activeManifestName,
+            isExpanded: childExpanded,
+            onToggleFolder,
+            onSelectManifest,
+            onDeleteManifest
+          },
+          child.path
+        );
+      }) })
+    ] });
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      style: { paddingLeft },
+      className: `group w-full flex items-center justify-between py-1 pr-1.5 rounded text-xs font-mono transition-colors ${isActive ? "bg-indigo-600/30 text-indigo-200 border border-indigo-500/50" : "text-slate-300 hover:bg-slate-800/60"}`,
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            type: "button",
+            onClick: (e) => onSelectManifest(node.path, e),
+            className: "flex items-center gap-1.5 flex-1 min-w-0 text-left hover:text-white cursor-pointer",
+            title: node.path,
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-3.5 w-3.5 text-indigo-400/80 shrink-0" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: node.name })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            onClick: (e) => onDeleteManifest(node.path, e),
+            className: "opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-opacity p-0.5 rounded shrink-0 cursor-pointer ml-1",
+            title: "删除清单",
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3.5 w-3.5" })
+          }
+        )
+      ]
+    }
+  );
+}
+function ManifestExplorer({
+  manifests,
+  activeManifestName,
+  onSelectManifest,
+  onDeleteManifest
+}) {
+  const explorerExpanded = useIdeStore((state) => state.explorerExpanded);
+  const toggleExplorerExpanded = useIdeStore((state) => state.toggleExplorerExpanded);
+  const tree = reactExports.useMemo(() => buildTree(manifests), [manifests]);
+  if (manifests.length === 0) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "py-6 text-center text-xs font-mono text-slate-500", children: "暂无清单蓝图" });
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-0.5", children: tree.map((node) => {
+    const isExpanded = explorerExpanded[node.path] === true;
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      ManifestTreeItem,
+      {
+        node,
+        depth: 0,
+        activeManifestName,
+        isExpanded,
+        onToggleFolder: toggleExplorerExpanded,
+        onSelectManifest,
+        onDeleteManifest
+      },
+      node.path
+    );
+  }) });
+}
+function PackageExplorer({
+  packages,
+  onSelectAtom,
+  onOpenLookup,
+  onDeletePackage,
+  onDeleteLookup,
+  onDeleteAtom
+}) {
+  const explorerExpanded = useIdeStore((state) => state.explorerExpanded);
+  const toggleExplorerExpanded = useIdeStore((state) => state.toggleExplorerExpanded);
+  const workspaceGroups = reactExports.useMemo(() => {
+    var _a;
+    const map = /* @__PURE__ */ new Map();
+    for (const pkg of packages) {
+      const wsPath = pkg.workspace_path || pkg.workspace || "默认工作区";
+      if (!map.has(wsPath)) {
+        map.set(wsPath, []);
+      }
+      (_a = map.get(wsPath)) == null ? void 0 : _a.push(pkg);
+    }
+    return Array.from(map.entries()).map(([path, pkgs]) => ({
+      path,
+      name: path.split("/").pop() || path,
+      packages: pkgs
+    }));
+  }, [packages]);
+  if (packages.length === 0) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "py-6 text-center text-xs font-mono text-slate-500", children: "暂无组件包" });
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1", children: workspaceGroups.map((group) => {
+    const isFolderExp = explorerExpanded[group.path] === true;
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1 mb-2", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "button",
+        {
+          type: "button",
+          onClick: () => toggleExplorerExpanded(group.path),
+          className: "w-full flex items-center gap-1.5 py-1 px-1 rounded text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-colors group cursor-pointer text-left",
+          title: group.path,
+          children: [
+            isFolderExp ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3.5 w-3.5 text-slate-500 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5 text-slate-500 shrink-0" }),
+            isFolderExp ? /* @__PURE__ */ jsxRuntimeExports.jsx(FolderOpen, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Folder, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "span",
+              {
+                className: "font-semibold truncate text-[11px] text-slate-300",
+                title: group.path,
+                children: group.path
+              }
+            )
+          ]
+        }
+      ),
+      isFolderExp && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pl-3 space-y-1 border-l border-slate-800/60 ml-2", children: group.packages.map((pkg) => {
+        var _a;
+        const pkgKey = `pkg:${pkg.name}`;
+        const isExp = explorerExpanded[pkgKey] === true;
+        const exportsCount = Object.keys(pkg.exports || {}).length;
+        const internalCount = Object.keys(pkg.internal_lookups || {}).length;
+        const atomsCount = ((_a = pkg.atoms) == null ? void 0 : _a.length) || 0;
+        return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            className: "rounded border border-slate-800/60 bg-slate-900/30 overflow-hidden",
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between w-full px-3 py-2 text-left hover:bg-slate-800/40 text-xs font-mono transition-colors group", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => toggleExplorerExpanded(pkgKey),
+                    className: "flex items-center gap-2 flex-1 text-left cursor-pointer truncate",
+                    children: [
+                      isExp ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3.5 w-3.5 text-slate-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5 text-slate-400 shrink-0" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(Package, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200 truncate", children: pkg.name }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-slate-500 ml-auto shrink-0", children: [
+                        "(",
+                        atomsCount,
+                        ")"
+                      ] })
+                    ]
+                  }
+                ),
+                onDeletePackage && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: (e) => onDeletePackage(pkg.name, e),
+                    className: "opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-rose-400 transition-opacity rounded cursor-pointer shrink-0 ml-1",
+                    title: `删除组件包 ${pkg.name}`,
+                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3.5 w-3.5" })
+                  }
+                )
+              ] }),
+              isExp && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-3 pb-2.5 pt-1 space-y-2 border-t border-slate-800/40 bg-slate-950/40", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-emerald-400 flex items-center justify-between mb-1", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(Globe, { className: "h-3 w-3" }),
+                      " 公开导出接口"
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}`),
+                        className: "text-slate-400 hover:text-emerald-400 p-0.5 rounded cursor-pointer",
+                        title: "新建公开导出接口",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
+                      }
+                    )
+                  ] }),
+                  exportsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.exports).map(([k, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "div",
+                    {
+                      className: "w-full text-left text-xs font-mono text-slate-300 hover:text-emerald-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer",
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                          "button",
+                          {
+                            type: "button",
+                            onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
+                            className: "flex-1 text-left truncate flex items-center gap-1 cursor-pointer",
+                            title: "点击打开",
+                            children: [
+                              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
+                              /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "outline", className: "text-[9px] px-1 py-0", children: def.pillar })
+                            ]
+                          }
+                        ),
+                        onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          "button",
+                          {
+                            type: "button",
+                            onClick: (e) => onDeleteLookup(k, e),
+                            className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
+                            title: "删除此公开接口",
+                            children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+                          }
+                        )
+                      ]
+                    },
+                    k
+                  )) })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-slate-400 flex items-center justify-between mb-1", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(Lock, { className: "h-3 w-3" }),
+                      " 内部私有查找"
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(`draft:${pkg.name}`, e),
+                        className: "text-slate-400 hover:text-indigo-400 p-0.5 rounded cursor-pointer",
+                        title: "新建内部查找",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
+                      }
+                    )
+                  ] }),
+                  internalCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.internal_lookups).map(([k, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "div",
+                    {
+                      className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer",
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                          "button",
+                          {
+                            type: "button",
+                            onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k, e),
+                            className: "flex-1 text-left truncate flex items-center gap-1 cursor-pointer",
+                            title: "点击打开",
+                            children: [
+                              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k }),
+                              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] text-slate-600", children: def.pillar })
+                            ]
+                          }
+                        ),
+                        onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          "button",
+                          {
+                            type: "button",
+                            onClick: (e) => onDeleteLookup(k, e),
+                            className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
+                            title: "删除此内部查找",
+                            children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+                          }
+                        )
+                      ]
+                    },
+                    k
+                  )) })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-slate-400 flex items-center justify-between mb-1", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(FileCode, { className: "h-3 w-3" }),
+                      " 包含原子清单"
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: (e) => {
+                          e.stopPropagation();
+                          onSelectAtom == null ? void 0 : onSelectAtom(`draft:${pkg.name}`, e);
+                        },
+                        className: "text-slate-400 hover:text-indigo-400 p-0.5 rounded transition-colors cursor-pointer",
+                        title: "新建原子组件",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3 w-3" })
+                      }
+                    )
+                  ] }),
+                  atomsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: pkg.atoms.map((atom) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "div",
+                    {
+                      className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 hover:bg-slate-800/60 rounded px-1.5 py-1 truncate flex items-center justify-between transition-colors group cursor-pointer",
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                          "button",
+                          {
+                            type: "button",
+                            onClick: (e) => onSelectAtom == null ? void 0 : onSelectAtom(atom.id, e),
+                            className: "flex items-center gap-1.5 flex-1 min-w-0 text-left cursor-pointer",
+                            title: "点击打开原子",
+                            children: [
+                              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-indigo-400 shrink-0" }),
+                              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: atom.id })
+                            ]
+                          }
+                        ),
+                        onDeleteAtom && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          "button",
+                          {
+                            type: "button",
+                            onClick: (e) => onDeleteAtom(atom.id, e),
+                            className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
+                            title: "删除此原子组件",
+                            children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+                          }
+                        )
+                      ]
+                    },
+                    atom.id
+                  )) })
+                ] })
+              ] })
+            ]
+          },
+          pkg.name
+        );
+      }) })
+    ] }, group.path);
+  }) });
+}
 function App() {
+  var _a, _b;
   const ideStore = useIdeStore();
+  const configStore = useConfigStore();
   const [manifests, setManifests] = reactExports.useState([]);
   const [packages, setPackages] = reactExports.useState([]);
   const [status, setStatus] = reactExports.useState("检测中...");
+  const [isCreatePkgOpen, setIsCreatePkgOpen] = reactExports.useState(false);
+  const [newPkgName, setNewPkgName] = reactExports.useState("");
+  const [newPkgWs, setNewPkgWs] = reactExports.useState("");
+  const [isCreateManOpen, setIsCreateManOpen] = reactExports.useState(false);
+  const [newManName, setNewManName] = reactExports.useState("");
+  const [newManWs, setNewManWs] = reactExports.useState("");
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = reactExports.useState(false);
   const [lintLoading, setLintLoading] = reactExports.useState(false);
   const [lintErrors, setLintErrors] = reactExports.useState(0);
   const [lintWarnings, setLintWarnings] = reactExports.useState(0);
   const [lintIssues, setLintIssues] = reactExports.useState([]);
+  const sidebarWidth = ideStore.sidebarWidth;
+  const setSidebarWidth = ideStore.setSidebarWidth;
+  const [isDraggingSidebar, setIsDraggingSidebar] = reactExports.useState(false);
+  const handleSidebarPointerDown = (e) => {
+    e.preventDefault();
+    setIsDraggingSidebar(true);
+  };
+  const handleSidebarPointerMove = reactExports.useCallback(
+    (e) => {
+      if (!isDraggingSidebar) return;
+      const newWidth = e.clientX - 48;
+      if (newWidth >= 180 && newWidth <= 600) {
+        setSidebarWidth(newWidth);
+      }
+    },
+    [isDraggingSidebar, setSidebarWidth]
+  );
+  const handleSidebarPointerUp = reactExports.useCallback(() => {
+    setIsDraggingSidebar(false);
+  }, []);
+  reactExports.useEffect(() => {
+    if (isDraggingSidebar) {
+      window.addEventListener("pointermove", handleSidebarPointerMove);
+      window.addEventListener("pointerup", handleSidebarPointerUp);
+    }
+    return () => {
+      window.removeEventListener("pointermove", handleSidebarPointerMove);
+      window.removeEventListener("pointerup", handleSidebarPointerUp);
+    };
+  }, [isDraggingSidebar, handleSidebarPointerMove, handleSidebarPointerUp]);
   const [explorerTab, setExplorerTab] = reactExports.useState("manifests");
   const fetchAssets = reactExports.useCallback(() => {
     fetch("/api/assets").then((res) => res.json()).then((data) => {
@@ -3826,7 +4236,9 @@ function App() {
       setLintIssues(data.issues || []);
     }).catch(console.error).finally(() => setLintLoading(false));
   }, []);
+  const { fetchConfig } = configStore;
   reactExports.useEffect(() => {
+    fetchConfig();
     fetch("/api/health").then((res) => res.json()).then((data) => setStatus(data.status === "ok" ? "正常" : data.status)).catch(() => setStatus("离线"));
     fetchAssets();
     fetchLintReport();
@@ -3873,7 +4285,7 @@ function App() {
       window.removeEventListener("keydown", handleGlobalKeyDown);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [fetchAssets, fetchLintReport, ideStore.goBack, ideStore.goForward]);
+  }, [fetchConfig, fetchAssets, fetchLintReport, ideStore.goBack, ideStore.goForward]);
   const handleOpenManifestTab = (mName, e, opts) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
     const isPreview = !newTab;
@@ -3952,12 +4364,11 @@ function App() {
     }
   };
   const handleCreateNewAtomDraft = () => {
-    var _a;
-    const defaultPkg = ((_a = packages[0]) == null ? void 0 : _a.name) || "";
-    const draftId = `draft_${Date.now().toString().slice(-4)}`;
+    var _a2;
+    const defaultPkg = ((_a2 = packages[0]) == null ? void 0 : _a2.name) || "";
     ideStore.openTab(
       {
-        id: `atom:${draftId}`,
+        id: `atom:draft_${Date.now()}`,
         type: "atom",
         title: "新建原子草稿",
         closable: true,
@@ -3967,15 +4378,22 @@ function App() {
     );
   };
   const handleCreateNewManifest = () => {
-    const draftName = `未命名蓝图_${Date.now().toString().slice(-4)}`;
+    var _a2, _b2;
+    setNewManName(`未命名蓝图_${Date.now().toString().slice(-4)}`);
+    setNewManWs(((_b2 = (_a2 = configStore.config) == null ? void 0 : _a2.manifest_paths) == null ? void 0 : _b2[0]) || "");
+    setIsCreateManOpen(true);
+  };
+  const submitCreateManifest = () => {
+    if (!newManName.trim()) return;
+    setIsCreateManOpen(false);
     ideStore.openTab(
       {
-        id: `manifest:${draftName}`,
+        id: `manifest:${newManName.trim()}`,
         type: "manifest",
-        title: draftName,
+        title: newManName.trim(),
         closable: true,
-        manifestName: ""
-        // 空字符串触发新建草稿
+        manifestName: "",
+        workspacePath: newManWs || void 0
       },
       { newTab: true }
     );
@@ -3994,9 +4412,7 @@ function App() {
   };
   const handleDeleteManifest = async (mName, e) => {
     e.stopPropagation();
-    if (!window.confirm(`确定要删除清单 "${mName}" 吗？此操作不可逆。`)) {
-      return;
-    }
+    if (!window.confirm(`确定要删除清单 "${mName}" 吗？此操作不可逆。`)) return;
     try {
       const res = await fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
         method: "DELETE"
@@ -4025,12 +4441,21 @@ function App() {
     [ideStore, fetchAssets, fetchLintReport]
   );
   const handleCreatePackage = reactExports.useCallback(() => {
-    const pkgName = window.prompt("请输入新建组件包名称（英文字符/下划线）:");
-    if (!pkgName || !pkgName.trim()) return;
+    var _a2, _b2;
+    setNewPkgName("");
+    setNewPkgWs(((_b2 = (_a2 = configStore.config) == null ? void 0 : _a2.library_paths) == null ? void 0 : _b2[0]) || "");
+    setIsCreatePkgOpen(true);
+  }, [configStore.config]);
+  const submitCreatePackage = reactExports.useCallback(() => {
+    if (!newPkgName.trim()) return;
+    setIsCreatePkgOpen(false);
     fetch("/api/packages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: pkgName.trim() })
+      body: JSON.stringify({
+        name: newPkgName.trim(),
+        workspace_path: newPkgWs || void 0
+      })
     }).then(async (res) => {
       if (res.ok) {
         fetchAssets();
@@ -4040,13 +4465,12 @@ function App() {
         alert(`创建组件包失败: ${data.detail}`);
       }
     }).catch(() => alert("创建组件包网络异常"));
-  }, [fetchAssets, fetchLintReport]);
+  }, [newPkgName, newPkgWs, fetchAssets, fetchLintReport]);
   const handleDeletePackage = reactExports.useCallback(
     (pkgName, e) => {
       e.stopPropagation();
-      if (!window.confirm(`确定要彻底删除组件包 "${pkgName}" 及其所有文件吗？此操作不可逆。`)) {
+      if (!window.confirm(`确定要彻底删除组件包 "${pkgName}" 及其所有文件吗？此操作不可逆。`))
         return;
-      }
       fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
         method: "DELETE"
       }).then(async (res) => {
@@ -4064,9 +4488,7 @@ function App() {
   const handleDeleteLookup = reactExports.useCallback(
     (lookupKey, e) => {
       e.stopPropagation();
-      if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？`)) {
-        return;
-      }
+      if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？`)) return;
       fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
         method: "DELETE"
       }).then(async (res) => {
@@ -4085,9 +4507,7 @@ function App() {
   const handleDeleteAtom = reactExports.useCallback(
     (atomId, e) => {
       e.stopPropagation();
-      if (!window.confirm(`确定要物理删除原子文件 "${atomId}" 吗？`)) {
-        return;
-      }
+      if (!window.confirm(`确定要物理删除原子文件 "${atomId}" 吗？`)) return;
       fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
         method: "DELETE"
       }).then(async (res) => {
@@ -4108,105 +4528,149 @@ function App() {
   const canGoForward = ideStore.historyIndex < ideStore.navigationHistory.length - 1;
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-screen flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans select-none", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-1 overflow-hidden", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-12 border-r border-slate-800 bg-slate-950 flex flex-col items-center py-3 space-y-4 shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "button",
-        {
-          type: "button",
-          onClick: () => {
-            if (!ideStore.sidebarOpen) ideStore.setSidebarOpen(true);
-            ideStore.setActiveSidebarView("explorer");
-          },
-          className: `p-2 rounded-lg transition-colors cursor-pointer ${ideStore.sidebarOpen && ideStore.activeSidebarView === "explorer" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
-          title: "资源管理器 (Explorer)",
-          children: /* @__PURE__ */ jsxRuntimeExports.jsx(FolderTree, { className: "h-5 w-5" })
-        }
-      ) }),
-      ideStore.sidebarOpen && /* @__PURE__ */ jsxRuntimeExports.jsxs("aside", { className: "w-72 border-r border-slate-800 bg-slate-900/40 flex flex-col shrink-0 overflow-hidden", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-3 border-b border-slate-800/80 flex items-center justify-between", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-bold font-mono tracking-wider text-slate-300", children: "资源视图" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "button",
-            {
-              type: "button",
-              onClick: ideStore.toggleSidebar,
-              className: "text-slate-400 hover:text-white p-0.5 cursor-pointer",
-              title: "折叠侧边栏",
-              children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3.5 w-3.5" })
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-2 border-b border-slate-800/60 bg-slate-950/40", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex rounded bg-slate-900 p-0.5 border border-slate-800 text-xs", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "button",
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-12 border-r border-slate-800 bg-slate-950 flex flex-col items-center py-3 space-y-4 shrink-0", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => {
+              if (!ideStore.sidebarOpen) ideStore.setSidebarOpen(true);
+              ideStore.setActiveSidebarView("explorer");
+            },
+            className: `p-2 rounded-lg transition-colors cursor-pointer ${ideStore.sidebarOpen && ideStore.activeSidebarView === "explorer" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
+            title: "资源管理器",
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(FolderTree, { className: "h-5 w-5" })
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => {
+              ideStore.openTab({
+                id: "system:settings",
+                type: "settings",
+                title: "设置",
+                closable: true
+              });
+            },
+            className: `mt-auto p-2 rounded-lg transition-colors cursor-pointer ${ideStore.activeTabId === "system:settings" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
+            title: "全局系统设置",
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(Settings, { className: "h-5 w-5" })
+          }
+        )
+      ] }),
+      ideStore.sidebarOpen && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "aside",
+          {
+            style: {
+              width: `${sidebarWidth}px`,
+              userSelect: isDraggingSidebar ? "none" : "auto"
+            },
+            className: "border-r border-slate-800 bg-slate-900/40 flex flex-col shrink-0 overflow-hidden",
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-3 border-b border-slate-800/80 flex items-center justify-between", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-bold font-mono tracking-wider text-slate-300", children: "资源视图" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: ideStore.toggleSidebar,
+                    className: "text-slate-400 hover:text-white p-0.5 cursor-pointer",
+                    title: "折叠侧边栏",
+                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3.5 w-3.5" })
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-2 border-b border-slate-800/60 bg-slate-950/40", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex rounded bg-slate-900 p-0.5 border border-slate-800 text-xs", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => setExplorerTab("manifests"),
+                      className: `flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${explorerTab === "manifests" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"}`,
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-3.5 w-3.5" }),
+                        " 清单蓝图"
+                      ]
+                    }
+                  ),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => setExplorerTab("packages"),
+                      className: `flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${explorerTab === "packages" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"}`,
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(Package, { className: "h-3.5 w-3.5" }),
+                        " 组件包"
+                      ]
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2", children: explorerTab === "manifests" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  Button,
+                  {
+                    variant: "outline",
+                    size: "sm",
+                    onClick: handleCreateNewManifest,
+                    className: "w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer",
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(FilePlus2, { className: "h-3.5 w-3.5 text-indigo-400" }),
+                      " 新建清单蓝图"
+                    ]
+                  }
+                ) : /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  Button,
+                  {
+                    variant: "outline",
+                    size: "sm",
+                    onClick: handleCreatePackage,
+                    className: "w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer",
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5 text-indigo-400" }),
+                      " 新建组件包"
+                    ]
+                  }
+                ) })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-y-auto p-2 space-y-1", children: explorerTab === "manifests" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                ManifestExplorer,
+                {
+                  manifests,
+                  activeManifestName: activeTab == null ? void 0 : activeTab.manifestName,
+                  onSelectManifest: (m, e) => handleOpenManifestTab(m, e),
+                  onDeleteManifest: (m, e) => handleDeleteManifest(m, e)
+                }
+              ) : /* @__PURE__ */ jsxRuntimeExports.jsx(
+                PackageExplorer,
+                {
+                  packages,
+                  onSelectAtom: (atomId, e) => handleOpenAtomTab(atomId, e),
+                  onOpenLookup: (lKey, e) => handleOpenLookupTab(lKey, e),
+                  onDeletePackage: handleDeletePackage,
+                  onDeleteLookup: handleDeleteLookup,
+                  onDeleteAtom: handleDeleteAtom
+                }
+              ) })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "div",
+          {
+            onPointerDown: handleSidebarPointerDown,
+            className: `relative z-20 shrink-0 group flex items-center justify-center w-1.5 cursor-col-resize hover:bg-indigo-500/60 transition-colors ${isDraggingSidebar ? "bg-indigo-500" : "bg-slate-800"}`,
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "div",
               {
-                type: "button",
-                onClick: () => setExplorerTab("manifests"),
-                className: `flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${explorerTab === "manifests" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"}`,
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-3.5 w-3.5" }),
-                  " 清单蓝图"
-                ]
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "button",
-              {
-                type: "button",
-                onClick: () => setExplorerTab("packages"),
-                className: `flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${explorerTab === "packages" ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"}`,
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Package, { className: "h-3.5 w-3.5" }),
-                  " 组件包"
-                ]
+                className: `rounded-full bg-slate-600 group-hover:bg-white h-8 w-1 transition-colors ${isDraggingSidebar ? "!bg-white" : ""}`
               }
             )
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2", children: explorerTab === "manifests" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            Button,
-            {
-              variant: "outline",
-              size: "sm",
-              onClick: handleCreateNewManifest,
-              className: "w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(FilePlus2, { className: "h-3.5 w-3.5 text-indigo-400" }),
-                " 新建清单蓝图"
-              ]
-            }
-          ) : /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            Button,
-            {
-              variant: "outline",
-              size: "sm",
-              onClick: handleCreatePackage,
-              className: "w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5 text-indigo-400" }),
-                " 新建组件包"
-              ]
-            }
-          ) })
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-y-auto p-2 space-y-1", children: explorerTab === "manifests" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-          ManifestExplorer,
-          {
-            manifests,
-            activeManifestName: activeTab == null ? void 0 : activeTab.manifestName,
-            onSelectManifest: (m, e) => handleOpenManifestTab(m, e),
-            onDeleteManifest: (m, e) => handleDeleteManifest(m, e)
           }
-        ) : /* @__PURE__ */ jsxRuntimeExports.jsx(
-          PackageExplorer,
-          {
-            packages,
-            onSelectAtom: (atomId, e) => handleOpenAtomTab(atomId, e),
-            onOpenLookup: (lKey, e) => handleOpenLookupTab(lKey, e),
-            onDeletePackage: handleDeletePackage,
-            onDeleteLookup: handleDeleteLookup,
-            onDeleteAtom: handleDeleteAtom
-          }
-        ) })
+        )
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { className: "flex-1 flex flex-col overflow-hidden bg-slate-950", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center border-b border-slate-800 bg-slate-900/60 overflow-x-auto shrink-0 scrollbar-none h-9", children: [
@@ -4217,8 +4681,8 @@ function App() {
                 type: "button",
                 onClick: ideStore.goBack,
                 disabled: !canGoBack,
-                className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors cursor-pointer",
-                title: "后退 (Cmd+[ 或 Alt+←)",
+                className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 transition-colors cursor-pointer",
+                title: "后退",
                 children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowLeft, { className: "h-3.5 w-3.5" })
               }
             ),
@@ -4228,8 +4692,8 @@ function App() {
                 type: "button",
                 onClick: ideStore.goForward,
                 disabled: !canGoForward,
-                className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors cursor-pointer",
-                title: "前进 (Cmd+] 或 Alt+→)",
+                className: "p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-25 transition-colors cursor-pointer",
+                title: "前进",
                 children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowRight, { className: "h-3.5 w-3.5" })
               }
             )
@@ -4241,20 +4705,19 @@ function App() {
               {
                 onClick: () => ideStore.setActiveTab(tab.id),
                 onDoubleClick: () => ideStore.pinTab(tab.id),
-                onAuxClick: (e) => {
-                  if (e.button === 1) {
-                    e.preventDefault();
-                    handleSafeCloseTab(tab, e);
-                  }
-                },
                 onKeyDown: (e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     ideStore.setActiveTab(tab.id);
                   }
                 },
-                className: `group flex items-center gap-2 px-3.5 py-2 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 ${isActive ? "bg-slate-950 text-indigo-300 border-t-2 border-t-indigo-500 font-semibold" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent"}`,
-                title: `${tab.title}${tab.isPreview ? " (预览态，双击标签固定)" : ""}`,
+                onAuxClick: (e) => {
+                  if (e.button === 1) {
+                    e.preventDefault();
+                    handleSafeCloseTab(tab, e);
+                  }
+                },
+                className: `group flex items-center gap-2 px-3.5 py-2 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 ${isActive ? "bg-slate-950 text-indigo-300 border-t-2 border-t-indigo-500 font-semibold" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent"}`,
                 children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx(
                     "span",
@@ -4285,21 +4748,12 @@ function App() {
               type: "button",
               onClick: handleCreateEmptyTab,
               className: "flex items-center justify-center p-1.5 ml-1.5 mr-2 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded transition-colors shrink-0 cursor-pointer",
-              title: "新建标签页 (Ctrl+T)",
+              title: "新建标签页",
               children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5" })
             }
           )
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-hidden relative", children: ideStore.tabs.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-          EmptyTab,
-          {
-            manifestsCount: manifests.length,
-            packagesCount: packages.length,
-            onOpenCommandPalette: () => setIsCommandPaletteOpen(true),
-            onCreateManifest: handleCreateNewManifest,
-            onCreateAtom: handleCreateNewAtomDraft
-          }
-        ) : ideStore.tabs.map((tab) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-hidden relative", children: ideStore.tabs.map((tab) => /* @__PURE__ */ jsxRuntimeExports.jsx(
           TabPane,
           {
             tab,
@@ -4332,7 +4786,6 @@ function App() {
                   onClick: fetchLintReport,
                   disabled: lintLoading,
                   className: "text-slate-400 hover:text-indigo-400 p-1 cursor-pointer",
-                  title: "重新运行规范诊断",
                   children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefreshCw, { className: `h-3 w-3 ${lintLoading ? "animate-spin" : ""}` })
                 }
               )
@@ -4353,17 +4806,11 @@ function App() {
           ] }) : lintIssues.map((issue) => {
             const isErr = issue.level === "错误";
             return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "div",
+              "button",
               {
+                type: "button",
                 onClick: () => handleProblemClick(issue),
-                onKeyDown: (e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    handleProblemClick(issue);
-                  }
-                },
-                className: `flex items-start justify-between p-2 rounded border cursor-pointer group transition-colors ${isErr ? "border-rose-900/50 bg-rose-950/20 text-rose-200 hover:bg-rose-950/40 hover:border-rose-700" : "border-amber-900/50 bg-amber-950/20 text-amber-200 hover:bg-amber-950/40 hover:border-amber-700"}`,
-                title: "点击直接在主编辑区打开对应文件定位",
+                className: `w-full text-left flex items-start justify-between p-2 rounded border cursor-pointer group transition-colors ${isErr ? "border-rose-900/50 bg-rose-950/20 text-rose-200 hover:bg-rose-950/40" : "border-amber-900/50 bg-amber-950/20 text-amber-200 hover:bg-amber-950/40"}`,
                 children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start gap-2 flex-1", children: [
                     isErr ? /* @__PURE__ */ jsxRuntimeExports.jsx(OctagonAlert, { className: "h-3.5 w-3.5 text-rose-400 mt-0.5 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(TriangleAlert, { className: "h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" }),
@@ -4404,7 +4851,6 @@ function App() {
             type: "button",
             onClick: ideStore.toggleBottomPanel,
             className: `flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors cursor-pointer ${lintErrors > 0 ? "text-rose-400 hover:bg-rose-950/60 font-semibold" : lintWarnings > 0 ? "text-amber-400 hover:bg-amber-950/60" : "text-slate-400 hover:text-emerald-300"}`,
-            title: "切换架构合规与诊断面板",
             children: [
               lintErrors > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-3 w-3 text-rose-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ShieldCheck, { className: "h-3 w-3 text-emerald-400" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: lintErrors > 0 ? `${lintErrors} 错误` : lintWarnings > 0 ? `${lintWarnings} 警告` : "合规" })
@@ -4426,7 +4872,7 @@ function App() {
             type: "button",
             onClick: () => setIsCommandPaletteOpen(true),
             className: "flex items-center gap-1 px-1.5 py-0.5 rounded text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer",
-            title: "打开命令面板 (Ctrl+P / Cmd+P)",
+            title: "打开命令面板 (Ctrl+P)",
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(Search, { className: "h-3 w-3 text-indigo-400" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px]", children: "Ctrl+P" })
@@ -4442,6 +4888,32 @@ function App() {
         onClose: () => setIsCommandPaletteOpen(false),
         manifests,
         packages
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      CreatePackageModal,
+      {
+        isOpen: isCreatePkgOpen,
+        onClose: () => setIsCreatePkgOpen(false),
+        newPkgName,
+        setNewPkgName,
+        newPkgWs,
+        setNewPkgWs,
+        libraryPaths: (_a = configStore.config) == null ? void 0 : _a.library_paths,
+        onSubmit: submitCreatePackage
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      CreateManifestModal,
+      {
+        isOpen: isCreateManOpen,
+        onClose: () => setIsCreateManOpen(false),
+        newManName,
+        setNewManName,
+        newManWs,
+        setNewManWs,
+        manifestPaths: (_b = configStore.config) == null ? void 0 : _b.manifest_paths,
+        onSubmit: submitCreateManifest
       }
     )
   ] });

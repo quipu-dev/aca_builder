@@ -39,10 +39,12 @@ interface ManifestImportRaw {
 
 export function ManifestEditorTab({
   manifestName,
+  workspacePath,
   packages,
   onSaved,
 }: {
   manifestName: string; // 若为空字符串则代表新建草稿
+  workspacePath?: string;
   packages: PackageItem[];
   onSaved?: () => void;
 }) {
@@ -51,9 +53,12 @@ export function ManifestEditorTab({
   const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
   const getSnapshot = useIdeStore((state) => state.getSnapshot);
   const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
+  const preferences = useIdeStore((state) => state.preferences);
 
   // 右侧辅助视口：'graph' (白板拓扑图) | 'prompt' (实时编译文本)
-  const [rightView, setRightView] = useState<'graph' | 'prompt'>('graph');
+  const [rightView, setRightView] = useState<'graph' | 'prompt'>(
+    preferences?.defaultRightPanel === 'prompt' ? 'prompt' : 'graph',
+  );
   const [showRightPanel, setShowRightPanel] = useState(true);
 
   // 稳定标识：manifestIdentifier 对应文件相对路径或逻辑标识，不可被 YAML 内部 name 覆写
@@ -146,7 +151,7 @@ export function ManifestEditorTab({
       setDescription(snapshot.description);
       setItems(snapshot.items);
       setOverrides(snapshot.overrides);
-      setRightView(snapshot.rightView);
+      if (snapshot.rightView) setRightView(snapshot.rightView);
       setShowRightPanel(snapshot.showRightPanel);
       setIsModified(snapshot.isModified);
       if (snapshot.initialSnapshot) {
@@ -318,6 +323,7 @@ export function ManifestEditorTab({
         description: description.trim(),
         imports: items.map((i) => ({ lookup: i.lookup })),
         identifier: manifestIdentifier || name.trim(),
+        workspace_path: workspacePath,
       };
       if (Object.keys(overrides).length > 0) {
         payload.overrides = overrides;

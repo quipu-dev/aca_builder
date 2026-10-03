@@ -25,6 +25,12 @@ from aca_builder.domain.services import (
 router = APIRouter()
 
 
+class UpdateConfigRequest(BaseModel):
+    library_paths: list[str] | None = None
+    manifest_paths: list[str] | None = None
+    post_process_hook: str | None = None
+
+
 class BuildRequest(BaseModel):
     manifest: str
     is_file: bool = False
@@ -71,6 +77,26 @@ def health_check() -> dict[str, str]:
     return {"status": "ok", "service": "aca-studio"}
 
 
+@router.get("/system/config")
+def get_system_config() -> dict[str, Any]:
+    return config.load_config()
+
+
+@router.put("/system/config")
+def update_system_config(req: UpdateConfigRequest):
+    app_config = config.load_config()
+    if req.library_paths is not None:
+        app_config["library_paths"] = req.library_paths
+    if req.manifest_paths is not None:
+        app_config["manifest_paths"] = req.manifest_paths
+    if req.post_process_hook is not None:
+        app_config["post_process_hook"] = req.post_process_hook
+
+    config.save_config(app_config)
+    broadcast_change("LIBRARY_DIRTY")
+    return {"status": "ok"}
+
+
 @router.get("/packages")
 def get_packages() -> dict[str, Any]:
     """获取所有已加载的 package 与 lookup 接口定义"""
@@ -93,16 +119,59 @@ def list_manifests() -> list[str]:
 @router.get("/assets")
 def get_assets_overview() -> dict[str, Any]:
     """获取系统完整的资产结构：包、公开接口、内部查找与所有原子清单"""
-    lib_repo, man_repo, _ = _bootstrap()
+    lib_repo, _man_repo, _ = _bootstrap()
     app_config = config.load_config()
     library_paths = config.get_library_paths(app_config)
     manifest_paths = config.get_manifest_paths(app_config)
 
     library = lib_repo.load_library(library_paths, fail_fast=False)
     interfaces = lib_repo.load_interfaces(library_paths)
-    manifest_names = man_repo.list_manifests(manifest_paths)
 
     packages_map: dict[str, dict[str, Any]] = {}
+
+    # 0. 预扫描所有挂载点下的 package.yaml，并精准标记其所属的 workspace 归属
+    for lib_root in library_paths:
+        if not lib_root.exists():
+            continue
+        workspace_name = lib_root.name
+        workspace_abs = str(lib_root.resolve())
+        for pkg_file in lib_root.rglob("package.yaml"):
+            try:
+                pkg_data = yaml.safe_load(pkg_file.read_text(encoding="utf-8"))
+                if pkg_data and "name" in pkg_data:
+                    p_name = pkg_data["name"]
+                    if p_name not in packages_map:
+                        packages_map[p_name] = {
+                            "name": p_name,
+                            "workspace": workspace_name,
+                            "workspace_path": workspace_abs,
+                            "exports": {},
+                            "internal_lookups": {},
+                            "atoms": [],
+                        }
+            except (yaml.YAMLError, OSError):
+                continue
+
+    # 收集清单文件并带上 workspace 溯源
+    manifest_items: list[dict[str, Any]] = []
+    for base_path in manifest_paths:
+        if not base_path.is_dir():
+            continue
+        m_ws_name = base_path.name
+        m_ws_abs = str(base_path.resolve())
+        for yaml_file in base_path.rglob("*.yaml"):
+            try:
+                relative = yaml_file.relative_to(base_path)
+                m_name = str(relative.with_suffix(""))
+                manifest_items.append(
+                    {
+                        "name": m_name,
+                        "workspace": m_ws_name,
+                        "workspace_path": m_ws_abs,
+                    }
+                )
+            except (yaml.YAMLError, OSError, ValueError):
+                continue
 
     for atom_id, atom in library.items():
         pkg = atom.get("package")
@@ -119,8 +188,11 @@ def get_assets_overview() -> dict[str, Any]:
         }
 
         if pkg not in packages_map:
+            # 回退默认 workspace
             packages_map[pkg] = {
                 "name": pkg,
+                "workspace": "default",
+                "workspace_path": "",
                 "exports": {},
                 "internal_lookups": {},
                 "atoms": [],
@@ -141,6 +213,8 @@ def get_assets_overview() -> dict[str, Any]:
             if pkg not in packages_map:
                 packages_map[pkg] = {
                     "name": pkg,
+                    "workspace": "default",
+                    "workspace_path": "",
                     "exports": {},
                     "internal_lookups": {},
                     "atoms": [],
@@ -152,7 +226,7 @@ def get_assets_overview() -> dict[str, Any]:
 
     return {
         "packages": list(packages_map.values()),
-        "manifests": manifest_names,
+        "manifests": manifest_items,
     }
 
 
@@ -377,6 +451,7 @@ class SaveManifestRequest(BaseModel):
     imports: list[dict[str, Any]]
     overrides: dict[str, Any] | None = None
     identifier: str | None = None  # 支持包含子路径的标识符，如 ats/auditai-agent
+    workspace_path: str | None = None
 
 
 def _execute_hook(app_config: dict[str, Any], prompt_text: str) -> str | None:
@@ -527,12 +602,18 @@ def compile_adhoc(req: AdhocCompileRequest):
 @router.post("/manifests")
 def save_manifest(req: SaveManifestRequest):
     """将装配好的结构持久化保存为 Manifest YAML 文件"""
+    from pathlib import Path
+
     app_config = config.load_config()
     manifest_paths = config.get_manifest_paths(app_config)
     if not manifest_paths:
         raise HTTPException(status_code=400, detail="No manifest_paths configured")
 
-    target_dir = manifest_paths[0]
+    target_dir = (
+        Path(req.workspace_path).expanduser().resolve()
+        if req.workspace_path
+        else manifest_paths[0]
+    )
     file_rel_path = req.identifier if req.identifier else req.name
     target_file = target_dir / f"{file_rel_path}.yaml"
     target_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1388,17 +1469,38 @@ class CreatePackageRequest(BaseModel):
     name: str
     description: str = ""
     version: str = "1.0.0"
+    workspace_path: str | None = None
 
 
 @router.post("/packages")
 def create_package(req: CreatePackageRequest) -> dict[str, Any]:
     """创建新的组件包与基础骨架目录"""
+    from pathlib import Path
+
     app_config = config.load_config()
     library_paths = config.get_library_paths(app_config)
     if not library_paths:
         raise HTTPException(status_code=400, detail="未配置知识库路径")
 
-    target_lib = library_paths[0]
+    for lib_root in library_paths:
+        if not lib_root.exists():
+            continue
+        for pkg_file in lib_root.rglob("package.yaml"):
+            try:
+                pkg_data = yaml.safe_load(pkg_file.read_text(encoding="utf-8"))
+                if pkg_data and pkg_data.get("name") == req.name:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"全局范围内已存在同名组件包: '{req.name}'",
+                    )
+            except (yaml.YAMLError, OSError):
+                continue
+
+    target_lib = (
+        Path(req.workspace_path).expanduser().resolve()
+        if req.workspace_path
+        else library_paths[0]
+    )
     target_lib.mkdir(parents=True, exist_ok=True)
     pkg_dir = target_lib / req.name
 

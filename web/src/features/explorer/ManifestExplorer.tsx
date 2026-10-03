@@ -1,9 +1,16 @@
+import { useIdeStore } from '@/stores/ide-store';
 import { ChevronDown, ChevronRight, Folder, FolderOpen, Layers, Trash2 } from 'lucide-react';
 import type React from 'react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+
+export interface ManifestItemObj {
+  name: string;
+  workspace?: string;
+  workspace_path?: string;
+}
 
 export interface ManifestExplorerProps {
-  manifests: string[];
+  manifests: Array<string | ManifestItemObj>;
   activeManifestName?: string;
   onSelectManifest: (manifestName: string, e?: React.MouseEvent) => void;
   onDeleteManifest: (manifestName: string, e: React.MouseEvent) => void;
@@ -16,7 +23,7 @@ interface ManifestTreeNode {
   children: ManifestTreeNode[];
 }
 
-function buildTree(paths: string[]): ManifestTreeNode[] {
+function buildTree(items: Array<string | ManifestItemObj>): ManifestTreeNode[] {
   interface TempNode {
     name: string;
     path: string;
@@ -31,19 +38,37 @@ function buildTree(paths: string[]): ManifestTreeNode[] {
     children: new Map(),
   };
 
-  for (const p of paths) {
+  for (const item of items) {
+    const p = typeof item === 'string' ? item : item.name;
+    const wsPath =
+      typeof item === 'string'
+        ? '默认工作区'
+        : item.workspace_path || item.workspace || '默认工作区';
+
+    // 1. 顶层根节点为 workspace_path (全长路径名)
+    let wsNode = root.children.get(wsPath);
+    if (!wsNode) {
+      wsNode = {
+        name: wsPath,
+        path: wsPath,
+        isFolder: true,
+        children: new Map(),
+      };
+      root.children.set(wsPath, wsNode);
+    }
+
     const parts = p.split('/').filter(Boolean);
-    let curr = root;
+    let curr = wsNode;
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       const isLeaf = i === parts.length - 1;
-      const subPath = parts.slice(0, i + 1).join('/');
+      const subPath = `${wsPath}::${parts.slice(0, i + 1).join('/')}`;
 
       let nextNode = curr.children.get(part);
       if (!nextNode) {
         nextNode = {
           name: part,
-          path: subPath,
+          path: isLeaf ? p : subPath,
           isFolder: !isLeaf,
           children: new Map(),
         };
@@ -80,63 +105,64 @@ function ManifestTreeItem({
   node,
   depth,
   activeManifestName,
-  expandedFolders,
   onToggleFolder,
+  isExpanded,
   onSelectManifest,
   onDeleteManifest,
 }: {
   node: ManifestTreeNode;
   depth: number;
   activeManifestName?: string;
-  expandedFolders: Record<string, boolean>;
   onToggleFolder: (path: string) => void;
+  isExpanded: boolean;
   onSelectManifest: (manifestName: string, e?: React.MouseEvent) => void;
   onDeleteManifest: (manifestName: string, e: React.MouseEvent) => void;
 }) {
-  const isExpanded = Boolean(expandedFolders[node.path]);
   const isActive = !node.isFolder && activeManifestName === node.path;
   const paddingLeft = `${depth * 14 + 6}px`;
 
   if (node.isFolder) {
     return (
-      <div className="space-y-0.5">
+      <div className="space-y-0.5 mb-1">
         <button
           type="button"
           onClick={() => onToggleFolder(node.path)}
           style={{ paddingLeft }}
-          className="w-full flex items-center gap-1.5 py-1 pr-2 rounded text-xs font-mono text-slate-300 hover:text-white hover:bg-slate-800/60 transition-colors group cursor-pointer text-left"
-          title={node.path}
+          className="w-full flex items-center gap-1.5 py-1 pr-2 rounded text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-colors group cursor-pointer text-left"
+          title={node.name}
         >
           {isExpanded ? (
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+            <ChevronDown className="h-3.5 w-3.5 text-slate-500 shrink-0" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+            <ChevronRight className="h-3.5 w-3.5 text-slate-500 shrink-0" />
           )}
           {isExpanded ? (
             <FolderOpen className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
           ) : (
             <Folder className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
           )}
-          <span className="font-medium truncate">{node.name}</span>
-          <span className="text-[10px] text-slate-500 ml-auto opacity-0 group-hover:opacity-100">
-            {node.children.length}
+          <span className="font-semibold truncate text-[11px] text-slate-300" title={node.name}>
+            {node.name}
           </span>
         </button>
 
         {isExpanded && (
-          <div className="space-y-0.5">
-            {node.children.map((child) => (
-              <ManifestTreeItem
-                key={child.path}
-                node={child}
-                depth={depth + 1}
-                activeManifestName={activeManifestName}
-                expandedFolders={expandedFolders}
-                onToggleFolder={onToggleFolder}
-                onSelectManifest={onSelectManifest}
-                onDeleteManifest={onDeleteManifest}
-              />
-            ))}
+          <div className="space-y-0.5 border-l border-slate-800/60 ml-3 pl-1">
+            {node.children.map((child) => {
+              const childExpanded = useIdeStore.getState().explorerExpanded[child.path] === true;
+              return (
+                <ManifestTreeItem
+                  key={child.path}
+                  node={child}
+                  depth={depth + 1}
+                  activeManifestName={activeManifestName}
+                  isExpanded={childExpanded}
+                  onToggleFolder={onToggleFolder}
+                  onSelectManifest={onSelectManifest}
+                  onDeleteManifest={onDeleteManifest}
+                />
+              );
+            })}
           </div>
         )}
       </div>
@@ -156,7 +182,7 @@ function ManifestTreeItem({
         type="button"
         onClick={(e) => onSelectManifest(node.path, e)}
         className="flex items-center gap-1.5 flex-1 min-w-0 text-left hover:text-white cursor-pointer"
-        title={`${node.path} (点击在当前标签页打开，按住 Ctrl 点击新建标签页)`}
+        title={node.path}
       >
         <Layers className="h-3.5 w-3.5 text-indigo-400/80 shrink-0" />
         <span className="truncate">{node.name}</span>
@@ -164,7 +190,7 @@ function ManifestTreeItem({
       <button
         type="button"
         onClick={(e) => onDeleteManifest(node.path, e)}
-        className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-opacity p-0.5 rounded shrink-0 cursor-pointer"
+        className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-opacity p-0.5 rounded shrink-0 cursor-pointer ml-1"
         title="删除清单"
       >
         <Trash2 className="h-3.5 w-3.5" />
@@ -179,16 +205,10 @@ export function ManifestExplorer({
   onSelectManifest,
   onDeleteManifest,
 }: ManifestExplorerProps) {
-  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+  const explorerExpanded = useIdeStore((state) => state.explorerExpanded);
+  const toggleExplorerExpanded = useIdeStore((state) => state.toggleExplorerExpanded);
 
   const tree = useMemo(() => buildTree(manifests), [manifests]);
-
-  const toggleFolder = (folderPath: string) => {
-    setExpandedFolders((prev) => ({
-      ...prev,
-      [folderPath]: !prev[folderPath],
-    }));
-  };
 
   if (manifests.length === 0) {
     return <div className="py-6 text-center text-xs font-mono text-slate-500">暂无清单蓝图</div>;
@@ -196,18 +216,21 @@ export function ManifestExplorer({
 
   return (
     <div className="space-y-0.5">
-      {tree.map((node) => (
-        <ManifestTreeItem
-          key={node.path}
-          node={node}
-          depth={0}
-          activeManifestName={activeManifestName}
-          expandedFolders={expandedFolders}
-          onToggleFolder={toggleFolder}
-          onSelectManifest={onSelectManifest}
-          onDeleteManifest={onDeleteManifest}
-        />
-      ))}
+      {tree.map((node) => {
+        const isExpanded = explorerExpanded[node.path] === true; // 默认折叠 (false)
+        return (
+          <ManifestTreeItem
+            key={node.path}
+            node={node}
+            depth={0}
+            activeManifestName={activeManifestName}
+            isExpanded={isExpanded}
+            onToggleFolder={toggleExplorerExpanded}
+            onSelectManifest={onSelectManifest}
+            onDeleteManifest={onDeleteManifest}
+          />
+        );
+      })}
     </div>
   );
 }

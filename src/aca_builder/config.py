@@ -22,6 +22,13 @@ def load_config() -> dict[str, Any]:
         return {}
 
 
+def save_config(config_data: dict[str, Any]) -> None:
+    """Saves the ACA global configuration file."""
+    CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with CONFIG_PATH.open("w", encoding="utf-8") as f:
+        yaml.safe_dump(config_data, f, sort_keys=False, allow_unicode=True)
+
+
 def get_library_paths(config: dict[str, Any]) -> list[Path]:
     """Gets a list of absolute library paths from the config."""
     base_dir = CONFIG_PATH.parent

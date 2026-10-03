@@ -6806,7 +6806,7 @@ const createImpl = (createState) => {
   Object.assign(useBoundStore, api);
   return useBoundStore;
 };
-const create = ((createState) => createImpl);
+const create = ((createState) => createState ? createImpl(createState) : createImpl);
 function createJSONStorage(getStorage, options) {
   let storage;
   try {
@@ -7233,6 +7233,17 @@ const Cpu = createLucideIcon("Cpu", [
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
+const Database = createLucideIcon("Database", [
+  ["ellipse", { cx: "12", cy: "5", rx: "9", ry: "3", key: "msslwz" }],
+  ["path", { d: "M3 5V19A9 3 0 0 0 21 19V5", key: "1wlel7" }],
+  ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
 const ExternalLink = createLucideIcon("ExternalLink", [
   ["path", { d: "M15 3h6v6", key: "1q9fwt" }],
   ["path", { d: "M10 14 21 3", key: "gplh6r" }],
@@ -7591,6 +7602,22 @@ const Save = createLucideIcon("Save", [
 const Search = createLucideIcon("Search", [
   ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }],
   ["path", { d: "m21 21-4.3-4.3", key: "1qie3q" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Settings = createLucideIcon("Settings", [
+  [
+    "path",
+    {
+      d: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z",
+      key: "1qme2f"
+    }
+  ],
+  ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
 ]);
 /**
  * @license lucide-react v0.468.0 - ISC
@@ -11811,7 +11838,7 @@ function ResizeControl({ nodeId, position, variant = ResizeControlVariant.Handle
 }
 reactExports.memo(ResizeControl);
 export {
-  Lock as $,
+  ChevronRight as $,
   BackgroundVariant as A,
   Box as B,
   CircleAlert as C,
@@ -11832,24 +11859,26 @@ export {
   React as R,
   Search as S,
   Trash2 as T,
-  ChevronRight as U,
-  FolderOpen as V,
+  FilePlus2 as U,
+  MousePointerClick as V,
   WandSparkles as W,
   X,
-  Folder as Y,
-  Package as Z,
-  Globe as _,
+  Settings as Y,
+  FolderTree as Z,
+  Database as _,
   Sparkles as a,
-  FileCode as a0,
-  FilePlus2 as a1,
-  MousePointerClick as a2,
-  FolderTree as a3,
-  ArrowLeft as a4,
-  ArrowRight as a5,
-  RefreshCw as a6,
-  ShieldCheck as a7,
-  OctagonAlert as a8,
-  ReactDOM as a9,
+  FolderOpen as a0,
+  Folder as a1,
+  Package as a2,
+  Globe as a3,
+  Lock as a4,
+  FileCode as a5,
+  ArrowLeft as a6,
+  ArrowRight as a7,
+  RefreshCw as a8,
+  ShieldCheck as a9,
+  OctagonAlert as aa,
+  ReactDOM as ab,
   LoaderCircle as b,
   create as c,
   Check as d,

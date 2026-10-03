@@ -24,7 +24,7 @@ export function CommandPalette({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  manifests: string[];
+  manifests: Array<string | { name: string; workspace?: string; workspace_path?: string }>;
   packages: PackageItem[];
 }) {
   const openTab = useIdeStore((state) => state.openTab);
@@ -37,14 +37,16 @@ export function CommandPalette({
     const list: CommandItem[] = [];
 
     // 1. 清单
-    for (const m of manifests) {
+    for (const item of manifests) {
+      const mName = typeof item === 'string' ? item : item.name;
+      const mWs = typeof item === 'string' ? undefined : item.workspace;
       list.push({
-        id: `manifest:${m}`,
+        id: `manifest:${mName}`,
         type: 'manifest',
-        title: m,
-        subtitle: '清单蓝图',
+        title: mName,
+        subtitle: mWs ? `清单蓝图 (@${mWs})` : '清单蓝图',
         badge: 'MANIFEST',
-        manifestName: m,
+        manifestName: mName,
       });
     }
 

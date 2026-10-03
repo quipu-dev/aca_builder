@@ -22,6 +22,30 @@ class LinterService:
         self.bus.info("linter.start", count=len(library_paths))  # Using msg_id
         error_count = 0
 
+        found_packages = {}
+        for lib_path in library_paths:
+            if not lib_path.exists():
+                continue
+            for pkg_file in lib_path.rglob("package.yaml"):
+                try:
+                    import yaml
+
+                    data = yaml.safe_load(pkg_file.read_text(encoding="utf-8"))
+                    name = data.get("name")
+                    if name:
+                        if name in found_packages:
+                            self.bus.lint_error(
+                                "linter.manifest.unexpected_error",
+                                manifest="N/A",
+                                file=str(pkg_file),
+                                error=f"Duplicate package name '{name}' conflicts with {found_packages[name]}",
+                            )
+                            error_count += 1
+                        else:
+                            found_packages[name] = pkg_file
+                except (yaml.YAMLError, OSError):
+                    pass
+
         # 0. Load Libraries
         load_errors = []
         library = self.lib_repo.load_library(

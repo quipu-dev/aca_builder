@@ -1,7 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type TabType = 'atom' | 'manifest' | 'lookup' | 'composer' | 'graph' | 'preview' | 'empty';
+export type TabType =
+  | 'atom'
+  | 'manifest'
+  | 'lookup'
+  | 'composer'
+  | 'graph'
+  | 'preview'
+  | 'empty'
+  | 'settings';
 
 export interface IdeTab {
   id: string; // 唯一键，例如 'atom:d1-profile', 'manifest:test_pkg/agent', 'lookup:pkg_a::d1l-api'
@@ -11,6 +19,7 @@ export interface IdeTab {
   atomId?: string;
   manifestName?: string;
   lookupKey?: string;
+  workspacePath?: string;
   isDirty?: boolean;
   isPreview?: boolean;
 }
@@ -19,9 +28,22 @@ export interface HistoryEntry {
   tab: IdeTab;
 }
 
+interface IdePreferences {
+  defaultRightPanel: 'prompt' | 'graph';
+}
+
 interface IdeState {
   tabs: IdeTab[];
   activeTabId: string;
+
+  // 侧边栏宽度状态
+  sidebarWidth: number;
+  setSidebarWidth: (width: number) => void;
+
+  // 资源管理器文件夹折叠状态持久化
+  explorerExpanded: Record<string, boolean>;
+  setExplorerExpanded: (path: string, expanded: boolean) => void;
+  toggleExplorerExpanded: (path: string) => void;
 
   // 视口导航历史栈
   navigationHistory: HistoryEntry[];
@@ -45,6 +67,9 @@ interface IdeState {
   setBottomPanelOpen: (open: boolean) => void;
   toggleBottomPanel: () => void;
   setActiveBottomTab: (tab: 'problems' | 'output') => void;
+
+  preferences: IdePreferences;
+  updatePreferences: (prefs: Partial<IdePreferences>) => void;
 
   openTab: (
     tab: IdeTab,
@@ -92,6 +117,8 @@ export const useIdeStore = create<IdeState>()(
         }),
 
       sidebarOpen: true,
+      sidebarWidth: 288,
+      setSidebarWidth: (width) => set({ sidebarWidth: width }),
       activeSidebarView: 'explorer',
       bottomPanelOpen: false,
       activeBottomTab: 'problems',
@@ -103,6 +130,23 @@ export const useIdeStore = create<IdeState>()(
       setBottomPanelOpen: (open) => set({ bottomPanelOpen: open }),
       toggleBottomPanel: () => set((state) => ({ bottomPanelOpen: !state.bottomPanelOpen })),
       setActiveBottomTab: (tab) => set({ activeBottomTab: tab, bottomPanelOpen: true }),
+
+      preferences: { defaultRightPanel: 'graph' },
+      updatePreferences: (prefs) =>
+        set((state) => ({ preferences: { ...state.preferences, ...prefs } })),
+
+      explorerExpanded: {},
+      setExplorerExpanded: (path, expanded) =>
+        set((state) => ({
+          explorerExpanded: { ...state.explorerExpanded, [path]: expanded },
+        })),
+      toggleExplorerExpanded: (path) =>
+        set((state) => ({
+          explorerExpanded: {
+            ...state.explorerExpanded,
+            [path]: !state.explorerExpanded[path],
+          },
+        })),
 
       pinTab: (tabId) =>
         set((state) => ({
@@ -245,6 +289,9 @@ export const useIdeStore = create<IdeState>()(
         activeTabId: state.activeTabId,
         tabSnapshots: state.tabSnapshots,
         sidebarOpen: state.sidebarOpen,
+        sidebarWidth: state.sidebarWidth,
+        preferences: state.preferences,
+        explorerExpanded: state.explorerExpanded,
       }),
     },
   ),
