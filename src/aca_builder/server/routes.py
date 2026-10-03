@@ -349,8 +349,21 @@ def get_assets_overview(x_aca_workspace: str | None = Header(None)) -> dict[str,
             else:
                 packages_map[pkg]["internal_lookups"][key] = lookup_item
 
+    kernel_info = None
+    for atom_id, atom in library.items():
+        if atom.get("meta", {}).get("type") == "kernel":
+            kernel_info = {
+                "id": atom_id,
+                "type": "kernel",
+                "source_file": atom.get("source_file"),
+                "content": atom.get("content", ""),
+                "meta": atom.get("meta", {}),
+            }
+            break
+
     return {
         "workspace": ws_id,
+        "kernel": kernel_info,
         "packages": list(packages_map.values()),
         "manifests": manifest_items,
     }
@@ -1381,9 +1394,9 @@ def delete_lookup(
 
 
 class CreateAtomRequest(BaseModel):
-    package: str
-    id: str
-    type: str  # d1, d2, d3
+    package: str | None = None
+    id: str | None = None
+    type: str  # d1, d2, d3, kernel
     priority: int | None = None
     domain: list[str] = []
     uses: list[str] = []
@@ -1400,6 +1413,33 @@ def create_atom(
     library_paths = ws_cfg.library_paths
     if not library_paths:
         raise HTTPException(status_code=400, detail="当前工作区未配置知识库路径")
+
+    if req.type == "kernel":
+        target_dir = library_paths[0]
+        if req.package:
+            for lib_root in library_paths:
+                if not lib_root.exists():
+                    continue
+                for pkg_file in lib_root.rglob("package.yaml"):
+                    try:
+                        pkg_data = yaml.safe_load(pkg_file.read_text(encoding="utf-8"))
+                        if pkg_data and pkg_data.get("name") == req.package:
+                            target_dir = pkg_file.parent
+                            break
+                    except Exception:
+                        continue
+        target_file = target_dir / "kernel.md"
+        full_content = f"---\ntype: kernel\n---\n\n{req.content.strip()}\n"
+        try:
+            target_file.write_text(full_content, encoding="utf-8")
+            broadcast_change("LIBRARY_DIRTY")
+            return {
+                "status": "ok",
+                "file": str(target_file),
+                "id": "kernel",
+            }
+        except OSError as e:
+            raise HTTPException(status_code=500, detail=f"保存 Kernel 失败: {e}")
 
     target_pkg_dir = None
     for lib_root in library_paths:
@@ -1421,12 +1461,13 @@ def create_atom(
             status_code=404, detail=f"未找到组件包 '{req.package}' 的存放目录"
         )
 
+    atom_id = req.id or f"{req.type}-atom"
     type_dir = target_pkg_dir / req.type
     type_dir.mkdir(parents=True, exist_ok=True)
-    target_file = type_dir / f"{req.id}.md"
+    target_file = type_dir / f"{atom_id}.md"
 
     meta: dict[str, Any] = {
-        "id": req.id,
+        "id": atom_id,
         "type": req.type,
     }
 
@@ -1450,7 +1491,7 @@ def create_atom(
         return {
             "status": "ok",
             "file": str(target_file),
-            "id": req.id,
+            "id": atom_id,
         }
     except OSError as e:
         raise HTTPException(status_code=500, detail=f"保存原子失败: {e}")
@@ -1531,10 +1572,13 @@ def update_atom(
             new_meta = req.meta if req.meta is not None else existing_meta
             new_content = req.content if req.content is not None else existing_content
 
-            if "id" not in new_meta:
-                new_meta["id"] = atom_id
-            if "type" not in new_meta and "type" in existing_meta:
-                new_meta["type"] = existing_meta["type"]
+            if atom_id == "kernel" or new_meta.get("type") == "kernel":
+                new_meta = {"type": "kernel"}
+            else:
+                if "id" not in new_meta:
+                    new_meta["id"] = atom_id
+                if "type" not in new_meta and "type" in existing_meta:
+                    new_meta["type"] = existing_meta["type"]
 
             meta_yaml = yaml.safe_dump(
                 new_meta, sort_keys=False, allow_unicode=True

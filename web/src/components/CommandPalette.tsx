@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import type { PackageItem } from '@/features/explorer/PackageExplorer';
+import type { KernelInfo, PackageItem } from '@/features/explorer/PackageExplorer';
 import { useIdeStore } from '@/stores/ide-store';
 import { Box, Layers, Search, Sparkles } from 'lucide-react';
 import type React from 'react';
@@ -21,11 +21,13 @@ export function CommandPalette({
   onClose,
   manifests,
   packages,
+  kernel,
 }: {
   isOpen: boolean;
   onClose: () => void;
   manifests: Array<string | { name: string; workspace?: string; workspace_path?: string }>;
   packages: PackageItem[];
+  kernel?: KernelInfo | null;
 }) {
   const openTab = useIdeStore((state) => state.openTab);
   const [query, setQuery] = useState('');
@@ -35,6 +37,18 @@ export function CommandPalette({
   // 汇聚系统中所有可索引跳转的实体
   const allItems = useMemo<CommandItem[]>(() => {
     const list: CommandItem[] = [];
+
+    // 0. Kernel 核心协议
+    if (kernel) {
+      list.push({
+        id: 'atom:kernel',
+        type: 'atom',
+        title: 'kernel.md (核心协议)',
+        subtitle: 'ACA Runtime Protocol',
+        badge: 'KERNEL',
+        atomId: 'kernel',
+      });
+    }
 
     // 1. 清单
     for (const item of manifests) {
@@ -87,7 +101,7 @@ export function CommandPalette({
     }
 
     return list;
-  }, [manifests, packages]);
+  }, [manifests, packages, kernel]);
 
   // 极速匹配过滤
   const filteredItems = useMemo(() => {

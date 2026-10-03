@@ -5,7 +5,11 @@ import { CreatePackageModal } from '@/components/modals/CreatePackageModal';
 import { CreateWorkspaceModal } from '@/components/modals/CreateWorkspaceModal';
 import { Button } from '@/components/ui/button';
 import { ManifestExplorer } from '@/features/explorer/ManifestExplorer';
-import { PackageExplorer, type PackageItem } from '@/features/explorer/PackageExplorer';
+import {
+  type KernelInfo,
+  PackageExplorer,
+  type PackageItem,
+} from '@/features/explorer/PackageExplorer';
 import { type IdeTab, useIdeStore } from '@/stores/ide-store';
 import { useWorkspaceStore } from '@/stores/workspace-store';
 import {
@@ -46,6 +50,7 @@ export function App() {
     Array<string | { name: string; workspace?: string; workspace_path?: string }>
   >([]);
   const [packages, setPackages] = useState<PackageItem[]>([]);
+  const [kernel, setKernel] = useState<KernelInfo | null>(null);
   const [status, setStatus] = useState<string>('检测中...');
 
   // 新建资产 Modal
@@ -113,10 +118,12 @@ export function App() {
       .then((data) => {
         setManifests(data.manifests || []);
         setPackages(data.packages || []);
+        setKernel(data.kernel || null);
       })
       .catch(() => {
         setManifests([]);
         setPackages([]);
+        setKernel(null);
       });
   }, []);
 
@@ -308,6 +315,19 @@ export function App() {
         title: '新建原子草稿',
         closable: true,
         atomId: `draft:${defaultPkg}`,
+      },
+      { newTab: true },
+    );
+  };
+
+  const handleCreateKernelDraft = () => {
+    ideStore.openTab(
+      {
+        id: 'atom:draft:kernel',
+        type: 'atom',
+        title: '初始化 Kernel 协议',
+        closable: true,
+        atomId: 'draft:kernel',
       },
       { newTab: true },
     );
@@ -612,8 +632,10 @@ export function App() {
                 ) : (
                   <PackageExplorer
                     packages={packages}
+                    kernel={kernel}
                     onSelectAtom={(atomId, e) => handleOpenAtomTab(atomId, e)}
                     onOpenLookup={(lKey, e) => handleOpenLookupTab(lKey, e)}
+                    onCreateKernel={handleCreateKernelDraft}
                     onDeletePackage={handleDeletePackage}
                     onDeleteLookup={handleDeleteLookup}
                     onDeleteAtom={handleDeleteAtom}
@@ -937,6 +959,7 @@ export function App() {
         onClose={() => setIsCommandPaletteOpen(false)}
         manifests={manifests}
         packages={packages}
+        kernel={kernel}
       />
 
       <CreatePackageModal

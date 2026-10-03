@@ -34,6 +34,7 @@ export function AtomEditorTab({
   const getSnapshot = useIdeStore((state) => state.getSnapshot);
 
   const tabId = `atom:${atomId}`;
+  const isKernel = atomId === 'kernel' || atomId === 'draft:kernel';
   const isDraft = atomId.startsWith('draft:') || atomId === 'new_atom';
   const draftInitialPkg = isDraft ? atomId.replace('draft:', '') : '';
 
@@ -44,11 +45,13 @@ export function AtomEditorTab({
   const [errorMsg, setErrorMsg] = useState('');
 
   // 基础数据与草稿字段
-  const [currentId, setCurrentId] = useState(isDraft ? '' : atomId);
-  const [draftSuffix, setDraftSuffix] = useState('');
-  const [pkgName, setPkgName] = useState<string>(draftInitialPkg || packages[0]?.name || '');
+  const [currentId, setCurrentId] = useState(isDraft ? (isKernel ? 'kernel' : '') : atomId);
+  const [draftSuffix, setDraftSuffix] = useState(isKernel ? 'kernel' : '');
+  const [pkgName, setPkgName] = useState<string>(
+    isKernel ? '全局' : draftInitialPkg || packages[0]?.name || '',
+  );
   const [sourceFile, setSourceFile] = useState<string>('');
-  const [atomType, setAtomType] = useState<string>('d3');
+  const [atomType, setAtomType] = useState<string>(isKernel ? 'kernel' : 'd3');
 
   // 可视化元数据状态
   const [priority, setPriority] = useState<number>(1);
@@ -59,7 +62,11 @@ export function AtomEditorTab({
 
   // Markdown 正文
   const [content, setContent] = useState<string>(
-    isDraft ? '# 新建原子组件\n\n在此输入具体的规则规范或程序技能...' : '',
+    isDraft
+      ? isKernel
+        ? '# ACA 运行时协议 v1.0\n\n## 1. 系统声明\n本文档定义了当前工作区的公理边界与核心执行契约。\n'
+        : '# 新建原子组件\n\n在此输入具体的规则规范或程序技能...'
+      : '',
   );
   const [isModified, setIsModified] = useState(false);
 
@@ -185,6 +192,45 @@ export function AtomEditorTab({
 
     if (isDraft) {
       // 草稿原子新建持久化逻辑
+      if (isKernel) {
+        if (!content.trim()) {
+          setErrorMsg('Kernel 协议正文不可为空');
+          setSaving(false);
+          return;
+        }
+        try {
+          const res = await fetch('/api/atoms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'kernel',
+              content: content,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setSaveSuccess(true);
+            setIsModified(false);
+            setTabDirty(tabId, false);
+            onSaved?.();
+            openTab({
+              id: 'atom:kernel',
+              type: 'atom',
+              title: 'kernel',
+              closable: true,
+              atomId: 'kernel',
+            });
+          } else {
+            setErrorMsg(data.detail || '创建 Kernel 失败');
+          }
+        } catch (_err) {
+          setErrorMsg('创建 Kernel 网络异常');
+        } finally {
+          setSaving(false);
+        }
+        return;
+      }
+
       const cleanSuffix = draftSuffix
         .trim()
         .toLowerCase()
@@ -423,7 +469,7 @@ export function AtomEditorTab({
       </div>
 
       {/* 草稿模式：定义所属包、构造类别与生成标识符 */}
-      {isDraft && (
+      {isDraft && !isKernel && (
         <div className="px-4 py-2.5 border-b border-slate-800 bg-indigo-950/20 grid grid-cols-3 gap-3 text-xs font-mono">
           <div>
             <label htmlFor="atom-draft-pkg" className="text-slate-400 block mb-1">
@@ -482,123 +528,125 @@ export function AtomEditorTab({
         </div>
       )}
 
-      {/* 可视化 Frontmatter 属性编辑条 (无需手写 YAML) */}
-      <div className="px-4 py-3 border-b border-slate-800/80 bg-slate-900/30 space-y-2.5 text-xs font-mono">
-        <div className="flex items-center gap-6">
-          {/* D3 专属：绝对优先级单选 */}
-          {atomType === 'd3' && (
-            <div className="flex items-center gap-2">
-              <span className="text-slate-400 flex items-center gap-1">
-                <Shield className="h-3.5 w-3.5 text-purple-400" /> 优先级:
-              </span>
+      {/* 可视化 Frontmatter 属性编辑条 (无需手写 YAML，Kernel 自动隐藏) */}
+      {!isKernel && (
+        <div className="px-4 py-3 border-b border-slate-800/80 bg-slate-900/30 space-y-2.5 text-xs font-mono">
+          <div className="flex items-center gap-6">
+            {/* D3 专属：绝对优先级单选 */}
+            {atomType === 'd3' && (
               <div className="flex items-center gap-2">
-                {[
-                  { val: 0, label: 'P0 公理' },
-                  { val: 1, label: 'P1 原则' },
-                  { val: 2, label: 'P2 指令' },
-                ].map((item) => (
-                  <label
-                    key={item.val}
-                    className={`flex items-center gap-1 px-2 py-0.5 rounded cursor-pointer border text-[11px] transition-colors ${
-                      priority === item.val
-                        ? 'border-purple-500 bg-purple-950/60 text-purple-200 font-semibold'
-                        : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:text-slate-200'
-                    }`}
+                <span className="text-slate-400 flex items-center gap-1">
+                  <Shield className="h-3.5 w-3.5 text-purple-400" /> 优先级:
+                </span>
+                <div className="flex items-center gap-2">
+                  {[
+                    { val: 0, label: 'P0 公理' },
+                    { val: 1, label: 'P1 原则' },
+                    { val: 2, label: 'P2 指令' },
+                  ].map((item) => (
+                    <label
+                      key={item.val}
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded cursor-pointer border text-[11px] transition-colors ${
+                        priority === item.val
+                          ? 'border-purple-500 bg-purple-950/60 text-purple-200 font-semibold'
+                          : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="atom-priority"
+                        className="hidden"
+                        checked={priority === item.val}
+                        onChange={() => {
+                          setPriority(item.val);
+                          markDirty();
+                        }}
+                      />
+                      <span>{item.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 领域 Domain 标签设定 */}
+            <div className="flex-1 flex items-center gap-2">
+              <span className="text-slate-400 flex items-center gap-1 shrink-0">
+                <Tag className="h-3.5 w-3.5 text-indigo-400" /> 领域标签:
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5 flex-1">
+                {domainList.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full text-[11px] border border-slate-700"
                   >
-                    <input
-                      type="radio"
-                      name="atom-priority"
-                      className="hidden"
-                      checked={priority === item.val}
-                      onChange={() => {
-                        setPriority(item.val);
-                        markDirty();
-                      }}
-                    />
-                    <span>{item.label}</span>
-                  </label>
+                    <span>{tag}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeDomainTag(tag)}
+                      className="hover:text-rose-400"
+                    >
+                      ×
+                    </button>
+                  </span>
                 ))}
+                <input
+                  type="text"
+                  value={domainInput}
+                  onChange={(e) => setDomainInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addDomainTag();
+                    }
+                  }}
+                  placeholder="+ 添加标签 (回车)"
+                  className="bg-slate-950 border border-slate-800/80 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-indigo-500 w-32"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* D2 专属：Uses 依赖查找接口列表 */}
+          {atomType === 'd2' && (
+            <div className="flex items-center gap-2 pt-1 border-t border-slate-800/40">
+              <span className="text-slate-400 flex items-center gap-1 shrink-0">
+                <Layers className="h-3.5 w-3.5 text-emerald-400" /> 依赖引用 (Uses):
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5 flex-1">
+                {usesList.map((ref) => (
+                  <span
+                    key={ref}
+                    className="inline-flex items-center gap-1 bg-emerald-950/60 text-emerald-300 px-2 py-0.5 rounded text-[11px] border border-emerald-800/60"
+                  >
+                    <span>{ref}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeUsesRef(ref)}
+                      className="hover:text-rose-400 ml-1"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                <input
+                  type="text"
+                  value={usesInput}
+                  onChange={(e) => setUsesInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addUsesRef();
+                    }
+                  }}
+                  placeholder="+ 关联 lookup (回车，例如 pkg::d1l-name)"
+                  className="bg-slate-950 border border-slate-800/80 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-emerald-500 w-64"
+                />
               </div>
             </div>
           )}
-
-          {/* 领域 Domain 标签设定 */}
-          <div className="flex-1 flex items-center gap-2">
-            <span className="text-slate-400 flex items-center gap-1 shrink-0">
-              <Tag className="h-3.5 w-3.5 text-indigo-400" /> 领域标签:
-            </span>
-            <div className="flex flex-wrap items-center gap-1.5 flex-1">
-              {domainList.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1 bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full text-[11px] border border-slate-700"
-                >
-                  <span>{tag}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeDomainTag(tag)}
-                    className="hover:text-rose-400"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-              <input
-                type="text"
-                value={domainInput}
-                onChange={(e) => setDomainInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addDomainTag();
-                  }
-                }}
-                placeholder="+ 添加标签 (回车)"
-                className="bg-slate-950 border border-slate-800/80 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-indigo-500 w-32"
-              />
-            </div>
-          </div>
         </div>
-
-        {/* D2 专属：Uses 依赖查找接口列表 */}
-        {atomType === 'd2' && (
-          <div className="flex items-center gap-2 pt-1 border-t border-slate-800/40">
-            <span className="text-slate-400 flex items-center gap-1 shrink-0">
-              <Layers className="h-3.5 w-3.5 text-emerald-400" /> 依赖引用 (Uses):
-            </span>
-            <div className="flex flex-wrap items-center gap-1.5 flex-1">
-              {usesList.map((ref) => (
-                <span
-                  key={ref}
-                  className="inline-flex items-center gap-1 bg-emerald-950/60 text-emerald-300 px-2 py-0.5 rounded text-[11px] border border-emerald-800/60"
-                >
-                  <span>{ref}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeUsesRef(ref)}
-                    className="hover:text-rose-400 ml-1"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-              <input
-                type="text"
-                value={usesInput}
-                onChange={(e) => setUsesInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addUsesRef();
-                  }
-                }}
-                placeholder="+ 关联 lookup (回车，例如 pkg::d1l-name)"
-                className="bg-slate-950 border border-slate-800/80 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-emerald-500 w-64"
-              />
-            </div>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Markdown 正文沉浸式编辑区 */}
       <div className="flex-1 overflow-hidden p-2 bg-slate-950">
