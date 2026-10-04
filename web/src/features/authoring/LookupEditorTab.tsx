@@ -13,6 +13,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SplitPane } from '@/components/ui/split-pane';
+import { toast } from '@/components/ui/toast';
 import type { PackageItem } from '@/features/explorer/PackageExplorer';
 import { TopologyGraph } from '@/features/graph/TopologyGraph';
 import { useIdeStore } from '@/stores/ide-store';
@@ -91,6 +92,7 @@ export function LookupEditorTab({
   const [sliceChunks, setSliceChunks] = useState<PromptChunk[]>([]);
   const [sliceProfile, setProfile] = useState<ProfileSummary | null>(null);
   const [saveStatus, setSaveStatus] = useState('');
+  const [confirmDeleting, setConfirmDeleting] = useState(false);
 
   const [selectorMode, setSelectorMode] = useState<'id' | 'domain' | 'ref'>('id');
   const [queryIdInput, setQueryIdInput] = useState('');
@@ -385,16 +387,22 @@ export function LookupEditorTab({
     return () => window.removeEventListener('aca:save-active-tab', handleGlobalSave);
   }, [tabId, saving, selectors.length, handleSave]);
 
-  const handleDelete = async () => {
+  const handleDelete = async (e?: React.MouseEvent) => {
     if (isDraft) return;
-    if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？此操作将从包定义中移除。`)) {
-      return;
-    }
-    try {
-      await deleteLookupMutation.mutateAsync(lookupKey);
-      onDeleted?.();
-    } catch (err: unknown) {
-      setSaveStatus(`删除失败: ${err instanceof Error ? err.message : '异常'}`);
+    if (e?.shiftKey || confirmDeleting) {
+      setConfirmDeleting(false);
+      try {
+        await deleteLookupMutation.mutateAsync(lookupKey);
+        toast.success(`查找接口 "${lookupKey}" 已删除`);
+        onDeleted?.();
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : '删除失败';
+        setSaveStatus(`删除失败: ${msg}`);
+        toast.error(msg);
+      }
+    } else {
+      setConfirmDeleting(true);
+      setTimeout(() => setConfirmDeleting(false), 3000);
     }
   };
 
@@ -424,11 +432,15 @@ export function LookupEditorTab({
               size="sm"
               onClick={handleDelete}
               disabled={deleteLookupMutation.isPending}
-              className="h-7 text-xs flex items-center gap-1 px-2.5 text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700 cursor-pointer"
-              title="删除此接口契约"
+              className={`h-7 text-xs flex items-center gap-1 px-2.5 cursor-pointer transition-colors ${
+                confirmDeleting
+                  ? 'bg-rose-600 text-white border-rose-500 hover:bg-rose-500 font-bold'
+                  : 'text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700'
+              }`}
+              title="删除此接口契约 (Shift+点击直接删除)"
             >
               <Trash2 className="h-3 w-3" />
-              <span>删除接口</span>
+              <span>{confirmDeleting ? '确定删除?' : '删除接口'}</span>
             </Button>
           )}
           <Button

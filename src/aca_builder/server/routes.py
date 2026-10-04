@@ -9,6 +9,7 @@ from aca_builder.server.common import (
 from aca_builder.server.routers.assets import router as assets_router
 from aca_builder.server.routers.atoms import router as atoms_router
 from aca_builder.server.routers.build import router as build_router
+from aca_builder.server.routers.fs import router as fs_router
 from aca_builder.server.routers.graph import router as graph_router
 from aca_builder.server.routers.lookups import router as lookups_router
 from aca_builder.server.routers.manifests import router as manifests_router
@@ -24,5 +25,6 @@ router.include_router(atoms_router)
 router.include_router(lookups_router)
 router.include_router(build_router)
 router.include_router(graph_router)
+router.include_router(fs_router)
 
 __all__ = ["broadcast_change", "get_current_workspace_id", "router"]

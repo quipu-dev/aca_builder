@@ -80,17 +80,34 @@ def get_assets_overview(x_aca_workspace: str | None = Header(None)) -> dict[str,
     for base_path in manifest_paths:
         if not base_path.is_dir():
             continue
-        for yaml_file in base_path.rglob("*.yaml"):
+
+        # 扫描目录与空文件夹
+        for item in base_path.rglob("*"):
             try:
-                relative = yaml_file.relative_to(base_path)
-                m_name = str(relative.with_suffix(""))
-                manifest_items.append(
-                    {
-                        "name": m_name,
-                        "workspace": ws_id,
-                        "workspace_path": str(base_path.resolve()),
-                    }
-                )
+                if item.is_dir():
+                    # 避免纳入隐藏目录（如 .git 等）
+                    if any(
+                        part.startswith(".")
+                        for part in item.relative_to(base_path).parts
+                    ):
+                        continue
+                    manifest_items.append(
+                        {
+                            "name": str(item.relative_to(base_path)),
+                            "type": "directory",
+                            "workspace": ws_id,
+                            "workspace_path": str(base_path.resolve()),
+                        }
+                    )
+                elif item.is_file() and item.suffix in [".yaml", ".yml"]:
+                    manifest_items.append(
+                        {
+                            "name": str(item.relative_to(base_path).with_suffix("")),
+                            "type": "file",
+                            "workspace": ws_id,
+                            "workspace_path": str(base_path.resolve()),
+                        }
+                    )
             except (yaml.YAMLError, OSError, ValueError):
                 continue
 

@@ -43,6 +43,9 @@ def setup_crud_env(tmp_path: Path, monkeypatch):
     (pkg_dir / "d1").mkdir()
     (pkg_dir / "d4").mkdir()
 
+    (lib_path / "kernel.md").write_text(
+        "---\ntype: kernel\n---\n# ACA Kernel Protocol\n", encoding="utf-8"
+    )
     (pkg_dir / "package.yaml").write_text(PKG_SAMPLE, encoding="utf-8")
     (pkg_dir / "d1" / "atom.md").write_text(ATOM_SAMPLE, encoding="utf-8")
     (pkg_dir / "d4" / "lookups.yaml").write_text(D4_SAMPLE, encoding="utf-8")
@@ -110,3 +113,25 @@ def test_create_and_delete_package(setup_crud_env):
     res_del = client.delete("/api/packages/pkg_new")
     assert res_del.status_code == 200
     assert not new_pkg_dir.exists()
+
+
+def test_compile_lookup_adhoc_excludes_kernel(setup_crud_env):
+    client, _, _ = setup_crud_env
+
+    res = client.post(
+        "/api/lookups/compile-adhoc",
+        json={
+            "key": "d1l-test-slice",
+            "selectors": [{"query": {"id": "d1-crud-atom"}}],
+            "package": "pkg_crud",
+            "pillar": "d1",
+        },
+    )
+    assert res.status_code == 200
+    data = res.json()
+
+    # 验证切片编译包含指定原子，但不包含全局 kernel
+    chunk_ids = [c["id"] for c in data.get("chunks", [])]
+    assert "d1-crud-atom" in chunk_ids
+    assert "kernel" not in chunk_ids
+    assert "ACA Kernel Protocol" not in data.get("prompt", "")

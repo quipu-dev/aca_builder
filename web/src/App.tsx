@@ -1,8 +1,11 @@
+import { createFolderFs, deleteFsItem, moveFsItem } from '@/api/fs';
 import { CommandPalette } from '@/components/CommandPalette';
 import { TabPane } from '@/components/layout/TabPane';
+import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
 import { CreatePackageModal } from '@/components/modals/CreatePackageModal';
 import { CreateWorkspaceModal } from '@/components/modals/CreateWorkspaceModal';
 import { Button } from '@/components/ui/button';
+import { ToastContainer, toast } from '@/components/ui/toast';
 import { ManifestExplorer } from '@/features/explorer/ManifestExplorer';
 import {
   type KernelInfo,
@@ -11,7 +14,9 @@ import {
 } from '@/features/explorer/PackageExplorer';
 import { type IdeTab, useIdeStore } from '@/stores/ide-store';
 import { useWorkspaceStore } from '@/stores/workspace-store';
+import { fileOpQueue } from '@/utils/queue';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { FolderPlus } from 'lucide-react';
 import {
   AlertCircle,
   AlertOctagon,
@@ -60,6 +65,9 @@ export function App() {
   const [isCreatePkgOpen, setIsCreatePkgOpen] = useState(false);
   const [newPkgName, setNewPkgName] = useState('');
   const [newPkgWs, setNewPkgWs] = useState('');
+
+  const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
+  const [targetParentFolder, setTargetParentFolder] = useState('');
 
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
   const [isWsDropdownOpen, setIsWsDropdownOpen] = useState(false);
@@ -111,7 +119,7 @@ export function App() {
     queryClient.invalidateQueries({ queryKey: ['lint'] });
   }, [queryClient]);
 
-  // 初始化加载工作区与后端状态检测
+  // 初始化加载工作区与后端状态检测（带 SSE 防抖）
   useEffect(() => {
     useWorkspaceStore
       .getState()
@@ -126,9 +134,13 @@ export function App() {
       .then((data) => setStatus(data.status === 'ok' ? '正常' : data.status))
       .catch(() => setStatus('离线'));
 
+    let sseTimer: ReturnType<typeof setTimeout> | null = null;
     const eventSource = new EventSource('/api/events/stream');
     eventSource.addEventListener('change', () => {
-      invalidateAll();
+      if (sseTimer) clearTimeout(sseTimer);
+      sseTimer = setTimeout(() => {
+        invalidateAll();
+      }, 350);
     });
 
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -168,6 +180,7 @@ export function App() {
     window.addEventListener('keydown', handleGlobalKeyDown);
 
     return () => {
+      if (sseTimer) clearTimeout(sseTimer);
       eventSource.close();
       window.removeEventListener('keydown', handleGlobalKeyDown);
     };
@@ -309,18 +322,105 @@ export function App() {
     );
   };
 
-  const handleCreateNewManifest = () => {
-    const draftId = `draft_${Date.now()}`;
+  const handleCreateNewManifest = (prefixPath = '') => {
+    const draftId = prefixPath ? `${prefixPath}/draft_${Date.now()}` : `draft_${Date.now()}`;
     ideStore.openTab(
       {
         id: `manifest:${draftId}`,
         type: 'manifest',
-        title: '新建清单',
+        title: prefixPath ? `${prefixPath}/新建清单` : '新建清单',
         closable: true,
         manifestName: draftId,
       },
       { newTab: true },
     );
+  };
+
+  const handleOpenCreateFolder = (parent = '') => {
+    setTargetParentFolder(parent);
+    setIsCreateFolderOpen(true);
+  };
+
+  const handleSubmitCreateFolder = async (folderPath: string) => {
+    try {
+      await createFolderFs({ path: folderPath, scope: 'manifests' });
+      toast.success(`目录 "${folderPath}" 创建成功`);
+      invalidateAll();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : '创建目录失败');
+    }
+  };
+
+  const handleDeleteFolder = (folderPath: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const wsId = wsStore.activeWorkspaceId;
+    const queryKey = ['assets', wsId];
+    const previousAssets = queryClient.getQueryData(queryKey);
+
+    // 乐观剔除该目录下所有项
+    queryClient.setQueryData(queryKey, (old: typeof assetsData) => {
+      if (!old) return old;
+      return {
+        ...old,
+        manifests: old.manifests.filter((m) => {
+          const name = typeof m === 'string' ? m : m.name;
+          return name !== folderPath && !name.startsWith(`${folderPath}/`);
+        }),
+      };
+    });
+
+    fileOpQueue.enqueue(async () => {
+      try {
+        await deleteFsItem({ path: folderPath, scope: 'manifests' });
+        toast.success(`物理目录 "${folderPath}" 已删除`);
+        queryClient.invalidateQueries({ queryKey: ['lint', wsId] });
+      } catch (err: unknown) {
+        queryClient.setQueryData(queryKey, previousAssets);
+        toast.error(err instanceof Error ? err.message : '删除目录失败');
+      }
+    });
+  };
+
+  const handleMoveManifestItem = (srcPath: string, destFolder: string, isFolder: boolean) => {
+    const itemName = srcPath.split('/').pop() || srcPath;
+    const cleanDestFolder = destFolder.trim().replace(/^\/+|\/+$/g, '');
+    const newPath = cleanDestFolder ? `${cleanDestFolder}/${itemName}` : itemName;
+
+    // 1. 同位置移动检查
+    if (srcPath === newPath) return;
+
+    // 2. 文件夹循环嵌套防卫
+    if (isFolder && (cleanDestFolder === srcPath || cleanDestFolder.startsWith(`${srcPath}/`))) {
+      toast.error('禁止将文件夹移动到其自身或其子目录内部');
+      return;
+    }
+
+    fileOpQueue.enqueue(async () => {
+      try {
+        await moveFsItem({
+          src: srcPath,
+          dest: newPath,
+          scope: 'manifests',
+        });
+        toast.success(`已移动至 ${cleanDestFolder ? `${cleanDestFolder}/` : '根目录'}`);
+        invalidateAll();
+
+        // 同步迁移已打开的对应 Tab
+        const oldTabId = `manifest:${srcPath}`;
+        const activeTabs = ideStore.tabs;
+        const targetTab = activeTabs.find((t) => t.id === oldTabId);
+        if (targetTab) {
+          ideStore.replaceTab(oldTabId, {
+            ...targetTab,
+            id: `manifest:${newPath}`,
+            title: itemName,
+            manifestName: newPath,
+          });
+        }
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : '移动失败');
+      }
+    });
   };
 
   const handleCreateEmptyTab = () => {
@@ -338,21 +438,42 @@ export function App() {
 
   const handleDeleteManifest = async (mName: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm(`确定要在当前工作区删除清单 "${mName}" 吗？`)) return;
-    try {
-      const res = await fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
-        method: 'DELETE',
-      });
-      if (res.ok) {
-        invalidateAll();
-        ideStore.closeTab(`manifest:${mName}`);
-      } else {
-        const data = await res.json();
-        alert(`删除失败: ${data.detail}`);
+    const wsId = wsStore.activeWorkspaceId;
+    const queryKey = ['assets', wsId];
+    const previousAssets = queryClient.getQueryData(queryKey);
+
+    // 1. 乐观更新：0ms 瞬间从视图中移除目标清单
+    queryClient.setQueryData(queryKey, (old: typeof assetsData) => {
+      if (!old) return old;
+      return {
+        ...old,
+        manifests: old.manifests.filter((m) =>
+          typeof m === 'string' ? m !== mName : m.name !== mName,
+        ),
+      };
+    });
+    ideStore.closeTab(`manifest:${mName}`);
+
+    // 2. 排入串行队列执行网络请求
+    fileOpQueue.enqueue(async () => {
+      try {
+        const res = await fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
+          method: 'DELETE',
+        });
+        if (res.ok) {
+          toast.success(`清单 "${mName}" 已删除`);
+          queryClient.invalidateQueries({ queryKey: ['lint', wsId] });
+        } else {
+          const data = await res.json();
+          // 回滚
+          queryClient.setQueryData(queryKey, previousAssets);
+          toast.error(`删除清单失败: ${data.detail || res.statusText}`);
+        }
+      } catch (_err) {
+        queryClient.setQueryData(queryKey, previousAssets);
+        toast.error('删除清单网络请求异常');
       }
-    } catch (_err) {
-      alert('删除清单网络请求异常');
-    }
+    });
   };
 
   const handleTabSaved = useCallback(() => {
@@ -388,79 +509,147 @@ export function App() {
     })
       .then(async (res) => {
         if (res.ok) {
+          toast.success(`组件包 "${newPkgName.trim()}" 创建成功`);
           invalidateAll();
         } else {
           const data = await res.json();
-          alert(`创建组件包失败: ${data.detail}`);
+          toast.error(`创建组件包失败: ${data.detail || res.statusText}`);
         }
       })
-      .catch(() => alert('创建组件包网络异常'));
+      .catch(() => toast.error('创建组件包网络异常'));
   }, [newPkgName, newPkgWs, invalidateAll]);
 
   const handleDeletePackage = useCallback(
     (pkgName: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!window.confirm(`确定要删除组件包 "${pkgName}" 吗？`)) return;
-      fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
-        method: 'DELETE',
-      })
-        .then(async (res) => {
+      const wsId = wsStore.activeWorkspaceId;
+      const queryKey = ['assets', wsId];
+      const previousAssets = queryClient.getQueryData(queryKey);
+
+      // 乐观剔除 Package
+      queryClient.setQueryData(queryKey, (old: typeof assetsData) => {
+        if (!old) return old;
+        return {
+          ...old,
+          packages: old.packages.filter((pkg) => pkg.name !== pkgName),
+        };
+      });
+
+      fileOpQueue.enqueue(async () => {
+        try {
+          const res = await fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
+            method: 'DELETE',
+          });
           if (res.ok) {
-            invalidateAll();
+            toast.success(`组件包 "${pkgName}" 已删除`);
+            queryClient.invalidateQueries({ queryKey: ['lint', wsId] });
           } else {
             const data = await res.json();
-            alert(`删除组件包失败: ${data.detail}`);
+            queryClient.setQueryData(queryKey, previousAssets);
+            toast.error(`删除组件包失败: ${data.detail || res.statusText}`);
           }
-        })
-        .catch(() => alert('删除组件包网络异常'));
+        } catch {
+          queryClient.setQueryData(queryKey, previousAssets);
+          toast.error('删除组件包网络异常');
+        }
+      });
     },
-    [invalidateAll],
+    [wsStore.activeWorkspaceId, queryClient],
   );
 
   const handleDeleteLookup = useCallback(
     (lookupKey: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？`)) return;
-      fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
-        method: 'DELETE',
-      })
-        .then(async (res) => {
+      const wsId = wsStore.activeWorkspaceId;
+      const queryKey = ['assets', wsId];
+      const previousAssets = queryClient.getQueryData(queryKey);
+
+      // 乐观剔除该 Lookup
+      queryClient.setQueryData(queryKey, (old: typeof assetsData) => {
+        if (!old) return old;
+        return {
+          ...old,
+          packages: old.packages.map((pkg) => {
+            const exports = { ...pkg.exports };
+            const internal = { ...pkg.internal_lookups };
+            delete exports[lookupKey];
+            delete internal[lookupKey];
+            return { ...pkg, exports, internal_lookups: internal };
+          }),
+        };
+      });
+      ideStore.closeTab(`lookup:${lookupKey}`);
+
+      fileOpQueue.enqueue(async () => {
+        try {
+          const res = await fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
+            method: 'DELETE',
+          });
           if (res.ok) {
-            ideStore.closeTab(`lookup:${lookupKey}`);
-            invalidateAll();
+            toast.success(`接口 "${lookupKey}" 已删除`);
+            queryClient.invalidateQueries({ queryKey: ['lint', wsId] });
           } else {
             const data = await res.json();
-            alert(`删除接口失败: ${data.detail}`);
+            queryClient.setQueryData(queryKey, previousAssets);
+            toast.error(`删除接口失败: ${data.detail || res.statusText}`);
           }
-        })
-        .catch(() => alert('删除接口网络异常'));
+        } catch {
+          queryClient.setQueryData(queryKey, previousAssets);
+          toast.error('删除接口网络异常');
+        }
+      });
     },
-    [ideStore, invalidateAll],
+    [ideStore, wsStore.activeWorkspaceId, queryClient],
   );
 
   const handleDeleteAtom = useCallback(
     (atomId: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!window.confirm(`确定要物理删除原子文件 "${atomId}" 吗？`)) return;
-      fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
-        method: 'DELETE',
-      })
-        .then(async (res) => {
+      const wsId = wsStore.activeWorkspaceId;
+      const queryKey = ['assets', wsId];
+      const previousAssets = queryClient.getQueryData(queryKey);
+
+      // 乐观剔除该 Atom
+      queryClient.setQueryData(queryKey, (old: typeof assetsData) => {
+        if (!old) return old;
+        if (atomId === 'kernel') {
+          return { ...old, kernel: null };
+        }
+        return {
+          ...old,
+          packages: old.packages.map((pkg) => ({
+            ...pkg,
+            atoms: pkg.atoms.filter((a) => a.id !== atomId),
+          })),
+        };
+      });
+
+      ideStore.closeTab(`atom:${atomId}`);
+      ideStore.clearSnapshot(`atom:${atomId}`);
+      if (atomId === 'kernel') {
+        ideStore.clearSnapshot('atom:draft:kernel');
+      }
+
+      fileOpQueue.enqueue(async () => {
+        try {
+          const res = await fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
+            method: 'DELETE',
+          });
           if (res.ok) {
-            ideStore.closeTab(`atom:${atomId}`);
-            ideStore.clearSnapshot(`atom:${atomId}`);
-            if (atomId === 'kernel') {
-              ideStore.clearSnapshot('atom:draft:kernel');
-            }
-            invalidateAll();
+            toast.success(`原子 "${atomId}" 已物理删除`);
+            queryClient.invalidateQueries({ queryKey: ['lint', wsId] });
           } else {
             const data = await res.json();
-            alert(`删除原子失败: ${data.detail}`);
+            queryClient.setQueryData(queryKey, previousAssets);
+            toast.error(`删除原子失败: ${data.detail || res.statusText}`);
           }
-        })
-        .catch(() => alert('删除原子网络异常'));
+        } catch {
+          queryClient.setQueryData(queryKey, previousAssets);
+          toast.error('删除原子网络异常');
+        }
+      });
     },
-    [ideStore, invalidateAll],
+    [ideStore, wsStore.activeWorkspaceId, queryClient],
   );
 
   const activeTab = ideStore.tabs.find((t) => t.id === ideStore.activeTabId);
@@ -569,14 +758,28 @@ export function App() {
 
                     <div className="pt-2">
                       {explorerTab === 'manifests' ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleCreateNewManifest}
-                          className="w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer"
-                        >
-                          <FilePlus2 className="h-3.5 w-3.5 text-indigo-400" /> 新建清单蓝图
-                        </Button>
+                        <div className="flex gap-1.5">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCreateNewManifest()}
+                            className="flex-1 flex items-center justify-center gap-1 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer"
+                            title="新建清单蓝图"
+                          >
+                            <FilePlus2 className="h-3.5 w-3.5 text-indigo-400" />
+                            <span>新建清单</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenCreateFolder()}
+                            className="flex-1 flex items-center justify-center gap-1 text-xs text-slate-300 border-slate-800 bg-slate-900/60 hover:bg-slate-800 h-7 cursor-pointer"
+                            title="在清单根目录新建物理文件夹"
+                          >
+                            <FolderPlus className="h-3.5 w-3.5 text-indigo-400" />
+                            <span>新建目录</span>
+                          </Button>
+                        </div>
                       ) : (
                         <Button
                           variant="outline"
@@ -597,6 +800,10 @@ export function App() {
                         activeManifestName={activeTab?.manifestName}
                         onSelectManifest={(m, e) => handleOpenManifestTab(m, e)}
                         onDeleteManifest={(m, e) => handleDeleteManifest(m, e)}
+                        onCreateInFolder={(folder) => handleCreateNewManifest(folder)}
+                        onCreateSubFolder={(parent) => handleOpenCreateFolder(parent)}
+                        onDeleteFolder={(folder, e) => handleDeleteFolder(folder, e)}
+                        onMoveItem={handleMoveManifestItem}
                       />
                     ) : (
                       <PackageExplorer
@@ -941,6 +1148,13 @@ export function App() {
         onSubmit={submitCreatePackage}
       />
 
+      <CreateFolderModal
+        isOpen={isCreateFolderOpen}
+        onClose={() => setIsCreateFolderOpen(false)}
+        parentPath={targetParentFolder}
+        onSubmit={handleSubmitCreateFolder}
+      />
+
       <CreateWorkspaceModal
         isOpen={isCreateWorkspaceOpen}
         onClose={() => setIsCreateWorkspaceOpen(false)}
@@ -949,6 +1163,8 @@ export function App() {
           await handleSelectWorkspace(params.id);
         }}
       />
+
+      <ToastContainer />
     </div>
   );
 }

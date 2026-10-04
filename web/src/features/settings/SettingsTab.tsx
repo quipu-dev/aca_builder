@@ -1,7 +1,9 @@
 import { Button } from '@/components/ui/button';
+import { ConfirmIconButton } from '@/components/ui/confirm-button';
+import { toast } from '@/components/ui/toast';
 import { useIdeStore } from '@/stores/ide-store';
 import { useWorkspaceStore } from '@/stores/workspace-store';
-import { Database, FolderTree, Save, Settings, Sliders, Trash2 } from 'lucide-react';
+import { Database, FolderTree, Save, Settings, Sliders } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export function SettingsTab() {
@@ -58,12 +60,13 @@ export function SettingsTab() {
       });
       if (res.ok) {
         await wsStore.fetchWorkspaces();
-        alert('当前工作区设置已保存！');
+        toast.success('当前工作区设置已保存！');
       } else {
-        alert('保存设置失败');
+        const data = await res.json().catch(() => ({}));
+        toast.error(`保存设置失败: ${data.detail || res.statusText}`);
       }
     } catch (_err) {
-      alert('保存设置网络异常');
+      toast.error('保存设置网络异常');
     } finally {
       setSaving(false);
     }
@@ -78,9 +81,12 @@ export function SettingsTab() {
       });
       if (res.ok) {
         await wsStore.fetchWorkspaces();
+        toast.success(`已设置 "${wsId}" 为默认工作区`);
+      } else {
+        toast.error('设置默认工作区失败');
       }
     } catch (_err) {
-      alert('设置默认工作区失败');
+      toast.error('设置默认工作区网络异常');
     }
   };
 
@@ -147,18 +153,15 @@ export function SettingsTab() {
                     </Button>
                   )}
                   {wsStore.workspaces.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (confirm(`确定要注销工作区 "${ws.name}" 吗？`)) {
-                          wsStore.deleteWorkspace(ws.id);
-                        }
+                    <ConfirmIconButton
+                      onConfirm={async () => {
+                        await wsStore.deleteWorkspace(ws.id);
+                        toast.success(`工作区 "${ws.name}" 已注销`);
                       }}
-                      className="p-1.5 text-slate-500 hover:text-rose-400 transition-colors"
-                      title="删除此工作区"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      title={`注销工作区 ${ws.name} (Shift+点击快速注销)`}
+                      confirmTitle="确认注销?"
+                      iconClassName="h-4 w-4"
+                    />
                   )}
                 </div>
               </div>

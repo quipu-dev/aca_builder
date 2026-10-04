@@ -60,13 +60,14 @@ def run_compilation_pipeline(
     overrides: dict[str, Any] | None = None,
     apply_hook: bool = False,
     hook_command: str | None = None,
+    include_kernel: bool = True,
 ) -> BuildResponse:
     """
     通用 Prompt 编译流水线：
     1. 应用 overrides
     2. 计算初始命中映射
     3. 级联依赖解析闭包
-    4. 自动注入单例 Kernel
+    4. 自动注入单例 Kernel（可选）
     5. Prompt 序列化、分块生成、词元分析与可选 Hook 执行
     """
     if not library:
@@ -107,12 +108,19 @@ def run_compilation_pipeline(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"依赖解析异常: {e}")
 
-    kernel_ids = {
-        k for k, v in library.items() if v.get("meta", {}).get("type") == "kernel"
-    }
-    for k_id in kernel_ids:
-        if k_id not in final_atom_map:
-            final_atom_map[k_id] = set()
+    if include_kernel:
+        kernel_ids = {
+            k for k, v in library.items() if v.get("meta", {}).get("type") == "kernel"
+        }
+        for k_id in kernel_ids:
+            if k_id not in final_atom_map:
+                final_atom_map[k_id] = set()
+    else:
+        final_atom_map = {
+            k: v
+            for k, v in final_atom_map.items()
+            if library.get(k, {}).get("meta", {}).get("type") != "kernel"
+        }
 
     prompt_text = serialize_prompt(final_atom_map, library)
     chunks_data = generate_prompt_chunks(final_atom_map, library)

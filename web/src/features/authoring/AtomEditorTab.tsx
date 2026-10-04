@@ -7,6 +7,7 @@ import {
 import { openInObsidian } from '@/api/system';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/toast';
 import { useIdeStore } from '@/stores/ide-store';
 import { generateIdSuffix } from '@/utils/ulid';
 import { markdown } from '@codemirror/lang-markdown';
@@ -83,6 +84,7 @@ export function AtomEditorTab({
       : '',
   );
   const [isModified, setIsModified] = useState(false);
+  const [confirmDeleting, setConfirmDeleting] = useState(false);
 
   // Mutations
   const createAtomMutation = useCreateAtomMutation();
@@ -352,16 +354,22 @@ export function AtomEditorTab({
     updateAtomMutation,
   ]);
 
-  const handleDelete = async () => {
+  const handleDelete = async (e?: React.MouseEvent) => {
     if (isDraft) return;
-    if (!window.confirm(`确定要永久删除原子组件 "${currentId}" 吗？此操作将物理删除文件。`)) {
-      return;
-    }
-    try {
-      await deleteAtomMutation.mutateAsync(currentId);
-      onDeleted?.();
-    } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : '删除原子失败');
+    if (e?.shiftKey || confirmDeleting) {
+      setConfirmDeleting(false);
+      try {
+        await deleteAtomMutation.mutateAsync(currentId);
+        toast.success(`原子 "${currentId}" 已物理删除`);
+        onDeleted?.();
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : '删除原子失败';
+        setErrorMsg(msg);
+        toast.error(msg);
+      }
+    } else {
+      setConfirmDeleting(true);
+      setTimeout(() => setConfirmDeleting(false), 3000);
     }
   };
 
@@ -469,11 +477,15 @@ export function AtomEditorTab({
               size="sm"
               onClick={handleDelete}
               disabled={deleteAtomMutation.isPending}
-              className="h-7 text-xs flex items-center gap-1 px-2 text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700 cursor-pointer"
-              title="物理删除该原子 Markdown 文件"
+              className={`h-7 text-xs flex items-center gap-1 px-2 cursor-pointer transition-colors ${
+                confirmDeleting
+                  ? 'bg-rose-600 text-white border-rose-500 hover:bg-rose-500 font-bold'
+                  : 'text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700'
+              }`}
+              title="物理删除该原子 (Shift+点击直接删除)"
             >
               <Trash2 className="h-3 w-3" />
-              <span>删除</span>
+              <span>{confirmDeleting ? '确定删除?' : '删除'}</span>
             </Button>
           )}
           <Button

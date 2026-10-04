@@ -116,4 +116,5 @@ def compile_lookup_adhoc(
         direct_lookup=(req.key, lookup_def),
         apply_hook=req.apply_hook,
         hook_command=ws_cfg.post_process_hook,
+        include_kernel=False,
     )

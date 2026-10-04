@@ -1,6 +1,9 @@
+var __defProp = Object.defineProperty;
 var __typeError = (msg) => {
   throw TypeError(msg);
 };
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
 var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
@@ -3391,6 +3394,43 @@ function useMutation(options, queryClient2) {
     mutate,
     mutateAsync: result.mutate
   };
+}
+async function apiFetch(url, options) {
+  const res = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      ...options == null ? void 0 : options.headers
+    },
+    ...options
+  });
+  if (!res.ok) {
+    let errorDetail = `HTTP ${res.status}`;
+    try {
+      const data = await res.json();
+      if (data.detail) errorDetail = data.detail;
+    } catch {
+    }
+    throw new Error(errorDetail);
+  }
+  return res.json();
+}
+async function createFolderFs(payload) {
+  return apiFetch("/api/fs/mkdir", {
+    method: "POST",
+    body: JSON.stringify({ scope: "manifests", ...payload })
+  });
+}
+async function moveFsItem(payload) {
+  return apiFetch("/api/fs/move", {
+    method: "POST",
+    body: JSON.stringify({ scope: "manifests", ...payload })
+  });
+}
+async function deleteFsItem(payload) {
+  return apiFetch("/api/fs/delete", {
+    method: "DELETE",
+    body: JSON.stringify({ scope: "manifests", ...payload })
+  });
 }
 function r(e) {
   var t, f, n = "";
@@ -8208,8 +8248,8 @@ var hideOthers = function(originalTarget, parentNode, markerName) {
   targets.push.apply(targets, Array.from(activeParentNode.querySelectorAll("[aria-live], script")));
   return applyAttributeToOthers(targets, activeParentNode, markerName, "aria-hidden");
 };
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __defProp2 = Object.defineProperty;
+var __name = (target, value) => __defProp2(target, "name", { value, configurable: true });
 var DIALOG_NAME = "Dialog";
 var [createDialogContext, createDialogScope] = /* @__PURE__ */ createContextScope(DIALOG_NAME);
 var [DialogProvider, useDialogContext] = createDialogContext(DIALOG_NAME);
@@ -8899,6 +8939,16 @@ const CircleCheckBig = createLucideIcon("CircleCheckBig", [
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
+const CircleCheck = createLucideIcon("CircleCheck", [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
 const CodeXml = createLucideIcon("CodeXml", [
   ["path", { d: "m18 16 4-4-4-4", key: "1inbqp" }],
   ["path", { d: "m6 8-4 4 4 4", key: "15zrgr" }],
@@ -9080,6 +9130,23 @@ const FolderOpen = createLucideIcon("FolderOpen", [
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
+const FolderPlus = createLucideIcon("FolderPlus", [
+  ["path", { d: "M12 10v6", key: "1bos4e" }],
+  ["path", { d: "M9 13h6", key: "1uhe8q" }],
+  [
+    "path",
+    {
+      d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z",
+      key: "1kt360"
+    }
+  ]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
 const FolderTree = createLucideIcon("FolderTree", [
   [
     "path",
@@ -9123,6 +9190,17 @@ const Globe = createLucideIcon("Globe", [
   ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
   ["path", { d: "M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20", key: "13o1zl" }],
   ["path", { d: "M2 12h20", key: "9i4pu4" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const Info$1 = createLucideIcon("Info", [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "M12 16v-4", key: "1dtifu" }],
+  ["path", { d: "M12 8h.01", key: "e9boi3" }]
 ]);
 /**
  * @license lucide-react v0.468.0 - ISC
@@ -9649,25 +9727,6 @@ function CommandPalette({
     }
   );
 }
-async function apiFetch(url, options) {
-  const res = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options == null ? void 0 : options.headers
-    },
-    ...options
-  });
-  if (!res.ok) {
-    let errorDetail = `HTTP ${res.status}`;
-    try {
-      const data = await res.json();
-      if (data.detail) errorDetail = data.detail;
-    } catch {
-    }
-    throw new Error(errorDetail);
-  }
-  return res.json();
-}
 async function fetchAtomDetail(atomId) {
   return apiFetch(`/api/atoms/${encodeURIComponent(atomId)}`);
 }
@@ -9743,6 +9802,70 @@ const Button = React$1.forwardRef(
   }
 );
 Button.displayName = "Button";
+let toastsState = [];
+const listeners = /* @__PURE__ */ new Set();
+function notify() {
+  for (const listener of listeners) {
+    listener([...toastsState]);
+  }
+}
+const toast = {
+  success: (message, duration = 2500) => {
+    toast.add({ type: "success", message, duration });
+  },
+  error: (message, duration = 4e3) => {
+    toast.add({ type: "error", message, duration });
+  },
+  info: (message, duration = 3e3) => {
+    toast.add({ type: "info", message, duration });
+  },
+  add: (item) => {
+    const id = `toast_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    toastsState = [...toastsState, { ...item, id }];
+    notify();
+    if (item.duration && item.duration > 0) {
+      setTimeout(() => {
+        toast.remove(id);
+      }, item.duration);
+    }
+  },
+  remove: (id) => {
+    toastsState = toastsState.filter((t) => t.id !== id);
+    notify();
+  }
+};
+function ToastContainer() {
+  const [toasts, setToasts] = reactExports.useState([]);
+  reactExports.useEffect(() => {
+    listeners.add(setToasts);
+    return () => {
+      listeners.delete(setToasts);
+    };
+  }, []);
+  if (toasts.length === 0) return null;
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "fixed bottom-9 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none font-sans text-xs", children: toasts.map((t) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      className: `pointer-events-auto flex items-start gap-2.5 p-3 rounded-lg border shadow-xl backdrop-blur-md transition-all duration-200 animate-in fade-in slide-in-from-bottom-2 ${t.type === "success" ? "bg-emerald-950/90 border-emerald-800/80 text-emerald-200" : t.type === "error" ? "bg-rose-950/90 border-rose-800/80 text-rose-200" : "bg-slate-900/90 border-slate-800 text-slate-200"}`,
+      children: [
+        t.type === "success" && /* @__PURE__ */ jsxRuntimeExports.jsx(CircleCheck, { className: "h-4 w-4 text-emerald-400 shrink-0 mt-0.5" }),
+        t.type === "error" && /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "h-4 w-4 text-rose-400 shrink-0 mt-0.5" }),
+        t.type === "info" && /* @__PURE__ */ jsxRuntimeExports.jsx(Info$1, { className: "h-4 w-4 text-indigo-400 shrink-0 mt-0.5" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 break-words leading-relaxed select-text", children: t.message }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            onClick: () => toast.remove(t.id),
+            className: "p-0.5 rounded text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0",
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3.5 w-3.5" })
+          }
+        )
+      ]
+    },
+    t.id
+  )) });
+}
 const ENCODING = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 const ENCODING_LEN = ENCODING.length;
 function ulid(seedTime = Date.now()) {
@@ -9803,6 +9926,7 @@ function AtomEditorTab({
     isDraft ? isKernel ? "# ACA 运行时协议 v1.0\n\n## 1. 系统声明\n本文档定义了当前工作区的公理边界与核心执行契约。\n" : "# 新建原子组件\n\n在此输入具体的规则规范或程序技能..." : ""
   );
   const [isModified, setIsModified] = reactExports.useState(false);
+  const [confirmDeleting, setConfirmDeleting] = reactExports.useState(false);
   const createAtomMutation = useCreateAtomMutation();
   const updateAtomMutation = useUpdateAtomMutation();
   const deleteAtomMutation = useDeleteAtomMutation();
@@ -10031,16 +10155,22 @@ function AtomEditorTab({
     createAtomMutation,
     updateAtomMutation
   ]);
-  const handleDelete2 = async () => {
+  const handleDelete2 = async (e) => {
     if (isDraft) return;
-    if (!window.confirm(`确定要永久删除原子组件 "${currentId}" 吗？此操作将物理删除文件。`)) {
-      return;
-    }
-    try {
-      await deleteAtomMutation.mutateAsync(currentId);
-      onDeleted == null ? void 0 : onDeleted();
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "删除原子失败");
+    if ((e == null ? void 0 : e.shiftKey) || confirmDeleting) {
+      setConfirmDeleting(false);
+      try {
+        await deleteAtomMutation.mutateAsync(currentId);
+        toast.success(`原子 "${currentId}" 已物理删除`);
+        onDeleted == null ? void 0 : onDeleted();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "删除原子失败";
+        setErrorMsg(msg);
+        toast.error(msg);
+      }
+    } else {
+      setConfirmDeleting(true);
+      setTimeout(() => setConfirmDeleting(false), 3e3);
     }
   };
   const handleKeyDown = (e) => {
@@ -10142,11 +10272,11 @@ function AtomEditorTab({
                 size: "sm",
                 onClick: handleDelete2,
                 disabled: deleteAtomMutation.isPending,
-                className: "h-7 text-xs flex items-center gap-1 px-2 text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700 cursor-pointer",
-                title: "物理删除该原子 Markdown 文件",
+                className: `h-7 text-xs flex items-center gap-1 px-2 cursor-pointer transition-colors ${confirmDeleting ? "bg-rose-600 text-white border-rose-500 hover:bg-rose-500 font-bold" : "text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700"}`,
+                title: "物理删除该原子 (Shift+点击直接删除)",
                 children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "删除" })
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: confirmDeleting ? "确定删除?" : "删除" })
                 ]
               }
             ),
@@ -26064,6 +26194,7 @@ function LookupEditorTab({
   const [sliceChunks2, setSliceChunks] = reactExports.useState([]);
   const [sliceProfile, setProfile] = reactExports.useState(null);
   const [saveStatus, setSaveStatus] = reactExports.useState("");
+  const [confirmDeleting, setConfirmDeleting] = reactExports.useState(false);
   const [selectorMode, setSelectorMode] = reactExports.useState("id");
   const [queryIdInput, setQueryIdInput] = reactExports.useState("");
   const [domainInput, setDomainInput] = reactExports.useState("");
@@ -26299,16 +26430,22 @@ function LookupEditorTab({
     window.addEventListener("aca:save-active-tab", handleGlobalSave);
     return () => window.removeEventListener("aca:save-active-tab", handleGlobalSave);
   }, [tabId, saving, selectors.length, handleSave]);
-  const handleDelete2 = async () => {
+  const handleDelete2 = async (e) => {
     if (isDraft) return;
-    if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？此操作将从包定义中移除。`)) {
-      return;
-    }
-    try {
-      await deleteLookupMutation.mutateAsync(lookupKey);
-      onDeleted == null ? void 0 : onDeleted();
-    } catch (err) {
-      setSaveStatus(`删除失败: ${err instanceof Error ? err.message : "异常"}`);
+    if ((e == null ? void 0 : e.shiftKey) || confirmDeleting) {
+      setConfirmDeleting(false);
+      try {
+        await deleteLookupMutation.mutateAsync(lookupKey);
+        toast.success(`查找接口 "${lookupKey}" 已删除`);
+        onDeleted == null ? void 0 : onDeleted();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "删除失败";
+        setSaveStatus(`删除失败: ${msg}`);
+        toast.error(msg);
+      }
+    } else {
+      setConfirmDeleting(true);
+      setTimeout(() => setConfirmDeleting(false), 3e3);
     }
   };
   const fullLookupKey = `${pillar}l-${rawKeyName.trim() || "..."}`;
@@ -26336,11 +26473,11 @@ function LookupEditorTab({
                 size: "sm",
                 onClick: handleDelete2,
                 disabled: deleteLookupMutation.isPending,
-                className: "h-7 text-xs flex items-center gap-1 px-2.5 text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700 cursor-pointer",
-                title: "删除此接口契约",
+                className: `h-7 text-xs flex items-center gap-1 px-2.5 cursor-pointer transition-colors ${confirmDeleting ? "bg-rose-600 text-white border-rose-500 hover:bg-rose-500 font-bold" : "text-rose-400 border-rose-900/50 hover:bg-rose-950/50 hover:border-rose-700"}`,
+                title: "删除此接口契约 (Shift+点击直接删除)",
                 children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "删除接口" })
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: confirmDeleting ? "确定删除?" : "删除接口" })
                 ]
               }
             ),
@@ -27650,6 +27787,58 @@ function EmptyTab({
     ] })
   ] }) });
 }
+function ConfirmIconButton({
+  onConfirm,
+  title = "删除 (按住 Shift 可直接删除)",
+  confirmTitle = "确定?",
+  className = "",
+  iconClassName = "h-3.5 w-3.5"
+}) {
+  const [confirming, setConfirming] = reactExports.useState(false);
+  reactExports.useEffect(() => {
+    if (!confirming) return;
+    const timer = setTimeout(() => {
+      setConfirming(false);
+    }, 3e3);
+    return () => clearTimeout(timer);
+  }, [confirming]);
+  const handleClick = (e) => {
+    e.stopPropagation();
+    if (e.shiftKey) {
+      setConfirming(false);
+      onConfirm(e);
+      return;
+    }
+    if (confirming) {
+      setConfirming(false);
+      onConfirm(e);
+    } else {
+      setConfirming(true);
+    }
+  };
+  if (confirming) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "button",
+      {
+        type: "button",
+        onClick: handleClick,
+        className: "px-1.5 py-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-mono font-bold animate-in fade-in transition-all shrink-0 cursor-pointer shadow-sm",
+        title: "再次点击确认删除 (3 秒后自动取消)",
+        children: confirmTitle
+      }
+    );
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "button",
+    {
+      type: "button",
+      onClick: handleClick,
+      className: `p-0.5 rounded transition-colors text-slate-500 hover:text-rose-400 cursor-pointer shrink-0 ${className}`,
+      title,
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: iconClassName })
+    }
+  );
+}
 const useWorkspaceStore = create$1((set, get) => ({
   workspaces: [],
   activeWorkspaceId: "",
@@ -27753,12 +27942,13 @@ function SettingsTab() {
       });
       if (res.ok) {
         await wsStore.fetchWorkspaces();
-        alert("当前工作区设置已保存！");
+        toast.success("当前工作区设置已保存！");
       } else {
-        alert("保存设置失败");
+        const data = await res.json().catch(() => ({}));
+        toast.error(`保存设置失败: ${data.detail || res.statusText}`);
       }
     } catch (_err) {
-      alert("保存设置网络异常");
+      toast.error("保存设置网络异常");
     } finally {
       setSaving(false);
     }
@@ -27772,9 +27962,12 @@ function SettingsTab() {
       });
       if (res.ok) {
         await wsStore.fetchWorkspaces();
+        toast.success(`已设置 "${wsId}" 为默认工作区`);
+      } else {
+        toast.error("设置默认工作区失败");
       }
     } catch (_err) {
-      alert("设置默认工作区失败");
+      toast.error("设置默认工作区网络异常");
     }
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-full flex-col bg-slate-950 text-slate-100 overflow-y-auto font-sans", children: [
@@ -27831,17 +28024,15 @@ function SettingsTab() {
               }
             ),
             wsStore.workspaces.length > 1 && /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "button",
+              ConfirmIconButton,
               {
-                type: "button",
-                onClick: () => {
-                  if (confirm(`确定要注销工作区 "${ws.name}" 吗？`)) {
-                    wsStore.deleteWorkspace(ws.id);
-                  }
+                onConfirm: async () => {
+                  await wsStore.deleteWorkspace(ws.id);
+                  toast.success(`工作区 "${ws.name}" 已注销`);
                 },
-                className: "p-1.5 text-slate-500 hover:text-rose-400 transition-colors",
-                title: "删除此工作区",
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-4 w-4" })
+                title: `注销工作区 ${ws.name} (Shift+点击快速注销)`,
+                confirmTitle: "确认注销?",
+                iconClassName: "h-4 w-4"
               }
             )
           ] })
@@ -28047,6 +28238,51 @@ function Modal({
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-4", children })
   ] }) });
 }
+function CreateFolderModal({
+  isOpen,
+  onClose,
+  parentPath = "",
+  onSubmit
+}) {
+  const [name2, setName] = reactExports.useState("");
+  const handleSubmit = (e) => {
+    e == null ? void 0 : e.preventDefault();
+    const clean = name2.trim().replace(/^\/+|\/+$/g, "");
+    if (!clean) return;
+    const fullPath = parentPath ? `${parentPath}/${clean}` : clean;
+    onSubmit(fullPath);
+    setName("");
+    onClose();
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    Modal,
+    {
+      isOpen,
+      onClose,
+      title: parentPath ? `新建子目录 (${parentPath}/)` : "新建物理目录",
+      children: /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleSubmit, className: "space-y-4 text-xs font-mono", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-folder-name", className: "block text-slate-400 mb-1", children: "目录名称 (可包含层级，如: projects/alpha)" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "input",
+            {
+              id: "modal-folder-name",
+              type: "text",
+              value: name2,
+              onChange: (e) => setName(e.target.value),
+              className: "w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 font-mono",
+              placeholder: "例如: core_agents 或 department_a"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-2 flex justify-end gap-2 font-sans", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { type: "button", variant: "ghost", onClick: onClose, children: "取消" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { type: "submit", disabled: !name2.trim(), children: "创建目录" })
+        ] })
+      ] })
+    }
+  );
+}
 function CreatePackageModal({
   isOpen,
   onClose,
@@ -28172,6 +28408,7 @@ function buildTree(items) {
     children: /* @__PURE__ */ new Map()
   };
   for (const item of items) {
+    const isExplicitDir = typeof item === "object" && item.type === "directory";
     const p2 = typeof item === "string" ? item : item.name;
     const parts = p2.split("/").filter(Boolean);
     let curr = root2;
@@ -28179,16 +28416,17 @@ function buildTree(items) {
       const part = parts[i];
       const isLeaf = i === parts.length - 1;
       const subPath = parts.slice(0, i + 1).join("/");
+      const isFolder = !isLeaf || isExplicitDir;
       let nextNode = curr.children.get(part);
       if (!nextNode) {
         nextNode = {
           name: part,
-          path: isLeaf ? p2 : subPath,
-          isFolder: !isLeaf,
+          path: isLeaf && !isExplicitDir ? p2 : subPath,
+          isFolder,
           children: /* @__PURE__ */ new Map()
         };
         curr.children.set(part, nextNode);
-      } else if (!isLeaf) {
+      } else if (isFolder) {
         nextNode.isFolder = true;
       }
       curr = nextNode;
@@ -28219,50 +28457,158 @@ function ManifestTreeItem({
   onToggleFolder,
   isExpanded,
   onSelectManifest,
-  onDeleteManifest
+  onDeleteManifest,
+  onCreateInFolder,
+  onCreateSubFolder,
+  onDeleteFolder,
+  onMoveItem
 }) {
+  const [isDragOver, setIsDragOver] = reactExports.useState(false);
   const isActive = !node2.isFolder && activeManifestName === node2.path;
   const paddingLeft = `${depth * 14 + 6}px`;
+  const handleDragStart = (e) => {
+    e.stopPropagation();
+    e.dataTransfer.setData(
+      "application/aca-manifest-item",
+      JSON.stringify({ path: node2.path, isFolder: node2.isFolder })
+    );
+    e.dataTransfer.effectAllowed = "move";
+  };
+  const handleDragOver = (e) => {
+    if (!node2.isFolder) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    if (!isDragOver) setIsDragOver(true);
+  };
+  const handleDragLeave = (e) => {
+    if (!node2.isFolder) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+  const handleDrop = (e) => {
+    if (!node2.isFolder) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    try {
+      const raw = e.dataTransfer.getData("application/aca-manifest-item");
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      onMoveItem == null ? void 0 : onMoveItem(data.path, node2.path, data.isFolder);
+    } catch {
+    }
+  };
   if (node2.isFolder) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-0.5 mb-1", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        "button",
-        {
-          type: "button",
-          onClick: () => onToggleFolder(node2.path),
-          style: { paddingLeft },
-          className: "w-full flex items-center gap-1.5 py-1 pr-2 rounded text-xs font-mono text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 transition-colors group cursor-pointer text-left",
-          title: node2.name,
-          children: [
-            isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3.5 w-3.5 text-slate-500 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5 text-slate-500 shrink-0" }),
-            isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(FolderOpen, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Folder, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold truncate text-[11px] text-slate-300", title: node2.name, children: node2.name })
-          ]
-        }
-      ),
-      isExpanded && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-0.5 border-l border-slate-800/60 ml-3 pl-1", children: node2.children.map((child) => {
-        const childExpanded = useIdeStore.getState().explorerExpanded[child.path] === true;
-        return /* @__PURE__ */ jsxRuntimeExports.jsx(
-          ManifestTreeItem,
-          {
-            node: child,
-            depth: depth + 1,
-            activeManifestName,
-            isExpanded: childExpanded,
-            onToggleFolder,
-            onSelectManifest,
-            onDeleteManifest
-          },
-          child.path
-        );
-      }) })
-    ] });
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "div",
+      {
+        className: "space-y-0.5 mb-1 group/folder",
+        onDragOver: handleDragOver,
+        onDragLeave: handleDragLeave,
+        onDrop: handleDrop,
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "div",
+            {
+              draggable: true,
+              onDragStart: handleDragStart,
+              style: { paddingLeft },
+              className: `w-full flex items-center justify-between py-1 pr-1.5 rounded text-xs font-mono transition-colors ${isDragOver ? "bg-indigo-600/30 border border-indigo-500 text-indigo-100 ring-1 ring-indigo-500/50" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent"}`,
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => onToggleFolder(node2.path),
+                    className: "flex items-center gap-1.5 flex-1 min-w-0 text-left cursor-pointer truncate",
+                    title: `${node2.path} (可拖拽此目录)`,
+                    children: [
+                      isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3.5 w-3.5 text-slate-500 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5 text-slate-500 shrink-0" }),
+                      isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(FolderOpen, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Folder, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold truncate text-[11px] text-slate-300", children: node2.name })
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "opacity-0 group-hover/folder:opacity-100 flex items-center gap-1 transition-opacity shrink-0", children: [
+                  onCreateInFolder && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: (e) => {
+                        e.stopPropagation();
+                        onCreateInFolder(node2.path);
+                      },
+                      className: "p-1 text-slate-400 hover:text-indigo-300 hover:bg-slate-800/80 rounded cursor-pointer transition-colors",
+                      title: `在 ${node2.path}/ 中新建清单`,
+                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(FilePlus2, { className: "h-3.5 w-3.5" })
+                    }
+                  ),
+                  onCreateSubFolder && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: (e) => {
+                        e.stopPropagation();
+                        onCreateSubFolder(node2.path);
+                      },
+                      className: "p-1 text-slate-400 hover:text-indigo-300 hover:bg-slate-800/80 rounded cursor-pointer transition-colors",
+                      title: `在 ${node2.path}/ 中新建子目录`,
+                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(FolderPlus, { className: "h-3.5 w-3.5" })
+                    }
+                  ),
+                  onDeleteFolder && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    ConfirmIconButton,
+                    {
+                      onConfirm: (e) => onDeleteFolder(node2.path, e),
+                      title: `删除目录 ${node2.path} 及其全部文件 (Shift+点击快速删除)`,
+                      confirmTitle: "删目录?",
+                      iconClassName: "h-3 w-3"
+                    }
+                  )
+                ] })
+              ]
+            }
+          ),
+          isExpanded && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-0.5 border-l border-slate-800/60 ml-3 pl-1", children: node2.children.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "div",
+            {
+              style: { paddingLeft: `${(depth + 1) * 14 + 6}px` },
+              className: "py-1 text-[10px] text-slate-600 italic",
+              children: "(空目录 - 可拖拽文件至此)"
+            }
+          ) : node2.children.map((child) => {
+            const childExpanded = useIdeStore.getState().explorerExpanded[child.path] === true;
+            return /* @__PURE__ */ jsxRuntimeExports.jsx(
+              ManifestTreeItem,
+              {
+                node: child,
+                depth: depth + 1,
+                activeManifestName,
+                isExpanded: childExpanded,
+                onToggleFolder,
+                onSelectManifest,
+                onDeleteManifest,
+                onCreateInFolder,
+                onCreateSubFolder,
+                onDeleteFolder,
+                onMoveItem
+              },
+              child.path
+            );
+          }) })
+        ]
+      }
+    );
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
     "div",
     {
+      draggable: true,
+      onDragStart: handleDragStart,
       style: { paddingLeft },
-      className: `group w-full flex items-center justify-between py-1 pr-1.5 rounded text-xs font-mono transition-colors ${isActive ? "bg-indigo-600/30 text-indigo-200 border border-indigo-500/50" : "text-slate-300 hover:bg-slate-800/60"}`,
+      className: `group w-full flex items-center justify-between py-1 pr-1.5 rounded text-xs font-mono transition-colors cursor-grab active:cursor-grabbing ${isActive ? "bg-indigo-600/30 text-indigo-200 border border-indigo-500/50" : "text-slate-300 hover:bg-slate-800/60 border border-transparent"}`,
       children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs(
           "button",
@@ -28270,23 +28616,20 @@ function ManifestTreeItem({
             type: "button",
             onClick: (e) => onSelectManifest(node2.path, e),
             className: "flex items-center gap-1.5 flex-1 min-w-0 text-left hover:text-white cursor-pointer",
-            title: node2.path,
+            title: `${node2.path} (可拖拽至目标目录)`,
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-3.5 w-3.5 text-indigo-400/80 shrink-0" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: node2.name })
             ]
           }
         ),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "opacity-0 group-hover:opacity-100 transition-opacity ml-1 shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          ConfirmIconButton,
           {
-            type: "button",
-            onClick: (e) => onDeleteManifest(node2.path, e),
-            className: "opacity-0 group-hover:opacity-100 text-slate-500 hover:text-rose-400 transition-opacity p-0.5 rounded shrink-0 cursor-pointer ml-1",
-            title: "删除清单",
-            children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3.5 w-3.5" })
+            onConfirm: (e) => onDeleteManifest(node2.path, e),
+            title: "删除清单 (Shift+点击快速删除)"
           }
-        )
+        ) })
       ]
     }
   );
@@ -28295,30 +28638,76 @@ function ManifestExplorer({
   manifests,
   activeManifestName,
   onSelectManifest,
-  onDeleteManifest
+  onDeleteManifest,
+  onCreateInFolder,
+  onCreateSubFolder,
+  onDeleteFolder,
+  onMoveItem
 }) {
   const explorerExpanded = useIdeStore((state) => state.explorerExpanded);
   const toggleExplorerExpanded = useIdeStore((state) => state.toggleExplorerExpanded);
+  const [isRootDragOver, setIsRootDragOver] = reactExports.useState(false);
   const tree = reactExports.useMemo(() => buildTree(manifests), [manifests]);
+  const handleRootDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (!isRootDragOver) setIsRootDragOver(true);
+  };
+  const handleRootDragLeave = () => {
+    setIsRootDragOver(false);
+  };
+  const handleRootDrop = (e) => {
+    e.preventDefault();
+    setIsRootDragOver(false);
+    try {
+      const raw = e.dataTransfer.getData("application/aca-manifest-item");
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      onMoveItem == null ? void 0 : onMoveItem(data.path, "", data.isFolder);
+    } catch {
+    }
+  };
   if (manifests.length === 0) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "py-6 text-center text-xs font-mono text-slate-500", children: "暂无清单蓝图" });
-  }
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-0.5", children: tree.map((node2) => {
-    const isExpanded = explorerExpanded[node2.path] === true;
     return /* @__PURE__ */ jsxRuntimeExports.jsx(
-      ManifestTreeItem,
+      "div",
       {
-        node: node2,
-        depth: 0,
-        activeManifestName,
-        isExpanded,
-        onToggleFolder: toggleExplorerExpanded,
-        onSelectManifest,
-        onDeleteManifest
-      },
-      node2.path
+        onDragOver: handleRootDragOver,
+        onDragLeave: handleRootDragLeave,
+        onDrop: handleRootDrop,
+        className: `py-8 text-center text-xs font-mono rounded border border-dashed transition-colors ${isRootDragOver ? "border-indigo-500 bg-indigo-950/30 text-indigo-300" : "border-slate-800 text-slate-500"}`,
+        children: "暂无清单蓝图 (可拖拽文件至此)"
+      }
     );
-  }) });
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "div",
+    {
+      onDragOver: handleRootDragOver,
+      onDragLeave: handleRootDragLeave,
+      onDrop: handleRootDrop,
+      className: `space-y-0.5 min-h-[140px] rounded p-1 transition-colors ${isRootDragOver ? "bg-indigo-950/20 ring-1 ring-indigo-500/40" : ""}`,
+      children: tree.map((node2) => {
+        const isExpanded = explorerExpanded[node2.path] === true;
+        return /* @__PURE__ */ jsxRuntimeExports.jsx(
+          ManifestTreeItem,
+          {
+            node: node2,
+            depth: 0,
+            activeManifestName,
+            isExpanded,
+            onToggleFolder: toggleExplorerExpanded,
+            onSelectManifest,
+            onDeleteManifest,
+            onCreateInFolder,
+            onCreateSubFolder,
+            onDeleteFolder,
+            onMoveItem
+          },
+          node2.path
+        );
+      })
+    }
+  );
 }
 function PackageExplorer({
   packages,
@@ -28348,13 +28737,11 @@ function PackageExplorer({
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium text-slate-400 text-[11px]", children: "核心协议" })
         ] }),
         kernel && onDeleteAtom && /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
+          ConfirmIconButton,
           {
-            type: "button",
-            onClick: (e) => onDeleteAtom("kernel", e),
-            className: "p-0.5 text-slate-500 hover:text-rose-400 rounded transition-colors",
-            title: "删除 Kernel 核心协议",
-            children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+            onConfirm: (e) => onDeleteAtom("kernel", e),
+            title: "删除 Kernel 核心协议 (Shift+点击快速删除)",
+            iconClassName: "h-3 w-3"
           }
         )
       ] }),
@@ -28417,16 +28804,14 @@ function PackageExplorer({
                   ]
                 }
               ),
-              onDeletePackage && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "button",
+              onDeletePackage && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "opacity-0 group-hover:opacity-100 transition-opacity ml-1 shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                ConfirmIconButton,
                 {
-                  type: "button",
-                  onClick: (e) => onDeletePackage(pkg.name, e),
-                  className: "opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-rose-400 transition-opacity rounded cursor-pointer shrink-0 ml-1",
-                  title: `删除组件包 ${pkg.name}`,
-                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3.5 w-3.5" })
+                  onConfirm: (e) => onDeletePackage(pkg.name, e),
+                  title: `删除组件包 ${pkg.name} (Shift+点击快速删除)`,
+                  iconClassName: "h-3.5 w-3.5"
                 }
-              )
+              ) })
             ] }),
             isExp && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-3 pb-2.5 pt-1 space-y-2 border-t border-slate-800/40 bg-slate-950/40", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
@@ -28464,16 +28849,14 @@ function PackageExplorer({
                           ]
                         }
                       ),
-                      onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "button",
+                      onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "opacity-0 group-hover:opacity-100 transition-opacity shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        ConfirmIconButton,
                         {
-                          type: "button",
-                          onClick: (e) => onDeleteLookup(k2, e),
-                          className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
-                          title: "删除此公开接口",
-                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+                          onConfirm: (e) => onDeleteLookup(k2, e),
+                          title: "删除此公开接口 (Shift+点击快速删除)",
+                          iconClassName: "h-3 w-3"
                         }
-                      )
+                      ) })
                     ]
                   },
                   k2
@@ -28514,16 +28897,14 @@ function PackageExplorer({
                           ]
                         }
                       ),
-                      onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "button",
+                      onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "opacity-0 group-hover:opacity-100 transition-opacity shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        ConfirmIconButton,
                         {
-                          type: "button",
-                          onClick: (e) => onDeleteLookup(k2, e),
-                          className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
-                          title: "删除此内部查找",
-                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+                          onConfirm: (e) => onDeleteLookup(k2, e),
+                          title: "删除此内部查找 (Shift+点击快速删除)",
+                          iconClassName: "h-3 w-3"
                         }
-                      )
+                      ) })
                     ]
                   },
                   k2
@@ -28567,16 +28948,14 @@ function PackageExplorer({
                           ]
                         }
                       ),
-                      onDeleteAtom && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "button",
+                      onDeleteAtom && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "opacity-0 group-hover:opacity-100 transition-opacity shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        ConfirmIconButton,
                         {
-                          type: "button",
-                          onClick: (e) => onDeleteAtom(atom.id, e),
-                          className: "opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity",
-                          title: "删除此原子组件",
-                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+                          onConfirm: (e) => onDeleteAtom(atom.id, e),
+                          title: "删除此原子组件 (Shift+点击快速删除)",
+                          iconClassName: "h-3 w-3"
                         }
-                      )
+                      ) })
                     ]
                   },
                   atom.id
@@ -28590,6 +28969,17 @@ function PackageExplorer({
     })
   ] });
 }
+class SerialQueue {
+  constructor() {
+    __publicField(this, "queue", Promise.resolve());
+  }
+  enqueue(task) {
+    return new Promise((resolve, reject) => {
+      this.queue = this.queue.then(() => task()).then(resolve).catch(reject);
+    });
+  }
+}
+const fileOpQueue = new SerialQueue();
 const EMPTY_MANIFESTS = [];
 const EMPTY_PACKAGES = [];
 function App() {
@@ -28601,6 +28991,8 @@ function App() {
   const [isCreatePkgOpen, setIsCreatePkgOpen] = reactExports.useState(false);
   const [newPkgName, setNewPkgName] = reactExports.useState("");
   const [newPkgWs, setNewPkgWs] = reactExports.useState("");
+  const [isCreateFolderOpen, setIsCreateFolderOpen] = reactExports.useState(false);
+  const [targetParentFolder, setTargetParentFolder] = reactExports.useState("");
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = reactExports.useState(false);
   const [isWsDropdownOpen, setIsWsDropdownOpen] = reactExports.useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = reactExports.useState(false);
@@ -28640,9 +29032,13 @@ function App() {
       useIdeStore.getState().setCurrentWorkspace(activeId);
     });
     fetch("/api/health").then((res) => res.json()).then((data) => setStatus(data.status === "ok" ? "正常" : data.status)).catch(() => setStatus("离线"));
+    let sseTimer = null;
     const eventSource = new EventSource("/api/events/stream");
     eventSource.addEventListener("change", () => {
-      invalidateAll();
+      if (sseTimer) clearTimeout(sseTimer);
+      sseTimer = setTimeout(() => {
+        invalidateAll();
+      }, 350);
     });
     const handleGlobalKeyDown = (e) => {
       const isMod = e.metaKey || e.ctrlKey;
@@ -28679,6 +29075,7 @@ function App() {
     };
     window.addEventListener("keydown", handleGlobalKeyDown);
     return () => {
+      if (sseTimer) clearTimeout(sseTimer);
       eventSource.close();
       window.removeEventListener("keydown", handleGlobalKeyDown);
     };
@@ -28800,18 +29197,91 @@ function App() {
       { newTab: true }
     );
   };
-  const handleCreateNewManifest = () => {
-    const draftId = `draft_${Date.now()}`;
+  const handleCreateNewManifest = (prefixPath = "") => {
+    const draftId = prefixPath ? `${prefixPath}/draft_${Date.now()}` : `draft_${Date.now()}`;
     ideStore.openTab(
       {
         id: `manifest:${draftId}`,
         type: "manifest",
-        title: "新建清单",
+        title: prefixPath ? `${prefixPath}/新建清单` : "新建清单",
         closable: true,
         manifestName: draftId
       },
       { newTab: true }
     );
+  };
+  const handleOpenCreateFolder = (parent = "") => {
+    setTargetParentFolder(parent);
+    setIsCreateFolderOpen(true);
+  };
+  const handleSubmitCreateFolder = async (folderPath) => {
+    try {
+      await createFolderFs({ path: folderPath, scope: "manifests" });
+      toast.success(`目录 "${folderPath}" 创建成功`);
+      invalidateAll();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "创建目录失败");
+    }
+  };
+  const handleDeleteFolder = (folderPath, e) => {
+    e.stopPropagation();
+    const wsId = wsStore.activeWorkspaceId;
+    const queryKey = ["assets", wsId];
+    const previousAssets = queryClient2.getQueryData(queryKey);
+    queryClient2.setQueryData(queryKey, (old) => {
+      if (!old) return old;
+      return {
+        ...old,
+        manifests: old.manifests.filter((m2) => {
+          const name2 = typeof m2 === "string" ? m2 : m2.name;
+          return name2 !== folderPath && !name2.startsWith(`${folderPath}/`);
+        })
+      };
+    });
+    fileOpQueue.enqueue(async () => {
+      try {
+        await deleteFsItem({ path: folderPath, scope: "manifests" });
+        toast.success(`物理目录 "${folderPath}" 已删除`);
+        queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
+      } catch (err) {
+        queryClient2.setQueryData(queryKey, previousAssets);
+        toast.error(err instanceof Error ? err.message : "删除目录失败");
+      }
+    });
+  };
+  const handleMoveManifestItem = (srcPath, destFolder, isFolder) => {
+    const itemName = srcPath.split("/").pop() || srcPath;
+    const cleanDestFolder = destFolder.trim().replace(/^\/+|\/+$/g, "");
+    const newPath = cleanDestFolder ? `${cleanDestFolder}/${itemName}` : itemName;
+    if (srcPath === newPath) return;
+    if (isFolder && (cleanDestFolder === srcPath || cleanDestFolder.startsWith(`${srcPath}/`))) {
+      toast.error("禁止将文件夹移动到其自身或其子目录内部");
+      return;
+    }
+    fileOpQueue.enqueue(async () => {
+      try {
+        await moveFsItem({
+          src: srcPath,
+          dest: newPath,
+          scope: "manifests"
+        });
+        toast.success(`已移动至 ${cleanDestFolder ? `${cleanDestFolder}/` : "根目录"}`);
+        invalidateAll();
+        const oldTabId = `manifest:${srcPath}`;
+        const activeTabs = ideStore.tabs;
+        const targetTab = activeTabs.find((t) => t.id === oldTabId);
+        if (targetTab) {
+          ideStore.replaceTab(oldTabId, {
+            ...targetTab,
+            id: `manifest:${newPath}`,
+            title: itemName,
+            manifestName: newPath
+          });
+        }
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "移动失败");
+      }
+    });
   };
   const handleCreateEmptyTab = () => {
     const newTabId = `empty_${Date.now()}`;
@@ -28827,21 +29297,37 @@ function App() {
   };
   const handleDeleteManifest = async (mName, e) => {
     e.stopPropagation();
-    if (!window.confirm(`确定要在当前工作区删除清单 "${mName}" 吗？`)) return;
-    try {
-      const res = await fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
-        method: "DELETE"
-      });
-      if (res.ok) {
-        invalidateAll();
-        ideStore.closeTab(`manifest:${mName}`);
-      } else {
-        const data = await res.json();
-        alert(`删除失败: ${data.detail}`);
+    const wsId = wsStore.activeWorkspaceId;
+    const queryKey = ["assets", wsId];
+    const previousAssets = queryClient2.getQueryData(queryKey);
+    queryClient2.setQueryData(queryKey, (old) => {
+      if (!old) return old;
+      return {
+        ...old,
+        manifests: old.manifests.filter(
+          (m2) => typeof m2 === "string" ? m2 !== mName : m2.name !== mName
+        )
+      };
+    });
+    ideStore.closeTab(`manifest:${mName}`);
+    fileOpQueue.enqueue(async () => {
+      try {
+        const res = await fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
+          method: "DELETE"
+        });
+        if (res.ok) {
+          toast.success(`清单 "${mName}" 已删除`);
+          queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
+        } else {
+          const data = await res.json();
+          queryClient2.setQueryData(queryKey, previousAssets);
+          toast.error(`删除清单失败: ${data.detail || res.statusText}`);
+        }
+      } catch (_err) {
+        queryClient2.setQueryData(queryKey, previousAssets);
+        toast.error("删除清单网络请求异常");
       }
-    } catch (_err) {
-      alert("删除清单网络请求异常");
-    }
+    });
   };
   const handleTabSaved = reactExports.useCallback(() => {
     invalidateAll();
@@ -28872,69 +29358,133 @@ function App() {
       })
     }).then(async (res) => {
       if (res.ok) {
+        toast.success(`组件包 "${newPkgName.trim()}" 创建成功`);
         invalidateAll();
       } else {
         const data = await res.json();
-        alert(`创建组件包失败: ${data.detail}`);
+        toast.error(`创建组件包失败: ${data.detail || res.statusText}`);
       }
-    }).catch(() => alert("创建组件包网络异常"));
+    }).catch(() => toast.error("创建组件包网络异常"));
   }, [newPkgName, newPkgWs, invalidateAll]);
   const handleDeletePackage = reactExports.useCallback(
     (pkgName, e) => {
       e.stopPropagation();
-      if (!window.confirm(`确定要删除组件包 "${pkgName}" 吗？`)) return;
-      fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
-        method: "DELETE"
-      }).then(async (res) => {
-        if (res.ok) {
-          invalidateAll();
-        } else {
-          const data = await res.json();
-          alert(`删除组件包失败: ${data.detail}`);
+      const wsId = wsStore.activeWorkspaceId;
+      const queryKey = ["assets", wsId];
+      const previousAssets = queryClient2.getQueryData(queryKey);
+      queryClient2.setQueryData(queryKey, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          packages: old.packages.filter((pkg) => pkg.name !== pkgName)
+        };
+      });
+      fileOpQueue.enqueue(async () => {
+        try {
+          const res = await fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
+            method: "DELETE"
+          });
+          if (res.ok) {
+            toast.success(`组件包 "${pkgName}" 已删除`);
+            queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
+          } else {
+            const data = await res.json();
+            queryClient2.setQueryData(queryKey, previousAssets);
+            toast.error(`删除组件包失败: ${data.detail || res.statusText}`);
+          }
+        } catch {
+          queryClient2.setQueryData(queryKey, previousAssets);
+          toast.error("删除组件包网络异常");
         }
-      }).catch(() => alert("删除组件包网络异常"));
+      });
     },
-    [invalidateAll]
+    [wsStore.activeWorkspaceId, queryClient2]
   );
   const handleDeleteLookup = reactExports.useCallback(
     (lookupKey, e) => {
       e.stopPropagation();
-      if (!window.confirm(`确定要删除查找接口 "${lookupKey}" 吗？`)) return;
-      fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
-        method: "DELETE"
-      }).then(async (res) => {
-        if (res.ok) {
-          ideStore.closeTab(`lookup:${lookupKey}`);
-          invalidateAll();
-        } else {
-          const data = await res.json();
-          alert(`删除接口失败: ${data.detail}`);
+      const wsId = wsStore.activeWorkspaceId;
+      const queryKey = ["assets", wsId];
+      const previousAssets = queryClient2.getQueryData(queryKey);
+      queryClient2.setQueryData(queryKey, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          packages: old.packages.map((pkg) => {
+            const exports = { ...pkg.exports };
+            const internal = { ...pkg.internal_lookups };
+            delete exports[lookupKey];
+            delete internal[lookupKey];
+            return { ...pkg, exports, internal_lookups: internal };
+          })
+        };
+      });
+      ideStore.closeTab(`lookup:${lookupKey}`);
+      fileOpQueue.enqueue(async () => {
+        try {
+          const res = await fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
+            method: "DELETE"
+          });
+          if (res.ok) {
+            toast.success(`接口 "${lookupKey}" 已删除`);
+            queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
+          } else {
+            const data = await res.json();
+            queryClient2.setQueryData(queryKey, previousAssets);
+            toast.error(`删除接口失败: ${data.detail || res.statusText}`);
+          }
+        } catch {
+          queryClient2.setQueryData(queryKey, previousAssets);
+          toast.error("删除接口网络异常");
         }
-      }).catch(() => alert("删除接口网络异常"));
+      });
     },
-    [ideStore, invalidateAll]
+    [ideStore, wsStore.activeWorkspaceId, queryClient2]
   );
   const handleDeleteAtom = reactExports.useCallback(
     (atomId, e) => {
       e.stopPropagation();
-      if (!window.confirm(`确定要物理删除原子文件 "${atomId}" 吗？`)) return;
-      fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
-        method: "DELETE"
-      }).then(async (res) => {
-        if (res.ok) {
-          ideStore.closeTab(`atom:${atomId}`);
-          ideStore.clearSnapshot(`atom:${atomId}`);
-          if (atomId === "kernel") {
-            ideStore.clearSnapshot("atom:draft:kernel");
-          }
-          invalidateAll();
-        } else {
-          const data = await res.json();
-          alert(`删除原子失败: ${data.detail}`);
+      const wsId = wsStore.activeWorkspaceId;
+      const queryKey = ["assets", wsId];
+      const previousAssets = queryClient2.getQueryData(queryKey);
+      queryClient2.setQueryData(queryKey, (old) => {
+        if (!old) return old;
+        if (atomId === "kernel") {
+          return { ...old, kernel: null };
         }
-      }).catch(() => alert("删除原子网络异常"));
+        return {
+          ...old,
+          packages: old.packages.map((pkg) => ({
+            ...pkg,
+            atoms: pkg.atoms.filter((a) => a.id !== atomId)
+          }))
+        };
+      });
+      ideStore.closeTab(`atom:${atomId}`);
+      ideStore.clearSnapshot(`atom:${atomId}`);
+      if (atomId === "kernel") {
+        ideStore.clearSnapshot("atom:draft:kernel");
+      }
+      fileOpQueue.enqueue(async () => {
+        try {
+          const res = await fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
+            method: "DELETE"
+          });
+          if (res.ok) {
+            toast.success(`原子 "${atomId}" 已物理删除`);
+            queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
+          } else {
+            const data = await res.json();
+            queryClient2.setQueryData(queryKey, previousAssets);
+            toast.error(`删除原子失败: ${data.detail || res.statusText}`);
+          }
+        } catch {
+          queryClient2.setQueryData(queryKey, previousAssets);
+          toast.error("删除原子网络异常");
+        }
+      });
     },
-    [ideStore, invalidateAll]
+    [ideStore, wsStore.activeWorkspaceId, queryClient2]
   );
   const activeTab = ideStore.tabs.find((t) => t.id === ideStore.activeTabId);
   const canGoBack = ideStore.historyIndex > 0;
@@ -29028,19 +29578,36 @@ function App() {
                       }
                     )
                   ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2", children: explorerTab === "manifests" ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                    Button,
-                    {
-                      variant: "outline",
-                      size: "sm",
-                      onClick: handleCreateNewManifest,
-                      className: "w-full flex items-center justify-center gap-1.5 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer",
-                      children: [
-                        /* @__PURE__ */ jsxRuntimeExports.jsx(FilePlus2, { className: "h-3.5 w-3.5 text-indigo-400" }),
-                        " 新建清单蓝图"
-                      ]
-                    }
-                  ) : /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2", children: explorerTab === "manifests" ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-1.5", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      Button,
+                      {
+                        variant: "outline",
+                        size: "sm",
+                        onClick: () => handleCreateNewManifest(),
+                        className: "flex-1 flex items-center justify-center gap-1 text-xs text-indigo-300 border-indigo-800/60 bg-indigo-950/20 hover:bg-indigo-950/50 h-7 cursor-pointer",
+                        title: "新建清单蓝图",
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(FilePlus2, { className: "h-3.5 w-3.5 text-indigo-400" }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "新建清单" })
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      Button,
+                      {
+                        variant: "outline",
+                        size: "sm",
+                        onClick: () => handleOpenCreateFolder(),
+                        className: "flex-1 flex items-center justify-center gap-1 text-xs text-slate-300 border-slate-800 bg-slate-900/60 hover:bg-slate-800 h-7 cursor-pointer",
+                        title: "在清单根目录新建物理文件夹",
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(FolderPlus, { className: "h-3.5 w-3.5 text-indigo-400" }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "新建目录" })
+                        ]
+                      }
+                    )
+                  ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(
                     Button,
                     {
                       variant: "outline",
@@ -29060,7 +29627,11 @@ function App() {
                     manifests,
                     activeManifestName: activeTab == null ? void 0 : activeTab.manifestName,
                     onSelectManifest: (m2, e) => handleOpenManifestTab(m2, e),
-                    onDeleteManifest: (m2, e) => handleDeleteManifest(m2, e)
+                    onDeleteManifest: (m2, e) => handleDeleteManifest(m2, e),
+                    onCreateInFolder: (folder) => handleCreateNewManifest(folder),
+                    onCreateSubFolder: (parent) => handleOpenCreateFolder(parent),
+                    onDeleteFolder: (folder, e) => handleDeleteFolder(folder, e),
+                    onMoveItem: handleMoveManifestItem
                   }
                 ) : /* @__PURE__ */ jsxRuntimeExports.jsx(
                   PackageExplorer,
@@ -29376,6 +29947,15 @@ function App() {
       }
     ),
     /* @__PURE__ */ jsxRuntimeExports.jsx(
+      CreateFolderModal,
+      {
+        isOpen: isCreateFolderOpen,
+        onClose: () => setIsCreateFolderOpen(false),
+        parentPath: targetParentFolder,
+        onSubmit: handleSubmitCreateFolder
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
       CreateWorkspaceModal,
       {
         isOpen: isCreateWorkspaceOpen,
@@ -29385,7 +29965,8 @@ function App() {
           await handleSelectWorkspace(params.id);
         }
       }
-    )
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(ToastContainer, {})
   ] });
 }
 const queryClient = new QueryClient({

@@ -1,15 +1,7 @@
 import { Badge } from '@/components/ui/badge';
+import { ConfirmIconButton } from '@/components/ui/confirm-button';
 import { useIdeStore } from '@/stores/ide-store';
-import {
-  ChevronDown,
-  ChevronRight,
-  FileCode,
-  Globe,
-  Lock,
-  Package,
-  Plus,
-  Trash2,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, FileCode, Globe, Lock, Package, Plus } from 'lucide-react';
 import type React from 'react';
 
 export interface LookupExportItem {
@@ -80,14 +72,11 @@ export function PackageExplorer({
             <span className="font-medium text-slate-400 text-[11px]">核心协议</span>
           </div>
           {kernel && onDeleteAtom && (
-            <button
-              type="button"
-              onClick={(e) => onDeleteAtom('kernel', e)}
-              className="p-0.5 text-slate-500 hover:text-rose-400 rounded transition-colors"
-              title="删除 Kernel 核心协议"
-            >
-              <Trash2 className="h-3 w-3" />
-            </button>
+            <ConfirmIconButton
+              onConfirm={(e) => onDeleteAtom('kernel', e)}
+              title="删除 Kernel 核心协议 (Shift+点击快速删除)"
+              iconClassName="h-3 w-3"
+            />
           )}
         </div>
 
@@ -148,14 +137,13 @@ export function PackageExplorer({
                   </span>
                 </button>
                 {onDeletePackage && (
-                  <button
-                    type="button"
-                    onClick={(e) => onDeletePackage(pkg.name, e)}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-rose-400 transition-opacity rounded cursor-pointer shrink-0 ml-1"
-                    title={`删除组件包 ${pkg.name}`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 shrink-0">
+                    <ConfirmIconButton
+                      onConfirm={(e) => onDeletePackage(pkg.name, e)}
+                      title={`删除组件包 ${pkg.name} (Shift+点击快速删除)`}
+                      iconClassName="h-3.5 w-3.5"
+                    />
+                  </div>
                 )}
               </div>
 
@@ -195,14 +183,13 @@ export function PackageExplorer({
                               </Badge>
                             </button>
                             {onDeleteLookup && (
-                              <button
-                                type="button"
-                                onClick={(e) => onDeleteLookup(k, e)}
-                                className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity"
-                                title="删除此公开接口"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                <ConfirmIconButton
+                                  onConfirm={(e) => onDeleteLookup(k, e)}
+                                  title="删除此公开接口 (Shift+点击快速删除)"
+                                  iconClassName="h-3 w-3"
+                                />
+                              </div>
                             )}
                           </div>
                         ))}
@@ -244,14 +231,13 @@ export function PackageExplorer({
                               <span className="text-[9px] text-slate-600">{def.pillar}</span>
                             </button>
                             {onDeleteLookup && (
-                              <button
-                                type="button"
-                                onClick={(e) => onDeleteLookup(k, e)}
-                                className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity"
-                                title="删除此内部查找"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                <ConfirmIconButton
+                                  onConfirm={(e) => onDeleteLookup(k, e)}
+                                  title="删除此内部查找 (Shift+点击快速删除)"
+                                  iconClassName="h-3 w-3"
+                                />
+                              </div>
                             )}
                           </div>
                         ))}
@@ -294,14 +280,13 @@ export function PackageExplorer({
                               <span className="truncate">{atom.id}</span>
                             </button>
                             {onDeleteAtom && (
-                              <button
-                                type="button"
-                                onClick={(e) => onDeleteAtom(atom.id, e)}
-                                className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-rose-400 rounded cursor-pointer transition-opacity"
-                                title="删除此原子组件"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                <ConfirmIconButton
+                                  onConfirm={(e) => onDeleteAtom(atom.id, e)}
+                                  title="删除此原子组件 (Shift+点击快速删除)"
+                                  iconClassName="h-3 w-3"
+                                />
+                              </div>
                             )}
                           </div>
                         ))}
