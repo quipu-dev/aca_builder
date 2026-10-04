@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -55,7 +54,30 @@ def get_workspaces(
         config_data = load_config()
 
     base_dir = CONFIG_PATH.parent
-    raw_workspaces = config_data.get("workspaces", {})
+
+    # 统一预处理：若输入为平铺单工作区格式，自动规范为 workspaces 字典
+    raw_workspaces = config_data.get("workspaces")
+    if not raw_workspaces and (
+        "libraries" in config_data
+        or "library_paths" in config_data
+        or "manifests" in config_data
+        or "manifest_paths" in config_data
+    ):
+        raw_workspaces = {
+            "default": {
+                "name": "Default Workspace",
+                "libraries": config_data.get("libraries")
+                or config_data.get("library_paths")
+                or [],
+                "manifests": config_data.get("manifests")
+                or config_data.get("manifest_paths")
+                or [],
+                "post_process_hook": config_data.get("post_process_hook"),
+            }
+        }
+    elif not raw_workspaces:
+        raw_workspaces = {}
+
     result: dict[str, WorkspaceConfig] = {}
 
     for ws_id, ws_data in raw_workspaces.items():
@@ -101,33 +123,6 @@ def get_workspaces(
             id=ws_id,
             name=display_name,
             root=root_path,
-            library_paths=lib_paths,
-            manifest_paths=man_paths,
-            post_process_hook=hook,
-        )
-
-    # 兼容处理：如果没有配置 workspaces 块，但顶层直接配置了 library_paths / manifest_paths
-    if not result and (
-        "library_paths" in config_data
-        or "libraries" in config_data
-        or "manifest_paths" in config_data
-        or "manifests" in config_data
-    ):
-        raw_libs = (
-            config_data.get("libraries") or config_data.get("library_paths") or []
-        )
-        lib_paths = [_expand_path(p, base_dir) for p in raw_libs]
-
-        raw_mans = (
-            config_data.get("manifests") or config_data.get("manifest_paths") or []
-        )
-        man_paths = [_expand_path(p, base_dir) for p in raw_mans]
-
-        hook = config_data.get("post_process_hook")
-        result["default"] = WorkspaceConfig(
-            id="default",
-            name="Default Workspace",
-            root=None,
             library_paths=lib_paths,
             manifest_paths=man_paths,
             post_process_hook=hook,
@@ -197,23 +192,10 @@ def get_cache_db_path(
     config_data: dict[str, Any] | None = None,
     workspace_id: str | None = None,
 ) -> Path:
-    """Returns the SQLite cache database path for a workspace (defaulting to active or env)."""
-    env_path = os.getenv("ACA_CACHE_DB_PATH")
-    if env_path:
-        return Path(env_path).expanduser().resolve()
-
-    if not workspace_id:
-        try:
-            ws_id, _ = resolve_workspace(config_data=config_data)
-            workspace_id = ws_id
-        except Exception:
-            workspace_id = "default"
-
-    cache_dir = Path.home() / ".cache" / "aca" / "workspaces"
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    return cache_dir / f"{workspace_id}.db"
+    """[已废弃] 仅保留向后兼容接口。"""
+    return Path("/dev/null")
 
 
 def get_workspace_cache_db_path(workspace_id: str) -> Path:
-    """Alias for get_cache_db_path with an explicit workspace_id."""
-    return get_cache_db_path(workspace_id=workspace_id)
+    """[已废弃] 仅保留向后兼容接口。"""
+    return Path("/dev/null")

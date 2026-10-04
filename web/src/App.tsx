@@ -6,6 +6,7 @@ import { CreatePackageModal } from '@/components/modals/CreatePackageModal';
 import { CreateWorkspaceModal } from '@/components/modals/CreateWorkspaceModal';
 import { Button } from '@/components/ui/button';
 import { ToastContainer, toast } from '@/components/ui/toast';
+import type { LintIssue } from '@/features/diagnostics/DiagnosticsDrawer';
 import { ManifestExplorer } from '@/features/explorer/ManifestExplorer';
 import {
   type KernelInfo,
@@ -14,7 +15,6 @@ import {
 } from '@/features/explorer/PackageExplorer';
 import { type IdeTab, useIdeStore } from '@/stores/ide-store';
 import { useWorkspaceStore } from '@/stores/workspace-store';
-import { fileOpQueue } from '@/utils/queue';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { FolderPlus } from 'lucide-react';
 import {
@@ -41,12 +41,6 @@ import {
 import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
-
-export interface LintIssue {
-  level: string;
-  code: string;
-  message: string;
-}
 
 const EMPTY_MANIFESTS: Array<
   string | { name: string; workspace?: string; workspace_path?: string }
@@ -274,57 +268,17 @@ export function App() {
   };
 
   const handleProblemClick = (issue: LintIssue) => {
-    const msg = issue.message;
-
-    // 1. 若为 Lookup 相关诊断，优先跳转至发生错误的源头 Lookup 接口
-    if (issue.code.startsWith('linter.lookup.')) {
-      const lookupMatch = msg.match(/Lookup '([^']+)'/);
-      if (lookupMatch) {
-        handleOpenLookupTab(lookupMatch[1]);
-        return;
-      }
-      // 特殊情况：跨包私有访问警告（原子持有方）
-      const atomLeadMatch = msg.match(/^([a-zA-Z0-9_-]+):/);
-      if (atomLeadMatch) {
-        handleOpenAtomTab(atomLeadMatch[1]);
-        return;
-      }
-    }
-
-    // 2. 若为 Manifest 清单相关诊断，优先跳转至清单蓝图
-    if (issue.code.startsWith('linter.manifest.')) {
-      const manifestMatch = msg.match(/Manifest '([^']+)'/);
-      if (manifestMatch) {
-        handleOpenManifestTab(manifestMatch[1]);
-        return;
-      }
-    }
-
-    // 3. 若为 Atom 相关诊断，优先跳转至对应原子
-    if (issue.code.startsWith('linter.atom.')) {
-      const atomMatch = msg.match(/^([a-zA-Z0-9_-]+)/);
-      if (atomMatch) {
-        handleOpenAtomTab(atomMatch[1]);
-        return;
-      }
-    }
-
-    // 4. 容错回退：显式实体语法优先于模糊 ID 匹配
-    const lookupFallback = msg.match(/Lookup '([^']+)'/);
-    if (lookupFallback) {
-      handleOpenLookupTab(lookupFallback[1]);
-      return;
-    }
-
-    const manifestFallback = msg.match(/Manifest '([^']+)'/);
-    if (manifestFallback) {
-      handleOpenManifestTab(manifestFallback[1]);
-      return;
-    }
-
-    const atomFallback = msg.match(/\b(d[1-3]-[a-zA-Z0-9_-]+)\b/);
-    if (atomFallback) {
-      handleOpenAtomTab(atomFallback[1]);
+    if (!issue.target) return;
+    switch (issue.target.type) {
+      case 'atom':
+        handleOpenAtomTab(issue.target.id);
+        break;
+      case 'lookup':
+        handleOpenLookupTab(issue.target.id);
+        break;
+      case 'manifest':
+        handleOpenManifestTab(issue.target.id);
+        break;
     }
   };
 
@@ -405,16 +359,15 @@ export function App() {
       };
     });
 
-    fileOpQueue.enqueue(async () => {
-      try {
-        await deleteFsItem({ path: folderPath, scope: 'manifests' });
+    deleteFsItem({ path: folderPath, scope: 'manifests' })
+      .then(() => {
         toast.success(`物理目录 "${folderPath}" 已删除`);
         queryClient.invalidateQueries({ queryKey: ['lint', wsId] });
-      } catch (err: unknown) {
+      })
+      .catch((err: unknown) => {
         queryClient.setQueryData(queryKey, previousAssets);
         toast.error(err instanceof Error ? err.message : '删除目录失败');
-      }
-    });
+      });
   };
 
   const handleMoveManifestItem = (srcPath: string, destFolder: string, isFolder: boolean) => {
@@ -431,13 +384,12 @@ export function App() {
       return;
     }
 
-    fileOpQueue.enqueue(async () => {
-      try {
-        await moveFsItem({
-          src: srcPath,
-          dest: newPath,
-          scope: 'manifests',
-        });
+    moveFsItem({
+      src: srcPath,
+      dest: newPath,
+      scope: 'manifests',
+    })
+      .then(() => {
         toast.success(`已移动至 ${cleanDestFolder ? `${cleanDestFolder}/` : '根目录'}`);
         invalidateAll();
 
@@ -453,10 +405,10 @@ export function App() {
             manifestName: newPath,
           });
         }
-      } catch (err: unknown) {
+      })
+      .catch((err: unknown) => {
         toast.error(err instanceof Error ? err.message : '移动失败');
-      }
-    });
+      });
   };
 
   const handleCreateEmptyTab = () => {
@@ -490,26 +442,24 @@ export function App() {
     });
     ideStore.closeTab(`manifest:${mName}`);
 
-    // 2. 排入串行队列执行网络请求
-    fileOpQueue.enqueue(async () => {
-      try {
-        const res = await fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
-          method: 'DELETE',
-        });
+    // 2. 直接发起异步删除网络请求
+    fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
+      method: 'DELETE',
+    })
+      .then(async (res) => {
         if (res.ok) {
           toast.success(`清单 "${mName}" 已删除`);
           queryClient.invalidateQueries({ queryKey: ['lint', wsId] });
         } else {
           const data = await res.json();
-          // 回滚
           queryClient.setQueryData(queryKey, previousAssets);
           toast.error(`删除清单失败: ${data.detail || res.statusText}`);
         }
-      } catch (_err) {
+      })
+      .catch(() => {
         queryClient.setQueryData(queryKey, previousAssets);
         toast.error('删除清单网络请求异常');
-      }
-    });
+      });
   };
 
   const handleTabSaved = useCallback(() => {
@@ -571,11 +521,10 @@ export function App() {
         };
       });
 
-      fileOpQueue.enqueue(async () => {
-        try {
-          const res = await fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
-            method: 'DELETE',
-          });
+      fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
+        method: 'DELETE',
+      })
+        .then(async (res) => {
           if (res.ok) {
             toast.success(`组件包 "${pkgName}" 已删除`);
             queryClient.invalidateQueries({ queryKey: ['lint', wsId] });
@@ -584,11 +533,11 @@ export function App() {
             queryClient.setQueryData(queryKey, previousAssets);
             toast.error(`删除组件包失败: ${data.detail || res.statusText}`);
           }
-        } catch {
+        })
+        .catch(() => {
           queryClient.setQueryData(queryKey, previousAssets);
           toast.error('删除组件包网络异常');
-        }
-      });
+        });
     },
     [wsStore.activeWorkspaceId, queryClient],
   );
@@ -616,11 +565,10 @@ export function App() {
       });
       ideStore.closeTab(`lookup:${lookupKey}`);
 
-      fileOpQueue.enqueue(async () => {
-        try {
-          const res = await fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
-            method: 'DELETE',
-          });
+      fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
+        method: 'DELETE',
+      })
+        .then(async (res) => {
           if (res.ok) {
             toast.success(`接口 "${lookupKey}" 已删除`);
             queryClient.invalidateQueries({ queryKey: ['lint', wsId] });
@@ -629,11 +577,11 @@ export function App() {
             queryClient.setQueryData(queryKey, previousAssets);
             toast.error(`删除接口失败: ${data.detail || res.statusText}`);
           }
-        } catch {
+        })
+        .catch(() => {
           queryClient.setQueryData(queryKey, previousAssets);
           toast.error('删除接口网络异常');
-        }
-      });
+        });
     },
     [ideStore, wsStore.activeWorkspaceId, queryClient],
   );
@@ -666,11 +614,10 @@ export function App() {
         ideStore.clearSnapshot('atom:draft:kernel');
       }
 
-      fileOpQueue.enqueue(async () => {
-        try {
-          const res = await fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
-            method: 'DELETE',
-          });
+      fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
+        method: 'DELETE',
+      })
+        .then(async (res) => {
           if (res.ok) {
             toast.success(`原子 "${atomId}" 已物理删除`);
             queryClient.invalidateQueries({ queryKey: ['lint', wsId] });
@@ -679,11 +626,11 @@ export function App() {
             queryClient.setQueryData(queryKey, previousAssets);
             toast.error(`删除原子失败: ${data.detail || res.statusText}`);
           }
-        } catch {
+        })
+        .catch(() => {
           queryClient.setQueryData(queryKey, previousAssets);
           toast.error('删除原子网络异常');
-        }
-      });
+        });
     },
     [ideStore, wsStore.activeWorkspaceId, queryClient],
   );

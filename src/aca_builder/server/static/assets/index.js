@@ -1,9 +1,6 @@
-var __defProp = Object.defineProperty;
 var __typeError = (msg) => {
   throw TypeError(msg);
 };
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
 var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
@@ -6153,7 +6150,6 @@ const useIdeStore = create$1()(
         currentWorkspace: state.currentWorkspace,
         tabs: state.tabs,
         activeTabId: state.activeTabId,
-        tabSnapshots: state.tabSnapshots,
         sidebarOpen: state.sidebarOpen,
         sidebarWidth: state.sidebarWidth,
         preferences: state.preferences,
@@ -8248,8 +8244,8 @@ var hideOthers = function(originalTarget, parentNode, markerName) {
   targets.push.apply(targets, Array.from(activeParentNode.querySelectorAll("[aria-live], script")));
   return applyAttributeToOthers(targets, activeParentNode, markerName, "aria-hidden");
 };
-var __defProp2 = Object.defineProperty;
-var __name = (target, value) => __defProp2(target, "name", { value, configurable: true });
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 var DIALOG_NAME = "Dialog";
 var [createDialogContext, createDialogScope] = /* @__PURE__ */ createContextScope(DIALOG_NAME);
 var [DialogProvider, useDialogContext] = createDialogContext(DIALOG_NAME);
@@ -9975,26 +9971,6 @@ function AtomEditorTab({
       setErrorMsg(err.message || "加载异常");
     }).finally(() => setLoading(false));
   }, [atomId, isDraft, setTabDirty, tabId, getSnapshot]);
-  reactExports.useEffect(() => {
-    const handleExternalUpdate = (e) => {
-      var _a3;
-      const customEvent = e;
-      if (((_a3 = customEvent.detail) == null ? void 0 : _a3.atomId) === atomId && !isModified) {
-        if (customEvent.detail.content !== void 0) {
-          setContent(customEvent.detail.content);
-        } else {
-          fetchAtomDetail(atomId).then((data) => {
-            if (data.content !== void 0) {
-              setContent(data.content);
-            }
-          }).catch(() => {
-          });
-        }
-      }
-    };
-    window.addEventListener("aca:atom-updated", handleExternalUpdate);
-    return () => window.removeEventListener("aca:atom-updated", handleExternalUpdate);
-  }, [atomId, isModified]);
   reactExports.useEffect(() => {
     if (!isReady) return;
     saveSnapshot(tabId, {
@@ -23287,12 +23263,6 @@ function AtomChunkCard({
       if (res.ok) {
         setSaveSuccess(true);
         setIsEditing(false);
-        useIdeStore.getState().clearSnapshot(`atom:${chunk.id}`);
-        window.dispatchEvent(
-          new CustomEvent("aca:atom-updated", {
-            detail: { atomId: chunk.id, content: editContent }
-          })
-        );
         onUpdated == null ? void 0 : onUpdated();
         setTimeout(() => setSaveSuccess(false), 2e3);
       } else {
@@ -29040,17 +29010,6 @@ function PackageExplorer({
     })
   ] });
 }
-class SerialQueue {
-  constructor() {
-    __publicField(this, "queue", Promise.resolve());
-  }
-  enqueue(task) {
-    return new Promise((resolve, reject) => {
-      this.queue = this.queue.then(() => task()).then(resolve).catch(reject);
-    });
-  }
-}
-const fileOpQueue = new SerialQueue();
 const EMPTY_MANIFESTS = [];
 const EMPTY_PACKAGES = [];
 function App() {
@@ -29222,46 +29181,17 @@ function App() {
     ideStore.closeTab(tab2.id);
   };
   const handleProblemClick = (issue) => {
-    const msg = issue.message;
-    if (issue.code.startsWith("linter.lookup.")) {
-      const lookupMatch = msg.match(/Lookup '([^']+)'/);
-      if (lookupMatch) {
-        handleOpenLookupTab(lookupMatch[1]);
-        return;
-      }
-      const atomLeadMatch = msg.match(/^([a-zA-Z0-9_-]+):/);
-      if (atomLeadMatch) {
-        handleOpenAtomTab(atomLeadMatch[1]);
-        return;
-      }
-    }
-    if (issue.code.startsWith("linter.manifest.")) {
-      const manifestMatch = msg.match(/Manifest '([^']+)'/);
-      if (manifestMatch) {
-        handleOpenManifestTab(manifestMatch[1]);
-        return;
-      }
-    }
-    if (issue.code.startsWith("linter.atom.")) {
-      const atomMatch = msg.match(/^([a-zA-Z0-9_-]+)/);
-      if (atomMatch) {
-        handleOpenAtomTab(atomMatch[1]);
-        return;
-      }
-    }
-    const lookupFallback = msg.match(/Lookup '([^']+)'/);
-    if (lookupFallback) {
-      handleOpenLookupTab(lookupFallback[1]);
-      return;
-    }
-    const manifestFallback = msg.match(/Manifest '([^']+)'/);
-    if (manifestFallback) {
-      handleOpenManifestTab(manifestFallback[1]);
-      return;
-    }
-    const atomFallback = msg.match(/\b(d[1-3]-[a-zA-Z0-9_-]+)\b/);
-    if (atomFallback) {
-      handleOpenAtomTab(atomFallback[1]);
+    if (!issue.target) return;
+    switch (issue.target.type) {
+      case "atom":
+        handleOpenAtomTab(issue.target.id);
+        break;
+      case "lookup":
+        handleOpenLookupTab(issue.target.id);
+        break;
+      case "manifest":
+        handleOpenManifestTab(issue.target.id);
+        break;
     }
   };
   const handleCreateNewAtomDraft = () => {
@@ -29334,15 +29264,12 @@ function App() {
         })
       };
     });
-    fileOpQueue.enqueue(async () => {
-      try {
-        await deleteFsItem({ path: folderPath, scope: "manifests" });
-        toast.success(`物理目录 "${folderPath}" 已删除`);
-        queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
-      } catch (err) {
-        queryClient2.setQueryData(queryKey, previousAssets);
-        toast.error(err instanceof Error ? err.message : "删除目录失败");
-      }
+    deleteFsItem({ path: folderPath, scope: "manifests" }).then(() => {
+      toast.success(`物理目录 "${folderPath}" 已删除`);
+      queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
+    }).catch((err) => {
+      queryClient2.setQueryData(queryKey, previousAssets);
+      toast.error(err instanceof Error ? err.message : "删除目录失败");
     });
   };
   const handleMoveManifestItem = (srcPath, destFolder, isFolder) => {
@@ -29354,29 +29281,26 @@ function App() {
       toast.error("禁止将文件夹移动到其自身或其子目录内部");
       return;
     }
-    fileOpQueue.enqueue(async () => {
-      try {
-        await moveFsItem({
-          src: srcPath,
-          dest: newPath,
-          scope: "manifests"
+    moveFsItem({
+      src: srcPath,
+      dest: newPath,
+      scope: "manifests"
+    }).then(() => {
+      toast.success(`已移动至 ${cleanDestFolder ? `${cleanDestFolder}/` : "根目录"}`);
+      invalidateAll();
+      const oldTabId = `manifest:${srcPath}`;
+      const activeTabs = ideStore.tabs;
+      const targetTab = activeTabs.find((t) => t.id === oldTabId);
+      if (targetTab) {
+        ideStore.replaceTab(oldTabId, {
+          ...targetTab,
+          id: `manifest:${newPath}`,
+          title: itemName,
+          manifestName: newPath
         });
-        toast.success(`已移动至 ${cleanDestFolder ? `${cleanDestFolder}/` : "根目录"}`);
-        invalidateAll();
-        const oldTabId = `manifest:${srcPath}`;
-        const activeTabs = ideStore.tabs;
-        const targetTab = activeTabs.find((t) => t.id === oldTabId);
-        if (targetTab) {
-          ideStore.replaceTab(oldTabId, {
-            ...targetTab,
-            id: `manifest:${newPath}`,
-            title: itemName,
-            manifestName: newPath
-          });
-        }
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "移动失败");
       }
+    }).catch((err) => {
+      toast.error(err instanceof Error ? err.message : "移动失败");
     });
   };
   const handleCreateEmptyTab = () => {
@@ -29406,23 +29330,20 @@ function App() {
       };
     });
     ideStore.closeTab(`manifest:${mName}`);
-    fileOpQueue.enqueue(async () => {
-      try {
-        const res = await fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
-          method: "DELETE"
-        });
-        if (res.ok) {
-          toast.success(`清单 "${mName}" 已删除`);
-          queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
-        } else {
-          const data = await res.json();
-          queryClient2.setQueryData(queryKey, previousAssets);
-          toast.error(`删除清单失败: ${data.detail || res.statusText}`);
-        }
-      } catch (_err) {
+    fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
+      method: "DELETE"
+    }).then(async (res) => {
+      if (res.ok) {
+        toast.success(`清单 "${mName}" 已删除`);
+        queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
+      } else {
+        const data = await res.json();
         queryClient2.setQueryData(queryKey, previousAssets);
-        toast.error("删除清单网络请求异常");
+        toast.error(`删除清单失败: ${data.detail || res.statusText}`);
       }
+    }).catch(() => {
+      queryClient2.setQueryData(queryKey, previousAssets);
+      toast.error("删除清单网络请求异常");
     });
   };
   const handleTabSaved = reactExports.useCallback(() => {
@@ -29475,23 +29396,20 @@ function App() {
           packages: old.packages.filter((pkg) => pkg.name !== pkgName)
         };
       });
-      fileOpQueue.enqueue(async () => {
-        try {
-          const res = await fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
-            method: "DELETE"
-          });
-          if (res.ok) {
-            toast.success(`组件包 "${pkgName}" 已删除`);
-            queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
-          } else {
-            const data = await res.json();
-            queryClient2.setQueryData(queryKey, previousAssets);
-            toast.error(`删除组件包失败: ${data.detail || res.statusText}`);
-          }
-        } catch {
+      fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
+        method: "DELETE"
+      }).then(async (res) => {
+        if (res.ok) {
+          toast.success(`组件包 "${pkgName}" 已删除`);
+          queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
+        } else {
+          const data = await res.json();
           queryClient2.setQueryData(queryKey, previousAssets);
-          toast.error("删除组件包网络异常");
+          toast.error(`删除组件包失败: ${data.detail || res.statusText}`);
         }
+      }).catch(() => {
+        queryClient2.setQueryData(queryKey, previousAssets);
+        toast.error("删除组件包网络异常");
       });
     },
     [wsStore.activeWorkspaceId, queryClient2]
@@ -29516,23 +29434,20 @@ function App() {
         };
       });
       ideStore.closeTab(`lookup:${lookupKey}`);
-      fileOpQueue.enqueue(async () => {
-        try {
-          const res = await fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
-            method: "DELETE"
-          });
-          if (res.ok) {
-            toast.success(`接口 "${lookupKey}" 已删除`);
-            queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
-          } else {
-            const data = await res.json();
-            queryClient2.setQueryData(queryKey, previousAssets);
-            toast.error(`删除接口失败: ${data.detail || res.statusText}`);
-          }
-        } catch {
+      fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
+        method: "DELETE"
+      }).then(async (res) => {
+        if (res.ok) {
+          toast.success(`接口 "${lookupKey}" 已删除`);
+          queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
+        } else {
+          const data = await res.json();
           queryClient2.setQueryData(queryKey, previousAssets);
-          toast.error("删除接口网络异常");
+          toast.error(`删除接口失败: ${data.detail || res.statusText}`);
         }
+      }).catch(() => {
+        queryClient2.setQueryData(queryKey, previousAssets);
+        toast.error("删除接口网络异常");
       });
     },
     [ideStore, wsStore.activeWorkspaceId, queryClient2]
@@ -29561,23 +29476,20 @@ function App() {
       if (atomId === "kernel") {
         ideStore.clearSnapshot("atom:draft:kernel");
       }
-      fileOpQueue.enqueue(async () => {
-        try {
-          const res = await fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
-            method: "DELETE"
-          });
-          if (res.ok) {
-            toast.success(`原子 "${atomId}" 已物理删除`);
-            queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
-          } else {
-            const data = await res.json();
-            queryClient2.setQueryData(queryKey, previousAssets);
-            toast.error(`删除原子失败: ${data.detail || res.statusText}`);
-          }
-        } catch {
+      fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
+        method: "DELETE"
+      }).then(async (res) => {
+        if (res.ok) {
+          toast.success(`原子 "${atomId}" 已物理删除`);
+          queryClient2.invalidateQueries({ queryKey: ["lint", wsId] });
+        } else {
+          const data = await res.json();
           queryClient2.setQueryData(queryKey, previousAssets);
-          toast.error("删除原子网络异常");
+          toast.error(`删除原子失败: ${data.detail || res.statusText}`);
         }
+      }).catch(() => {
+        queryClient2.setQueryData(queryKey, previousAssets);
+        toast.error("删除原子网络异常");
       });
     },
     [ideStore, wsStore.activeWorkspaceId, queryClient2]

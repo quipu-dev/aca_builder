@@ -156,28 +156,6 @@ export function AtomEditorTab({
   }, [atomId, isDraft, setTabDirty, tabId, getSnapshot]);
 
   useEffect(() => {
-    const handleExternalUpdate = (e: Event) => {
-      const customEvent = e as CustomEvent<{ atomId: string; content?: string }>;
-      if (customEvent.detail?.atomId === atomId && !isModified) {
-        if (customEvent.detail.content !== undefined) {
-          setContent(customEvent.detail.content);
-        } else {
-          fetchAtomDetail(atomId)
-            .then((data) => {
-              if (data.content !== undefined) {
-                setContent(data.content);
-              }
-            })
-            .catch(() => {});
-        }
-      }
-    };
-
-    window.addEventListener('aca:atom-updated', handleExternalUpdate);
-    return () => window.removeEventListener('aca:atom-updated', handleExternalUpdate);
-  }, [atomId, isModified]);
-
-  useEffect(() => {
     if (!isReady) return;
     saveSnapshot(tabId, {
       currentId,

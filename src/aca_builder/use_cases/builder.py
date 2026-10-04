@@ -6,14 +6,10 @@ from typing import Any
 from aca_builder.domain.events import BuildError
 from aca_builder.domain.ports import LibraryRepository, ManifestRepository
 from aca_builder.domain.services import (
-    evaluate_lookup,
+    compile_prompt_closure,
     generate_prompt_profile,
-    resolve_dependencies,
-    resolve_lookup_by_key,
-    select_atoms_by_query,
-    serialize_prompt,
 )
-from aca_builder.messages import MESSAGES  # 新增导入
+from aca_builder.messages import MESSAGES
 
 
 class BuilderService:
@@ -21,14 +17,13 @@ class BuilderService:
         self.lib_repo = lib_repo
         self.man_repo = man_repo
 
-    def build_prompt(
+    def _load_manifest_and_resources(
         self,
         manifest_identifier: str,
         library_paths: list[Path],
         manifest_paths: list[Path],
         is_file_path: bool = False,
-    ) -> str:
-        # 1. Resolve Manifest Path
+    ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
         manifest_path = None
         if is_file_path:
             manifest_path = Path(manifest_identifier)
@@ -49,59 +44,29 @@ class BuilderService:
                     )
                 )
 
-        # 2. Load Resources
         manifest = self.man_repo.load_manifest(manifest_path)
         library = self.lib_repo.load_library(library_paths)
         interfaces = self.lib_repo.load_interfaces(library_paths)
+        return manifest, library, interfaces
 
-        if not library:
-            raise BuildError(MESSAGES["builder.library.empty"])
-
-        # 3. Apply Overrides (Inline logic from old core)
-        if "overrides" in manifest:
-            for lkey, override in manifest["overrides"].items():
-                if lkey not in interfaces["lookups"]:
-                    raise BuildError(
-                        MESSAGES["builder.override.error"].format(key=lkey)
-                    )
-                interfaces["lookups"][lkey]["selectors"] = override["selectors"]
-
-        # 4. Imports & Resolution
-        initial_map = {}
-        imports = manifest.get("imports", [])
-        manifest_pkg = None  # Manifests are user-land / global context usually
-
-        for item in imports:
-            if "lookup" in item:
-                lkey = item["lookup"]
-                l_def = resolve_lookup_by_key(lkey, manifest_pkg, interfaces)
-                if not l_def:
-                    raise BuildError(
-                        MESSAGES["builder.lookup.not_found"].format(key=lkey)
-                    )
-
-                ids = evaluate_lookup(library, l_def, interfaces)
-                for aid in ids:
-                    initial_map.setdefault(aid, set()).add(lkey)
-
-            elif "query" in item:
-                ids = select_atoms_by_query(library, item["query"])
-                for aid in ids:
-                    if aid not in initial_map:
-                        initial_map[aid] = set()
-
-        final_atom_map = resolve_dependencies(initial_map, library, interfaces)
-
-        # 5. Kernel Injection
-        kernel_ids = {k for k, v in library.items() if v["meta"]["type"] == "kernel"}
-        if not kernel_ids:
-            raise BuildError(MESSAGES["builder.kernel.missing"])
-        for k_id in kernel_ids:
-            if k_id not in final_atom_map:
-                final_atom_map[k_id] = set()
-
-        # 6. Serialzie
-        return serialize_prompt(final_atom_map, library)
+    def build_prompt(
+        self,
+        manifest_identifier: str,
+        library_paths: list[Path],
+        manifest_paths: list[Path],
+        is_file_path: bool = False,
+    ) -> str:
+        manifest, library, interfaces = self._load_manifest_and_resources(
+            manifest_identifier, library_paths, manifest_paths, is_file_path
+        )
+        _, prompt = compile_prompt_closure(
+            library=library,
+            interfaces=interfaces,
+            imports=manifest.get("imports", []),
+            overrides=manifest.get("overrides"),
+            include_kernel=True,
+        )
+        return prompt
 
     def build_with_profile(
         self,
@@ -110,70 +75,15 @@ class BuilderService:
         manifest_paths: list[Path],
         is_file_path: bool = False,
     ) -> tuple[str, dict[str, Any]]:
-        # 1. Resolve Manifest Path
-        if is_file_path:
-            manifest_path = Path(manifest_identifier)
-            if not manifest_path.exists():
-                raise BuildError(
-                    MESSAGES["builder.manifest.file_not_found"].format(
-                        path=manifest_identifier
-                    )
-                )
-        else:
-            manifest_path = self.man_repo.find_manifest(
-                manifest_identifier, manifest_paths
-            )
-            if not manifest_path:
-                raise BuildError(
-                    MESSAGES["builder.manifest.not_found"].format(
-                        identifier=manifest_identifier
-                    )
-                )
-
-        manifest = self.man_repo.load_manifest(manifest_path)
-        library = self.lib_repo.load_library(library_paths)
-        interfaces = self.lib_repo.load_interfaces(library_paths)
-
-        if not library:
-            raise BuildError(MESSAGES["builder.library.empty"])
-
-        if "overrides" in manifest:
-            for lkey, override in manifest["overrides"].items():
-                if lkey not in interfaces["lookups"]:
-                    raise BuildError(
-                        MESSAGES["builder.override.error"].format(key=lkey)
-                    )
-                interfaces["lookups"][lkey]["selectors"] = override["selectors"]
-
-        initial_map = {}
-        imports = manifest.get("imports", [])
-        for item in imports:
-            if "lookup" in item:
-                lkey = item["lookup"]
-                l_def = resolve_lookup_by_key(lkey, None, interfaces)
-                if not l_def:
-                    raise BuildError(
-                        MESSAGES["builder.lookup.not_found"].format(key=lkey)
-                    )
-
-                ids = evaluate_lookup(library, l_def, interfaces)
-                for aid in ids:
-                    initial_map.setdefault(aid, set()).add(lkey)
-            elif "query" in item:
-                ids = select_atoms_by_query(library, item["query"])
-                for aid in ids:
-                    if aid not in initial_map:
-                        initial_map[aid] = set()
-
-        final_atom_map = resolve_dependencies(initial_map, library, interfaces)
-
-        kernel_ids = {k for k, v in library.items() if v["meta"]["type"] == "kernel"}
-        if not kernel_ids:
-            raise BuildError(MESSAGES["builder.kernel.missing"])
-        for k_id in kernel_ids:
-            if k_id not in final_atom_map:
-                final_atom_map[k_id] = set()
-
-        prompt = serialize_prompt(final_atom_map, library)
+        manifest, library, interfaces = self._load_manifest_and_resources(
+            manifest_identifier, library_paths, manifest_paths, is_file_path
+        )
+        final_atom_map, prompt = compile_prompt_closure(
+            library=library,
+            interfaces=interfaces,
+            imports=manifest.get("imports", []),
+            overrides=manifest.get("overrides"),
+            include_kernel=True,
+        )
         profile = generate_prompt_profile(final_atom_map, library)
         return prompt, profile

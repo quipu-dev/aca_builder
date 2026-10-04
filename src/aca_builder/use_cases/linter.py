@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from typing import Any
+
 from aca_builder.domain.events import BuildError
 from aca_builder.domain.ports import LibraryRepository, ManifestRepository, MessageBus
 from aca_builder.domain.services import evaluate_lookup, resolve_lookup_by_key
@@ -107,25 +109,32 @@ class LinterService:
                                 target_pkg=target.get("package"),
                             )  # Using msg_id
 
-        # 2. Validate Lookups (D4)
-        for key, l_def in interfaces["lookups"].items():
+        # 2. Validate Lookups (规范收集公开、内部私有与遗留全局定义)
+        all_lookups: list[tuple[str, dict[str, Any]]] = []
+        for k, v in interfaces.get("exports", {}).items():
+            all_lookups.append((k, v))
+        for pkg_name, pkg_lookups in interfaces.get("internals", {}).items():
+            for k, v in pkg_lookups.items():
+                all_lookups.append((f"{pkg_name}::{k}", v))
+        for k, v in interfaces.get("legacy", {}).items():
+            all_lookups.append((k, v))
+
+        for key, l_def in all_lookups:
             pkg = l_def.get("package")
             pillar = l_def.get("pillar")
 
             if pillar not in ["d1", "d2", "d3"]:
                 self.bus.lint_error(
                     "linter.lookup.invalid_pillar", key=key, pillar=pillar
-                )  # Using msg_id
+                )
                 error_count += 1
 
-            lookup_name = key.split("::")[
-                -1
-            ]  # 兼容多段命名空间 (如 pkg::internal::name)，精准提取短名称
+            lookup_name = key.split("::")[-1]
             expected_prefix = f"{pillar}l-"
             if not lookup_name.startswith(expected_prefix):
                 self.bus.lint_error(
                     "linter.lookup.invalid_prefix", key=key, prefix=expected_prefix
-                )  # Using msg_id
+                )
                 error_count += 1
 
             selectors = l_def.get("selectors", [])

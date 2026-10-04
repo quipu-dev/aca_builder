@@ -366,7 +366,6 @@ export const useIdeStore = create<IdeState>()(
         currentWorkspace: state.currentWorkspace,
         tabs: state.tabs,
         activeTabId: state.activeTabId,
-        tabSnapshots: state.tabSnapshots,
         sidebarOpen: state.sidebarOpen,
         sidebarWidth: state.sidebarWidth,
         preferences: state.preferences,

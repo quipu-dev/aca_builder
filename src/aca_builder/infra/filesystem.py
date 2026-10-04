@@ -11,14 +11,8 @@ from aca_builder.domain.ports import LibraryRepository, ManifestRepository
 
 class FSLibraryRepository(LibraryRepository):
     def __init__(self, cache_db: Any | None = None):
-        if cache_db is None:
-            from aca_builder import config
-            from aca_builder.infra.cache_db import SQLiteAtomCache
-
-            db_path = config.get_cache_db_path()
-            self.cache = SQLiteAtomCache(db_path)
-        else:
-            self.cache = cache_db
+        # 兼容旧构造入参，内部不再需要缓存引擎
+        pass
 
     def _parse_atom(
         self, file_path: Path, package_name: str | None = None
@@ -80,27 +74,71 @@ class FSLibraryRepository(LibraryRepository):
         fail_fast: bool = True,
         errors: list[str] | None = None,
     ) -> dict[str, dict[str, Any]]:
-        return self.cache.sync_and_load(
-            library_paths=library_paths,
-            parse_fn=self._parse_atom,
-            find_pkg_fn=self._find_package_config,
-            fail_fast=fail_fast,
-            errors=errors,
-        )
+        """直连文件系统加载原子组件，毫秒级就绪且零外部数据库依赖。"""
+        library: dict[str, dict[str, Any]] = {}
+        pkg_cache: dict[Path, str | None] = {}
+
+        for lib_root in library_paths:
+            if not lib_root.exists():
+                continue
+
+            for file_path in lib_root.glob("**/*.md"):
+                parent_dir = file_path.parent
+                if parent_dir in pkg_cache:
+                    pkg_name = pkg_cache[parent_dir]
+                else:
+                    pkg_info = self._find_package_config(parent_dir, lib_root)
+                    pkg_name = (
+                        pkg_info.get("name")
+                        if pkg_info and "name" in pkg_info
+                        else None
+                    )
+                    pkg_cache[parent_dir] = pkg_name
+
+                try:
+                    atom = self._parse_atom(file_path, pkg_name)
+                    aid = atom["id"]
+                    if aid in library:
+                        from aca_builder.messages import MESSAGES
+
+                        err_msg = MESSAGES["linter.atom.duplicate_id"].format(
+                            atom_id=aid
+                        )
+                        if fail_fast:
+                            raise BuildError(err_msg)
+                        if errors is not None:
+                            errors.append(err_msg)
+                        continue
+                    library[aid] = atom
+                except Exception as e:
+                    if fail_fast:
+                        raise
+                    if errors is not None:
+                        errors.append(str(e))
+                    continue
+
+        return library
 
     def load_interfaces(self, library_paths: list[Path]) -> dict[str, Any]:
-        """Loads d4 files and package exports into hierarchical and unified interface tables."""
+        """
+        加载并构建正规分层的接口符号表：
+        - exports: 全局公开导出表 (pkg::name -> def)
+        - internals: 包局部私有符号表 (pkg -> name -> def)
+        - legacy: 遗留全局无包查找表 (name -> def)
+        - lookups: 兼容视图字典，包含 exports 与全限定私有别名
+        """
         interfaces: dict[str, Any] = {
-            "lookups": {},
             "exports": {},
             "internals": {},
+            "legacy": {},
+            "lookups": {},
         }
 
         for lib_root in library_paths:
             if not lib_root.exists():
                 continue
 
-            # 1. D4 Internal Lookups
+            # 1. 加载 D4 内部私有查找器
             for d4_file in lib_root.glob("**/d4/*.yaml"):
                 try:
                     pkg_info = self._find_package_config(d4_file.parent, lib_root)
@@ -117,20 +155,19 @@ class FSLibraryRepository(LibraryRepository):
                             lookup_def["visibility"] = "private"
 
                             if pkg_name:
-                                # 分层内部表存储
                                 interfaces["internals"].setdefault(pkg_name, {})[
                                     key
                                 ] = lookup_def
-                                # 全局唯一私有键，杜绝与公开同名 exports 冲突
+                                # 保留全限定私有别名于兼容字典，杜绝与同名公开导出冲突
                                 internal_key = f"{pkg_name}::internal::{key}"
                                 interfaces["lookups"][internal_key] = lookup_def
                             else:
-                                # 遗留全局无包 lookup
+                                interfaces["legacy"][key] = lookup_def
                                 interfaces["lookups"][key] = lookup_def
                 except (yaml.YAMLError, OSError):
                     continue
 
-            # 2. Package Exports
+            # 2. 加载 Package.yaml 公开导出门面
             for pkg_file in lib_root.rglob("package.yaml"):
                 try:
                     pkg_data = yaml.safe_load(pkg_file.read_text(encoding="utf-8"))

@@ -1,9 +1,15 @@
 import { AlertOctagon, AlertTriangle, CheckCircle, RefreshCw, X } from 'lucide-react';
 
+export interface TargetLocation {
+  type: 'atom' | 'lookup' | 'manifest';
+  id: string;
+}
+
 export interface LintIssue {
   level: string;
   code: string;
   message: string;
+  target?: TargetLocation | null;
 }
 
 export function DiagnosticsDrawer({

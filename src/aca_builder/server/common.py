@@ -99,6 +99,19 @@ class CollectingMessageBus:
         except (KeyError, IndexError, ValueError):
             return template
 
+    def _extract_target(
+        self, msg_id: str, kwargs: dict[str, Any]
+    ) -> dict[str, str] | None:
+        if "target" in kwargs and isinstance(kwargs["target"], dict):
+            return kwargs["target"]
+        if kwargs.get("atom_id"):
+            return {"type": "atom", "id": str(kwargs["atom_id"])}
+        if kwargs.get("key"):
+            return {"type": "lookup", "id": str(kwargs["key"])}
+        if kwargs.get("manifest"):
+            return {"type": "manifest", "id": str(kwargs["manifest"])}
+        return None
+
     def error(self, msg_id: str, **kwargs: Any) -> None:
         self.error_count += 1
         self.issues.append(
@@ -106,6 +119,7 @@ class CollectingMessageBus:
                 "level": "错误",
                 "code": msg_id,
                 "message": self._format(msg_id, **kwargs),
+                "target": self._extract_target(msg_id, kwargs),
             }
         )
 
@@ -116,6 +130,7 @@ class CollectingMessageBus:
                 "level": "错误",
                 "code": msg_id,
                 "message": self._format(msg_id, **kwargs),
+                "target": self._extract_target(msg_id, kwargs),
             }
         )
 
@@ -126,6 +141,7 @@ class CollectingMessageBus:
                 "level": "警告",
                 "code": msg_id,
                 "message": self._format(msg_id, **kwargs),
+                "target": self._extract_target(msg_id, kwargs),
             }
         )
 

@@ -5,14 +5,11 @@ from typing import Any
 from fastapi import HTTPException
 from pydantic import BaseModel
 
+from aca_builder.domain.events import BuildError
 from aca_builder.domain.services import (
-    evaluate_lookup,
+    compile_prompt_closure,
     generate_prompt_chunks,
     generate_prompt_profile,
-    resolve_dependencies,
-    resolve_lookup_by_key,
-    select_atoms_by_query,
-    serialize_prompt,
 )
 from aca_builder.server.common import execute_hook
 
@@ -63,66 +60,25 @@ def run_compilation_pipeline(
     include_kernel: bool = True,
 ) -> BuildResponse:
     """
-    通用 Prompt 编译流水线：
-    1. 应用 overrides
-    2. 计算初始命中映射
-    3. 级联依赖解析闭包
-    4. 自动注入单例 Kernel（可选）
-    5. Prompt 序列化、分块生成、词元分析与可选 Hook 执行
+    通用 Prompt 服务端呈现流水线：
+    1. 调用纯领域统一编译流水线 (compile_prompt_closure)
+    2. 生成 Presentation 层所需分块 (chunks) 与词元分析 (profile)
+    3. 可选执行后处理 Hook 并包装响应
     """
-    if not library:
-        raise HTTPException(status_code=400, detail="Library is empty")
-
-    if overrides:
-        for lkey, override in overrides.items():
-            if lkey in interfaces.get("lookups", {}):
-                interfaces["lookups"][lkey]["selectors"] = override.get("selectors", [])
-
-    initial_map: dict[str, set[str]] = {}
-
-    if direct_lookup:
-        lkey, ldef = direct_lookup
-        try:
-            matched_ids = evaluate_lookup(library, ldef, interfaces)
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"选择器演算异常: {e}")
-        for aid in matched_ids:
-            initial_map.setdefault(aid, set()).add(lkey)
-    elif imports:
-        for item in imports:
-            if "lookup" in item:
-                lkey = item["lookup"]
-                ldef = resolve_lookup_by_key(lkey, None, interfaces)
-                if not ldef:
-                    continue
-                matched_ids = evaluate_lookup(library, ldef, interfaces)
-                for aid in matched_ids:
-                    initial_map.setdefault(aid, set()).add(lkey)
-            elif "query" in item:
-                matched_ids = select_atoms_by_query(library, item["query"])
-                for aid in matched_ids:
-                    initial_map.setdefault(aid, set())
-
     try:
-        final_atom_map = resolve_dependencies(initial_map, library, interfaces)
+        final_atom_map, prompt_text = compile_prompt_closure(
+            library=library,
+            interfaces=interfaces,
+            imports=imports,
+            direct_lookup=direct_lookup,
+            overrides=overrides,
+            include_kernel=include_kernel,
+        )
+    except BuildError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"依赖解析异常: {e}")
+        raise HTTPException(status_code=400, detail=f"编译解析异常: {e}")
 
-    if include_kernel:
-        kernel_ids = {
-            k for k, v in library.items() if v.get("meta", {}).get("type") == "kernel"
-        }
-        for k_id in kernel_ids:
-            if k_id not in final_atom_map:
-                final_atom_map[k_id] = set()
-    else:
-        final_atom_map = {
-            k: v
-            for k, v in final_atom_map.items()
-            if library.get(k, {}).get("meta", {}).get("type") != "kernel"
-        }
-
-    prompt_text = serialize_prompt(final_atom_map, library)
     chunks_data = generate_prompt_chunks(final_atom_map, library)
     profile_data = generate_prompt_profile(final_atom_map, library)
 
