@@ -299,7 +299,6 @@ export function App() {
 
   const handleCreateKernelDraft = () => {
     const draftId = `draft:kernel:${Date.now()}`;
-    ideStore.clearSnapshot(`atom:${draftId}`);
     ideStore.openTab(
       {
         id: `atom:${draftId}`,
@@ -609,10 +608,6 @@ export function App() {
       });
 
       ideStore.closeTab(`atom:${atomId}`);
-      ideStore.clearSnapshot(`atom:${atomId}`);
-      if (atomId === 'kernel') {
-        ideStore.clearSnapshot('atom:draft:kernel');
-      }
 
       fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
         method: 'DELETE',

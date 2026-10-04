@@ -5,11 +5,9 @@ from typing import Any
 
 from aca_builder.domain.events import BuildError
 from aca_builder.domain.ports import LibraryRepository, ManifestRepository
-from aca_builder.domain.services import (
-    compile_prompt_closure,
-    generate_prompt_profile,
-)
+from aca_builder.domain.services import compile_prompt_closure
 from aca_builder.messages import MESSAGES
+from aca_builder.server.compile_service import generate_prompt_profile
 
 
 class BuilderService:

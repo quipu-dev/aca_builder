@@ -37,7 +37,6 @@ export interface WorkspaceTabState {
   activeTabId: string;
   navigationHistory: HistoryEntry[];
   historyIndex: number;
-  tabSnapshots: Record<string, unknown>;
   explorerExpanded: Record<string, boolean>;
 }
 
@@ -58,11 +57,6 @@ interface IdeState {
 
   navigationHistory: HistoryEntry[];
   historyIndex: number;
-
-  tabSnapshots: Record<string, unknown>;
-  saveSnapshot: (tabId: string, snapshot: unknown) => void;
-  getSnapshot: <T = unknown>(tabId: string) => T | undefined;
-  clearSnapshot: (tabId: string) => void;
 
   sidebarOpen: boolean;
   activeSidebarView: 'explorer' | 'search';
@@ -109,7 +103,6 @@ const createDefaultWorkspaceState = (): WorkspaceTabState => ({
   activeTabId: INITIAL_EMPTY_TAB.id,
   navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
   historyIndex: 0,
-  tabSnapshots: {},
   explorerExpanded: {},
 });
 
@@ -123,7 +116,6 @@ export const useIdeStore = create<IdeState>()(
       navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
       historyIndex: 0,
 
-      tabSnapshots: {},
       explorerExpanded: {},
       workspaceStates: {},
 
@@ -134,13 +126,12 @@ export const useIdeStore = create<IdeState>()(
           activeTabId,
           navigationHistory,
           historyIndex,
-          tabSnapshots,
           explorerExpanded,
           workspaceStates,
         } = get();
         if (currentWorkspace === wsId) return;
 
-        // 1. 保存当前工作区状态
+        // 1. 保存当前工作区标签页状态
         const updatedWorkspaces = {
           ...workspaceStates,
           [currentWorkspace]: {
@@ -148,7 +139,6 @@ export const useIdeStore = create<IdeState>()(
             activeTabId,
             navigationHistory,
             historyIndex,
-            tabSnapshots,
             explorerExpanded,
           },
         };
@@ -162,26 +152,10 @@ export const useIdeStore = create<IdeState>()(
           activeTabId: targetState.activeTabId,
           navigationHistory: targetState.navigationHistory,
           historyIndex: targetState.historyIndex,
-          tabSnapshots: targetState.tabSnapshots,
           explorerExpanded: targetState.explorerExpanded,
           workspaceStates: updatedWorkspaces,
         });
       },
-
-      saveSnapshot: (tabId, snapshot) =>
-        set((state) => ({
-          tabSnapshots: {
-            ...state.tabSnapshots,
-            [tabId]: snapshot,
-          },
-        })),
-      getSnapshot: <T>(tabId: string) => get().tabSnapshots[tabId] as T | undefined,
-      clearSnapshot: (tabId) =>
-        set((state) => {
-          const rest = { ...state.tabSnapshots };
-          delete rest[tabId];
-          return { tabSnapshots: rest };
-        }),
 
       sidebarOpen: true,
       sidebarWidth: 288,

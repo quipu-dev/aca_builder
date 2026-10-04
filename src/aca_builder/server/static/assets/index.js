@@ -5938,7 +5938,6 @@ const createDefaultWorkspaceState = () => ({
   activeTabId: INITIAL_EMPTY_TAB.id,
   navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
   historyIndex: 0,
-  tabSnapshots: {},
   explorerExpanded: {}
 });
 const useIdeStore = create$1()(
@@ -5949,7 +5948,6 @@ const useIdeStore = create$1()(
       activeTabId: INITIAL_EMPTY_TAB.id,
       navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
       historyIndex: 0,
-      tabSnapshots: {},
       explorerExpanded: {},
       workspaceStates: {},
       setCurrentWorkspace: (wsId) => {
@@ -5959,7 +5957,6 @@ const useIdeStore = create$1()(
           activeTabId,
           navigationHistory,
           historyIndex,
-          tabSnapshots,
           explorerExpanded,
           workspaceStates
         } = get();
@@ -5971,7 +5968,6 @@ const useIdeStore = create$1()(
             activeTabId,
             navigationHistory,
             historyIndex,
-            tabSnapshots,
             explorerExpanded
           }
         };
@@ -5982,23 +5978,10 @@ const useIdeStore = create$1()(
           activeTabId: targetState.activeTabId,
           navigationHistory: targetState.navigationHistory,
           historyIndex: targetState.historyIndex,
-          tabSnapshots: targetState.tabSnapshots,
           explorerExpanded: targetState.explorerExpanded,
           workspaceStates: updatedWorkspaces
         });
       },
-      saveSnapshot: (tabId, snapshot) => set((state) => ({
-        tabSnapshots: {
-          ...state.tabSnapshots,
-          [tabId]: snapshot
-        }
-      })),
-      getSnapshot: (tabId) => get().tabSnapshots[tabId],
-      clearSnapshot: (tabId) => set((state) => {
-        const rest = { ...state.tabSnapshots };
-        delete rest[tabId];
-        return { tabSnapshots: rest };
-      }),
       sidebarOpen: true,
       sidebarWidth: 288,
       setSidebarWidth: (width) => set({ sidebarWidth: width }),
@@ -9891,15 +9874,11 @@ function AtomEditorTab({
   var _a2;
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const replaceTab = useIdeStore((state) => state.replaceTab);
-  const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
-  const getSnapshot = useIdeStore((state) => state.getSnapshot);
-  const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
   const tabId = `atom:${atomId}`;
   const isKernel = atomId === "kernel" || atomId.startsWith("draft:kernel");
   const isDraft = atomId.startsWith("draft:") || atomId === "new_atom";
   const draftParts = isDraft ? atomId.split(":") : [];
   const draftInitialPkg = isDraft && draftParts[1] !== "kernel" ? draftParts[1] : "";
-  const [isReady, setIsReady] = reactExports.useState(false);
   const [loading, setLoading] = reactExports.useState(!isDraft);
   const [saveSuccess, setSaveSuccess] = reactExports.useState(false);
   const [errorMsg, setErrorMsg] = reactExports.useState("");
@@ -9928,27 +9907,8 @@ function AtomEditorTab({
   const deleteAtomMutation = useDeleteAtomMutation();
   const saving = createAtomMutation.isPending || updateAtomMutation.isPending;
   reactExports.useEffect(() => {
-    const snapshot = getSnapshot(tabId);
-    if (snapshot) {
-      setCurrentId(snapshot.currentId);
-      setPkgName(snapshot.pkgName);
-      setSourceFile(snapshot.sourceFile);
-      setAtomType(snapshot.atomType);
-      setDescription(snapshot.description || "");
-      setPriority(snapshot.priority);
-      setDomainList(snapshot.domainList);
-      setUsesList(snapshot.usesList);
-      setContent(snapshot.content);
-      if (snapshot.draftSuffix !== void 0) setDraftSuffix(snapshot.draftSuffix);
-      setIsModified(snapshot.isModified);
-      setTabDirty(tabId, snapshot.isModified);
-      setLoading(false);
-      setIsReady(true);
-      return;
-    }
     if (isDraft) {
       setLoading(false);
-      setIsReady(true);
       return;
     }
     setLoading(true);
@@ -9966,46 +9926,14 @@ function AtomEditorTab({
       setContent(data.content || "");
       setIsModified(false);
       setTabDirty(tabId, false);
-      setIsReady(true);
     }).catch((err) => {
       setErrorMsg(err.message || "加载异常");
     }).finally(() => setLoading(false));
-  }, [atomId, isDraft, setTabDirty, tabId, getSnapshot]);
-  reactExports.useEffect(() => {
-    if (!isReady) return;
-    saveSnapshot(tabId, {
-      currentId,
-      pkgName,
-      sourceFile,
-      atomType,
-      description,
-      priority,
-      domainList,
-      usesList,
-      content: content2,
-      draftSuffix,
-      isModified
-    });
-  }, [
-    isReady,
-    tabId,
-    currentId,
-    pkgName,
-    sourceFile,
-    atomType,
-    description,
-    priority,
-    domainList,
-    usesList,
-    content2,
-    draftSuffix,
-    isModified,
-    saveSnapshot
-  ]);
+  }, [atomId, isDraft, setTabDirty, tabId]);
   const markDirty = () => {
     if (!isModified) {
       setIsModified(true);
-      setTabDirty(`atom:${atomId}`, true);
+      setTabDirty(tabId, true);
     }
   };
   const handleOpenObsidian = async () => {
@@ -10031,7 +9959,6 @@ function AtomEditorTab({
           setSaveSuccess(true);
           setIsModified(false);
           setTabDirty(tabId, false);
-          clearSnapshot(tabId);
           onSaved == null ? void 0 : onSaved();
           replaceTab(tabId, {
             id: "atom:kernel",
@@ -10064,8 +9991,7 @@ function AtomEditorTab({
         });
         setSaveSuccess(true);
         setIsModified(false);
-        setTabDirty(`atom:${atomId}`, false);
-        clearSnapshot(tabId);
+        setTabDirty(tabId, false);
         onSaved == null ? void 0 : onSaved();
         replaceTab(tabId, {
           id: `atom:${generatedId}`,
@@ -10104,7 +10030,7 @@ function AtomEditorTab({
       });
       setSaveSuccess(true);
       setIsModified(false);
-      setTabDirty(`atom:${atomId}`, false);
+      setTabDirty(tabId, false);
       onSaved == null ? void 0 : onSaved();
       setTimeout(() => setSaveSuccess(false), 2e3);
     } catch (err) {
@@ -10115,7 +10041,6 @@ function AtomEditorTab({
     isKernel,
     content2,
     tabId,
-    clearSnapshot,
     onSaved,
     replaceTab,
     draftSuffix,
@@ -10127,7 +10052,6 @@ function AtomEditorTab({
     priority,
     currentId,
     setTabDirty,
-    atomId,
     createAtomMutation,
     updateAtomMutation
   ]);
@@ -26138,15 +26062,11 @@ function LookupEditorTab({
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const openTab = useIdeStore((state) => state.openTab);
   const replaceTab = useIdeStore((state) => state.replaceTab);
-  const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
-  const getSnapshot = useIdeStore((state) => state.getSnapshot);
-  const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
   const isDraft = lookupKey.startsWith("draft:");
   const draftParts = isDraft ? lookupKey.split(":") : [];
   const isInternalKey = lookupKey.includes("::internal::");
   const initialPkg = isDraft ? draftParts[1] || "" : lookupKey.includes("::") ? lookupKey.split("::")[0] : "";
   const initialPublic = isDraft ? !((_a2 = draftParts[2]) == null ? void 0 : _a2.startsWith("private")) : !isInternalKey;
-  const [isReady, setIsReady] = reactExports.useState(false);
   const [pkgName, setPkgName] = reactExports.useState(initialPkg || ((_b2 = packages[0]) == null ? void 0 : _b2.name) || "");
   const [isPublic, setIsPublic] = reactExports.useState(initialPublic);
   const [pillar, setPillar] = reactExports.useState("d1");
@@ -26195,28 +26115,8 @@ function LookupEditorTab({
   };
   reactExports.useEffect(() => {
     var _a3, _b3, _c2, _d2, _e3, _f2;
-    if (isReady) return;
-    const snapshot = getSnapshot(tabId);
-    if (snapshot) {
-      setPkgName(snapshot.pkgName);
-      setIsPublic(snapshot.isPublic);
-      setPillar(snapshot.pillar);
-      setRawKeyName(snapshot.rawKeyName);
-      setDescription(snapshot.description);
-      setSelectors(snapshot.selectors);
-      if (snapshot.rightView) setRightView(snapshot.rightView);
-      setIsModified(snapshot.isModified);
-      setTabDirty(tabId, snapshot.isModified);
-      setIsReady(true);
-      return;
-    }
-    if (isDraft) {
-      setIsReady(true);
-      return;
-    }
-    if (!packages || packages.length === 0) {
-      return;
-    }
+    if (isDraft) return;
+    if (!packages || packages.length === 0) return;
     const rawKey = lookupKey.split("::").pop() || lookupKey;
     const targetPkg = lookupKey.includes("::") ? lookupKey.split("::")[0] : null;
     for (const pkg of packages) {
@@ -26230,7 +26130,6 @@ function LookupEditorTab({
           setDescription(internalDef.description || "");
           setRawKeyName(rawKey.replace(/^d[1-3]l-/, "") || "");
           setSelectors(internalDef.selectors || []);
-          setIsReady(true);
           return;
         }
       }
@@ -26242,37 +26141,10 @@ function LookupEditorTab({
         setDescription(exportDef.description || "");
         setRawKeyName(rawKey.replace(/^d[1-3]l-/, "") || "");
         setSelectors(exportDef.selectors || []);
-        setIsReady(true);
         return;
       }
     }
-    setIsReady(true);
-  }, [lookupKey, packages, isDraft, tabId, getSnapshot, setTabDirty, isReady, isPublic]);
-  reactExports.useEffect(() => {
-    if (!isReady) return;
-    saveSnapshot(tabId, {
-      pkgName,
-      isPublic,
-      pillar,
-      rawKeyName,
-      description,
-      selectors,
-      rightView,
-      isModified
-    });
-  }, [
-    isReady,
-    tabId,
-    pkgName,
-    isPublic,
-    pillar,
-    rawKeyName,
-    description,
-    selectors,
-    rightView,
-    isModified,
-    saveSnapshot
-  ]);
+  }, [lookupKey, packages, isDraft, isPublic]);
   const runLiveDebug = reactExports.useCallback(() => {
     if (selectors.length === 0) {
       setMatchedAtoms([]);
@@ -26361,18 +26233,7 @@ function LookupEditorTab({
       setTabDirty(tabId, false);
       const fullTargetKey = isPublic ? `${pkgName}::${pillar}l-${cleanSuffix}` : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
       const newTabId = `lookup:${fullTargetKey}`;
-      saveSnapshot(newTabId, {
-        pkgName,
-        isPublic,
-        pillar,
-        rawKeyName: cleanSuffix,
-        description: description.trim(),
-        selectors,
-        rightView,
-        isModified: false
-      });
       if (isDraft) {
-        clearSnapshot(tabId);
         replaceTab(tabId, {
           id: newTabId,
           type: "lookup",
@@ -26393,11 +26254,8 @@ function LookupEditorTab({
     pillar,
     isPublic,
     description,
-    rightView,
     tabId,
     setTabDirty,
-    saveSnapshot,
-    clearSnapshot,
     onSaved,
     isDraft,
     replaceTab,
@@ -26421,18 +26279,7 @@ function LookupEditorTab({
         const oldTabId = tabId;
         const fullTargetKey = nextPublic ? `${pkgName}::${pillar}l-${cleanSuffix}` : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
         const newTabId = `lookup:${fullTargetKey}`;
-        saveSnapshot(newTabId, {
-          pkgName,
-          isPublic: nextPublic,
-          pillar,
-          rawKeyName: cleanSuffix,
-          description: description.trim(),
-          selectors,
-          rightView,
-          isModified: false
-        });
         if (oldTabId !== newTabId) {
-          clearSnapshot(oldTabId);
           replaceTab(oldTabId, {
             id: newTabId,
             type: "lookup",
@@ -27033,9 +26880,6 @@ function ManifestEditorTab({
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const openTab = useIdeStore((state) => state.openTab);
   const replaceTab = useIdeStore((state) => state.replaceTab);
-  const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
-  const getSnapshot = useIdeStore((state) => state.getSnapshot);
-  const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
   const preferences = useIdeStore((state) => state.preferences);
   const isDraft = !manifestName || manifestName.startsWith("draft_");
   const [rightView, setRightView] = reactExports.useState(
@@ -27043,7 +26887,6 @@ function ManifestEditorTab({
   );
   const [showRightPanel, setShowRightPanel] = reactExports.useState(true);
   const [manifestIdentifier, setManifestIdentifier] = reactExports.useState(isDraft ? "" : manifestName);
-  const [isReady, setIsReady] = reactExports.useState(false);
   const [name2, setName] = reactExports.useState(
     !isDraft && manifestName ? manifestName.split("/").pop() || manifestName : ""
   );
@@ -27088,27 +26931,7 @@ function ManifestEditorTab({
     return list2;
   }, [packages]);
   reactExports.useEffect(() => {
-    const snapshot = getSnapshot(tabId);
-    if (snapshot) {
-      setName(snapshot.name);
-      setVersion(snapshot.version);
-      setDescription(snapshot.description);
-      setItems(snapshot.items);
-      setOverrides(snapshot.overrides);
-      if (snapshot.rightView) setRightView(snapshot.rightView);
-      setShowRightPanel(snapshot.showRightPanel);
-      setIsModified(snapshot.isModified);
-      if (snapshot.initialSnapshot) {
-        setInitialSnapshot(snapshot.initialSnapshot);
-      }
-      setTabDirty(tabId, snapshot.isModified);
-      setIsReady(true);
-      return;
-    }
-    if (!manifestName) {
-      setIsReady(true);
-      return;
-    }
+    if (!manifestName || isDraft) return;
     fetchManifestDetail(manifestName).then((data) => {
       const loadedName = data.name || manifestName;
       const loadedVersion = data.version || "1.0.0";
@@ -27133,38 +26956,10 @@ function ManifestEditorTab({
         items: mappedItems,
         overrides: loadedOverrides
       });
-      setIsReady(true);
     }).catch((err) => {
       console.error(err);
     });
-  }, [manifestName, tabId, setTabDirty, getSnapshot]);
-  reactExports.useEffect(() => {
-    if (!isReady) return;
-    saveSnapshot(tabId, {
-      name: name2,
-      version,
-      description,
-      items,
-      overrides,
-      rightView,
-      showRightPanel,
-      isModified,
-      initialSnapshot
-    });
-  }, [
-    isReady,
-    tabId,
-    name2,
-    version,
-    description,
-    items,
-    overrides,
-    rightView,
-    showRightPanel,
-    isModified,
-    initialSnapshot,
-    saveSnapshot
-  ]);
+  }, [manifestName, isDraft, tabId, setTabDirty]);
   const compileCurrent = reactExports.useCallback(
     (hookFlag = isHookActive) => {
       const targetQueryKey = manifestIdentifier || name2;
@@ -27243,7 +27038,6 @@ function ManifestEditorTab({
         items: [...items],
         overrides: { ...overrides }
       });
-      clearSnapshot(tabId);
       onSaved == null ? void 0 : onSaved();
       if (isDraft) {
         replaceTab(tabId, {
@@ -27269,7 +27063,6 @@ function ManifestEditorTab({
     overrides,
     tabId,
     setTabDirty,
-    clearSnapshot,
     onSaved,
     isDraft,
     replaceTab,
@@ -27303,7 +27096,6 @@ function ManifestEditorTab({
     }
     setIsModified(false);
     setTabDirty(tabId, false);
-    clearSnapshot(tabId);
   };
   const handleOpenAtom = reactExports.useCallback(
     (atomId) => {
@@ -29211,7 +29003,6 @@ function App() {
   };
   const handleCreateKernelDraft = () => {
     const draftId = `draft:kernel:${Date.now()}`;
-    ideStore.clearSnapshot(`atom:${draftId}`);
     ideStore.openTab(
       {
         id: `atom:${draftId}`,
@@ -29472,10 +29263,6 @@ function App() {
         };
       });
       ideStore.closeTab(`atom:${atomId}`);
-      ideStore.clearSnapshot(`atom:${atomId}`);
-      if (atomId === "kernel") {
-        ideStore.clearSnapshot("atom:draft:kernel");
-      }
       fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
         method: "DELETE"
       }).then(async (res) => {

@@ -57,9 +57,6 @@ export function ManifestEditorTab({
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const openTab = useIdeStore((state) => state.openTab);
   const replaceTab = useIdeStore((state) => state.replaceTab);
-  const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
-  const getSnapshot = useIdeStore((state) => state.getSnapshot);
-  const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
   const preferences = useIdeStore((state) => state.preferences);
 
   const isDraft = !manifestName || manifestName.startsWith('draft_');
@@ -70,7 +67,6 @@ export function ManifestEditorTab({
   const [showRightPanel, setShowRightPanel] = useState(true);
 
   const [manifestIdentifier, setManifestIdentifier] = useState(isDraft ? '' : manifestName);
-  const [isReady, setIsReady] = useState(false);
   const [name, setName] = useState(
     !isDraft && manifestName ? manifestName.split('/').pop() || manifestName : '',
   );
@@ -129,45 +125,7 @@ export function ManifestEditorTab({
   }, [packages]);
 
   useEffect(() => {
-    const snapshot = getSnapshot<{
-      name: string;
-      version: string;
-      description: string;
-      items: ImportItem[];
-      overrides: Record<string, { selectors: unknown[] }>;
-      rightView: 'graph' | 'prompt';
-      showRightPanel: boolean;
-      isModified: boolean;
-      initialSnapshot: {
-        name: string;
-        version: string;
-        description: string;
-        items: ImportItem[];
-        overrides: Record<string, { selectors: unknown[] }>;
-      } | null;
-    }>(tabId);
-
-    if (snapshot) {
-      setName(snapshot.name);
-      setVersion(snapshot.version);
-      setDescription(snapshot.description);
-      setItems(snapshot.items);
-      setOverrides(snapshot.overrides);
-      if (snapshot.rightView) setRightView(snapshot.rightView);
-      setShowRightPanel(snapshot.showRightPanel);
-      setIsModified(snapshot.isModified);
-      if (snapshot.initialSnapshot) {
-        setInitialSnapshot(snapshot.initialSnapshot);
-      }
-      setTabDirty(tabId, snapshot.isModified);
-      setIsReady(true);
-      return;
-    }
-
-    if (!manifestName) {
-      setIsReady(true);
-      return;
-    }
+    if (!manifestName || isDraft) return;
 
     fetchManifestDetail(manifestName)
       .then((data) => {
@@ -198,40 +156,11 @@ export function ManifestEditorTab({
           items: mappedItems,
           overrides: loadedOverrides,
         });
-        setIsReady(true);
       })
       .catch((err) => {
         console.error(err);
       });
-  }, [manifestName, tabId, setTabDirty, getSnapshot]);
-
-  useEffect(() => {
-    if (!isReady) return;
-    saveSnapshot(tabId, {
-      name,
-      version,
-      description,
-      items,
-      overrides,
-      rightView,
-      showRightPanel,
-      isModified,
-      initialSnapshot,
-    });
-  }, [
-    isReady,
-    tabId,
-    name,
-    version,
-    description,
-    items,
-    overrides,
-    rightView,
-    showRightPanel,
-    isModified,
-    initialSnapshot,
-    saveSnapshot,
-  ]);
+  }, [manifestName, isDraft, tabId, setTabDirty]);
 
   const compileCurrent = useCallback(
     (hookFlag = isHookActive) => {
@@ -322,7 +251,6 @@ export function ManifestEditorTab({
         items: [...items],
         overrides: { ...overrides },
       });
-      clearSnapshot(tabId);
       onSaved?.();
 
       if (isDraft) {
@@ -349,7 +277,6 @@ export function ManifestEditorTab({
     overrides,
     tabId,
     setTabDirty,
-    clearSnapshot,
     onSaved,
     isDraft,
     replaceTab,
@@ -387,7 +314,6 @@ export function ManifestEditorTab({
 
     setIsModified(false);
     setTabDirty(tabId, false);
-    clearSnapshot(tabId);
   };
 
   const handleOpenAtom = useCallback(

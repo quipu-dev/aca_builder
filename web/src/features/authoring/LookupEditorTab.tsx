@@ -60,9 +60,6 @@ export function LookupEditorTab({
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const openTab = useIdeStore((state) => state.openTab);
   const replaceTab = useIdeStore((state) => state.replaceTab);
-  const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
-  const getSnapshot = useIdeStore((state) => state.getSnapshot);
-  const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
 
   const isDraft = lookupKey.startsWith('draft:');
   const draftParts = isDraft ? lookupKey.split(':') : [];
@@ -74,7 +71,6 @@ export function LookupEditorTab({
       : '';
   const initialPublic = isDraft ? !draftParts[2]?.startsWith('private') : !isInternalKey;
 
-  const [isReady, setIsReady] = useState(false);
   const [pkgName, setPkgName] = useState(initialPkg || packages[0]?.name || '');
   const [isPublic, setIsPublic] = useState(initialPublic);
   const [pillar, setPillar] = useState<'d1' | 'd2' | 'd3'>('d1');
@@ -132,41 +128,8 @@ export function LookupEditorTab({
   };
 
   useEffect(() => {
-    if (isReady) return;
-
-    const snapshot = getSnapshot<{
-      pkgName: string;
-      isPublic: boolean;
-      pillar: 'd1' | 'd2' | 'd3';
-      rawKeyName: string;
-      description: string;
-      selectors: SelectorRule[];
-      rightView: 'atoms' | 'graph' | 'prompt';
-      isModified: boolean;
-    }>(tabId);
-
-    if (snapshot) {
-      setPkgName(snapshot.pkgName);
-      setIsPublic(snapshot.isPublic);
-      setPillar(snapshot.pillar);
-      setRawKeyName(snapshot.rawKeyName);
-      setDescription(snapshot.description);
-      setSelectors(snapshot.selectors);
-      if (snapshot.rightView) setRightView(snapshot.rightView);
-      setIsModified(snapshot.isModified);
-      setTabDirty(tabId, snapshot.isModified);
-      setIsReady(true);
-      return;
-    }
-
-    if (isDraft) {
-      setIsReady(true);
-      return;
-    }
-
-    if (!packages || packages.length === 0) {
-      return;
-    }
+    if (isDraft) return;
+    if (!packages || packages.length === 0) return;
 
     const rawKey = lookupKey.split('::').pop() || lookupKey;
     const targetPkg = lookupKey.includes('::') ? lookupKey.split('::')[0] : null;
@@ -174,7 +137,6 @@ export function LookupEditorTab({
     for (const pkg of packages) {
       if (targetPkg && pkg.name !== targetPkg) continue;
 
-      // 如果明确是 internal key，优先在 internal_lookups 中精确检索
       if (lookupKey.includes('::internal::') || !isPublic) {
         const internalDef =
           pkg.internal_lookups?.[lookupKey] ||
@@ -187,7 +149,6 @@ export function LookupEditorTab({
           setDescription(internalDef.description || '');
           setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
           setSelectors((internalDef.selectors as SelectorRule[]) || []);
-          setIsReady(true);
           return;
         }
       }
@@ -204,39 +165,10 @@ export function LookupEditorTab({
         setDescription(exportDef.description || '');
         setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
         setSelectors((exportDef.selectors as SelectorRule[]) || []);
-        setIsReady(true);
         return;
       }
     }
-
-    setIsReady(true);
-  }, [lookupKey, packages, isDraft, tabId, getSnapshot, setTabDirty, isReady, isPublic]);
-
-  useEffect(() => {
-    if (!isReady) return;
-    saveSnapshot(tabId, {
-      pkgName,
-      isPublic,
-      pillar,
-      rawKeyName,
-      description,
-      selectors,
-      rightView,
-      isModified,
-    });
-  }, [
-    isReady,
-    tabId,
-    pkgName,
-    isPublic,
-    pillar,
-    rawKeyName,
-    description,
-    selectors,
-    rightView,
-    isModified,
-    saveSnapshot,
-  ]);
+  }, [lookupKey, packages, isDraft, isPublic]);
 
   const runLiveDebug = useCallback(() => {
     if (selectors.length === 0) {
@@ -349,26 +281,12 @@ export function LookupEditorTab({
       setIsModified(false);
       setTabDirty(tabId, false);
 
-      // 统一区分公开与私有的全局唯一 Tab ID 与 LookupKey
       const fullTargetKey = isPublic
         ? `${pkgName}::${pillar}l-${cleanSuffix}`
         : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
       const newTabId = `lookup:${fullTargetKey}`;
 
-      // 关键修复：预先以新 Tab ID 写入快照，杜绝重挂载时异步 packages 尚未返回导致空 selectors 覆写
-      saveSnapshot(newTabId, {
-        pkgName,
-        isPublic,
-        pillar,
-        rawKeyName: cleanSuffix,
-        description: description.trim(),
-        selectors,
-        rightView,
-        isModified: false,
-      });
-
       if (isDraft) {
-        clearSnapshot(tabId);
         replaceTab(tabId, {
           id: newTabId,
           type: 'lookup',
@@ -390,11 +308,8 @@ export function LookupEditorTab({
     pillar,
     isPublic,
     description,
-    rightView,
     tabId,
     setTabDirty,
-    saveSnapshot,
-    clearSnapshot,
     onSaved,
     isDraft,
     replaceTab,
@@ -405,7 +320,6 @@ export function LookupEditorTab({
     setIsPublic(nextPublic);
     markDirty();
 
-    // 如果是已存在的接口且具备合法名称，在切换契约的瞬间执行迁移与左侧树刷新
     const cleanSuffix = rawKeyName
       .trim()
       .toLowerCase()
@@ -430,19 +344,7 @@ export function LookupEditorTab({
           : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
         const newTabId = `lookup:${fullTargetKey}`;
 
-        saveSnapshot(newTabId, {
-          pkgName,
-          isPublic: nextPublic,
-          pillar,
-          rawKeyName: cleanSuffix,
-          description: description.trim(),
-          selectors,
-          rightView,
-          isModified: false,
-        });
-
         if (oldTabId !== newTabId) {
-          clearSnapshot(oldTabId);
           replaceTab(oldTabId, {
             id: newTabId,
             type: 'lookup',

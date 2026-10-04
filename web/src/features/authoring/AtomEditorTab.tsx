@@ -41,9 +41,6 @@ export function AtomEditorTab({
 }) {
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const replaceTab = useIdeStore((state) => state.replaceTab);
-  const saveSnapshot = useIdeStore((state) => state.saveSnapshot);
-  const getSnapshot = useIdeStore((state) => state.getSnapshot);
-  const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
 
   const tabId = `atom:${atomId}`;
   const isKernel = atomId === 'kernel' || atomId.startsWith('draft:kernel');
@@ -51,7 +48,6 @@ export function AtomEditorTab({
   const draftParts = isDraft ? atomId.split(':') : [];
   const draftInitialPkg = isDraft && draftParts[1] !== 'kernel' ? draftParts[1] : '';
 
-  const [isReady, setIsReady] = useState(false);
   const [loading, setLoading] = useState(!isDraft);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -93,41 +89,8 @@ export function AtomEditorTab({
   const saving = createAtomMutation.isPending || updateAtomMutation.isPending;
 
   useEffect(() => {
-    const snapshot = getSnapshot<{
-      currentId: string;
-      pkgName: string;
-      sourceFile: string;
-      atomType: string;
-      description?: string;
-      priority: number;
-      domainList: string[];
-      usesList: string[];
-      content: string;
-      isModified: boolean;
-      draftSuffix?: string;
-    }>(tabId);
-
-    if (snapshot) {
-      setCurrentId(snapshot.currentId);
-      setPkgName(snapshot.pkgName);
-      setSourceFile(snapshot.sourceFile);
-      setAtomType(snapshot.atomType);
-      setDescription(snapshot.description || '');
-      setPriority(snapshot.priority);
-      setDomainList(snapshot.domainList);
-      setUsesList(snapshot.usesList);
-      setContent(snapshot.content);
-      if (snapshot.draftSuffix !== undefined) setDraftSuffix(snapshot.draftSuffix);
-      setIsModified(snapshot.isModified);
-      setTabDirty(tabId, snapshot.isModified);
-      setLoading(false);
-      setIsReady(true);
-      return;
-    }
-
     if (isDraft) {
       setLoading(false);
-      setIsReady(true);
       return;
     }
 
@@ -147,50 +110,17 @@ export function AtomEditorTab({
         setContent(data.content || '');
         setIsModified(false);
         setTabDirty(tabId, false);
-        setIsReady(true);
       })
       .catch((err) => {
         setErrorMsg(err.message || '加载异常');
       })
       .finally(() => setLoading(false));
-  }, [atomId, isDraft, setTabDirty, tabId, getSnapshot]);
-
-  useEffect(() => {
-    if (!isReady) return;
-    saveSnapshot(tabId, {
-      currentId,
-      pkgName,
-      sourceFile,
-      atomType,
-      description,
-      priority,
-      domainList,
-      usesList,
-      content,
-      draftSuffix,
-      isModified,
-    });
-  }, [
-    isReady,
-    tabId,
-    currentId,
-    pkgName,
-    sourceFile,
-    atomType,
-    description,
-    priority,
-    domainList,
-    usesList,
-    content,
-    draftSuffix,
-    isModified,
-    saveSnapshot,
-  ]);
+  }, [atomId, isDraft, setTabDirty, tabId]);
 
   const markDirty = () => {
     if (!isModified) {
       setIsModified(true);
-      setTabDirty(`atom:${atomId}`, true);
+      setTabDirty(tabId, true);
     }
   };
 
@@ -220,7 +150,6 @@ export function AtomEditorTab({
           setSaveSuccess(true);
           setIsModified(false);
           setTabDirty(tabId, false);
-          clearSnapshot(tabId);
           onSaved?.();
           replaceTab(tabId, {
             id: 'atom:kernel',
@@ -260,8 +189,7 @@ export function AtomEditorTab({
 
         setSaveSuccess(true);
         setIsModified(false);
-        setTabDirty(`atom:${atomId}`, false);
-        clearSnapshot(tabId);
+        setTabDirty(tabId, false);
         onSaved?.();
         replaceTab(tabId, {
           id: `atom:${generatedId}`,
@@ -304,7 +232,7 @@ export function AtomEditorTab({
 
       setSaveSuccess(true);
       setIsModified(false);
-      setTabDirty(`atom:${atomId}`, false);
+      setTabDirty(tabId, false);
       onSaved?.();
       setTimeout(() => setSaveSuccess(false), 2000);
     } catch (err: unknown) {
@@ -315,7 +243,6 @@ export function AtomEditorTab({
     isKernel,
     content,
     tabId,
-    clearSnapshot,
     onSaved,
     replaceTab,
     draftSuffix,
@@ -327,7 +254,6 @@ export function AtomEditorTab({
     priority,
     currentId,
     setTabDirty,
-    atomId,
     createAtomMutation,
     updateAtomMutation,
   ]);
