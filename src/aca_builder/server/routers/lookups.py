@@ -115,6 +115,7 @@ def create_or_update_lookup(
     try:
         lookup_name = raw_key
         if req.is_public:
+            # 1. 写入 package.yaml 的 exports
             pkg_content = (
                 yaml.safe_load(target_pkg_yaml.read_text(encoding="utf-8")) or {}
             )
@@ -125,7 +126,30 @@ def create_or_update_lookup(
                 encoding="utf-8",
             )
             full_return_key = f"{req.package}::{lookup_name}"
+
+            # 2. 互斥清理：若之前存在内部私有查找，物理清理 d4/*.yaml 中的旧定义
+            d4_dir = target_pkg_dir / "d4"
+            if d4_dir.exists():
+                for d4_file in d4_dir.glob("*.yaml"):
+                    try:
+                        d4_c = yaml.safe_load(d4_file.read_text(encoding="utf-8")) or {}
+                        if (
+                            isinstance(d4_c, dict)
+                            and d4_c.get("type") == "d4"
+                            and "lookups" in d4_c
+                            and lookup_name in d4_c["lookups"]
+                        ):
+                            del d4_c["lookups"][lookup_name]
+                            d4_file.write_text(
+                                yaml.safe_dump(
+                                    d4_c, sort_keys=False, allow_unicode=True
+                                ),
+                                encoding="utf-8",
+                            )
+                    except (yaml.YAMLError, OSError):
+                        continue
         else:
+            # 1. 写入 d4/lookups.yaml
             d4_dir = target_pkg_dir / "d4"
             d4_dir.mkdir(parents=True, exist_ok=True)
             d4_file = d4_dir / "lookups.yaml"
@@ -147,6 +171,21 @@ def create_or_update_lookup(
                 encoding="utf-8",
             )
             full_return_key = f"{req.package}::internal::{lookup_name}"
+
+            # 2. 互斥清理：若之前存在公开导出，物理清理 package.yaml 的 exports
+            if target_pkg_yaml.exists():
+                pkg_content = (
+                    yaml.safe_load(target_pkg_yaml.read_text(encoding="utf-8")) or {}
+                )
+                exports = pkg_content.get("exports", {})
+                if lookup_name in exports:
+                    del exports[lookup_name]
+                    target_pkg_yaml.write_text(
+                        yaml.safe_dump(
+                            pkg_content, sort_keys=False, allow_unicode=True
+                        ),
+                        encoding="utf-8",
+                    )
 
         broadcast_change("LIBRARY_DIRTY")
         return {"status": "ok", "key": full_return_key, "package": req.package}

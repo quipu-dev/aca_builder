@@ -128,8 +128,32 @@ class LinterService:
                 )  # Using msg_id
                 error_count += 1
 
+            selectors = l_def.get("selectors", [])
+            if not selectors:
+                self.bus.lint_error(
+                    "linter.lookup.empty_selectors", key=key
+                )  # Using msg_id
+                error_count += 1
+                continue
+
+            # 校验显式指定的原子 ID 是否存在于当前知识库
+            for sel in selectors:
+                if isinstance(sel, dict) and "query" in sel:
+                    target_id = sel["query"].get("id")
+                    if target_id and target_id not in library:
+                        self.bus.lint_error(
+                            "linter.lookup.atom_not_found",
+                            key=key,
+                            atom_id=target_id,
+                        )  # Using msg_id
+                        error_count += 1
+
             try:
-                evaluate_lookup(library, l_def, interfaces)
+                matched_ids = evaluate_lookup(library, l_def, interfaces)
+                if not matched_ids:
+                    self.bus.warn(
+                        "linter.lookup.no_atoms_matched", key=key
+                    )  # Using msg_id
             except BuildError as e:
                 self.bus.lint_error(
                     "linter.lookup.eval_error", key=key, pkg=pkg, error=str(e)

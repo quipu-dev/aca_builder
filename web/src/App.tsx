@@ -274,21 +274,57 @@ export function App() {
   };
 
   const handleProblemClick = (issue: LintIssue) => {
-    const text = `${issue.code} ${issue.message}`;
-    const atomMatch = text.match(/\b(d[1-3]-[a-zA-Z0-9_-]+)\b/);
-    if (atomMatch) {
-      handleOpenAtomTab(atomMatch[1]);
+    const msg = issue.message;
+
+    // 1. 若为 Lookup 相关诊断，优先跳转至发生错误的源头 Lookup 接口
+    if (issue.code.startsWith('linter.lookup.')) {
+      const lookupMatch = msg.match(/Lookup '([^']+)'/);
+      if (lookupMatch) {
+        handleOpenLookupTab(lookupMatch[1]);
+        return;
+      }
+      // 特殊情况：跨包私有访问警告（原子持有方）
+      const atomLeadMatch = msg.match(/^([a-zA-Z0-9_-]+):/);
+      if (atomLeadMatch) {
+        handleOpenAtomTab(atomLeadMatch[1]);
+        return;
+      }
+    }
+
+    // 2. 若为 Manifest 清单相关诊断，优先跳转至清单蓝图
+    if (issue.code.startsWith('linter.manifest.')) {
+      const manifestMatch = msg.match(/Manifest '([^']+)'/);
+      if (manifestMatch) {
+        handleOpenManifestTab(manifestMatch[1]);
+        return;
+      }
+    }
+
+    // 3. 若为 Atom 相关诊断，优先跳转至对应原子
+    if (issue.code.startsWith('linter.atom.')) {
+      const atomMatch = msg.match(/^([a-zA-Z0-9_-]+)/);
+      if (atomMatch) {
+        handleOpenAtomTab(atomMatch[1]);
+        return;
+      }
+    }
+
+    // 4. 容错回退：显式实体语法优先于模糊 ID 匹配
+    const lookupFallback = msg.match(/Lookup '([^']+)'/);
+    if (lookupFallback) {
+      handleOpenLookupTab(lookupFallback[1]);
       return;
     }
-    const manifestMatch = text.match(/Manifest '([^']+)'/);
-    if (manifestMatch) {
-      handleOpenManifestTab(manifestMatch[1]);
+
+    const manifestFallback = msg.match(/Manifest '([^']+)'/);
+    if (manifestFallback) {
+      handleOpenManifestTab(manifestFallback[1]);
       return;
     }
-    const lookupMatch = text.match(/Lookup '([^']+)'/);
-    if (lookupMatch) {
-      const lKey = lookupMatch[1];
-      handleOpenLookupTab(lKey);
+
+    const atomFallback = msg.match(/\b(d[1-3]-[a-zA-Z0-9_-]+)\b/);
+    if (atomFallback) {
+      handleOpenAtomTab(atomFallback[1]);
     }
   };
 

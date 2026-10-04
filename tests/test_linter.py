@@ -223,7 +223,8 @@ type: d4
 lookups:
   wrong-prefix-lookup:
     pillar: d1
-    selectors: []
+    selectors:
+      - query: { id: "d1-valid" }
 """,
         encoding="utf-8",
     )
@@ -231,6 +232,79 @@ lookups:
     assert result.exit_code != 0
     mock_deps.lint_error.assert_any_call(
         "linter.lookup.invalid_prefix", key="wrong-prefix-lookup", prefix="d1l-"
+    )
+
+
+def test_lint_d4_empty_selectors_error(setup_lint_environment, mock_deps):
+    """测试当 Lookup 未配置任何选择器规则时，Linter 触发报错。"""
+    lib_path, _ = setup_lint_environment
+    (lib_path / "d4" / "empty_sel.yaml").write_text(
+        """
+type: d4
+lookups:
+  d1l-empty:
+    pillar: d1
+    selectors: []
+""",
+        encoding="utf-8",
+    )
+    result = runner.invoke(app, ["lint"])
+    assert result.exit_code != 0
+    mock_deps.lint_error.assert_any_call(
+        "linter.lookup.empty_selectors", key="d1l-empty"
+    )
+
+
+def test_lint_d4_explicit_atom_id_not_found_error(setup_lint_environment, mock_deps):
+    """测试当选择器显式指定的原子 ID 不存在时，Linter 触发报错。"""
+    lib_path, _ = setup_lint_environment
+    (lib_path / "d4" / "ghost_atom.yaml").write_text(
+        """
+type: d4
+lookups:
+  d1l-ghost:
+    pillar: d1
+    selectors:
+      - query: { id: "ghost-atom-does-not-exist" }
+""",
+        encoding="utf-8",
+    )
+    result = runner.invoke(app, ["lint"])
+    assert result.exit_code != 0
+    mock_deps.lint_error.assert_any_call(
+        "linter.lookup.atom_not_found",
+        key="d1l-ghost",
+        atom_id="ghost-atom-does-not-exist",
+    )
+
+
+def test_lint_d4_predicate_no_match_warning(setup_lint_environment, mock_deps):
+    """测试当选择器通过 domain 谓词过滤但命中 0 个原子时，Linter 给出空载告警。"""
+    _, manifests_path = setup_lint_environment
+    lib_path = setup_lint_environment[0]
+
+    (manifests_path / "valid_agent.yaml").write_text("""
+name: Valid Agent
+imports:
+  - lookup: d3l-core-safety
+  - lookup: alpha::d1l-public-alpha
+""")
+
+    (lib_path / "d4" / "unmatched.yaml").write_text(
+        """
+type: d4
+lookups:
+  d1l-unmatched:
+    pillar: d1
+    selectors:
+      - query: { domain: ["non_existent_domain_xyz"] }
+""",
+        encoding="utf-8",
+    )
+    result = runner.invoke(app, ["lint"])
+    assert result.exit_code == 0
+    mock_deps.warn.assert_any_call(
+        "linter.lookup.no_atoms_matched", key="d1l-unmatched"
     )
 
 

@@ -192,3 +192,41 @@ def test_package_with_identical_public_export_and_internal_lookup(setup_isolatio
     # 3. 验证公开接口通过 evaluate_lookup 解析其 ref: d3l-development-protocol 能命中内部实现并求值出底层原子
     matched_atom_ids = evaluate_lookup(library, pub_lookup, interfaces)
     assert "d3-workflow-atom" in matched_atom_ids
+
+
+def test_evaluate_lookup_strictly_respects_pillar(tmp_path: Path):
+    """验证当 query 仅包含 domain 时，evaluate_lookup 严格受限于 lookup 的 pillar，不会泄露其他 pillar 原子。"""
+    lib_path = tmp_path / "lib_pillar"
+    lib_path.mkdir()
+
+    # D1 原子，domain 包含 reasoning
+    (lib_path / "d1_atom.md").write_text(
+        "---\nid: d1-reasoning\ntype: d1\ndomain: ['reasoning']\n---\nD1 content",
+        encoding="utf-8",
+    )
+    # D2 原子，同样 domain 包含 reasoning
+    (lib_path / "d2_atom.md").write_text(
+        "---\nid: d2-reasoning\ntype: d2\ndomain: ['reasoning']\n---\nD2 content",
+        encoding="utf-8",
+    )
+
+    repo = FSLibraryRepository()
+    library = repo.load_library([lib_path])
+
+    # 1. 以 d1l (pillar: d1) 查询 domain: ['reasoning']
+    d1_lookup_def = {
+        "pillar": "d1",
+        "selectors": [{"query": {"domain": ["reasoning"]}}],
+    }
+    d1_matched = evaluate_lookup(library, d1_lookup_def, {})
+    assert "d1-reasoning" in d1_matched
+    assert "d2-reasoning" not in d1_matched
+
+    # 2. 以 d2l (pillar: d2) 查询 domain: ['reasoning']
+    d2_lookup_def = {
+        "pillar": "d2",
+        "selectors": [{"query": {"domain": ["reasoning"]}}],
+    }
+    d2_matched = evaluate_lookup(library, d2_lookup_def, {})
+    assert "d2-reasoning" in d2_matched
+    assert "d1-reasoning" not in d2_matched

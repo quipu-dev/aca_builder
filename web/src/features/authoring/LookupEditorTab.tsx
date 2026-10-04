@@ -348,22 +348,37 @@ export function LookupEditorTab({
       setSaveStatus('已保存');
       setIsModified(false);
       setTabDirty(tabId, false);
-      clearSnapshot(tabId);
-      onSaved?.();
 
       // 统一区分公开与私有的全局唯一 Tab ID 与 LookupKey
       const fullTargetKey = isPublic
         ? `${pkgName}::${pillar}l-${cleanSuffix}`
         : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
+      const newTabId = `lookup:${fullTargetKey}`;
+
+      // 关键修复：预先以新 Tab ID 写入快照，杜绝重挂载时异步 packages 尚未返回导致空 selectors 覆写
+      saveSnapshot(newTabId, {
+        pkgName,
+        isPublic,
+        pillar,
+        rawKeyName: cleanSuffix,
+        description: description.trim(),
+        selectors,
+        rightView,
+        isModified: false,
+      });
+
       if (isDraft) {
+        clearSnapshot(tabId);
         replaceTab(tabId, {
-          id: `lookup:${fullTargetKey}`,
+          id: newTabId,
           type: 'lookup',
           title: `${pillar}l-${cleanSuffix}`,
           closable: true,
           lookupKey: fullTargetKey,
         });
       }
+
+      onSaved?.();
       setTimeout(() => setSaveStatus(''), 2500);
     } catch (err: unknown) {
       setSaveStatus(`保存失败: ${err instanceof Error ? err.message : '异常'}`);
@@ -375,14 +390,81 @@ export function LookupEditorTab({
     pillar,
     isPublic,
     description,
+    rightView,
     tabId,
     setTabDirty,
+    saveSnapshot,
     clearSnapshot,
     onSaved,
     isDraft,
     replaceTab,
     saveLookupMutation,
   ]);
+
+  const handleVisibilityChange = async (nextPublic: boolean) => {
+    setIsPublic(nextPublic);
+    markDirty();
+
+    // 如果是已存在的接口且具备合法名称，在切换契约的瞬间执行迁移与左侧树刷新
+    const cleanSuffix = rawKeyName
+      .trim()
+      .toLowerCase()
+      .replace(/^d[1-3]l-/, '')
+      .replace(/[^a-z0-9_-]/g, '-');
+
+    if (!isDraft && cleanSuffix && selectors.length > 0) {
+      try {
+        setSaveStatus('正在更新可见性...');
+        await saveLookupMutation.mutateAsync({
+          package: pkgName,
+          key: `${pillar}l-${cleanSuffix}`,
+          pillar,
+          is_public: nextPublic,
+          description: description.trim(),
+          selectors: selectors as Array<Record<string, unknown>>,
+        });
+
+        const oldTabId = tabId;
+        const fullTargetKey = nextPublic
+          ? `${pkgName}::${pillar}l-${cleanSuffix}`
+          : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
+        const newTabId = `lookup:${fullTargetKey}`;
+
+        saveSnapshot(newTabId, {
+          pkgName,
+          isPublic: nextPublic,
+          pillar,
+          rawKeyName: cleanSuffix,
+          description: description.trim(),
+          selectors,
+          rightView,
+          isModified: false,
+        });
+
+        if (oldTabId !== newTabId) {
+          clearSnapshot(oldTabId);
+          replaceTab(oldTabId, {
+            id: newTabId,
+            type: 'lookup',
+            title: `${pillar}l-${cleanSuffix}`,
+            closable: true,
+            lookupKey: fullTargetKey,
+          });
+        }
+
+        setIsModified(false);
+        setTabDirty(newTabId, false);
+        setSaveStatus('已更新可见性');
+        onSaved?.();
+        toast.success(nextPublic ? '已迁移为公开导出接口' : '已迁移为内部私有查找');
+        setTimeout(() => setSaveStatus(''), 2500);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : '更新可见性失败';
+        setSaveStatus(`失败: ${msg}`);
+        toast.error(msg);
+      }
+    }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -513,10 +595,7 @@ export function LookupEditorTab({
                     <select
                       id="lookup-visibility"
                       value={isPublic ? 'public' : 'private'}
-                      onChange={(e) => {
-                        setIsPublic(e.target.value === 'public');
-                        markDirty();
-                      }}
+                      onChange={(e) => handleVisibilityChange(e.target.value === 'public')}
                       className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
                     >
                       <option value="public">公开导出 (package.yaml exports)</option>

@@ -26389,18 +26389,29 @@ function LookupEditorTab({
       setSaveStatus("已保存");
       setIsModified(false);
       setTabDirty(tabId, false);
-      clearSnapshot(tabId);
-      onSaved == null ? void 0 : onSaved();
       const fullTargetKey = isPublic ? `${pkgName}::${pillar}l-${cleanSuffix}` : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
+      const newTabId = `lookup:${fullTargetKey}`;
+      saveSnapshot(newTabId, {
+        pkgName,
+        isPublic,
+        pillar,
+        rawKeyName: cleanSuffix,
+        description: description.trim(),
+        selectors,
+        rightView,
+        isModified: false
+      });
       if (isDraft) {
+        clearSnapshot(tabId);
         replaceTab(tabId, {
-          id: `lookup:${fullTargetKey}`,
+          id: newTabId,
           type: "lookup",
           title: `${pillar}l-${cleanSuffix}`,
           closable: true,
           lookupKey: fullTargetKey
         });
       }
+      onSaved == null ? void 0 : onSaved();
       setTimeout(() => setSaveStatus(""), 2500);
     } catch (err) {
       setSaveStatus(`保存失败: ${err instanceof Error ? err.message : "异常"}`);
@@ -26412,14 +26423,67 @@ function LookupEditorTab({
     pillar,
     isPublic,
     description,
+    rightView,
     tabId,
     setTabDirty,
+    saveSnapshot,
     clearSnapshot,
     onSaved,
     isDraft,
     replaceTab,
     saveLookupMutation
   ]);
+  const handleVisibilityChange = async (nextPublic) => {
+    setIsPublic(nextPublic);
+    markDirty();
+    const cleanSuffix = rawKeyName.trim().toLowerCase().replace(/^d[1-3]l-/, "").replace(/[^a-z0-9_-]/g, "-");
+    if (!isDraft && cleanSuffix && selectors.length > 0) {
+      try {
+        setSaveStatus("正在更新可见性...");
+        await saveLookupMutation.mutateAsync({
+          package: pkgName,
+          key: `${pillar}l-${cleanSuffix}`,
+          pillar,
+          is_public: nextPublic,
+          description: description.trim(),
+          selectors
+        });
+        const oldTabId = tabId;
+        const fullTargetKey = nextPublic ? `${pkgName}::${pillar}l-${cleanSuffix}` : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
+        const newTabId = `lookup:${fullTargetKey}`;
+        saveSnapshot(newTabId, {
+          pkgName,
+          isPublic: nextPublic,
+          pillar,
+          rawKeyName: cleanSuffix,
+          description: description.trim(),
+          selectors,
+          rightView,
+          isModified: false
+        });
+        if (oldTabId !== newTabId) {
+          clearSnapshot(oldTabId);
+          replaceTab(oldTabId, {
+            id: newTabId,
+            type: "lookup",
+            title: `${pillar}l-${cleanSuffix}`,
+            closable: true,
+            lookupKey: fullTargetKey
+          });
+        }
+        setIsModified(false);
+        setTabDirty(newTabId, false);
+        setSaveStatus("已更新可见性");
+        onSaved == null ? void 0 : onSaved();
+        toast.success(nextPublic ? "已迁移为公开导出接口" : "已迁移为内部私有查找");
+        setTimeout(() => setSaveStatus(""), 2500);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "更新可见性失败";
+        setSaveStatus(`失败: ${msg}`);
+        toast.error(msg);
+      }
+    }
+  };
   const handleKeyDown = (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "s") {
       e.preventDefault();
@@ -26539,10 +26603,7 @@ function LookupEditorTab({
                       {
                         id: "lookup-visibility",
                         value: isPublic ? "public" : "private",
-                        onChange: (e) => {
-                          setIsPublic(e.target.value === "public");
-                          markDirty();
-                        },
+                        onChange: (e) => handleVisibilityChange(e.target.value === "public"),
                         className: "w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500",
                         children: [
                           /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "public", children: "公开导出 (package.yaml exports)" }),
@@ -29161,21 +29222,46 @@ function App() {
     ideStore.closeTab(tab2.id);
   };
   const handleProblemClick = (issue) => {
-    const text2 = `${issue.code} ${issue.message}`;
-    const atomMatch = text2.match(/\b(d[1-3]-[a-zA-Z0-9_-]+)\b/);
-    if (atomMatch) {
-      handleOpenAtomTab(atomMatch[1]);
+    const msg = issue.message;
+    if (issue.code.startsWith("linter.lookup.")) {
+      const lookupMatch = msg.match(/Lookup '([^']+)'/);
+      if (lookupMatch) {
+        handleOpenLookupTab(lookupMatch[1]);
+        return;
+      }
+      const atomLeadMatch = msg.match(/^([a-zA-Z0-9_-]+):/);
+      if (atomLeadMatch) {
+        handleOpenAtomTab(atomLeadMatch[1]);
+        return;
+      }
+    }
+    if (issue.code.startsWith("linter.manifest.")) {
+      const manifestMatch = msg.match(/Manifest '([^']+)'/);
+      if (manifestMatch) {
+        handleOpenManifestTab(manifestMatch[1]);
+        return;
+      }
+    }
+    if (issue.code.startsWith("linter.atom.")) {
+      const atomMatch = msg.match(/^([a-zA-Z0-9_-]+)/);
+      if (atomMatch) {
+        handleOpenAtomTab(atomMatch[1]);
+        return;
+      }
+    }
+    const lookupFallback = msg.match(/Lookup '([^']+)'/);
+    if (lookupFallback) {
+      handleOpenLookupTab(lookupFallback[1]);
       return;
     }
-    const manifestMatch = text2.match(/Manifest '([^']+)'/);
-    if (manifestMatch) {
-      handleOpenManifestTab(manifestMatch[1]);
+    const manifestFallback = msg.match(/Manifest '([^']+)'/);
+    if (manifestFallback) {
+      handleOpenManifestTab(manifestFallback[1]);
       return;
     }
-    const lookupMatch = text2.match(/Lookup '([^']+)'/);
-    if (lookupMatch) {
-      const lKey = lookupMatch[1];
-      handleOpenLookupTab(lKey);
+    const atomFallback = msg.match(/\b(d[1-3]-[a-zA-Z0-9_-]+)\b/);
+    if (atomFallback) {
+      handleOpenAtomTab(atomFallback[1]);
     }
   };
   const handleCreateNewAtomDraft = () => {

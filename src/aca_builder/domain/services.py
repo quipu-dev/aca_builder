@@ -119,10 +119,21 @@ def evaluate_lookup(
 
     results = set()
     selectors = lookup_def.get("selectors", [])
+    pillar = lookup_def.get("pillar")
 
     for sel in selectors:
         if "query" in sel:
-            results.update(select_atoms_by_query(library, sel["query"]))
+            query = dict(sel["query"])
+            if pillar and "type" not in query:
+                query["type"] = pillar
+            matched = select_atoms_by_query(library, query)
+            if pillar:
+                matched = {
+                    aid
+                    for aid in matched
+                    if library.get(aid, {}).get("meta", {}).get("type") == pillar
+                }
+            results.update(matched)
 
         if "ref" in sel:
             ref_key = sel["ref"]
@@ -138,9 +149,16 @@ def evaluate_lookup(
 
             new_visited = visited.copy()
             new_visited.add(ref_key)
-            results.update(
-                evaluate_lookup(library, target_lookup, interfaces, new_visited)
+            ref_results = evaluate_lookup(
+                library, target_lookup, interfaces, new_visited
             )
+            if pillar:
+                ref_results = {
+                    aid
+                    for aid in ref_results
+                    if library.get(aid, {}).get("meta", {}).get("type") == pillar
+                }
+            results.update(ref_results)
 
     return results
 

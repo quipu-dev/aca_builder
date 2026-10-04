@@ -82,6 +82,59 @@ def test_delete_public_and_private_lookup(setup_crud_env):
     assert "d1l-private-crud" not in d4_yaml.get("lookups", {})
 
 
+def test_lookup_visibility_migration_cleans_old_definition(setup_crud_env):
+    """验证当将一个接口从私有改为公开（或公开改为私有）时，后端能彻底清理旧位置文件，不留残余。"""
+    client, _, pkg_dir = setup_crud_env
+
+    # 1. 将现有的私有接口 d1l-private-crud 改为公开导出
+    res_migrate_to_pub = client.post(
+        "/api/lookups",
+        json={
+            "package": "pkg_crud",
+            "key": "d1l-private-crud",
+            "pillar": "d1",
+            "is_public": True,
+            "description": "Migrated to public",
+            "selectors": [{"query": {"id": "d1-crud-atom"}}],
+        },
+    )
+    assert res_migrate_to_pub.status_code == 200
+
+    # 验证 package.yaml 出现了新公开接口
+    pkg_yaml = yaml.safe_load((pkg_dir / "package.yaml").read_text(encoding="utf-8"))
+    assert "d1l-private-crud" in pkg_yaml.get("exports", {})
+
+    # 验证 d4/lookups.yaml 中的旧定义已被物理删除
+    d4_yaml = yaml.safe_load(
+        (pkg_dir / "d4" / "lookups.yaml").read_text(encoding="utf-8")
+    )
+    assert "d1l-private-crud" not in d4_yaml.get("lookups", {})
+
+    # 2. 将公开接口 d1l-public-crud 改为内部私有
+    res_migrate_to_priv = client.post(
+        "/api/lookups",
+        json={
+            "package": "pkg_crud",
+            "key": "d1l-public-crud",
+            "pillar": "d1",
+            "is_public": False,
+            "description": "Migrated to private",
+            "selectors": [{"query": {"id": "d1-crud-atom"}}],
+        },
+    )
+    assert res_migrate_to_priv.status_code == 200
+
+    # 验证 d4/lookups.yaml 出现私有定义
+    d4_yaml_2 = yaml.safe_load(
+        (pkg_dir / "d4" / "lookups.yaml").read_text(encoding="utf-8")
+    )
+    assert "d1l-public-crud" in d4_yaml_2.get("lookups", {})
+
+    # 验证 package.yaml 的 exports 中已被物理清理
+    pkg_yaml_2 = yaml.safe_load((pkg_dir / "package.yaml").read_text(encoding="utf-8"))
+    assert "d1l-public-crud" not in pkg_yaml_2.get("exports", {})
+
+
 def test_delete_atom_file(setup_crud_env):
     client, _, pkg_dir = setup_crud_env
     atom_file = pkg_dir / "d1" / "atom.md"
