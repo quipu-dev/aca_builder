@@ -27,6 +27,11 @@ class CreatePackageRequest(BaseModel):
     workspace_path: str | None = None
 
 
+class UpdatePackageRequest(BaseModel):
+    version: str | None = None
+    description: str | None = None
+
+
 @router.get("/packages")
 def get_packages(x_aca_workspace: str | None = Header(None)) -> dict[str, Any]:
     """获取当前工作区所有已加载的 package 与 lookup 接口定义"""
@@ -67,6 +72,8 @@ def get_assets_overview(x_aca_workspace: str | None = Header(None)) -> dict[str,
                     if p_name not in packages_map:
                         packages_map[p_name] = {
                             "name": p_name,
+                            "version": str(pkg_data.get("version", "1.0.0")),
+                            "description": str(pkg_data.get("description", "")),
                             "workspace": ws_id,
                             "workspace_path": str(pkg_file.parent.resolve()),
                             "exports": {},
@@ -236,6 +243,49 @@ def create_package(
         return {"status": "ok", "package": req.name, "path": str(pkg_dir)}
     except OSError as e:
         raise HTTPException(status_code=500, detail=f"创建组件包失败: {e}")
+
+
+@router.put("/packages/{package_name}")
+def update_package(
+    package_name: str,
+    req: UpdatePackageRequest,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, Any]:
+    """更新组件包的基础元数据（版本、描述等）"""
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    _, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
+    if not library_paths:
+        raise HTTPException(status_code=400, detail="当前工作区未配置知识库路径")
+
+    target_pkg_dir, target_pkg_yaml = find_package_dir_and_yaml(
+        library_paths, package_name
+    )
+    if not target_pkg_dir or not target_pkg_yaml or not target_pkg_yaml.exists():
+        raise HTTPException(
+            status_code=404, detail=f"未找到组件包 '{package_name}' 的配置文件"
+        )
+
+    try:
+        pkg_data = yaml.safe_load(target_pkg_yaml.read_text(encoding="utf-8")) or {}
+        if req.version is not None:
+            pkg_data["version"] = req.version.strip()
+        if req.description is not None:
+            pkg_data["description"] = req.description.strip()
+
+        target_pkg_yaml.write_text(
+            yaml.safe_dump(pkg_data, sort_keys=False, allow_unicode=True),
+            encoding="utf-8",
+        )
+        broadcast_change("LIBRARY_DIRTY")
+        return {
+            "status": "ok",
+            "package": package_name,
+            "version": pkg_data.get("version"),
+            "description": pkg_data.get("description"),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"更新组件包失败: {e}")
 
 
 @router.delete("/packages/{package_name}")

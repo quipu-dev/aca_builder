@@ -1,5 +1,7 @@
 import {
   fetchAtomDetail,
+  fetchAtomReferences,
+  renameAtomApi,
   useCreateAtomMutation,
   useDeleteAtomMutation,
   useUpdateAtomMutation,
@@ -7,6 +9,7 @@ import {
 import { openInObsidian } from '@/api/system';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
 import { toast } from '@/components/ui/toast';
 import { useIdeStore } from '@/stores/ide-store';
 import { generateIdSuffix } from '@/utils/ulid';
@@ -82,6 +85,13 @@ export function AtomEditorTab({
   const [isModified, setIsModified] = useState(false);
   const [confirmDeleting, setConfirmDeleting] = useState(false);
 
+  // 重命名与引用状态
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [renameInput, setRenameInput] = useState('');
+  const [cascadeRename, setCascadeRename] = useState(true);
+  const [renaming, setRenaming] = useState(false);
+  const [referenceCount, setReferenceCount] = useState<number | null>(null);
+
   // Mutations
   const createAtomMutation = useCreateAtomMutation();
   const updateAtomMutation = useUpdateAtomMutation();
@@ -110,12 +120,19 @@ export function AtomEditorTab({
         setContent(data.content || '');
         setIsModified(false);
         setTabDirty(tabId, false);
+
+        // 加载被引用数
+        if (!isKernel) {
+          fetchAtomReferences(atomId)
+            .then((refRes) => setReferenceCount(refRes.reference_count))
+            .catch(() => {});
+        }
       })
       .catch((err) => {
         setErrorMsg(err.message || '加载异常');
       })
       .finally(() => setLoading(false));
-  }, [atomId, isDraft, setTabDirty, tabId]);
+  }, [atomId, isDraft, isKernel, setTabDirty, tabId]);
 
   const markDirty = () => {
     if (!isModified) {
@@ -258,8 +275,49 @@ export function AtomEditorTab({
     updateAtomMutation,
   ]);
 
+  const handleOpenRename = () => {
+    setRenameInput(currentId);
+    setIsRenameModalOpen(true);
+  };
+
+  const handleConfirmRename = async () => {
+    const clean = renameInput.trim();
+    if (!clean || clean === currentId) {
+      setIsRenameModalOpen(false);
+      return;
+    }
+    setRenaming(true);
+    try {
+      const res = await renameAtomApi(currentId, clean, cascadeRename);
+      const countMsg = res.cascaded_lookups_count
+        ? ` (已同步更新 ${res.cascaded_lookups_count} 处 Lookup 选择器)`
+        : '';
+      toast.success(`原子已重命名为 "${clean}"${countMsg}`);
+      setIsRenameModalOpen(false);
+      onSaved?.();
+      replaceTab(tabId, {
+        id: `atom:${clean}`,
+        type: 'atom',
+        title: clean,
+        closable: true,
+        atomId: clean,
+      });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : '重命名失败');
+    } finally {
+      setRenaming(false);
+    }
+  };
+
   const handleDelete = async (e?: React.MouseEvent) => {
     if (isDraft) return;
+    if (referenceCount && referenceCount > 0 && !e?.shiftKey && !confirmDeleting) {
+      const confirmForce = window.confirm(
+        `警告：当前原子正被 ${referenceCount} 个 Lookup 接口引用！\n删除可能导致这些接口解析为空集合。确定要删除吗？`,
+      );
+      if (!confirmForce) return;
+    }
+
     if (e?.shiftKey || confirmDeleting) {
       setConfirmDeleting(false);
       try {
@@ -356,6 +414,24 @@ export function AtomEditorTab({
           </Badge>
           <span className="font-semibold text-slate-100 truncate">{atomId}</span>
           <span className="text-[11px] text-slate-500 truncate">@{pkgName}</span>
+          {!isDraft && !isKernel && (
+            <button
+              type="button"
+              onClick={handleOpenRename}
+              className="text-[11px] text-indigo-400 hover:text-indigo-300 hover:underline cursor-pointer ml-1"
+              title="重命名原子标识符并移动文件"
+            >
+              [重命名]
+            </button>
+          )}
+          {typeof referenceCount === 'number' && referenceCount > 0 && (
+            <span
+              className="text-[10px] text-amber-400 bg-amber-950/60 border border-amber-800/80 px-1.5 py-0.2 rounded"
+              title={`当前有 ${referenceCount} 个 Lookup 引用该原子`}
+            >
+              {referenceCount} 处引用
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
@@ -635,6 +711,56 @@ export function AtomEditorTab({
           className="text-xs font-mono h-full"
         />
       </div>
+
+      <Modal
+        isOpen={isRenameModalOpen}
+        onClose={() => setIsRenameModalOpen(false)}
+        title={`重命名原子: ${currentId}`}
+      >
+        <div className="space-y-4 text-xs font-mono">
+          <div>
+            <label htmlFor="atom-rename-input" className="block text-slate-400 mb-1">
+              新原子标识符 (ID)
+            </label>
+            <input
+              id="atom-rename-input"
+              type="text"
+              value={renameInput}
+              onChange={(e) => setRenameInput(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 font-mono"
+            />
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                id="atom-cascade-check"
+                type="checkbox"
+                checked={cascadeRename}
+                onChange={(e) => setCascadeRename(e.target.checked)}
+                className="rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-0"
+              />
+              <label
+                htmlFor="atom-cascade-check"
+                className="text-slate-300 text-[11px] cursor-pointer"
+              >
+                级联同步更新所有显式引用该 ID 的 Lookup 选择器
+              </label>
+            </div>
+            <span className="text-[10px] text-slate-500 mt-1 block">
+              重命名将物理重命名磁盘文件、更新 Frontmatter ID，并可选传播至所有关联接口。
+            </span>
+          </div>
+          <div className="pt-2 flex justify-end gap-2 font-sans">
+            <Button variant="ghost" onClick={() => setIsRenameModalOpen(false)}>
+              取消
+            </Button>
+            <Button
+              onClick={handleConfirmRename}
+              disabled={renaming || !renameInput.trim() || renameInput.trim() === currentId}
+            >
+              {renaming ? '重命名中...' : '确认重命名'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

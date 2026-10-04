@@ -34,6 +34,11 @@ class UpdateAtomRequest(BaseModel):
     meta: dict[str, Any] | None = None
 
 
+class RenameAtomRequest(BaseModel):
+    new_id: str
+    cascade: bool = True
+
+
 @router.post("/atoms")
 def create_atom(
     req: CreateAtomRequest,
@@ -207,3 +212,218 @@ def delete_atom(
         return {"status": "ok", "deleted": atom_id}
     except OSError as e:
         raise HTTPException(status_code=500, detail=f"删除原子失败: {e}")
+
+
+@router.post("/atoms/{atom_id}/rename")
+def rename_atom(
+    atom_id: str,
+    req: RenameAtomRequest,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, Any]:
+    """重命名原子组件：校验唯一性、更新 Frontmatter ID 并物理重命名 Markdown 文件"""
+    if atom_id == "kernel":
+        raise HTTPException(status_code=400, detail="Kernel 核心协议原子不允许重命名")
+
+    clean_new_id = req.new_id.strip()
+    if not clean_new_id:
+        raise HTTPException(status_code=400, detail="新原子标识符不能为空")
+
+    if clean_new_id == atom_id:
+        return {"status": "ok", "id": atom_id}
+
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
+    library = lib_repo.load_library(library_paths, fail_fast=False)
+
+    atom = library.get(atom_id)
+    if not atom:
+        raise HTTPException(status_code=404, detail=f"Atom '{atom_id}' not found")
+
+    if clean_new_id in library:
+        raise HTTPException(
+            status_code=400,
+            detail=f"目标原子标识符 '{clean_new_id}' 已在当前工作区存在",
+        )
+
+    source_path = Path(atom["source_file"])
+    dest_path = source_path.parent / f"{clean_new_id}.md"
+
+    if dest_path.exists():
+        raise HTTPException(
+            status_code=400,
+            detail=f"目标物理文件 '{dest_path.name}' 已存在",
+        )
+
+    try:
+        raw_text = source_path.read_text(encoding="utf-8")
+        parts = raw_text.split("---", 2)
+        if len(parts) >= 3 and parts[0].strip() == "":
+            try:
+                meta = yaml.safe_load(parts[1]) or {}
+            except Exception:
+                meta = atom.get("meta", {})
+            content = parts[2].strip()
+        else:
+            meta = atom.get("meta", {})
+            content = atom.get("content", "")
+
+        meta["id"] = clean_new_id
+        meta_yaml = yaml.safe_dump(meta, sort_keys=False, allow_unicode=True).strip()
+        new_full = f"---\n{meta_yaml}\n---\n\n{content}\n"
+
+        dest_path.write_text(new_full, encoding="utf-8")
+        source_path.unlink()
+
+        # 级联更新所有 Lookups 中的原子 ID 引用
+        cascaded_lookups_count = 0
+        if req.cascade:
+            for lib_root in library_paths:
+                if not lib_root.exists():
+                    continue
+                # 1. 更新 package.yaml 中的 exports
+                for pkg_file in lib_root.rglob("package.yaml"):
+                    try:
+                        pkg_content = (
+                            yaml.safe_load(pkg_file.read_text(encoding="utf-8")) or {}
+                        )
+                        exports = pkg_content.get("exports") or {}
+                        if not isinstance(exports, dict):
+                            continue
+                        pkg_modified = False
+                        for ldef in exports.values():
+                            if not isinstance(ldef, dict):
+                                continue
+                            for sel in ldef.get("selectors") or []:
+                                if (
+                                    isinstance(sel, dict)
+                                    and isinstance(sel.get("query"), dict)
+                                    and sel["query"].get("id") == atom_id
+                                ):
+                                    sel["query"]["id"] = clean_new_id
+                                    pkg_modified = True
+                                    cascaded_lookups_count += 1
+                        if pkg_modified:
+                            pkg_file.write_text(
+                                yaml.safe_dump(
+                                    pkg_content, sort_keys=False, allow_unicode=True
+                                ),
+                                encoding="utf-8",
+                            )
+                    except (yaml.YAMLError, OSError, KeyError):
+                        pass
+
+                # 2. 更新 d4/*.yaml 中的内部私有 lookups
+                for d4_file in lib_root.glob("**/d4/*.yaml"):
+                    try:
+                        d4_content = (
+                            yaml.safe_load(d4_file.read_text(encoding="utf-8")) or {}
+                        )
+                        if (
+                            isinstance(d4_content, dict)
+                            and d4_content.get("type") == "d4"
+                        ):
+                            lookups = d4_content.get("lookups") or {}
+                            if not isinstance(lookups, dict):
+                                continue
+                            d4_modified = False
+                            for ldef in lookups.values():
+                                if not isinstance(ldef, dict):
+                                    continue
+                                for sel in ldef.get("selectors") or []:
+                                    if (
+                                        isinstance(sel, dict)
+                                        and isinstance(sel.get("query"), dict)
+                                        and sel["query"].get("id") == atom_id
+                                    ):
+                                        sel["query"]["id"] = clean_new_id
+                                        d4_modified = True
+                                        cascaded_lookups_count += 1
+                            if d4_modified:
+                                d4_file.write_text(
+                                    yaml.safe_dump(
+                                        d4_content, sort_keys=False, allow_unicode=True
+                                    ),
+                                    encoding="utf-8",
+                                )
+                    except (yaml.YAMLError, OSError, KeyError):
+                        pass
+
+        broadcast_change("LIBRARY_DIRTY")
+        return {
+            "status": "ok",
+            "old_id": atom_id,
+            "new_id": clean_new_id,
+            "file": str(dest_path),
+            "cascaded_lookups_count": cascaded_lookups_count,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"重命名原子失败: {e}")
+
+
+@router.get("/atoms/{atom_id}/references")
+def get_atom_references(
+    atom_id: str,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, Any]:
+    """反向探测所有通过精确 ID 引用该原子的 Lookup 列表及 Manifest 蓝图（用于安全预检）"""
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, _man_repo, _, _, ws_cfg = _bootstrap(ws_id)
+    interfaces = lib_repo.load_interfaces(ws_cfg.library_paths)
+    manifest_paths = ws_cfg.manifest_paths
+
+    referenced_lookups = []
+    all_lookups = interfaces.get("lookups", {})
+
+    for lkey, ldef in all_lookups.items():
+        selectors = ldef.get("selectors", [])
+        for sel in selectors:
+            if (
+                isinstance(sel, dict)
+                and "query" in sel
+                and sel["query"].get("id") == atom_id
+            ):
+                referenced_lookups.append(
+                    {
+                        "key": lkey,
+                        "package": ldef.get("package"),
+                        "visibility": ldef.get("visibility"),
+                        "pillar": ldef.get("pillar"),
+                    }
+                )
+                break
+
+    referenced_manifests = []
+    for base_path in manifest_paths:
+        if not base_path.is_dir():
+            continue
+        for m_file in base_path.rglob("*.yaml"):
+            try:
+                m_data = yaml.safe_load(m_file.read_text(encoding="utf-8"))
+                if not isinstance(m_data, dict):
+                    continue
+                imports = m_data.get("imports", [])
+                for imp in imports:
+                    if (
+                        isinstance(imp, dict)
+                        and "query" in imp
+                        and imp["query"].get("id") == atom_id
+                    ):
+                        rel_name = str(m_file.relative_to(base_path).with_suffix(""))
+                        referenced_manifests.append(
+                            {
+                                "name": rel_name,
+                                "file": str(m_file),
+                            }
+                        )
+                        break
+            except (yaml.YAMLError, OSError, KeyError):
+                pass
+
+    total_ref = len(referenced_lookups) + len(referenced_manifests)
+    return {
+        "atom_id": atom_id,
+        "reference_count": total_ref,
+        "referenced_by_lookups": referenced_lookups,
+        "referenced_by_manifests": referenced_manifests,
+    }

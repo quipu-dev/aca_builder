@@ -79,6 +79,7 @@ export function LookupEditorTab({
     !isDraft ? cleanRawName.replace(/^d[1-3]l-/, '') : '',
   );
   const [description, setDescription] = useState('');
+  const [initialKey, setInitialKey] = useState(isDraft ? '' : lookupKey);
 
   const [selectors, setSelectors] = useState<SelectorRule[]>([]);
   const [isModified, setIsModified] = useState(false);
@@ -149,6 +150,7 @@ export function LookupEditorTab({
           setDescription(internalDef.description || '');
           setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
           setSelectors((internalDef.selectors as SelectorRule[]) || []);
+          setInitialKey(lookupKey);
           return;
         }
       }
@@ -165,6 +167,7 @@ export function LookupEditorTab({
         setDescription(exportDef.description || '');
         setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
         setSelectors((exportDef.selectors as SelectorRule[]) || []);
+        setInitialKey(lookupKey);
         return;
       }
     }
@@ -268,6 +271,10 @@ export function LookupEditorTab({
 
     setSaveStatus('正在写入...');
     try {
+      const fullTargetKey = isPublic
+        ? `${pkgName}::${pillar}l-${cleanSuffix}`
+        : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
+
       await saveLookupMutation.mutateAsync({
         package: pkgName,
         key: `${pillar}l-${cleanSuffix}`,
@@ -275,15 +282,13 @@ export function LookupEditorTab({
         is_public: isPublic,
         description: description.trim(),
         selectors: selectors as Array<Record<string, unknown>>,
+        old_key: initialKey || undefined,
       });
 
       setSaveStatus('已保存');
       setIsModified(false);
       setTabDirty(tabId, false);
-
-      const fullTargetKey = isPublic
-        ? `${pkgName}::${pillar}l-${cleanSuffix}`
-        : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
+      setInitialKey(fullTargetKey);
       const newTabId = `lookup:${fullTargetKey}`;
 
       if (isDraft) {
@@ -308,6 +313,7 @@ export function LookupEditorTab({
     pillar,
     isPublic,
     description,
+    initialKey,
     tabId,
     setTabDirty,
     onSaved,

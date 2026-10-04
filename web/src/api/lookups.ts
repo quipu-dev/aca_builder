@@ -39,6 +39,13 @@ export interface BuildResponse {
   profile?: ProfileSummary | null;
 }
 
+export interface LookupReferencesResponse {
+  lookup_key: string;
+  referenced_by_atoms: Array<{ id: string; package?: string; source_file?: string }>;
+  referenced_by_manifests: Array<{ name: string; file?: string }>;
+  total_references: number;
+}
+
 export interface SaveLookupPayload {
   package: string;
   key: string;
@@ -46,6 +53,13 @@ export interface SaveLookupPayload {
   is_public: boolean;
   description: string;
   selectors: Array<Record<string, unknown>>;
+  old_key?: string;
+}
+
+export async function fetchLookupReferences(lookupKey: string): Promise<LookupReferencesResponse> {
+  return apiFetch<LookupReferencesResponse>(
+    `/api/lookups/${encodeURIComponent(lookupKey)}/references`,
+  );
 }
 
 export async function evaluateLookupAdhoc(

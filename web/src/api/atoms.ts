@@ -27,8 +27,48 @@ export interface UpdateAtomPayload {
   meta?: Record<string, unknown>;
 }
 
+export interface AtomReferenceItem {
+  key: string;
+  package?: string | null;
+  visibility?: string;
+  pillar?: string;
+}
+
+export interface AtomReferencesResponse {
+  atom_id: string;
+  reference_count: number;
+  referenced_by_lookups: AtomReferenceItem[];
+}
+
 export async function fetchAtomDetail(atomId: string): Promise<AtomDetailResponse> {
   return apiFetch<AtomDetailResponse>(`/api/atoms/${encodeURIComponent(atomId)}`);
+}
+
+export async function fetchAtomReferences(atomId: string): Promise<AtomReferencesResponse> {
+  return apiFetch<AtomReferencesResponse>(`/api/atoms/${encodeURIComponent(atomId)}/references`);
+}
+
+export async function renameAtomApi(
+  atomId: string,
+  newId: string,
+  cascade = true,
+): Promise<{
+  status: string;
+  old_id: string;
+  new_id: string;
+  file: string;
+  cascaded_lookups_count?: number;
+}> {
+  return apiFetch<{
+    status: string;
+    old_id: string;
+    new_id: string;
+    file: string;
+    cascaded_lookups_count?: number;
+  }>(`/api/atoms/${encodeURIComponent(atomId)}/rename`, {
+    method: 'POST',
+    body: JSON.stringify({ new_id: newId, cascade }),
+  });
 }
 
 export function useCreateAtomMutation() {

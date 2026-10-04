@@ -4,6 +4,7 @@ import { TabPane } from '@/components/layout/TabPane';
 import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
 import { CreatePackageModal } from '@/components/modals/CreatePackageModal';
 import { CreateWorkspaceModal } from '@/components/modals/CreateWorkspaceModal';
+import { EditPackageModal } from '@/components/modals/EditPackageModal';
 import { Button } from '@/components/ui/button';
 import { ToastContainer, toast } from '@/components/ui/toast';
 import type { LintIssue } from '@/features/diagnostics/DiagnosticsDrawer';
@@ -55,10 +56,13 @@ export function App() {
   const [status, setStatus] = useState<string>('检测中...');
   const [explorerTab, setExplorerTab] = useState<'manifests' | 'packages'>('manifests');
 
-  // 新建资产 Modal
+  // 新建与编辑资产 Modal
   const [isCreatePkgOpen, setIsCreatePkgOpen] = useState(false);
   const [newPkgName, setNewPkgName] = useState('');
   const [newPkgWs, setNewPkgWs] = useState('');
+
+  const [editingPkg, setEditingPkg] = useState<PackageItem | null>(null);
+  const [isEditPkgOpen, setIsEditPkgOpen] = useState(false);
 
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [targetParentFolder, setTargetParentFolder] = useState('');
@@ -790,6 +794,10 @@ export function App() {
                         onSelectAtom={(atomId, e) => handleOpenAtomTab(atomId, e)}
                         onOpenLookup={(lKey, e) => handleOpenLookupTab(lKey, e)}
                         onCreateKernel={handleCreateKernelDraft}
+                        onEditPackage={(pkg) => {
+                          setEditingPkg(pkg);
+                          setIsEditPkgOpen(true);
+                        }}
                         onDeletePackage={handleDeletePackage}
                         onDeleteLookup={handleDeleteLookup}
                         onDeleteAtom={handleDeleteAtom}
@@ -1125,6 +1133,36 @@ export function App() {
         libraryPaths={currentWsObj?.library_paths}
         onSubmit={submitCreatePackage}
       />
+
+      {editingPkg && (
+        <EditPackageModal
+          isOpen={isEditPkgOpen}
+          onClose={() => {
+            setIsEditPkgOpen(false);
+            setEditingPkg(null);
+          }}
+          packageName={editingPkg.name}
+          initialVersion={editingPkg.version}
+          initialDescription={editingPkg.description}
+          onSubmit={({ version, description }) => {
+            fetch(`/api/packages/${encodeURIComponent(editingPkg.name)}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ version, description }),
+            })
+              .then(async (res) => {
+                if (res.ok) {
+                  toast.success(`组件包 "${editingPkg.name}" 元数据已更新`);
+                  invalidateAll();
+                } else {
+                  const data = await res.json();
+                  toast.error(`更新失败: ${data.detail || res.statusText}`);
+                }
+              })
+              .catch(() => toast.error('更新组件包网络异常'));
+          }}
+        />
+      )}
 
       <CreateFolderModal
         isOpen={isCreateFolderOpen}

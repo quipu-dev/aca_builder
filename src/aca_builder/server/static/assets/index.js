@@ -9388,6 +9388,18 @@ const Search = createLucideIcon("Search", [
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
+const Settings2 = createLucideIcon("Settings2", [
+  ["path", { d: "M20 7h-9", key: "3s1dr2" }],
+  ["path", { d: "M14 17H5", key: "gfn3mx" }],
+  ["circle", { cx: "17", cy: "17", r: "3", key: "18b49y" }],
+  ["circle", { cx: "7", cy: "7", r: "3", key: "dfmy0x" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
 const Settings = createLucideIcon("Settings", [
   [
     "path",
@@ -9709,6 +9721,15 @@ function CommandPalette({
 async function fetchAtomDetail(atomId) {
   return apiFetch(`/api/atoms/${encodeURIComponent(atomId)}`);
 }
+async function fetchAtomReferences(atomId) {
+  return apiFetch(`/api/atoms/${encodeURIComponent(atomId)}/references`);
+}
+async function renameAtomApi(atomId, newId, cascade = true) {
+  return apiFetch(`/api/atoms/${encodeURIComponent(atomId)}/rename`, {
+    method: "POST",
+    body: JSON.stringify({ new_id: newId, cascade })
+  });
+}
 function useCreateAtomMutation() {
   const queryClient2 = useQueryClient();
   return useMutation({
@@ -9781,6 +9802,21 @@ const Button = React$1.forwardRef(
   }
 );
 Button.displayName = "Button";
+function Modal({
+  isOpen,
+  onClose,
+  title,
+  children
+}) {
+  if (!isOpen) return null;
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-between items-center px-4 py-3 border-b border-slate-800 bg-slate-950/50", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-sm font-semibold text-slate-100", children: title }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: onClose, className: "text-slate-500 hover:text-slate-300", children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" }) })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-4", children })
+  ] }) });
+}
 let toastsState = [];
 const listeners = /* @__PURE__ */ new Set();
 function notify() {
@@ -9902,6 +9938,11 @@ function AtomEditorTab({
   );
   const [isModified, setIsModified] = reactExports.useState(false);
   const [confirmDeleting, setConfirmDeleting] = reactExports.useState(false);
+  const [isRenameModalOpen, setIsRenameModalOpen] = reactExports.useState(false);
+  const [renameInput, setRenameInput] = reactExports.useState("");
+  const [cascadeRename, setCascadeRename] = reactExports.useState(true);
+  const [renaming, setRenaming] = reactExports.useState(false);
+  const [referenceCount, setReferenceCount] = reactExports.useState(null);
   const createAtomMutation = useCreateAtomMutation();
   const updateAtomMutation = useUpdateAtomMutation();
   const deleteAtomMutation = useDeleteAtomMutation();
@@ -9926,10 +9967,14 @@ function AtomEditorTab({
       setContent(data.content || "");
       setIsModified(false);
       setTabDirty(tabId, false);
+      if (!isKernel) {
+        fetchAtomReferences(atomId).then((refRes) => setReferenceCount(refRes.reference_count)).catch(() => {
+        });
+      }
     }).catch((err) => {
       setErrorMsg(err.message || "加载异常");
     }).finally(() => setLoading(false));
-  }, [atomId, isDraft, setTabDirty, tabId]);
+  }, [atomId, isDraft, isKernel, setTabDirty, tabId]);
   const markDirty = () => {
     if (!isModified) {
       setIsModified(true);
@@ -10055,8 +10100,45 @@ function AtomEditorTab({
     createAtomMutation,
     updateAtomMutation
   ]);
+  const handleOpenRename = () => {
+    setRenameInput(currentId);
+    setIsRenameModalOpen(true);
+  };
+  const handleConfirmRename = async () => {
+    const clean = renameInput.trim();
+    if (!clean || clean === currentId) {
+      setIsRenameModalOpen(false);
+      return;
+    }
+    setRenaming(true);
+    try {
+      const res = await renameAtomApi(currentId, clean, cascadeRename);
+      const countMsg = res.cascaded_lookups_count ? ` (已同步更新 ${res.cascaded_lookups_count} 处 Lookup 选择器)` : "";
+      toast.success(`原子已重命名为 "${clean}"${countMsg}`);
+      setIsRenameModalOpen(false);
+      onSaved == null ? void 0 : onSaved();
+      replaceTab(tabId, {
+        id: `atom:${clean}`,
+        type: "atom",
+        title: clean,
+        closable: true,
+        atomId: clean
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "重命名失败");
+    } finally {
+      setRenaming(false);
+    }
+  };
   const handleDelete2 = async (e) => {
     if (isDraft) return;
+    if (referenceCount && referenceCount > 0 && !(e == null ? void 0 : e.shiftKey) && !confirmDeleting) {
+      const confirmForce = window.confirm(
+        `警告：当前原子正被 ${referenceCount} 个 Lookup 接口引用！
+删除可能导致这些接口解析为空集合。确定要删除吗？`
+      );
+      if (!confirmForce) return;
+    }
     if ((e == null ? void 0 : e.shiftKey) || confirmDeleting) {
       setConfirmDeleting(false);
       try {
@@ -10144,7 +10226,28 @@ function AtomEditorTab({
             /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[11px] text-slate-500 truncate", children: [
               "@",
               pkgName
-            ] })
+            ] }),
+            !isDraft && !isKernel && /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                type: "button",
+                onClick: handleOpenRename,
+                className: "text-[11px] text-indigo-400 hover:text-indigo-300 hover:underline cursor-pointer ml-1",
+                title: "重命名原子标识符并移动文件",
+                children: "[重命名]"
+              }
+            ),
+            typeof referenceCount === "number" && referenceCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "span",
+              {
+                className: "text-[10px] text-amber-400 bg-amber-950/60 border border-amber-800/80 px-1.5 py-0.2 rounded",
+                title: `当前有 ${referenceCount} 个 Lookup 引用该原子`,
+                children: [
+                  referenceCount,
+                  " 处引用"
+                ]
+              }
+            )
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 shrink-0", children: [
             errorMsg && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[11px] text-rose-400 flex items-center gap-1 font-sans", children: [
@@ -10434,7 +10537,62 @@ function AtomEditorTab({
             },
             className: "text-xs font-mono h-full"
           }
-        ) })
+        ) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
+          Modal,
+          {
+            isOpen: isRenameModalOpen,
+            onClose: () => setIsRenameModalOpen(false),
+            title: `重命名原子: ${currentId}`,
+            children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-4 text-xs font-mono", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "atom-rename-input", className: "block text-slate-400 mb-1", children: "新原子标识符 (ID)" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "input",
+                  {
+                    id: "atom-rename-input",
+                    type: "text",
+                    value: renameInput,
+                    onChange: (e) => setRenameInput(e.target.value),
+                    className: "w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 font-mono"
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-2 flex items-center gap-2", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "input",
+                    {
+                      id: "atom-cascade-check",
+                      type: "checkbox",
+                      checked: cascadeRename,
+                      onChange: (e) => setCascadeRename(e.target.checked),
+                      className: "rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-0"
+                    }
+                  ),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "label",
+                    {
+                      htmlFor: "atom-cascade-check",
+                      className: "text-slate-300 text-[11px] cursor-pointer",
+                      children: "级联同步更新所有显式引用该 ID 的 Lookup 选择器"
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 mt-1 block", children: "重命名将物理重命名磁盘文件、更新 Frontmatter ID，并可选传播至所有关联接口。" })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-2 flex justify-end gap-2 font-sans", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "ghost", onClick: () => setIsRenameModalOpen(false), children: "取消" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  Button,
+                  {
+                    onClick: handleConfirmRename,
+                    disabled: renaming || !renameInput.trim() || renameInput.trim() === currentId,
+                    children: renaming ? "重命名中..." : "确认重命名"
+                  }
+                )
+              ] })
+            ] })
+          }
+        )
       ]
     }
   );
@@ -26075,6 +26233,7 @@ function LookupEditorTab({
     !isDraft ? cleanRawName.replace(/^d[1-3]l-/, "") : ""
   );
   const [description, setDescription] = reactExports.useState("");
+  const [initialKey, setInitialKey] = reactExports.useState(isDraft ? "" : lookupKey);
   const [selectors, setSelectors] = reactExports.useState([]);
   const [isModified, setIsModified] = reactExports.useState(false);
   const preferences = useIdeStore((state) => state.preferences);
@@ -26130,6 +26289,7 @@ function LookupEditorTab({
           setDescription(internalDef.description || "");
           setRawKeyName(rawKey.replace(/^d[1-3]l-/, "") || "");
           setSelectors(internalDef.selectors || []);
+          setInitialKey(lookupKey);
           return;
         }
       }
@@ -26141,6 +26301,7 @@ function LookupEditorTab({
         setDescription(exportDef.description || "");
         setRawKeyName(rawKey.replace(/^d[1-3]l-/, "") || "");
         setSelectors(exportDef.selectors || []);
+        setInitialKey(lookupKey);
         return;
       }
     }
@@ -26220,18 +26381,20 @@ function LookupEditorTab({
     if (!cleanSuffix || selectors.length === 0) return;
     setSaveStatus("正在写入...");
     try {
+      const fullTargetKey = isPublic ? `${pkgName}::${pillar}l-${cleanSuffix}` : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
       await saveLookupMutation.mutateAsync({
         package: pkgName,
         key: `${pillar}l-${cleanSuffix}`,
         pillar,
         is_public: isPublic,
         description: description.trim(),
-        selectors
+        selectors,
+        old_key: initialKey || void 0
       });
       setSaveStatus("已保存");
       setIsModified(false);
       setTabDirty(tabId, false);
-      const fullTargetKey = isPublic ? `${pkgName}::${pillar}l-${cleanSuffix}` : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
+      setInitialKey(fullTargetKey);
       const newTabId = `lookup:${fullTargetKey}`;
       if (isDraft) {
         replaceTab(tabId, {
@@ -26254,6 +26417,7 @@ function LookupEditorTab({
     pillar,
     isPublic,
     description,
+    initialKey,
     tabId,
     setTabDirty,
     onSaved,
@@ -28053,21 +28217,6 @@ const TabPane = reactExports.memo(
     return prev.isActive === next.isActive && prev.tab.id === next.tab.id && prev.tab.isDirty === next.tab.isDirty && prev.tab.title === next.tab.title && prev.packages === next.packages && prev.manifestsCount === next.manifestsCount && prev.onSaved === next.onSaved;
   }
 );
-function Modal({
-  isOpen,
-  onClose,
-  title,
-  children
-}) {
-  if (!isOpen) return null;
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex justify-between items-center px-4 py-3 border-b border-slate-800 bg-slate-950/50", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-sm font-semibold text-slate-100", children: title }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", onClick: onClose, className: "text-slate-500 hover:text-slate-300", children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-4 w-4" }) })
-    ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-4", children })
-  ] }) });
-}
 function CreateFolderModal({
   isOpen,
   onClose,
@@ -28230,6 +28379,63 @@ function CreateWorkspaceModal({
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-2 flex justify-end gap-2 font-sans", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { variant: "ghost", onClick: onClose, children: "取消" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { onClick: handleSubmit, disabled: !wsId.trim() || !wsRoot.trim(), children: "注册工作区" })
+    ] })
+  ] }) });
+}
+function EditPackageModal({
+  isOpen,
+  onClose,
+  packageName,
+  initialVersion = "1.0.0",
+  initialDescription = "",
+  onSubmit
+}) {
+  const [version, setVersion] = reactExports.useState(initialVersion);
+  const [description, setDescription] = reactExports.useState(initialDescription);
+  reactExports.useEffect(() => {
+    setVersion(initialVersion);
+    setDescription(initialDescription);
+  }, [initialVersion, initialDescription]);
+  const handleSubmit = (e) => {
+    e == null ? void 0 : e.preventDefault();
+    onSubmit({
+      version: version.trim() || "1.0.0",
+      description: description.trim()
+    });
+    onClose();
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(Modal, { isOpen, onClose, title: `编辑组件包元数据: ${packageName}`, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleSubmit, className: "space-y-4 text-xs font-mono", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-pkg-version", className: "block text-slate-400 mb-1", children: "版本号 (Version)" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "input",
+        {
+          id: "modal-pkg-version",
+          type: "text",
+          value: version,
+          onChange: (e) => setVersion(e.target.value),
+          className: "w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 font-mono",
+          placeholder: "例如: 1.0.0"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-pkg-desc", className: "block text-slate-400 mb-1", children: "功能描述 (Description)" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "textarea",
+        {
+          id: "modal-pkg-desc",
+          value: description,
+          onChange: (e) => setDescription(e.target.value),
+          rows: 3,
+          className: "w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 font-sans leading-relaxed",
+          placeholder: "说明此组件包的主要职责与契约..."
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-2 flex justify-end gap-2 font-sans", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { type: "button", variant: "ghost", onClick: onClose, children: "取消" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(Button, { type: "submit", children: "保存修改" })
     ] })
   ] }) });
 }
@@ -28545,6 +28751,7 @@ function PackageExplorer({
   onSelectAtom,
   onOpenLookup,
   onCreateKernel,
+  onEditPackage,
   onDeletePackage,
   onDeleteLookup,
   onDeleteAtom
@@ -28626,6 +28833,10 @@ function PackageExplorer({
                     isExp ? /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3.5 w-3.5 text-slate-400 shrink-0" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronRight, { className: "h-3.5 w-3.5 text-slate-400 shrink-0" }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx(Package, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200 truncate", children: pkg.name }),
+                    pkg.version && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[9px] text-slate-500 bg-slate-950 px-1 py-0.2 rounded border border-slate-800", children: [
+                      "v",
+                      pkg.version
+                    ] }),
                     /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-slate-500 ml-auto shrink-0", children: [
                       "(",
                       atomsCount,
@@ -28634,14 +28845,29 @@ function PackageExplorer({
                   ]
                 }
               ),
-              onDeletePackage && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "opacity-0 group-hover:opacity-100 transition-opacity ml-1 shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                ConfirmIconButton,
-                {
-                  onConfirm: (e) => onDeletePackage(pkg.name, e),
-                  title: `删除组件包 ${pkg.name} (Shift+点击快速删除)`,
-                  iconClassName: "h-3.5 w-3.5"
-                }
-              ) })
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "opacity-0 group-hover:opacity-100 transition-opacity ml-1 shrink-0 flex items-center gap-0.5", children: [
+                onEditPackage && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: (e) => {
+                      e.stopPropagation();
+                      onEditPackage(pkg);
+                    },
+                    className: "p-1 rounded text-slate-400 hover:text-indigo-300 hover:bg-slate-800/80 transition-colors",
+                    title: "编辑包版本与说明",
+                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Settings2, { className: "h-3.5 w-3.5" })
+                  }
+                ),
+                onDeletePackage && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  ConfirmIconButton,
+                  {
+                    onConfirm: (e) => onDeletePackage(pkg.name, e),
+                    title: `删除组件包 ${pkg.name} (Shift+点击快速删除)`,
+                    iconClassName: "h-3.5 w-3.5"
+                  }
+                )
+              ] })
             ] }),
             isExp && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-3 pb-2.5 pt-1 space-y-2 border-t border-slate-800/40 bg-slate-950/40", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
@@ -28813,6 +29039,8 @@ function App() {
   const [isCreatePkgOpen, setIsCreatePkgOpen] = reactExports.useState(false);
   const [newPkgName, setNewPkgName] = reactExports.useState("");
   const [newPkgWs, setNewPkgWs] = reactExports.useState("");
+  const [editingPkg, setEditingPkg] = reactExports.useState(null);
+  const [isEditPkgOpen, setIsEditPkgOpen] = reactExports.useState(false);
   const [isCreateFolderOpen, setIsCreateFolderOpen] = reactExports.useState(false);
   const [targetParentFolder, setTargetParentFolder] = reactExports.useState("");
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = reactExports.useState(false);
@@ -29436,6 +29664,10 @@ function App() {
                     onSelectAtom: (atomId, e) => handleOpenAtomTab(atomId, e),
                     onOpenLookup: (lKey, e) => handleOpenLookupTab(lKey, e),
                     onCreateKernel: handleCreateKernelDraft,
+                    onEditPackage: (pkg) => {
+                      setEditingPkg(pkg);
+                      setIsEditPkgOpen(true);
+                    },
                     onDeletePackage: handleDeletePackage,
                     onDeleteLookup: handleDeleteLookup,
                     onDeleteAtom: handleDeleteAtom
@@ -29739,6 +29971,34 @@ function App() {
         setNewPkgWs,
         libraryPaths: currentWsObj == null ? void 0 : currentWsObj.library_paths,
         onSubmit: submitCreatePackage
+      }
+    ),
+    editingPkg && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      EditPackageModal,
+      {
+        isOpen: isEditPkgOpen,
+        onClose: () => {
+          setIsEditPkgOpen(false);
+          setEditingPkg(null);
+        },
+        packageName: editingPkg.name,
+        initialVersion: editingPkg.version,
+        initialDescription: editingPkg.description,
+        onSubmit: ({ version, description }) => {
+          fetch(`/api/packages/${encodeURIComponent(editingPkg.name)}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ version, description })
+          }).then(async (res) => {
+            if (res.ok) {
+              toast.success(`组件包 "${editingPkg.name}" 元数据已更新`);
+              invalidateAll();
+            } else {
+              const data = await res.json();
+              toast.error(`更新失败: ${data.detail || res.statusText}`);
+            }
+          }).catch(() => toast.error("更新组件包网络异常"));
+        }
       }
     ),
     /* @__PURE__ */ jsxRuntimeExports.jsx(

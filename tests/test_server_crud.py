@@ -38,6 +38,9 @@ def setup_crud_env(tmp_path: Path, monkeypatch):
     lib_path = tmp_path / "lib"
     lib_path.mkdir()
 
+    man_path = tmp_path / "manifests"
+    man_path.mkdir()
+
     pkg_dir = lib_path / "pkg_crud"
     pkg_dir.mkdir()
     (pkg_dir / "d1").mkdir()
@@ -54,7 +57,9 @@ def setup_crud_env(tmp_path: Path, monkeypatch):
     config_dir.mkdir()
     config_file = config_dir / "config.yaml"
     config_file.write_text(
-        yaml.dump({"library_paths": [str(lib_path)], "manifest_paths": []}),
+        yaml.dump(
+            {"library_paths": [str(lib_path)], "manifest_paths": [str(man_path)]}
+        ),
         encoding="utf-8",
     )
     monkeypatch.setattr("aca_builder.config.CONFIG_PATH", config_file)
@@ -188,3 +193,98 @@ def test_compile_lookup_adhoc_excludes_kernel(setup_crud_env):
     assert "d1-crud-atom" in chunk_ids
     assert "kernel" not in chunk_ids
     assert "ACA Kernel Protocol" not in data.get("prompt", "")
+
+
+def test_update_package_metadata(setup_crud_env):
+    client, _, pkg_dir = setup_crud_env
+
+    res = client.put(
+        "/api/packages/pkg_crud",
+        json={"version": "1.2.0", "description": "Updated Package Desc"},
+    )
+    assert res.status_code == 200
+    pkg_yaml = yaml.safe_load((pkg_dir / "package.yaml").read_text(encoding="utf-8"))
+    assert pkg_yaml.get("version") == "1.2.0"
+    assert pkg_yaml.get("description") == "Updated Package Desc"
+
+
+def test_rename_atom_with_cascade(setup_crud_env):
+    client, _, pkg_dir = setup_crud_env
+    old_file = pkg_dir / "d1" / "atom.md"
+    new_file = pkg_dir / "d1" / "d1-renamed-atom.md"
+
+    res = client.post(
+        "/api/atoms/d1-crud-atom/rename",
+        json={"new_id": "d1-renamed-atom", "cascade": True},
+    )
+    assert res.status_code == 200
+    assert not old_file.exists()
+    assert new_file.exists()
+
+    # 1. 验证 Frontmatter 中的 ID 已同步更新
+    content = new_file.read_text(encoding="utf-8")
+    assert "id: d1-renamed-atom" in content
+    assert "Crud Test Content" in content
+
+    # 2. 验证 package.yaml 中公开接口的选择器已被级联更新
+    pkg_yaml = yaml.safe_load((pkg_dir / "package.yaml").read_text(encoding="utf-8"))
+    sel_id = pkg_yaml["exports"]["d1l-public-crud"]["selectors"][0]["query"]["id"]
+    assert sel_id == "d1-renamed-atom"
+
+    # 3. 验证 d4/lookups.yaml 中的私有接口选择器也被级联更新
+    d4_yaml = yaml.safe_load(
+        (pkg_dir / "d4" / "lookups.yaml").read_text(encoding="utf-8")
+    )
+    sel_d4_id = d4_yaml["lookups"]["d1l-private-crud"]["selectors"][0]["query"]["id"]
+    assert sel_d4_id == "d1-renamed-atom"
+
+
+def test_rename_lookup_with_old_key_cleans_legacy(setup_crud_env):
+    client, _, pkg_dir = setup_crud_env
+
+    # 现存公开接口为 pkg_crud::d1l-public-crud
+    # 将其重命名为 d1l-public-renamed，并传入 old_key
+    res = client.post(
+        "/api/lookups",
+        json={
+            "package": "pkg_crud",
+            "key": "d1l-public-renamed",
+            "pillar": "d1",
+            "is_public": True,
+            "description": "Renamed Lookup",
+            "selectors": [{"query": {"id": "d1-crud-atom"}}],
+            "old_key": "pkg_crud::d1l-public-crud",
+        },
+    )
+    assert res.status_code == 200
+
+    pkg_yaml = yaml.safe_load((pkg_dir / "package.yaml").read_text(encoding="utf-8"))
+    exports = pkg_yaml.get("exports", {})
+    assert "d1l-public-renamed" in exports
+    assert "d1l-public-crud" not in exports
+
+
+def test_atom_and_lookup_references(setup_crud_env):
+    client, lib_path, _pkg_dir = setup_crud_env
+    # 创建一个显式引用原子的 Manifest 到已配置的工作区目录中
+    manifest_dir = lib_path.parent / "manifests"
+    manifest_dir.mkdir(exist_ok=True)
+    (manifest_dir / "test_manifest.yaml").write_text(
+        "name: test_m\nimports:\n  - query: {id: 'd1-crud-atom'}\n",
+        encoding="utf-8",
+    )
+
+    # 1. 验证探测原子的引用者（同时包含 lookups 与 manifests）
+    res_atom = client.get("/api/atoms/d1-crud-atom/references")
+    assert res_atom.status_code == 200
+    data_atom = res_atom.json()
+    assert data_atom["reference_count"] >= 2
+    ref_keys = [item["key"] for item in data_atom["referenced_by_lookups"]]
+    assert any("d1l-public-crud" in k for k in ref_keys)
+    assert len(data_atom.get("referenced_by_manifests", [])) >= 1
+
+    # 2. 验证探测 Lookup 的引用者
+    res_lookup = client.get("/api/lookups/pkg_crud::d1l-public-crud/references")
+    assert res_lookup.status_code == 200
+    data_lookup = res_lookup.json()
+    assert "total_references" in data_lookup

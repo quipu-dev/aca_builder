@@ -1,7 +1,16 @@
 import { Badge } from '@/components/ui/badge';
 import { ConfirmIconButton } from '@/components/ui/confirm-button';
 import { useIdeStore } from '@/stores/ide-store';
-import { ChevronDown, ChevronRight, FileCode, Globe, Lock, Package, Plus } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  FileCode,
+  Globe,
+  Lock,
+  Package,
+  Plus,
+  Settings2,
+} from 'lucide-react';
 import type React from 'react';
 
 export interface LookupExportItem {
@@ -21,6 +30,8 @@ export interface KernelInfo {
 
 export interface PackageItem {
   name: string;
+  version?: string;
+  description?: string;
   workspace?: string;
   workspace_path?: string;
   exports: Record<string, LookupExportItem>;
@@ -39,6 +50,7 @@ export function PackageExplorer({
   onSelectAtom,
   onOpenLookup,
   onCreateKernel,
+  onEditPackage,
   onDeletePackage,
   onDeleteLookup,
   onDeleteAtom,
@@ -48,6 +60,7 @@ export function PackageExplorer({
   onSelectAtom?: (atomId: string, e?: React.MouseEvent) => void;
   onOpenLookup?: (lookupKey: string, e?: React.MouseEvent) => void;
   onCreateKernel?: () => void;
+  onEditPackage?: (pkg: PackageItem) => void;
   onDeletePackage?: (pkgName: string, e: React.MouseEvent) => void;
   onDeleteLookup?: (lookupKey: string, e: React.MouseEvent) => void;
   onDeleteAtom?: (atomId: string, e: React.MouseEvent) => void;
@@ -132,19 +145,37 @@ export function PackageExplorer({
                   )}
                   <Package className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
                   <span className="font-semibold text-slate-200 truncate">{pkg.name}</span>
+                  {pkg.version && (
+                    <span className="text-[9px] text-slate-500 bg-slate-950 px-1 py-0.2 rounded border border-slate-800">
+                      v{pkg.version}
+                    </span>
+                  )}
                   <span className="text-[10px] text-slate-500 ml-auto shrink-0">
                     ({atomsCount})
                   </span>
                 </button>
-                {onDeletePackage && (
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 shrink-0">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 shrink-0 flex items-center gap-0.5">
+                  {onEditPackage && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditPackage(pkg);
+                      }}
+                      className="p-1 rounded text-slate-400 hover:text-indigo-300 hover:bg-slate-800/80 transition-colors"
+                      title="编辑包版本与说明"
+                    >
+                      <Settings2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  {onDeletePackage && (
                     <ConfirmIconButton
                       onConfirm={(e) => onDeletePackage(pkg.name, e)}
                       title={`删除组件包 ${pkg.name} (Shift+点击快速删除)`}
                       iconClassName="h-3.5 w-3.5"
                     />
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               {isExp && (
