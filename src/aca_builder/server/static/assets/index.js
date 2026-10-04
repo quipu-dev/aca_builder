@@ -26173,13 +26173,17 @@ function LookupEditorTab({
   const clearSnapshot = useIdeStore((state) => state.clearSnapshot);
   const isDraft = lookupKey.startsWith("draft:");
   const draftParts = isDraft ? lookupKey.split(":") : [];
-  const initialPkg = isDraft ? draftParts[1] || "" : "";
-  const initialPublic = isDraft ? !((_a2 = draftParts[2]) == null ? void 0 : _a2.startsWith("private")) : true;
+  const isInternalKey = lookupKey.includes("::internal::");
+  const initialPkg = isDraft ? draftParts[1] || "" : lookupKey.includes("::") ? lookupKey.split("::")[0] : "";
+  const initialPublic = isDraft ? !((_a2 = draftParts[2]) == null ? void 0 : _a2.startsWith("private")) : !isInternalKey;
   const [isReady, setIsReady] = reactExports.useState(false);
   const [pkgName, setPkgName] = reactExports.useState(initialPkg || ((_b2 = packages[0]) == null ? void 0 : _b2.name) || "");
   const [isPublic, setIsPublic] = reactExports.useState(initialPublic);
   const [pillar, setPillar] = reactExports.useState("d1");
-  const [rawKeyName, setRawKeyName] = reactExports.useState("");
+  const cleanRawName = lookupKey.split("::").pop() || lookupKey;
+  const [rawKeyName, setRawKeyName] = reactExports.useState(
+    !isDraft ? cleanRawName.replace(/^d[1-3]l-/, "") : ""
+  );
   const [description, setDescription] = reactExports.useState("");
   const [selectors, setSelectors] = reactExports.useState([]);
   const [isModified, setIsModified] = reactExports.useState(false);
@@ -26220,7 +26224,7 @@ function LookupEditorTab({
     }
   };
   reactExports.useEffect(() => {
-    var _a3, _b3, _c2, _d2, _e3;
+    var _a3, _b3, _c2, _d2, _e3, _f2;
     if (isReady) return;
     const snapshot = getSnapshot(tabId);
     if (snapshot) {
@@ -26243,11 +26247,24 @@ function LookupEditorTab({
     if (!packages || packages.length === 0) {
       return;
     }
-    const rawKey = lookupKey.includes("::") ? lookupKey.split("::")[1] : lookupKey;
+    const rawKey = lookupKey.split("::").pop() || lookupKey;
     const targetPkg = lookupKey.includes("::") ? lookupKey.split("::")[0] : null;
     for (const pkg of packages) {
       if (targetPkg && pkg.name !== targetPkg) continue;
-      const exportDef = ((_a3 = pkg.exports) == null ? void 0 : _a3[lookupKey]) || ((_b3 = pkg.exports) == null ? void 0 : _b3[`${pkg.name}::${rawKey}`]) || ((_c2 = pkg.exports) == null ? void 0 : _c2[rawKey]);
+      if (lookupKey.includes("::internal::") || !isPublic) {
+        const internalDef = ((_a3 = pkg.internal_lookups) == null ? void 0 : _a3[lookupKey]) || ((_b3 = pkg.internal_lookups) == null ? void 0 : _b3[`${pkg.name}::internal::${rawKey}`]) || ((_c2 = pkg.internal_lookups) == null ? void 0 : _c2[rawKey]);
+        if (internalDef) {
+          setPkgName(pkg.name);
+          setPillar(internalDef.pillar || "d1");
+          setIsPublic(false);
+          setDescription(internalDef.description || "");
+          setRawKeyName(rawKey.replace(/^d[1-3]l-/, "") || "");
+          setSelectors(internalDef.selectors || []);
+          setIsReady(true);
+          return;
+        }
+      }
+      const exportDef = ((_d2 = pkg.exports) == null ? void 0 : _d2[lookupKey]) || ((_e3 = pkg.exports) == null ? void 0 : _e3[`${pkg.name}::${rawKey}`]) || ((_f2 = pkg.exports) == null ? void 0 : _f2[rawKey]);
       if (exportDef) {
         setPkgName(pkg.name);
         setPillar(exportDef.pillar || "d1");
@@ -26258,20 +26275,9 @@ function LookupEditorTab({
         setIsReady(true);
         return;
       }
-      const internalDef = ((_d2 = pkg.internal_lookups) == null ? void 0 : _d2[lookupKey]) || ((_e3 = pkg.internal_lookups) == null ? void 0 : _e3[rawKey]);
-      if (internalDef) {
-        setPkgName(pkg.name);
-        setPillar(internalDef.pillar || "d1");
-        setIsPublic(false);
-        setDescription(internalDef.description || "");
-        setRawKeyName(rawKey.replace(/^d[1-3]l-/, "") || "");
-        setSelectors(internalDef.selectors || []);
-        setIsReady(true);
-        return;
-      }
     }
     setIsReady(true);
-  }, [lookupKey, packages, isDraft, tabId, getSnapshot, setTabDirty, isReady]);
+  }, [lookupKey, packages, isDraft, tabId, getSnapshot, setTabDirty, isReady, isPublic]);
   reactExports.useEffect(() => {
     if (!isReady) return;
     saveSnapshot(tabId, {
@@ -26385,7 +26391,7 @@ function LookupEditorTab({
       setTabDirty(tabId, false);
       clearSnapshot(tabId);
       onSaved == null ? void 0 : onSaved();
-      const fullTargetKey = isPublic ? `${pkgName}::${pillar}l-${cleanSuffix}` : `${pillar}l-${cleanSuffix}`;
+      const fullTargetKey = isPublic ? `${pkgName}::${pillar}l-${cleanSuffix}` : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
       if (isDraft) {
         replaceTab(tabId, {
           id: `lookup:${fullTargetKey}`,
@@ -27436,7 +27442,8 @@ function ManifestEditorTab({
             { title: "其它", key: "other", variant: "outline" }
           ].map((group) => {
             const groupItems = items.filter((item) => {
-              const p2 = (item.pillar || (item.lookup.includes("::") ? item.lookup.split("::")[1].slice(0, 2) : item.lookup.slice(0, 2))).toLowerCase();
+              const rawLookupName = item.lookup.split("::").pop() || item.lookup;
+              const p2 = (item.pillar || rawLookupName.slice(0, 2)).toLowerCase();
               if (group.key === "other") {
                 return p2 !== "d1" && p2 !== "d2" && p2 !== "d3";
               }
@@ -28879,36 +28886,39 @@ function PackageExplorer({
                     }
                   )
                 ] }),
-                internalCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.internal_lookups).map(([k2, def]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "div",
-                  {
-                    className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer",
-                    children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                        "button",
-                        {
-                          type: "button",
-                          onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k2, e),
-                          className: "flex-1 text-left truncate flex items-center gap-1 cursor-pointer",
-                          title: "点击打开",
-                          children: [
-                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: k2 }),
-                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] text-slate-600", children: def.pillar })
-                          ]
-                        }
-                      ),
-                      onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "opacity-0 group-hover:opacity-100 transition-opacity shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        ConfirmIconButton,
-                        {
-                          onConfirm: (e) => onDeleteLookup(k2, e),
-                          title: "删除此内部查找 (Shift+点击快速删除)",
-                          iconClassName: "h-3 w-3"
-                        }
-                      ) })
-                    ]
-                  },
-                  k2
-                )) })
+                internalCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1 pl-2", children: Object.entries(pkg.internal_lookups).map(([k2, def]) => {
+                  const displayKey = k2.split("::").pop() || k2;
+                  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "div",
+                    {
+                      className: "w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer",
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                          "button",
+                          {
+                            type: "button",
+                            onClick: (e) => onOpenLookup == null ? void 0 : onOpenLookup(k2, e),
+                            className: "flex-1 text-left truncate flex items-center gap-1 cursor-pointer",
+                            title: `点击打开 (${k2})`,
+                            children: [
+                              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: displayKey }),
+                              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] text-slate-600", children: def.pillar })
+                            ]
+                          }
+                        ),
+                        onDeleteLookup && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "opacity-0 group-hover:opacity-100 transition-opacity shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          ConfirmIconButton,
+                          {
+                            onConfirm: (e) => onDeleteLookup(k2, e),
+                            title: "删除此内部查找 (Shift+点击快速删除)",
+                            iconClassName: "h-3 w-3"
+                          }
+                        ) })
+                      ]
+                    },
+                    k2
+                  );
+                }) })
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[10px] font-semibold text-slate-400 flex items-center justify-between mb-1", children: [

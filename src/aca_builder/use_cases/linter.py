@@ -118,7 +118,9 @@ class LinterService:
                 )  # Using msg_id
                 error_count += 1
 
-            lookup_name = key.split("::", 1)[-1]  # Get local name if namespaced
+            lookup_name = key.split("::")[
+                -1
+            ]  # 兼容多段命名空间 (如 pkg::internal::name)，精准提取短名称
             expected_prefix = f"{pillar}l-"
             if not lookup_name.startswith(expected_prefix):
                 self.bus.lint_error(

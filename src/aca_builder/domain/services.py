@@ -46,46 +46,66 @@ def select_atoms_by_query(library: dict[str, Any], query: dict[str, Any]) -> set
 def resolve_lookup_by_key(
     ref_key: str, context_pkg: str | None, interfaces: dict[str, Any]
 ) -> dict[str, Any] | None:
-    """Resolves a lookup key checking visibility rules."""
+    """Resolves a lookup key checking visibility rules with hierarchical scoping."""
+    exports_dict = interfaces.get("exports", {})
+    internals_dict = interfaces.get("internals", {})
+    lookups_dict = interfaces.get("lookups", {})
+
     if "::" in ref_key:
-        # Absolute reference 'pkg::name'.
-        # First, check if it's a direct hit on a public (namespaced) key.
-        public_target = interfaces["lookups"].get(ref_key)
-        if public_target:
-            return public_target
+        parts = ref_key.split("::")
+        pkg = parts[0]
+        actual_name = parts[-1]
 
-        # If not, it might be an attempt to access a private member.
-        parts = ref_key.split("::", 1)
-        if len(parts) != 2:
-            return None
-        pkg, name = parts
+        # 1. 优先在公开导出表中查找
+        if ref_key in exports_dict:
+            return exports_dict[ref_key]
 
-        private_target = interfaces["lookups"].get(name)
-        if private_target and private_target.get("package") == pkg:
-            # It's a valid member of the package. Now check visibility.
-            if context_pkg != pkg and private_target.get("visibility") != "public":
+        # 2. 查找显式全限定私有键 pkg::internal::name
+        if ref_key in lookups_dict:
+            target = lookups_dict[ref_key]
+            if target.get("visibility") == "private" and context_pkg != pkg:
                 raise BuildError(
-                    f"Access denied: '{name}' in package '{pkg}' is private."
+                    f"Access denied: '{actual_name}' in package '{pkg}' is private."
                 )
-            return private_target
-        return None  # No public or private match found
+            return target
+
+        # 3. 如果是用 pkg::name 格式尝试访问私有实现
+        pkg_internals = internals_dict.get(pkg, {})
+        if actual_name in pkg_internals:
+            target = pkg_internals[actual_name]
+            if context_pkg != pkg:
+                raise BuildError(
+                    f"Access denied: '{actual_name}' in package '{pkg}' is private."
+                )
+            return target
+
+        return None
     else:
-        # Relative reference
-        target = interfaces["lookups"].get(ref_key)
-        if not target:
-            return None
+        # 相对引用（短名称）
+        # 1. 优先在当前包的私有实现表中查找 (支持同名 export -> ref: internal)
+        if (
+            context_pkg
+            and context_pkg in internals_dict
+            and ref_key in internals_dict[context_pkg]
+        ):
+            return internals_dict[context_pkg][ref_key]
 
-        target_pkg = target.get("package")
-        if target_pkg is None:
-            return target  # Global/Legacy
-        if context_pkg == target_pkg:
-            return target  # Same package
-        if target.get("visibility") == "public":
-            return target  # Public API
+        # 2. 查找全局无包归属的 lookup (Legacy)
+        if ref_key in lookups_dict:
+            return lookups_dict[ref_key]
 
-        # Permissive for implicit relative access to private members of other packages.
-        # This is for backward compatibility; strict linting should catch this.
-        return target
+        # 3. 检查当前包自身公开导出
+        if context_pkg:
+            scoped_export = f"{context_pkg}::{ref_key}"
+            if scoped_export in exports_dict:
+                return exports_dict[scoped_export]
+
+        # 4. 容错回退：全局唯一公开导出匹配
+        for k, item in exports_dict.items():
+            if k.endswith(f"::{ref_key}"):
+                return item
+
+        return None
 
 
 def evaluate_lookup(

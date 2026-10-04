@@ -66,14 +66,22 @@ export function LookupEditorTab({
 
   const isDraft = lookupKey.startsWith('draft:');
   const draftParts = isDraft ? lookupKey.split(':') : [];
-  const initialPkg = isDraft ? draftParts[1] || '' : '';
-  const initialPublic = isDraft ? !draftParts[2]?.startsWith('private') : true;
+  const isInternalKey = lookupKey.includes('::internal::');
+  const initialPkg = isDraft
+    ? draftParts[1] || ''
+    : lookupKey.includes('::')
+      ? lookupKey.split('::')[0]
+      : '';
+  const initialPublic = isDraft ? !draftParts[2]?.startsWith('private') : !isInternalKey;
 
   const [isReady, setIsReady] = useState(false);
   const [pkgName, setPkgName] = useState(initialPkg || packages[0]?.name || '');
   const [isPublic, setIsPublic] = useState(initialPublic);
   const [pillar, setPillar] = useState<'d1' | 'd2' | 'd3'>('d1');
-  const [rawKeyName, setRawKeyName] = useState('');
+  const cleanRawName = lookupKey.split('::').pop() || lookupKey;
+  const [rawKeyName, setRawKeyName] = useState(
+    !isDraft ? cleanRawName.replace(/^d[1-3]l-/, '') : '',
+  );
   const [description, setDescription] = useState('');
 
   const [selectors, setSelectors] = useState<SelectorRule[]>([]);
@@ -160,11 +168,29 @@ export function LookupEditorTab({
       return;
     }
 
-    const rawKey = lookupKey.includes('::') ? lookupKey.split('::')[1] : lookupKey;
+    const rawKey = lookupKey.split('::').pop() || lookupKey;
     const targetPkg = lookupKey.includes('::') ? lookupKey.split('::')[0] : null;
 
     for (const pkg of packages) {
       if (targetPkg && pkg.name !== targetPkg) continue;
+
+      // 如果明确是 internal key，优先在 internal_lookups 中精确检索
+      if (lookupKey.includes('::internal::') || !isPublic) {
+        const internalDef =
+          pkg.internal_lookups?.[lookupKey] ||
+          pkg.internal_lookups?.[`${pkg.name}::internal::${rawKey}`] ||
+          pkg.internal_lookups?.[rawKey];
+        if (internalDef) {
+          setPkgName(pkg.name);
+          setPillar((internalDef.pillar as 'd1' | 'd2' | 'd3') || 'd1');
+          setIsPublic(false);
+          setDescription(internalDef.description || '');
+          setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
+          setSelectors((internalDef.selectors as SelectorRule[]) || []);
+          setIsReady(true);
+          return;
+        }
+      }
 
       const exportDef =
         pkg.exports?.[lookupKey] ||
@@ -181,22 +207,10 @@ export function LookupEditorTab({
         setIsReady(true);
         return;
       }
-
-      const internalDef = pkg.internal_lookups?.[lookupKey] || pkg.internal_lookups?.[rawKey];
-      if (internalDef) {
-        setPkgName(pkg.name);
-        setPillar((internalDef.pillar as 'd1' | 'd2' | 'd3') || 'd1');
-        setIsPublic(false);
-        setDescription(internalDef.description || '');
-        setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
-        setSelectors((internalDef.selectors as SelectorRule[]) || []);
-        setIsReady(true);
-        return;
-      }
     }
 
     setIsReady(true);
-  }, [lookupKey, packages, isDraft, tabId, getSnapshot, setTabDirty, isReady]);
+  }, [lookupKey, packages, isDraft, tabId, getSnapshot, setTabDirty, isReady, isPublic]);
 
   useEffect(() => {
     if (!isReady) return;
@@ -337,9 +351,10 @@ export function LookupEditorTab({
       clearSnapshot(tabId);
       onSaved?.();
 
+      // 统一区分公开与私有的全局唯一 Tab ID 与 LookupKey
       const fullTargetKey = isPublic
         ? `${pkgName}::${pillar}l-${cleanSuffix}`
-        : `${pillar}l-${cleanSuffix}`;
+        : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
       if (isDraft) {
         replaceTab(tabId, {
           id: `lookup:${fullTargetKey}`,

@@ -89,14 +89,18 @@ class FSLibraryRepository(LibraryRepository):
         )
 
     def load_interfaces(self, library_paths: list[Path]) -> dict[str, Any]:
-        """Loads d4 files and package exports."""
-        interfaces = {"lookups": {}}
+        """Loads d4 files and package exports into hierarchical and unified interface tables."""
+        interfaces: dict[str, Any] = {
+            "lookups": {},
+            "exports": {},
+            "internals": {},
+        }
 
         for lib_root in library_paths:
             if not lib_root.exists():
                 continue
 
-            # 1. D4 Internal Lookups (MUST be loaded first)
+            # 1. D4 Internal Lookups
             for d4_file in lib_root.glob("**/d4/*.yaml"):
                 try:
                     pkg_info = self._find_package_config(d4_file.parent, lib_root)
@@ -109,16 +113,24 @@ class FSLibraryRepository(LibraryRepository):
                         and "lookups" in data
                     ):
                         for key, lookup_def in data["lookups"].items():
-                            if key in interfaces["lookups"]:
-                                # First one wins, could be a warning later
-                                continue
                             lookup_def["package"] = pkg_name
                             lookup_def["visibility"] = "private"
-                            interfaces["lookups"][key] = lookup_def
+
+                            if pkg_name:
+                                # 分层内部表存储
+                                interfaces["internals"].setdefault(pkg_name, {})[
+                                    key
+                                ] = lookup_def
+                                # 全局唯一私有键，杜绝与公开同名 exports 冲突
+                                internal_key = f"{pkg_name}::internal::{key}"
+                                interfaces["lookups"][internal_key] = lookup_def
+                            else:
+                                # 遗留全局无包 lookup
+                                interfaces["lookups"][key] = lookup_def
                 except (yaml.YAMLError, OSError):
                     continue
 
-            # 2. Package Exports (Loaded second to layer on top)
+            # 2. Package Exports
             for pkg_file in lib_root.rglob("package.yaml"):
                 try:
                     pkg_data = yaml.safe_load(pkg_file.read_text(encoding="utf-8"))
@@ -129,14 +141,14 @@ class FSLibraryRepository(LibraryRepository):
                     exports = pkg_data.get("exports", {})
                     for key, def_ in exports.items():
                         namespaced_key = f"{pkg_name}::{key}"
-                        if namespaced_key in interfaces["lookups"]:
-                            # With namespacing, any duplicate is a critical error.
+                        if namespaced_key in interfaces["exports"]:
                             raise BuildError(
                                 f"Duplicate public lookup key '{key}' defined in package '{pkg_name}'."
                             )
 
                         def_["package"] = pkg_name
                         def_["visibility"] = "public"
+                        interfaces["exports"][namespaced_key] = def_
                         interfaces["lookups"][namespaced_key] = def_
                 except (yaml.YAMLError, OSError, ValueError) as e:
                     raise BuildError(f"Error processing package file {pkg_file}: {e}")

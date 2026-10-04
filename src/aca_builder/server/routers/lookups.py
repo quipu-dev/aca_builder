@@ -124,6 +124,7 @@ def create_or_update_lookup(
                 yaml.safe_dump(pkg_content, sort_keys=False, allow_unicode=True),
                 encoding="utf-8",
             )
+            full_return_key = f"{req.package}::{lookup_name}"
         else:
             d4_dir = target_pkg_dir / "d4"
             d4_dir.mkdir(parents=True, exist_ok=True)
@@ -145,9 +146,10 @@ def create_or_update_lookup(
                 yaml.safe_dump(d4_content, sort_keys=False, allow_unicode=True),
                 encoding="utf-8",
             )
+            full_return_key = f"{req.package}::internal::{lookup_name}"
 
         broadcast_change("LIBRARY_DIRTY")
-        return {"status": "ok", "key": lookup_name, "package": req.package}
+        return {"status": "ok", "key": full_return_key, "package": req.package}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"保存 Lookup 失败: {e}")
 
@@ -163,6 +165,26 @@ def delete_lookup(
     interfaces = lib_repo.load_interfaces(library_paths)
 
     lookup_def = interfaces.get("lookups", {}).get(lookup_key)
+    is_internal_pattern = "::internal::" in lookup_key
+
+    if not lookup_def:
+        # 回退在 exports 或 internals 中精准匹配
+        if is_internal_pattern:
+            pkg_part, name_part = lookup_key.split("::internal::", 1)
+            lookup_def = (
+                interfaces.get("internals", {}).get(pkg_part, {}).get(name_part)
+            )
+        elif "::" in lookup_key:
+            lookup_def = interfaces.get("exports", {}).get(lookup_key)
+
+    if not lookup_def:
+        # 兼容旧短名称请求：遍历所有注册条目匹配后缀
+        for k, item in interfaces.get("lookups", {}).items():
+            if k == lookup_key or k.endswith(f"::{lookup_key}"):
+                lookup_def = item
+                lookup_key = k
+                break
+
     if not lookup_def:
         raise HTTPException(status_code=404, detail=f"Lookup '{lookup_key}' not found")
 

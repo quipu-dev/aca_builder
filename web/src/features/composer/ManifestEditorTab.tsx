@@ -555,12 +555,8 @@ export function ManifestEditorTab({
             { title: '其它', key: 'other', variant: 'outline' as const },
           ].map((group) => {
             const groupItems = items.filter((item) => {
-              const p = (
-                item.pillar ||
-                (item.lookup.includes('::')
-                  ? item.lookup.split('::')[1].slice(0, 2)
-                  : item.lookup.slice(0, 2))
-              ).toLowerCase();
+              const rawLookupName = item.lookup.split('::').pop() || item.lookup;
+              const p = (item.pillar || rawLookupName.slice(0, 2)).toLowerCase();
 
               if (group.key === 'other') {
                 return p !== 'd1' && p !== 'd2' && p !== 'd3';

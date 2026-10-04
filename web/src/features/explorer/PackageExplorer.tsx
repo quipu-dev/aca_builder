@@ -216,31 +216,34 @@ export function PackageExplorer({
                     </div>
                     {internalCount > 0 && (
                       <div className="space-y-1 pl-2">
-                        {Object.entries(pkg.internal_lookups).map(([k, def]) => (
-                          <div
-                            key={k}
-                            className="w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer"
-                          >
-                            <button
-                              type="button"
-                              onClick={(e) => onOpenLookup?.(k, e)}
-                              className="flex-1 text-left truncate flex items-center gap-1 cursor-pointer"
-                              title="点击打开"
+                        {Object.entries(pkg.internal_lookups).map(([k, def]) => {
+                          const displayKey = k.split('::').pop() || k;
+                          return (
+                            <div
+                              key={k}
+                              className="w-full text-left text-xs font-mono text-slate-400 hover:text-indigo-300 flex items-center justify-between p-1 rounded hover:bg-slate-800/40 transition-colors group cursor-pointer"
                             >
-                              <span className="truncate">{k}</span>
-                              <span className="text-[9px] text-slate-600">{def.pillar}</span>
-                            </button>
-                            {onDeleteLookup && (
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                <ConfirmIconButton
-                                  onConfirm={(e) => onDeleteLookup(k, e)}
-                                  title="删除此内部查找 (Shift+点击快速删除)"
-                                  iconClassName="h-3 w-3"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                              <button
+                                type="button"
+                                onClick={(e) => onOpenLookup?.(k, e)}
+                                className="flex-1 text-left truncate flex items-center gap-1 cursor-pointer"
+                                title={`点击打开 (${k})`}
+                              >
+                                <span className="truncate">{displayKey}</span>
+                                <span className="text-[9px] text-slate-600">{def.pillar}</span>
+                              </button>
+                              {onDeleteLookup && (
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                  <ConfirmIconButton
+                                    onConfirm={(e) => onDeleteLookup(k, e)}
+                                    title="删除此内部查找 (Shift+点击快速删除)"
+                                    iconClassName="h-3 w-3"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
