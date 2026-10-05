@@ -7,9 +7,11 @@ import {
   useUpdateAtomMutation,
 } from '@/api/atoms';
 import { openInObsidian } from '@/api/system';
-import { Badge } from '@/components/ui/badge';
+import { Badge, getPillarVariant } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
+import { Select } from '@/components/ui/select';
 import { toast } from '@/components/ui/toast';
 import { useIdeStore } from '@/stores/ide-store';
 import { generateIdSuffix } from '@/utils/ulid';
@@ -398,15 +400,7 @@ export function AtomEditorTab({
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 font-mono text-xs">
         <div className="flex items-center gap-2 truncate">
           <Badge
-            variant={
-              atomType === 'd1'
-                ? 'd1'
-                : atomType === 'd2'
-                  ? 'd2'
-                  : atomType === 'd3'
-                    ? 'd3'
-                    : 'kernel'
-            }
+            variant={getPillarVariant(atomType, 'kernel')}
             className="text-[10px] uppercase font-bold"
           >
             {atomType}
@@ -436,7 +430,7 @@ export function AtomEditorTab({
 
         <div className="flex items-center gap-2 shrink-0">
           {errorMsg && (
-            <span className="text-[11px] text-rose-400 flex items-center gap-1 font-sans">
+            <span className="text-[11px] text-rose-400 flex items-center gap-1">
               <AlertCircle className="h-3 w-3" /> {errorMsg}
             </span>
           )}
@@ -492,39 +486,37 @@ export function AtomEditorTab({
             <label htmlFor="atom-draft-pkg" className="text-slate-400 block mb-1">
               所属包
             </label>
-            <select
+            <Select
               id="atom-draft-pkg"
               value={pkgName}
               onChange={(e) => {
                 setPkgName(e.target.value);
                 markDirty();
               }}
-              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
             >
               {packages.map((p) => (
                 <option key={p.name} value={p.name}>
                   {p.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
             <label htmlFor="atom-draft-type" className="text-slate-400 block mb-1">
               构造类别
             </label>
-            <select
+            <Select
               id="atom-draft-type"
               value={atomType}
               onChange={(e) => {
                 setAtomType(e.target.value);
                 markDirty();
               }}
-              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
             >
               <option value="d3">D3</option>
               <option value="d2">D2</option>
               <option value="d1">D1</option>
-            </select>
+            </Select>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
@@ -545,7 +537,7 @@ export function AtomEditorTab({
               </button>
             </div>
             <div className="flex items-center gap-1">
-              <input
+              <Input
                 id="atom-draft-suffix"
                 type="text"
                 value={draftSuffix}
@@ -554,7 +546,7 @@ export function AtomEditorTab({
                   markDirty();
                 }}
                 placeholder="例如: 01k47... 或业务词"
-                className="flex-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs"
+                className="flex-1"
               />
             </div>
           </div>
@@ -604,7 +596,7 @@ export function AtomEditorTab({
               <span className="text-slate-400 flex items-center gap-1 shrink-0">
                 <FileText className="h-3.5 w-3.5 text-cyan-400" /> 描述说明:
               </span>
-              <input
+              <Input
                 type="text"
                 value={description}
                 onChange={(e) => {
@@ -612,7 +604,7 @@ export function AtomEditorTab({
                   markDirty();
                 }}
                 placeholder="简明业务描述（将在白板拓扑节点卡片中直观呈现）"
-                className="flex-1 bg-slate-950 border border-slate-800/80 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-cyan-500 font-sans"
+                className="flex-1 border-slate-800/80 py-0.5 text-[11px] focus:border-cyan-500"
               />
             </div>
           </div>
@@ -637,7 +629,7 @@ export function AtomEditorTab({
                   </button>
                 </span>
               ))}
-              <input
+              <Input
                 type="text"
                 value={domainInput}
                 onChange={(e) => setDomainInput(e.target.value)}
@@ -648,7 +640,7 @@ export function AtomEditorTab({
                   }
                 }}
                 placeholder="+ 添加标签 (回车)"
-                className="bg-slate-950 border border-slate-800/80 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-indigo-500 w-32"
+                className="border-slate-800/80 py-0.5 text-[11px] w-32"
               />
             </div>
           </div>
@@ -674,7 +666,7 @@ export function AtomEditorTab({
                     </button>
                   </span>
                 ))}
-                <input
+                <Input
                   type="text"
                   value={usesInput}
                   onChange={(e) => setUsesInput(e.target.value)}
@@ -685,7 +677,7 @@ export function AtomEditorTab({
                     }
                   }}
                   placeholder="+ 关联 lookup (回车，例如 pkg::d1l-name)"
-                  className="bg-slate-950 border border-slate-800/80 rounded px-2 py-0.5 text-[11px] text-slate-200 focus:outline-none focus:border-emerald-500 w-64"
+                  className="border-slate-800/80 py-0.5 text-[11px] focus:border-emerald-500 w-64"
                 />
               </div>
             </div>
@@ -722,12 +714,11 @@ export function AtomEditorTab({
             <label htmlFor="atom-rename-input" className="block text-slate-400 mb-1">
               新原子标识符 (ID)
             </label>
-            <input
+            <Input
               id="atom-rename-input"
               type="text"
               value={renameInput}
               onChange={(e) => setRenameInput(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 font-mono"
             />
             <div className="mt-2 flex items-center gap-2">
               <input
@@ -748,7 +739,7 @@ export function AtomEditorTab({
               重命名将物理重命名磁盘文件、更新 Frontmatter ID，并可选传播至所有关联接口。
             </span>
           </div>
-          <div className="pt-2 flex justify-end gap-2 font-sans">
+          <div className="pt-2 flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setIsRenameModalOpen(false)}>
               取消
             </Button>

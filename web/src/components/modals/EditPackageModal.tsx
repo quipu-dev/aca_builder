@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import type React from 'react';
 import { useEffect, useState } from 'react';
@@ -42,12 +43,11 @@ export function EditPackageModal({
           <label htmlFor="modal-pkg-version" className="block text-slate-400 mb-1">
             版本号 (Version)
           </label>
-          <input
+          <Input
             id="modal-pkg-version"
             type="text"
             value={version}
             onChange={(e) => setVersion(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 font-mono"
             placeholder="例如: 1.0.0"
           />
         </div>

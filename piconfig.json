@@ -6,6 +6,13 @@
       "paths": ["."],
       "ignore": ["*.test.ts", "*.test.tsx", "package-lock.json"],
       "ignore_dir": ["static"]
+    },
+    "web": {
+      "format": "xml",
+      "extension": ["py", "toml", "js", "ts", "tsx", "json", "css", "html"],
+      "paths": ["web"],
+      "ignore": ["*.test.ts", "*.test.tsx", "package-lock.json"],
+      "ignore_dir": ["static"]
     }
   }
 }

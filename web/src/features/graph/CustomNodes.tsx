@@ -1,4 +1,4 @@
-import { type BadgeProps, Badge as UiBadge } from '@/components/ui/badge';
+import { Badge as UiBadge, getPillarVariant } from '@/components/ui/badge';
 import { Handle, Position } from '@xyflow/react';
 import { AlertTriangle, Box, Layers } from 'lucide-react';
 
@@ -49,7 +49,7 @@ export function LookupNode({ data }: { data: LookupNodeData }) {
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-1.5 text-xs font-mono">
           <Box className="h-3.5 w-3.5 text-slate-400" />
-          <span className="font-semibold">{data.pillar?.toUpperCase()} 查找接口</span>
+          <span className="font-semibold">{data.pillar?.toUpperCase()} 接口</span>
         </div>
         {isBroken && (
           <span className="flex items-center gap-1 text-[10px] text-rose-400 font-bold">
@@ -85,14 +85,7 @@ export interface AtomNodeData {
 }
 
 export function AtomNode({ data }: { data: AtomNodeData }) {
-  const typeVariantMap: Record<string, BadgeProps['variant']> = {
-    kernel: 'kernel',
-    d1: 'd1',
-    d2: 'd2',
-    d3: 'd3',
-  };
-
-  const variant = typeVariantMap[data.type] || 'default';
+  const variant = getPillarVariant(data.type);
 
   return (
     <div className="rounded-md border border-slate-800 bg-slate-950/90 p-2.5 text-slate-100 shadow-md transition-all min-w-[200px] max-w-[240px]">

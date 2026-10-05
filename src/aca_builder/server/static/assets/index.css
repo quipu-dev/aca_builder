@@ -1975,16 +1975,6 @@ body {
   background-color: rgb(79 70 229 / 0.4);
 }
 
-.selection\:text-indigo-100 *::-moz-selection {
-  --tw-text-opacity: 1;
-  color: rgb(224 231 255 / var(--tw-text-opacity, 1));
-}
-
-.selection\:text-indigo-100 *::selection {
-  --tw-text-opacity: 1;
-  color: rgb(224 231 255 / var(--tw-text-opacity, 1));
-}
-
 .selection\:text-indigo-200 *::-moz-selection {
   --tw-text-opacity: 1;
   color: rgb(199 210 254 / var(--tw-text-opacity, 1));
@@ -2003,16 +1993,6 @@ body {
   background-color: rgb(79 70 229 / 0.4);
 }
 
-.selection\:text-indigo-100::-moz-selection {
-  --tw-text-opacity: 1;
-  color: rgb(224 231 255 / var(--tw-text-opacity, 1));
-}
-
-.selection\:text-indigo-100::selection {
-  --tw-text-opacity: 1;
-  color: rgb(224 231 255 / var(--tw-text-opacity, 1));
-}
-
 .selection\:text-indigo-200::-moz-selection {
   --tw-text-opacity: 1;
   color: rgb(199 210 254 / var(--tw-text-opacity, 1));
@@ -2021,6 +2001,16 @@ body {
 .selection\:text-indigo-200::selection {
   --tw-text-opacity: 1;
   color: rgb(199 210 254 / var(--tw-text-opacity, 1));
+}
+
+.placeholder\:text-slate-500::-moz-placeholder {
+  --tw-text-opacity: 1;
+  color: rgb(100 116 139 / var(--tw-text-opacity, 1));
+}
+
+.placeholder\:text-slate-500::placeholder {
+  --tw-text-opacity: 1;
+  color: rgb(100 116 139 / var(--tw-text-opacity, 1));
 }
 
 .hover\:border-emerald-500\/50:hover {

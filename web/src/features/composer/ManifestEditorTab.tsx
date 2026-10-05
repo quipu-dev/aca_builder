@@ -11,6 +11,9 @@ import {
 } from '@/components/editor/PromptViewer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { SegmentedControl } from '@/components/ui/segmented-control';
+import { Select } from '@/components/ui/select';
 import { SplitPane } from '@/components/ui/split-pane';
 import type { LookupExportItem, PackageItem } from '@/features/explorer/PackageExplorer';
 import { TopologyGraph } from '@/features/graph/TopologyGraph';
@@ -354,7 +357,7 @@ export function ManifestEditorTab({
             <label htmlFor="manifest-id-input" className="text-slate-400 block mb-1">
               清单标识符 / 路径
             </label>
-            <input
+            <Input
               id="manifest-id-input"
               type="text"
               value={manifestIdentifier}
@@ -363,14 +366,13 @@ export function ManifestEditorTab({
                 markDirty();
               }}
               placeholder="例如: smart-contract-auditor"
-              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
             />
           </div>
           <div>
             <label htmlFor="manifest-name-input" className="text-slate-400 block mb-1">
               显示名称
             </label>
-            <input
+            <Input
               id="manifest-name-input"
               type="text"
               value={name}
@@ -379,14 +381,13 @@ export function ManifestEditorTab({
                 markDirty();
               }}
               placeholder="智能体装配名称"
-              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
             />
           </div>
           <div>
             <label htmlFor="manifest-version-input" className="text-slate-400 block mb-1">
               版本
             </label>
-            <input
+            <Input
               id="manifest-version-input"
               type="text"
               value={version}
@@ -394,14 +395,13 @@ export function ManifestEditorTab({
                 setVersion(e.target.value);
                 markDirty();
               }}
-              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
             />
           </div>
           <div>
             <label htmlFor="manifest-desc-input" className="text-slate-400 block mb-1">
               描述说明
             </label>
-            <input
+            <Input
               id="manifest-desc-input"
               type="text"
               value={description}
@@ -409,7 +409,6 @@ export function ManifestEditorTab({
                 setDescription(e.target.value);
                 markDirty();
               }}
-              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
             />
           </div>
         </div>
@@ -419,21 +418,21 @@ export function ManifestEditorTab({
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <Filter className="h-3.5 w-3.5 text-slate-500 absolute left-2.5 top-2" />
-            <input
+            <Input
               type="text"
               value={lookupFilterQuery}
               onChange={(e) => setLookupFilterQuery(e.target.value)}
               placeholder="过滤可用公开接口 (按包名或键名搜索)..."
-              className="w-full bg-slate-950 border border-slate-800 rounded pl-8 pr-2.5 py-1 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+              className="pl-8 pr-2.5"
             />
           </div>
         </div>
 
         <div className="flex gap-2">
-          <select
+          <Select
             value={selectedLookup}
             onChange={(e) => setSelectedLookup(e.target.value)}
-            className="flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+            className="flex-1"
           >
             <option value="">-- 选择要注入的公开查找接口 --</option>
             {availableExports
@@ -448,7 +447,7 @@ export function ManifestEditorTab({
                   [{exp.pkg}] {exp.key} ({exp.pillar.toUpperCase()})
                 </option>
               ))}
-          </select>
+          </Select>
           <Button
             size="sm"
             onClick={handleAddLookup}
@@ -498,7 +497,7 @@ export function ManifestEditorTab({
                   <Badge variant={group.variant} className="text-[9px] px-1 py-0 uppercase">
                     {group.key}
                   </Badge>
-                  <span>{group.title}</span>
+
                   <span className="text-slate-600 text-[10px]">({groupItems.length})</span>
                 </div>
 
@@ -578,12 +577,12 @@ export function ManifestEditorTab({
                             )}
                           </div>
                           <div className="flex gap-2">
-                            <input
+                            <Input
                               type="text"
                               value={overrideQueryId}
                               onChange={(e) => setOverrideQueryId(e.target.value)}
                               placeholder="目标特定原子 ID，如 d1-custom"
-                              className="flex-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                              className="flex-1"
                             />
                             <Button
                               size="sm"
@@ -678,32 +677,25 @@ export function ManifestEditorTab({
             secondary={
               <div className="h-full flex flex-col bg-slate-900/30 overflow-hidden">
                 <div className="flex items-center justify-between px-3.5 py-1.5 border-b border-slate-800 bg-slate-950/70 shrink-0">
-                  <div className="flex rounded bg-slate-950 border border-slate-800 p-0.5 text-[11px]">
-                    <button
-                      type="button"
-                      onClick={() => setRightView('graph')}
-                      className={`flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors cursor-pointer ${
-                        rightView === 'graph'
-                          ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                      title="在右侧观察依赖拓扑 DAG 变化"
-                    >
-                      <Network className="h-3 w-3" /> 白板拓扑
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRightView('prompt')}
-                      className={`flex items-center gap-1 px-2.5 py-0.5 rounded transition-colors cursor-pointer ${
-                        rightView === 'prompt'
-                          ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                          : 'text-slate-400 hover:text-white'
-                      }`}
-                      title="在右侧查看拼接好的完整 Prompt 文本与词元"
-                    >
-                      <Code2 className="h-3 w-3" /> 实时编译
-                    </button>
-                  </div>
+                  <SegmentedControl
+                    size="sm"
+                    value={rightView}
+                    onChange={setRightView}
+                    options={[
+                      {
+                        value: 'graph',
+                        label: '白板拓扑',
+                        icon: <Network className="h-3 w-3" />,
+                        title: '在右侧观察依赖拓扑 DAG 变化',
+                      },
+                      {
+                        value: 'prompt',
+                        label: '实时编译',
+                        icon: <Code2 className="h-3 w-3" />,
+                        title: '在右侧查看拼接好的完整 Prompt 文本与词元',
+                      },
+                    ]}
+                  />
 
                   <button
                     type="button"

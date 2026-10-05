@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { ConfirmIconButton } from '@/components/ui/confirm-button';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
 import { toast } from '@/components/ui/toast';
 import { useIdeStore } from '@/stores/ide-store';
 import { useWorkspaceStore } from '@/stores/workspace-store';
@@ -180,24 +182,22 @@ export function SettingsTab() {
                 <label htmlFor="settings-ws-name" className="text-slate-400 block mb-1">
                   工作区显示名称
                 </label>
-                <input
+                <Input
                   id="settings-ws-name"
                   type="text"
                   value={wsName}
                   onChange={(e) => setWsName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
                 />
               </div>
               <div>
                 <label htmlFor="settings-ws-root" className="text-slate-400 block mb-1">
                   根目录绝对路径 (Root)
                 </label>
-                <input
+                <Input
                   id="settings-ws-root"
                   type="text"
                   value={wsRoot}
                   onChange={(e) => setWsRoot(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
                 />
               </div>
             </div>
@@ -238,12 +238,12 @@ export function SettingsTab() {
               <label htmlFor="settings-hook-cmd" className="font-medium block mb-1">
                 后处理管道钩子 (Post-Process Hook)
               </label>
-              <input
+              <Input
                 id="settings-hook-cmd"
                 type="text"
                 value={hookCommand}
                 onChange={(e) => setHookCommand(e.target.value)}
-                className="w-full font-mono text-xs bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-purple-500"
+                className="focus:border-purple-500"
                 placeholder="例如: pbcopy 或 cat"
               />
             </div>
@@ -262,16 +262,16 @@ export function SettingsTab() {
                 选择打开 Manifest 或 Lookup 编辑器时，右侧默认展开拓扑图还是实时切片 Prompt。
               </div>
             </div>
-            <select
+            <Select
               value={preferences.defaultRightPanel}
               onChange={(e) =>
                 updatePreferences({ defaultRightPanel: e.target.value as 'graph' | 'prompt' })
               }
-              className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-indigo-500 text-xs font-mono"
+              className="py-1.5"
             >
               <option value="graph">白板拓扑图 (Graph)</option>
               <option value="prompt">实时切片编译 (Prompt)</option>
-            </select>
+            </Select>
           </div>
         </section>
       </div>

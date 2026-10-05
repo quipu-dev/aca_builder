@@ -5,6 +5,24 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'secondary' | 'outline' | 'destructive' | 'd1' | 'd2' | 'd3' | 'kernel';
 }
 
+export function getPillarVariant(
+  type?: string,
+  fallback: BadgeProps['variant'] = 'default',
+): BadgeProps['variant'] {
+  switch (type?.toLowerCase()) {
+    case 'd1':
+      return 'd1';
+    case 'd2':
+      return 'd2';
+    case 'd3':
+      return 'd3';
+    case 'kernel':
+      return 'kernel';
+    default:
+      return fallback;
+  }
+}
+
 export function Badge({ className, variant = 'default', ...props }: BadgeProps) {
   const variantStyles = {
     default: 'bg-indigo-600/30 text-indigo-300 border-indigo-500/40',

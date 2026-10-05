@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
+import { Select } from '@/components/ui/select';
 
 export function CreateManifestModal({
   isOpen,
@@ -27,12 +29,11 @@ export function CreateManifestModal({
           <label htmlFor="modal-man-name" className="block text-xs font-mono text-slate-400 mb-1">
             蓝图名称 (可选带目录层级)
           </label>
-          <input
+          <Input
             id="modal-man-name"
             type="text"
             value={newManName}
             onChange={(e) => setNewManName(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500"
             placeholder="例如: project_a/main_agent"
           />
         </div>
@@ -41,18 +42,17 @@ export function CreateManifestModal({
             <label htmlFor="modal-man-ws" className="block text-xs font-mono text-slate-400 mb-1">
               选择工作区 (Workspace)
             </label>
-            <select
+            <Select
               id="modal-man-ws"
               value={newManWs}
               onChange={(e) => setNewManWs(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500"
             >
               {manifestPaths.map((p) => (
                 <option key={p} value={p}>
                   {p}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         )}
         <div className="pt-2 flex justify-end gap-2">

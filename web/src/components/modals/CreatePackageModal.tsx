@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
+import { Select } from '@/components/ui/select';
 
 export function CreatePackageModal({
   isOpen,
@@ -34,12 +36,11 @@ export function CreatePackageModal({
           <label htmlFor="modal-pkg-name" className="block text-xs font-mono text-slate-400 mb-1">
             包名称 (需在全局范围内唯一)
           </label>
-          <input
+          <Input
             id="modal-pkg-name"
             type="text"
             value={newPkgName}
             onChange={(e) => setNewPkgName(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500"
             placeholder="例如: core_agent"
           />
         </div>
@@ -48,18 +49,17 @@ export function CreatePackageModal({
             <label htmlFor="modal-pkg-ws" className="block text-xs font-mono text-slate-400 mb-1">
               选择工作区 (Workspace)
             </label>
-            <select
+            <Select
               id="modal-pkg-ws"
               value={newPkgWs}
               onChange={(e) => setNewPkgWs(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500"
             >
               {libraryPaths.map((p) => (
                 <option key={p} value={p}>
                   {p}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         )}
         <div className="pt-2 flex justify-end gap-2">

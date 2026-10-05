@@ -12,6 +12,9 @@ import {
 } from '@/components/editor/PromptViewer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { SegmentedControl } from '@/components/ui/segmented-control';
+import { Select } from '@/components/ui/select';
 import { SplitPane } from '@/components/ui/split-pane';
 import { toast } from '@/components/ui/toast';
 import type { PackageItem } from '@/features/explorer/PackageExplorer';
@@ -415,7 +418,7 @@ export function LookupEditorTab({
 
   return (
     <div
-      className="flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none font-mono"
+      className="flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden"
       onKeyDown={handleKeyDown}
     >
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 text-xs shrink-0">
@@ -479,55 +482,52 @@ export function LookupEditorTab({
                     <label htmlFor="lookup-pkg" className="text-slate-400 block mb-1">
                       所属组件包
                     </label>
-                    <select
+                    <Select
                       id="lookup-pkg"
                       value={pkgName}
                       onChange={(e) => {
                         setPkgName(e.target.value);
                         markDirty();
                       }}
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
                     >
                       {packages.map((p) => (
                         <option key={p.name} value={p.name}>
                           {p.name}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
 
                   <div>
                     <label htmlFor="lookup-visibility" className="text-slate-400 block mb-1">
                       可见性契约
                     </label>
-                    <select
+                    <Select
                       id="lookup-visibility"
                       value={isPublic ? 'public' : 'private'}
                       onChange={(e) => handleVisibilityChange(e.target.value === 'public')}
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
                     >
-                      <option value="public">公开导出 (package.yaml exports)</option>
-                      <option value="private">内部私有 (d4/lookups.yaml)</option>
-                    </select>
+                      <option value="public">公开导出</option>
+                      <option value="private">内部私有</option>
+                    </Select>
                   </div>
 
                   <div>
                     <label htmlFor="lookup-pillar" className="text-slate-400 block mb-1">
                       构造类别
                     </label>
-                    <select
+                    <Select
                       id="lookup-pillar"
                       value={pillar}
                       onChange={(e) => {
                         setPillar(e.target.value as 'd1' | 'd2' | 'd3');
                         markDirty();
                       }}
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
                     >
                       <option value="d1">D1 (d1l-*)</option>
                       <option value="d2">D2 (d2l-*)</option>
                       <option value="d3">D3 (d3l-*)</option>
-                    </select>
+                    </Select>
                   </div>
                 </div>
 
@@ -550,7 +550,7 @@ export function LookupEditorTab({
                         <span>ULID</span>
                       </button>
                     </div>
-                    <input
+                    <Input
                       id="lookup-key-name"
                       type="text"
                       value={rawKeyName}
@@ -558,8 +558,7 @@ export function LookupEditorTab({
                         setRawKeyName(e.target.value);
                         markDirty();
                       }}
-                      placeholder="例如: core-safety 或点击 ULID"
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500 font-mono text-xs"
+                      placeholder="例如: core-safety"
                     />
                   </div>
 
@@ -567,7 +566,7 @@ export function LookupEditorTab({
                     <label htmlFor="lookup-desc" className="text-slate-400 block mb-1">
                       描述说明
                     </label>
-                    <input
+                    <Input
                       id="lookup-desc"
                       type="text"
                       value={description}
@@ -576,7 +575,6 @@ export function LookupEditorTab({
                         markDirty();
                       }}
                       placeholder="导出该模块的基础协议与守则"
-                      className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
                     />
                   </div>
                 </div>
@@ -588,44 +586,25 @@ export function LookupEditorTab({
                     <Filter className="h-4 w-4 text-indigo-400" />
                     <span>选择器构建器 (Selectors Builder)</span>
                   </div>
-                  <div className="flex rounded bg-slate-950 p-0.5 border border-slate-800 text-[11px]">
-                    <button
-                      type="button"
-                      onClick={() => setSelectorMode('id')}
-                      className={`px-2 py-0.5 rounded transition-colors ${
-                        selectorMode === 'id' ? 'bg-indigo-600 text-white' : 'text-slate-400'
-                      }`}
-                    >
-                      按原子 ID 选取
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSelectorMode('domain')}
-                      className={`px-2 py-0.5 rounded transition-colors ${
-                        selectorMode === 'domain' ? 'bg-indigo-600 text-white' : 'text-slate-400'
-                      }`}
-                    >
-                      按 Domain 领域查询
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSelectorMode('ref')}
-                      className={`px-2 py-0.5 rounded transition-colors ${
-                        selectorMode === 'ref' ? 'bg-indigo-600 text-white' : 'text-slate-400'
-                      }`}
-                    >
-                      跨 Lookup 引用
-                    </button>
-                  </div>
+                  <SegmentedControl
+                    size="sm"
+                    value={selectorMode}
+                    onChange={setSelectorMode}
+                    options={[
+                      { value: 'id', label: '按原子 ID 选取' },
+                      { value: 'domain', label: '按 Domain 领域查询' },
+                      { value: 'ref', label: '跨 Lookup 引用' },
+                    ]}
+                  />
                 </div>
 
                 <div className="flex gap-2">
                   {selectorMode === 'id' && (
                     <div className="flex-1 flex gap-2">
-                      <select
+                      <Select
                         value={queryIdInput}
                         onChange={(e) => setQueryIdInput(e.target.value)}
-                        className="flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                        className="flex-1"
                       >
                         <option value="">-- 点选当前包内的 {pillar.toUpperCase()} 原子 --</option>
                         {currentPillarAtoms.map((a) => (
@@ -633,36 +612,36 @@ export function LookupEditorTab({
                             {a.id}
                           </option>
                         ))}
-                      </select>
-                      <input
+                      </Select>
+                      <Input
                         type="text"
                         value={queryIdInput}
                         onChange={(e) => setQueryIdInput(e.target.value)}
                         placeholder="或直接手填 ID"
-                        className="w-40 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                        className="w-40"
                       />
                     </div>
                   )}
 
                   {selectorMode === 'domain' && (
-                    <input
+                    <Input
                       type="text"
                       value={domainInput}
                       onChange={(e) => setDomainInput(e.target.value)}
                       placeholder="输入领域标签，用逗号分隔，支持 - 排除，如: reasoning, -experimental"
-                      className="flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                      className="flex-1"
                     />
                   )}
 
                   {selectorMode === 'ref' && (
                     <>
-                      <input
+                      <Input
                         type="text"
                         list="lookup-ref-candidates"
                         value={refInput}
                         onChange={(e) => setRefInput(e.target.value)}
                         placeholder="输入或选择引用的另一个 lookup，如 pkg::d1l-name"
-                        className="flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 focus:outline-none focus:border-indigo-500"
+                        className="flex-1"
                       />
                       <datalist id="lookup-ref-candidates">
                         {candidateLookupRefs.map((refKey) => (
@@ -734,44 +713,31 @@ export function LookupEditorTab({
           secondary={
             <div className="h-full flex flex-col bg-slate-900/30 overflow-hidden">
               <div className="flex items-center justify-between px-3.5 py-2 border-b border-slate-800 bg-slate-950/70 shrink-0">
-                <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 p-0.5 rounded text-[11px]">
-                  <button
-                    type="button"
-                    onClick={() => setRightView('atoms')}
-                    className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${
-                      rightView === 'atoms'
-                        ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                    title="查看一阶命中原子"
-                  >
-                    <Layers className="h-3 w-3" /> 命中原子
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRightView('graph')}
-                    className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${
-                      rightView === 'graph'
-                        ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                    title="查看以此 Lookup 为根的级联依赖拓扑图"
-                  >
-                    <Network className="h-3 w-3" /> 白板拓扑
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRightView('prompt')}
-                    className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${
-                      rightView === 'prompt'
-                        ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                    title="查看此接口传递依赖排序生成的切片 Prompt 文本"
-                  >
-                    <Code2 className="h-3 w-3" /> 切片编译
-                  </button>
-                </div>
+                <SegmentedControl
+                  size="sm"
+                  value={rightView}
+                  onChange={setRightView}
+                  options={[
+                    {
+                      value: 'atoms',
+                      label: '命中原子',
+                      icon: <Layers className="h-3 w-3" />,
+                      title: '查看一阶命中原子',
+                    },
+                    {
+                      value: 'graph',
+                      label: '白板拓扑',
+                      icon: <Network className="h-3 w-3" />,
+                      title: '查看以此 Lookup 为根的级联依赖拓扑图',
+                    },
+                    {
+                      value: 'prompt',
+                      label: '切片编译',
+                      icon: <Code2 className="h-3 w-3" />,
+                      title: '查看此接口传递依赖排序生成的切片 Prompt 文本',
+                    },
+                  ]}
+                />
 
                 <div className="flex items-center gap-2">
                   {evaluating ? (
@@ -787,7 +753,7 @@ export function LookupEditorTab({
               </div>
 
               {evalError && (
-                <div className="m-3 mb-0 rounded bg-rose-950/60 border border-rose-800/80 p-2.5 text-xs text-rose-300 flex items-center gap-1.5 shrink-0 font-sans">
+                <div className="m-3 mb-0 rounded bg-rose-950/60 border border-rose-800/80 p-2.5 text-xs text-rose-300 flex items-center gap-1.5 shrink-0">
                   <AlertCircle className="h-4 w-4 shrink-0" />
                   <span>{evalError}</span>
                 </div>
@@ -863,7 +829,7 @@ export function LookupEditorTab({
                             </div>
                           )}
 
-                          <div className="text-[11px] text-slate-400 line-clamp-2 bg-slate-900/60 p-1.5 rounded font-sans leading-relaxed">
+                          <div className="text-[11px] text-slate-400 line-clamp-2 pt-1 border-t border-slate-800/40 font-sans leading-relaxed">
                             {atom.preview || '（原子内容为空）'}
                           </div>
                         </div>

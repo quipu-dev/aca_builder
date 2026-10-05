@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { useState } from 'react';
 
@@ -38,12 +39,11 @@ export function CreateWorkspaceModal({
           <label htmlFor="modal-ws-id" className="block text-slate-400 mb-1">
             工作区标识符 (ID, 英文/数字)
           </label>
-          <input
+          <Input
             id="modal-ws-id"
             type="text"
             value={wsId}
             onChange={(e) => setWsId(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 font-mono"
             placeholder="例如: aca_en 或 agent_exp"
           />
         </div>
@@ -52,12 +52,11 @@ export function CreateWorkspaceModal({
           <label htmlFor="modal-ws-name" className="block text-slate-400 mb-1">
             显示名称 (Display Name)
           </label>
-          <input
+          <Input
             id="modal-ws-name"
             type="text"
             value={wsName}
             onChange={(e) => setWsName(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500"
             placeholder="例如: 英文公理库"
           />
         </div>
@@ -66,12 +65,11 @@ export function CreateWorkspaceModal({
           <label htmlFor="modal-ws-root" className="block text-slate-400 mb-1">
             根目录绝对路径 (Root Path)
           </label>
-          <input
+          <Input
             id="modal-ws-root"
             type="text"
             value={wsRoot}
             onChange={(e) => setWsRoot(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 font-mono"
             placeholder="例如: /home/user/Projects/aca_en"
           />
           <span className="text-[10px] text-slate-500 mt-1 block">

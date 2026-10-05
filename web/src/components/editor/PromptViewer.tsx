@@ -1,5 +1,6 @@
-import { Badge } from '@/components/ui/badge';
+import { Badge, getPillarVariant } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { markdown } from '@codemirror/lang-markdown';
 import CodeMirror from '@uiw/react-codemirror';
 import {
@@ -115,21 +116,6 @@ function AtomChunkCard({
     }
   };
 
-  const getPillarBadgeVariant = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'd1':
-        return 'd1';
-      case 'd2':
-        return 'd2';
-      case 'd3':
-        return 'd3';
-      case 'kernel':
-        return 'kernel';
-      default:
-        return 'secondary';
-    }
-  };
-
   return (
     <div
       className={`rounded-lg border transition-all duration-200 overflow-hidden shadow-sm ${
@@ -144,7 +130,7 @@ function AtomChunkCard({
       <div className="flex items-center justify-between px-3.5 py-2 border-b border-slate-800/70 bg-slate-950/70 text-xs font-mono">
         <div className="flex items-center gap-2 truncate">
           <Badge
-            variant={getPillarBadgeVariant(chunk.type)}
+            variant={getPillarVariant(chunk.type, 'secondary')}
             className="text-[10px] uppercase font-bold px-1.5 py-0"
           >
             {chunk.type}
@@ -267,7 +253,7 @@ function AtomChunkCard({
           <div
             ref={previewContainerRef}
             onDoubleClick={handleStartEditing}
-            className="cursor-text text-slate-300 select-text selection:bg-indigo-600/40 selection:text-indigo-100"
+            className="cursor-text text-slate-300"
             title="双击进入就地编辑模式"
           >
             {chunk.content ? (
@@ -365,34 +351,25 @@ export function PromptViewer({
 
         <div className="flex items-center gap-1.5">
           {/* 模式切换 */}
-          <div className="flex items-center rounded bg-slate-950 border border-slate-800/80 p-0.5">
-            <button
-              type="button"
-              onClick={() => setDisplayMode('chunks')}
-              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] transition-colors ${
-                displayMode === 'chunks'
-                  ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="分块卡片流呈现"
-            >
-              <Layers className="h-3 w-3" />
-              <span>分块</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setDisplayMode('raw')}
-              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] transition-colors ${
-                displayMode === 'raw'
-                  ? 'bg-indigo-600 text-white font-medium shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="完整纯文本视口"
-            >
-              <Code2 className="h-3 w-3" />
-              <span>文本</span>
-            </button>
-          </div>
+          <SegmentedControl
+            size="sm"
+            value={displayMode}
+            onChange={setDisplayMode}
+            options={[
+              {
+                value: 'chunks',
+                label: '分块',
+                icon: <Layers className="h-3 w-3" />,
+                title: '分块卡片流呈现',
+              },
+              {
+                value: 'raw',
+                label: '文本',
+                icon: <Code2 className="h-3 w-3" />,
+                title: '完整纯文本视口',
+              },
+            ]}
+          />
 
           {/* After 钩子微型开关 */}
           <button
@@ -541,9 +518,9 @@ export function PromptViewer({
       <div className="flex-1 overflow-auto p-3">
         {displayMode === 'chunks' && !isHookActive ? (
           chunks.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center text-xs text-slate-600 font-mono">
+            <div className="flex h-full flex-col items-center justify-center text-xs text-slate-600">
               <Box className="h-8 w-8 text-slate-700 mb-2" />
-              暂无装配好的原子块
+              <span>暂无装配好的原子块</span>
             </div>
           ) : (
             <div className="space-y-3">

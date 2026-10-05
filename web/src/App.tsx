@@ -6,6 +6,7 @@ import { CreatePackageModal } from '@/components/modals/CreatePackageModal';
 import { CreateWorkspaceModal } from '@/components/modals/CreateWorkspaceModal';
 import { EditPackageModal } from '@/components/modals/EditPackageModal';
 import { Button } from '@/components/ui/button';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { ToastContainer, toast } from '@/components/ui/toast';
 import type { LintIssue } from '@/features/diagnostics/DiagnosticsDrawer';
 import { ManifestExplorer } from '@/features/explorer/ManifestExplorer';
@@ -640,7 +641,7 @@ export function App() {
   const currentWsObj = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
 
   return (
-    <div className="flex h-screen flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans select-none">
+    <div className="flex h-screen flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans">
       <div className="flex flex-1 overflow-hidden">
         {/* 最左侧：活动栏 */}
         <div className="w-12 border-r border-slate-800 bg-slate-950 flex flex-col items-center py-3 space-y-4 shrink-0">
@@ -713,30 +714,23 @@ export function App() {
 
                   {/* 清单 / 组件包 切换选项卡 */}
                   <div className="p-2 border-b border-slate-800/60 bg-slate-950/40">
-                    <div className="flex rounded bg-slate-900 p-0.5 border border-slate-800 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => setExplorerTab('manifests')}
-                        className={`flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${
-                          explorerTab === 'manifests'
-                            ? 'bg-indigo-600 text-white shadow-sm'
-                            : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                      >
-                        <Layers className="h-3.5 w-3.5" /> 清单蓝图
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setExplorerTab('packages')}
-                        className={`flex-1 py-1 rounded font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${
-                          explorerTab === 'packages'
-                            ? 'bg-indigo-600 text-white shadow-sm'
-                            : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                      >
-                        <Package className="h-3.5 w-3.5" /> 组件包
-                      </button>
-                    </div>
+                    <SegmentedControl
+                      fullWidth
+                      value={explorerTab}
+                      onChange={setExplorerTab}
+                      options={[
+                        {
+                          value: 'manifests',
+                          label: '清单蓝图',
+                          icon: <Layers className="h-3.5 w-3.5" />,
+                        },
+                        {
+                          value: 'packages',
+                          label: '组件包',
+                          icon: <Package className="h-3.5 w-3.5" />,
+                        },
+                      ]}
+                    />
 
                     <div className="pt-2">
                       {explorerTab === 'manifests' ? (
@@ -939,7 +933,7 @@ export function App() {
                     </button>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-3 space-y-1.5 select-text">
+                  <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
                     {lintIssues.length === 0 ? (
                       <div className="flex items-center gap-2 text-emerald-400 py-4 justify-center">
                         <ShieldCheck className="h-4 w-4" />
