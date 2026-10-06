@@ -16,6 +16,8 @@ export interface CommandItem {
   lookupKey?: string;
 }
 
+import type { ManifestItemObj } from '@/features/explorer/ManifestExplorer';
+
 export function CommandPalette({
   isOpen,
   onClose,
@@ -25,7 +27,7 @@ export function CommandPalette({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  manifests: Array<string | { name: string; workspace?: string; workspace_path?: string }>;
+  manifests: ManifestItemObj[];
   packages: PackageItem[];
   kernel?: KernelInfo | null;
 }) {
@@ -46,8 +48,8 @@ export function CommandPalette({
     }
 
     for (const item of manifests) {
-      const mName = typeof item === 'string' ? item : item.name;
-      const mWs = typeof item === 'string' ? undefined : item.workspace;
+      const mName = item.name;
+      const mWs = item.workspace;
       list.push({
         id: `manifest:${mName}`,
         type: 'manifest',

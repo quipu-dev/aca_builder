@@ -130,15 +130,13 @@ def test_two_packages_with_same_internal_and_public_lookups(setup_isolation_env)
     library = repo.load_library([lib_path])
     interfaces = repo.load_interfaces([lib_path])
 
-    lookups = interfaces["lookups"]
+    # 1. 验证两个包的同名私有查找均成功加载且独立在 internals 字典中
+    assert "d1l-shared-internal" in interfaces["internals"]["pkg_one"]
+    assert "d1l-shared-internal" in interfaces["internals"]["pkg_two"]
 
-    # 1. 验证两个包的同名私有查找均成功加载且带包命名空间
-    assert "pkg_one::internal::d1l-shared-internal" in lookups
-    assert "pkg_two::internal::d1l-shared-internal" in lookups
-
-    # 2. 验证两个包的同名公开接口均成功加载且带包命名空间
-    assert "pkg_one::d1l-shared-public" in lookups
-    assert "pkg_two::d1l-shared-public" in lookups
+    # 2. 验证两个包的同名公开接口均成功加载且在 exports 导出表中带有完整命名空间
+    assert "pkg_one::d1l-shared-public" in interfaces["exports"]
+    assert "pkg_two::d1l-shared-public" in interfaces["exports"]
 
     # 3. 验证相对引用（同包内解析短名）能准确命中自身包的私有查找
     p1_def = resolve_lookup_by_key(

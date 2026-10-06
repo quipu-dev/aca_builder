@@ -42,8 +42,7 @@ export interface ImportItem {
 }
 
 interface ManifestImportRaw {
-  lookup?: string;
-  query?: Record<string, unknown>;
+  lookup: string;
 }
 
 export function ManifestEditorTab({
@@ -138,10 +137,10 @@ export function ManifestEditorTab({
         const loadedOverrides = data.overrides || {};
         const rawImports = (data.imports || []) as ManifestImportRaw[];
         const mappedItems = rawImports
-          .filter((imp) => Boolean(imp.lookup))
+          .filter((imp) => Boolean(imp?.lookup))
           .map((imp) => ({
             id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-            lookup: imp.lookup as string,
+            lookup: imp.lookup,
           }));
 
         setName(loadedName);

@@ -373,9 +373,16 @@ def get_atom_references(
     manifest_paths = ws_cfg.manifest_paths
 
     referenced_lookups = []
-    all_lookups = interfaces.get("lookups", {})
+    all_lookups: list[tuple[str, dict[str, Any]]] = []
+    for k, v in interfaces.get("exports", {}).items():
+        all_lookups.append((k, v))
+    for pkg, pkg_lookups in interfaces.get("internals", {}).items():
+        for k, v in pkg_lookups.items():
+            all_lookups.append((f"{pkg}::internal::{k}", v))
+    for k, v in interfaces.get("legacy", {}).items():
+        all_lookups.append((k, v))
 
-    for lkey, ldef in all_lookups.items():
+    for lkey, ldef in all_lookups:
         selectors = ldef.get("selectors", [])
         for sel in selectors:
             if (

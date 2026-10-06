@@ -267,11 +267,12 @@ def compile_prompt_closure(
     if overrides:
         interfaces = copy.deepcopy(interfaces)
         for lkey, override in overrides.items():
-            if lkey not in interfaces.get("lookups", {}):
+            target_lookup = resolve_lookup_by_key(lkey, None, interfaces)
+            if not target_lookup:
                 from aca_builder.messages import MESSAGES
 
                 raise BuildError(MESSAGES["builder.override.error"].format(key=lkey))
-            interfaces["lookups"][lkey]["selectors"] = override.get("selectors", [])
+            target_lookup["selectors"] = override.get("selectors", [])
 
     # 2. 初始命中收集
     initial_map: dict[str, set[str]] = {}

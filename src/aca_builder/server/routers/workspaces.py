@@ -198,11 +198,6 @@ def update_current_workspace_config(
         ws_entry["name"] = req.name
     if req.root is not None:
         ws_entry["root"] = req.root
-    # 彻底清理多余的多目录字段，由 root 统一约定推导
-    ws_entry.pop("libraries", None)
-    ws_entry.pop("library_paths", None)
-    ws_entry.pop("manifests", None)
-    ws_entry.pop("manifest_paths", None)
     if req.post_process_hook is not None:
         ws_entry["post_process_hook"] = req.post_process_hook
 

@@ -20,7 +20,7 @@ export interface ManifestItemObj {
 }
 
 export interface ManifestExplorerProps {
-  manifests: Array<string | ManifestItemObj>;
+  manifests: ManifestItemObj[];
   activeManifestName?: string;
   onSelectManifest: (manifestName: string, e?: React.MouseEvent) => void;
   onDeleteManifest: (manifestName: string, e: React.MouseEvent) => void;
@@ -37,7 +37,7 @@ interface ManifestTreeNode {
   children: ManifestTreeNode[];
 }
 
-function buildTree(items: Array<string | ManifestItemObj>): ManifestTreeNode[] {
+function buildTree(items: ManifestItemObj[]): ManifestTreeNode[] {
   interface TempNode {
     name: string;
     path: string;
@@ -53,8 +53,8 @@ function buildTree(items: Array<string | ManifestItemObj>): ManifestTreeNode[] {
   };
 
   for (const item of items) {
-    const isExplicitDir = typeof item === 'object' && item.type === 'directory';
-    const p = typeof item === 'string' ? item : item.name;
+    const isExplicitDir = item.type === 'directory';
+    const p = item.name;
     const parts = p.split('/').filter(Boolean);
     let curr = root;
 

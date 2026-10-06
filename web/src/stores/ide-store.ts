@@ -76,7 +76,7 @@ interface IdeState {
 
   openTab: (
     tab: IdeTab,
-    options?: boolean | { newTab?: boolean; fromHistory?: boolean; isPreview?: boolean },
+    options?: { newTab?: boolean; fromHistory?: boolean; isPreview?: boolean },
   ) => void;
   replaceTab: (oldTabId: string, newTab: IdeTab) => void;
   closeTab: (tabId: string) => void;
@@ -212,14 +212,12 @@ export const useIdeStore = create<IdeState>()(
         });
       },
 
-      openTab: (tab, options = false) => {
+      openTab: (tab, options) => {
         const { tabs, navigationHistory, historyIndex } = get();
-        const newTab = typeof options === 'boolean' ? options : !!options?.newTab;
-        const fromHistory = typeof options === 'object' && !!options?.fromHistory;
+        const newTab = !!options?.newTab;
+        const fromHistory = !!options?.fromHistory;
         const isPreview =
-          typeof options === 'object' && options?.isPreview !== undefined
-            ? options.isPreview
-            : (tab.isPreview ?? false);
+          options?.isPreview !== undefined ? options.isPreview : (tab.isPreview ?? false);
 
         const tabToOpen: IdeTab = { ...tab, isPreview };
 

@@ -10,10 +10,6 @@ from aca_builder.domain.ports import LibraryRepository, ManifestRepository
 
 
 class FSLibraryRepository(LibraryRepository):
-    def __init__(self, cache_db: Any | None = None):
-        # 兼容旧构造入参，内部不再需要缓存引擎
-        pass
-
     def _parse_atom(
         self, file_path: Path, package_name: str | None = None
     ) -> dict[str, Any]:
@@ -125,13 +121,11 @@ class FSLibraryRepository(LibraryRepository):
         - exports: 全局公开导出表 (pkg::name -> def)
         - internals: 包局部私有符号表 (pkg -> name -> def)
         - legacy: 遗留全局无包查找表 (name -> def)
-        - lookups: 兼容视图字典，包含 exports 与全限定私有别名
         """
         interfaces: dict[str, Any] = {
             "exports": {},
             "internals": {},
             "legacy": {},
-            "lookups": {},
         }
 
         for lib_root in library_paths:
@@ -158,12 +152,8 @@ class FSLibraryRepository(LibraryRepository):
                                 interfaces["internals"].setdefault(pkg_name, {})[
                                     key
                                 ] = lookup_def
-                                # 保留全限定私有别名于兼容字典，杜绝与同名公开导出冲突
-                                internal_key = f"{pkg_name}::internal::{key}"
-                                interfaces["lookups"][internal_key] = lookup_def
                             else:
                                 interfaces["legacy"][key] = lookup_def
-                                interfaces["lookups"][key] = lookup_def
                 except (yaml.YAMLError, OSError):
                     continue
 
@@ -186,7 +176,6 @@ class FSLibraryRepository(LibraryRepository):
                         def_["package"] = pkg_name
                         def_["visibility"] = "public"
                         interfaces["exports"][namespaced_key] = def_
-                        interfaces["lookups"][namespaced_key] = def_
                 except (yaml.YAMLError, OSError, ValueError) as e:
                     raise BuildError(f"Error processing package file {pkg_file}: {e}")
 

@@ -103,7 +103,6 @@ def setup_test_environment(tmp_path: Path, monkeypatch):
     config_file.write_text(yaml.dump(config_data), encoding="utf-8")
 
     monkeypatch.setattr("aca_builder.config.CONFIG_PATH", config_file)
-    monkeypatch.setenv("ACA_CACHE_DB_PATH", str(tmp_path / "cache.db"))
 
     return tmp_path, lib_path, manifest_pkg_path
 

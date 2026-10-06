@@ -29,8 +29,9 @@ def build_topology_graph(
     ):
         interfaces = copy.deepcopy(interfaces)
         for lkey, override in manifest_data["overrides"].items():
-            if lkey in interfaces.get("lookups", {}):
-                interfaces["lookups"][lkey]["selectors"] = override.get("selectors", [])
+            target_lookup = resolve_lookup_by_key(lkey, None, interfaces)
+            if target_lookup:
+                target_lookup["selectors"] = override.get("selectors", [])
 
     nodes: list[dict[str, Any]] = []
     edges: list[dict[str, Any]] = []

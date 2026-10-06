@@ -40,33 +40,30 @@ def _perform_delete_lookup(
     lookup_key: str,
 ) -> bool:
     """内部通用清理指定 Lookup 定义的执行器：支持全限定名及唯一定义短名的安全解析，杜绝跨包误删"""
-    lookup_def = interfaces.get("lookups", {}).get(lookup_key)
-    is_internal_pattern = "::internal::" in lookup_key
+    lookup_def = None
+    if "::internal::" in lookup_key:
+        pkg_part, name_part = lookup_key.split("::internal::", 1)
+        lookup_def = (
+            interfaces.get("internals", {}).get(pkg_part, {}).get(name_part)
+        )
+    elif "::" in lookup_key:
+        lookup_def = interfaces.get("exports", {}).get(lookup_key)
+    else:
+        # 短名称局部寻址：在唯一匹配无歧义的情况下予以定位
+        candidates = []
+        if lookup_key in interfaces.get("legacy", {}):
+            candidates.append((interfaces["legacy"][lookup_key], lookup_key))
+        for pkg, pkg_lookups in interfaces.get("internals", {}).items():
+            if lookup_key in pkg_lookups:
+                candidates.append(
+                    (pkg_lookups[lookup_key], f"{pkg}::internal::{lookup_key}")
+                )
+        for exp_key, exp_def in interfaces.get("exports", {}).items():
+            if exp_key.endswith(f"::{lookup_key}"):
+                candidates.append((exp_def, exp_key))
 
-    if not lookup_def:
-        if is_internal_pattern:
-            pkg_part, name_part = lookup_key.split("::internal::", 1)
-            lookup_def = (
-                interfaces.get("internals", {}).get(pkg_part, {}).get(name_part)
-            )
-        elif "::" in lookup_key:
-            lookup_def = interfaces.get("exports", {}).get(lookup_key)
-        else:
-            # 短名称局部寻址：在唯一匹配无歧义的情况下予以定位
-            candidates = []
-            if lookup_key in interfaces.get("legacy", {}):
-                candidates.append((interfaces["legacy"][lookup_key], lookup_key))
-            for pkg, pkg_lookups in interfaces.get("internals", {}).items():
-                if lookup_key in pkg_lookups:
-                    candidates.append(
-                        (pkg_lookups[lookup_key], f"{pkg}::internal::{lookup_key}")
-                    )
-            for exp_key, exp_def in interfaces.get("exports", {}).items():
-                if exp_key.endswith(f"::{lookup_key}"):
-                    candidates.append((exp_def, exp_key))
-
-            if len(candidates) == 1:
-                lookup_def, lookup_key = candidates[0]
+        if len(candidates) == 1:
+            lookup_def, lookup_key = candidates[0]
 
     if not lookup_def:
         return False

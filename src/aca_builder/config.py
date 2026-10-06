@@ -138,16 +138,3 @@ def resolve_workspace(
         post_process_hook=None,
     )
     return fallback_id, fallback_ws
-
-
-def get_cache_db_path(
-    config_data: dict[str, Any] | None = None,
-    workspace_id: str | None = None,
-) -> Path:
-    """[已废弃] 仅保留向后兼容接口。"""
-    return Path("/dev/null")
-
-
-def get_workspace_cache_db_path(workspace_id: str) -> Path:
-    """[已废弃] 仅保留向后兼容接口。"""
-    return Path("/dev/null")

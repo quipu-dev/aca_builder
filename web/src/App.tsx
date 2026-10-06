@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { ToastContainer, toast } from '@/components/ui/toast';
 import type { LintIssue } from '@/features/diagnostics/DiagnosticsDrawer';
-import { ManifestExplorer } from '@/features/explorer/ManifestExplorer';
+import { ManifestExplorer, type ManifestItemObj } from '@/features/explorer/ManifestExplorer';
 import {
   type KernelInfo,
   PackageExplorer,
@@ -44,9 +44,7 @@ import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
-const EMPTY_MANIFESTS: Array<
-  string | { name: string; workspace?: string; workspace_path?: string }
-> = [];
+const EMPTY_MANIFESTS: ManifestItemObj[] = [];
 const EMPTY_PACKAGES: PackageItem[] = [];
 
 export function App() {
@@ -74,7 +72,7 @@ export function App() {
 
   // 1. 使用 React Query 接管工作区资产数据
   const { data: assetsData } = useQuery<{
-    manifests: Array<string | { name: string; workspace?: string; workspace_path?: string }>;
+    manifests: ManifestItemObj[];
     packages: PackageItem[];
     kernel: KernelInfo | null;
   }>({
@@ -356,10 +354,9 @@ export function App() {
       if (!old) return old;
       return {
         ...old,
-        manifests: old.manifests.filter((m) => {
-          const name = typeof m === 'string' ? m : m.name;
-          return name !== folderPath && !name.startsWith(`${folderPath}/`);
-        }),
+        manifests: old.manifests.filter(
+          (m) => m.name !== folderPath && !m.name.startsWith(`${folderPath}/`),
+        ),
       };
     });
 
@@ -439,9 +436,7 @@ export function App() {
       if (!old) return old;
       return {
         ...old,
-        manifests: old.manifests.filter((m) =>
-          typeof m === 'string' ? m !== mName : m.name !== mName,
-        ),
+        manifests: old.manifests.filter((m) => m.name !== mName),
       };
     });
     ideStore.closeTab(`manifest:${mName}`);

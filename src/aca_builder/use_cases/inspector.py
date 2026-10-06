@@ -19,13 +19,11 @@ class InspectorService:
         """Inspect packages or display global library stats. Returns True on success, False if package not found."""
         if package:
             interfaces = self.lib_repo.load_interfaces(library_paths)
-            found_lookups = []
-            for key, l_def in interfaces.get("lookups", {}).items():
-                if (
-                    l_def.get("package") == package
-                    and l_def.get("visibility") == "public"
-                ):
-                    found_lookups.append((key, l_def))
+            found_lookups = [
+                (key, l_def)
+                for key, l_def in interfaces.get("exports", {}).items()
+                if l_def.get("package") == package
+            ]
 
             if not found_lookups:
                 self.bus.warn("info.pkg.not_found", name=package)

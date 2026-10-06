@@ -143,30 +143,46 @@ def get_assets_overview(x_aca_workspace: str | None = Header(None)) -> dict[str,
             }
         packages_map[pkg]["atoms"].append(atom_summary)
 
-    for key, l_def in interfaces.get("lookups", {}).items():
+    for key, l_def in interfaces.get("exports", {}).items():
         pkg = l_def.get("package")
-        is_public = l_def.get("visibility") == "public"
-        lookup_item = {
+        if not pkg:
+            continue
+        if pkg not in packages_map:
+            packages_map[pkg] = {
+                "name": pkg,
+                "workspace": ws_id,
+                "workspace_path": "",
+                "exports": {},
+                "internal_lookups": {},
+                "atoms": [],
+            }
+        packages_map[pkg]["exports"][key] = {
             "key": key,
             "pillar": l_def.get("pillar"),
             "description": l_def.get("description", ""),
-            "visibility": l_def.get("visibility"),
+            "visibility": "public",
             "selectors": l_def.get("selectors", []),
         }
-        if pkg:
-            if pkg not in packages_map:
-                packages_map[pkg] = {
-                    "name": pkg,
-                    "workspace": ws_id,
-                    "workspace_path": "",
-                    "exports": {},
-                    "internal_lookups": {},
-                    "atoms": [],
-                }
-            if is_public:
-                packages_map[pkg]["exports"][key] = lookup_item
-            else:
-                packages_map[pkg]["internal_lookups"][key] = lookup_item
+
+    for pkg, pkg_lookups in interfaces.get("internals", {}).items():
+        if pkg not in packages_map:
+            packages_map[pkg] = {
+                "name": pkg,
+                "workspace": ws_id,
+                "workspace_path": "",
+                "exports": {},
+                "internal_lookups": {},
+                "atoms": [],
+            }
+        for key, l_def in pkg_lookups.items():
+            full_internal_key = f"{pkg}::internal::{key}"
+            packages_map[pkg]["internal_lookups"][full_internal_key] = {
+                "key": full_internal_key,
+                "pillar": l_def.get("pillar"),
+                "description": l_def.get("description", ""),
+                "visibility": "private",
+                "selectors": l_def.get("selectors", []),
+            }
 
     kernel_info = None
     for atom_id, atom in library.items():
