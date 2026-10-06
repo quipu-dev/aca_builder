@@ -28,6 +28,7 @@ export interface LookupNodeData {
   description?: string;
   isBroken?: boolean;
   isPrivate?: boolean;
+  hasContract?: boolean;
   onEdit?: (lookupKey: string) => void;
 }
 
@@ -50,6 +51,11 @@ export function LookupNode({ data }: { data: LookupNodeData }) {
         <div className="flex items-center gap-1.5 text-xs font-mono">
           <Box className="h-3.5 w-3.5 text-slate-400" />
           <span className="font-semibold">{data.pillar?.toUpperCase()} 接口</span>
+          {data.hasContract && (
+            <span className="text-[9px] font-bold px-1 rounded bg-indigo-950 text-indigo-300 border border-indigo-800">
+              契约
+            </span>
+          )}
         </div>
         {isBroken && (
           <span className="flex items-center gap-1 text-[10px] text-rose-400 font-bold">

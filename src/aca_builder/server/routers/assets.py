@@ -160,6 +160,7 @@ def get_assets_overview(x_aca_workspace: str | None = Header(None)) -> dict[str,
             "pillar": l_def.get("pillar"),
             "description": l_def.get("description", ""),
             "visibility": "public",
+            "contract": l_def.get("contract"),
             "selectors": l_def.get("selectors", []),
         }
 
@@ -180,6 +181,7 @@ def get_assets_overview(x_aca_workspace: str | None = Header(None)) -> dict[str,
                 "pillar": l_def.get("pillar"),
                 "description": l_def.get("description", ""),
                 "visibility": "private",
+                "contract": l_def.get("contract"),
                 "selectors": l_def.get("selectors", []),
             }
 

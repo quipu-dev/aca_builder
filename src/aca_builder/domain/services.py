@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 from typing import Any
 
 from aca_builder.domain.indexing import InvertedIndex
@@ -135,35 +134,79 @@ def resolve_dependencies(
     initial_map: dict[str, set[str]],
     library: dict[str, Any],
     interfaces: dict[str, Any],
+    atom_envs: dict[str, dict[str, str]] | None = None,
 ) -> dict[str, set[str]]:
     final_deps = initial_map.copy()
-    to_process = list(initial_map.keys())
+    to_process: list[tuple[str, dict[str, str]]] = []
+    for aid in initial_map:
+        env = dict(atom_envs.get(aid, {})) if atom_envs else {}
+        to_process.append((aid, env))
+
+    visited_states: set[tuple[str, tuple[tuple[str, str], ...]]] = set()
 
     while to_process:
-        current_id = to_process.pop(0)
+        current_id, current_env = to_process.pop(0)
+        state_key = (current_id, tuple(sorted(current_env.items())))
+        if state_key in visited_states:
+            continue
+        visited_states.add(state_key)
+
         atom = library.get(current_id)
         if not atom:
             continue
 
         meta = atom["meta"]
         current_pkg = atom.get("package")
+        atom_type = (
+            meta.get("type") if hasattr(meta, "get") else getattr(meta, "type", "")
+        )
 
-        if meta["type"] == "d2":
-            uses = meta.get("uses", [])
+        if atom_type == "d2":
+            uses = list(
+                meta.get("uses", [])
+                if hasattr(meta, "get")
+                else getattr(meta, "uses", [])
+            )
+            requires = (
+                meta.get("requires", {})
+                if hasattr(meta, "get")
+                else getattr(meta, "requires", {})
+            )
+            if isinstance(requires, dict):
+                uses.extend(requires.values())
+
             for use_ref in uses:
-                lookup_def = resolve_lookup_by_key(use_ref, current_pkg, interfaces)
+                # 作用域环境重定向 (Scoped Rebinding)
+                target_ref = use_ref
+                short_ref = use_ref.split("::")[-1]
+                if current_env and use_ref in current_env:
+                    target_ref = current_env[use_ref]
+                elif current_env and short_ref in current_env:
+                    target_ref = current_env[short_ref]
+
+                # 1. 直接绑定到目标具体原子 ID
+                if target_ref in library:
+                    if target_ref not in final_deps:
+                        final_deps[target_ref] = {use_ref}
+                    else:
+                        final_deps[target_ref].add(use_ref)
+                    to_process.append((target_ref, current_env))
+                    continue
+
+                # 2. 绑定到 Lookup 查找接口
+                lookup_def = resolve_lookup_by_key(target_ref, current_pkg, interfaces)
                 if not lookup_def:
                     raise BuildError(
-                        f"Dependency Error: Lookup '{use_ref}' not found (referenced by {current_id})."
+                        f"Dependency Error: Lookup '{target_ref}' not found (referenced by {current_id})."
                     )
 
                 triggered_ids = evaluate_lookup(library, lookup_def, interfaces)
                 for tid in triggered_ids:
                     if tid not in final_deps:
                         final_deps[tid] = {use_ref}
-                        to_process.append(tid)
                     else:
                         final_deps[tid].add(use_ref)
+                    to_process.append((tid, current_env))
     return final_deps
 
 
@@ -201,16 +244,14 @@ def compile_prompt_closure(
     interfaces: dict[str, Any],
     imports: list[dict[str, Any]] | None = None,
     direct_lookup: tuple[str, dict[str, Any]] | None = None,
-    overrides: dict[str, Any] | None = None,
     include_kernel: bool = True,
 ) -> tuple[dict[str, set[str]], str]:
     """
     通用纯领域编译流水线：
-    1. 应用 overrides (深拷贝避免污染运行时接口表)
-    2. 计算直接命中映射 (direct_lookup 或 imports)
-    3. 传递依赖闭包演算
-    4. 单例 Kernel 自动注入或排除
-    5. 严格语义排序与序列化
+    1. 计算直接命中映射 (direct_lookup 或 imports 及其局部 with 注入环境)
+    2. 传递依赖闭包演算 (严格词法作用域隔离)
+    3. 单例 Kernel 自动注入或排除
+    4. 严格语义排序与序列化
     返回: (final_atom_map, prompt_text)
     """
     if not library:
@@ -218,19 +259,9 @@ def compile_prompt_closure(
 
         raise BuildError(MESSAGES["builder.library.empty"])
 
-    # 1. 隔离应用 overrides
-    if overrides:
-        interfaces = copy.deepcopy(interfaces)
-        for lkey, override in overrides.items():
-            target_lookup = resolve_lookup_by_key(lkey, None, interfaces)
-            if not target_lookup:
-                from aca_builder.messages import MESSAGES
-
-                raise BuildError(MESSAGES["builder.override.error"].format(key=lkey))
-            target_lookup["selectors"] = override.get("selectors", [])
-
-    # 2. 初始命中收集
+    # 1. 初始命中收集与作用域环境帧构建
     initial_map: dict[str, set[str]] = {}
+    atom_envs: dict[str, dict[str, str]] = {}
 
     if direct_lookup:
         lkey, ldef = direct_lookup
@@ -239,6 +270,10 @@ def compile_prompt_closure(
             initial_map.setdefault(aid, set()).add(lkey)
     elif imports:
         for item in imports:
+            item_env = item.get("with", {}) if isinstance(item, dict) else {}
+            if not isinstance(item_env, dict):
+                item_env = {}
+
             if "lookup" in item:
                 lkey = item["lookup"]
                 ldef = resolve_lookup_by_key(lkey, None, interfaces)
@@ -251,14 +286,20 @@ def compile_prompt_closure(
                 ids = evaluate_lookup(library, ldef, interfaces)
                 for aid in ids:
                     initial_map.setdefault(aid, set()).add(lkey)
+                    if item_env:
+                        atom_envs.setdefault(aid, {}).update(item_env)
             elif "query" in item:
                 ids = select_atoms_by_query(library, item["query"])
                 for aid in ids:
                     if aid not in initial_map:
                         initial_map[aid] = set()
+                    if item_env:
+                        atom_envs.setdefault(aid, {}).update(item_env)
 
-    # 3. 依赖闭包求解
-    final_atom_map = resolve_dependencies(initial_map, library, interfaces)
+    # 3. 依赖闭包求解（携带词法作用域注入环境）
+    final_atom_map = resolve_dependencies(
+        initial_map, library, interfaces, atom_envs=atom_envs
+    )
 
     # 4. 单例 Kernel 注入
     if include_kernel:

@@ -26,7 +26,6 @@ def run_compilation_pipeline(
     interfaces: dict[str, Any],
     imports: list[dict[str, Any]] | None = None,
     direct_lookup: tuple[str, dict[str, Any]] | None = None,
-    overrides: dict[str, Any] | None = None,
     apply_hook: bool = False,
     hook_command: str | None = None,
     include_kernel: bool = True,
@@ -43,7 +42,6 @@ def run_compilation_pipeline(
             interfaces=interfaces,
             imports=imports,
             direct_lookup=direct_lookup,
-            overrides=overrides,
             include_kernel=include_kernel,
         )
     except BuildError as e:

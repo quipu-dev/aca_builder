@@ -272,6 +272,44 @@ def test_rename_lookup_with_old_key_cleans_legacy(setup_crud_env):
     assert "d1l-public-crud" not in exports
 
 
+def test_get_lookup_providers_with_contract(setup_crud_env):
+    client, _lib_path, _pkg_dir = setup_crud_env
+
+    # 1. 建立一个带契约的查找接口
+    res_create = client.post(
+        "/api/lookups",
+        json={
+            "package": "pkg_crud",
+            "key": "d1l-contracted-api",
+            "pillar": "d1",
+            "is_public": True,
+            "description": "Contracted API",
+            "contract": {
+                "required_domains": ["test"],
+            },
+            "selectors": [{"query": {"id": "d1-crud-atom"}}],
+        },
+    )
+    assert res_create.status_code == 200
+
+    # 2. 查询 /api/assets，确认 contract 字段被正确透出
+    res_assets = client.get("/api/assets")
+    assert res_assets.status_code == 200
+    assets_data = res_assets.json()
+    pkg_item = next(p for p in assets_data["packages"] if p["name"] == "pkg_crud")
+    contract_def = pkg_item["exports"]["pkg_crud::d1l-contracted-api"]
+    assert "contract" in contract_def
+    assert contract_def["contract"] == {"required_domains": ["test"]}
+
+    # 3. 调用 /api/lookups/{key}/providers 检索候选实现者
+    res_prov = client.get("/api/lookups/pkg_crud::d1l-contracted-api/providers")
+    assert res_prov.status_code == 200
+    prov_data = res_prov.json()
+    assert prov_data["has_contract"] is True
+    assert prov_data["pillar"] == "d1"
+    assert "providers" in prov_data
+
+
 def test_atom_and_lookup_references(setup_crud_env):
     client, lib_path, _pkg_dir = setup_crud_env
     # 创建一个显式引用原子的 Manifest 到已配置的工作区目录中

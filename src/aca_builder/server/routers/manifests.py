@@ -19,7 +19,6 @@ class SaveManifestRequest(BaseModel):
     version: str = "1.0.0"
     description: str = ""
     imports: list[dict[str, Any]]
-    overrides: dict[str, Any] | None = None
     identifier: str | None = None
     workspace_path: str | None = None
 
@@ -51,8 +50,6 @@ def save_manifest(
         "description": req.description,
         "imports": req.imports,
     }
-    if req.overrides:
-        manifest_content["overrides"] = req.overrides
 
     try:
         atomic_write_text(

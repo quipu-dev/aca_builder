@@ -21,7 +21,6 @@ class BuildRequest(BaseModel):
 
 class AdhocCompileRequest(BaseModel):
     imports: list[dict[str, Any]]
-    overrides: dict[str, Any] | None = None
     apply_hook: bool = False
 
 
@@ -63,7 +62,6 @@ def build_prompt(
         library=library,
         interfaces=interfaces,
         imports=manifest.get("imports", []),
-        overrides=manifest.get("overrides"),
         apply_hook=req.apply_hook,
         hook_command=ws_cfg.post_process_hook,
     )
@@ -85,7 +83,6 @@ def compile_adhoc(
         library=library,
         interfaces=interfaces,
         imports=req.imports,
-        overrides=req.overrides,
         apply_hook=req.apply_hook,
         hook_command=ws_cfg.post_process_hook,
     )

@@ -60,7 +60,6 @@ class BuilderService:
             library=library,
             interfaces=interfaces,
             imports=manifest.get("imports", []),
-            overrides=manifest.get("overrides"),
             include_kernel=True,
         )
         return res.prompt
@@ -79,7 +78,6 @@ class BuilderService:
             library=library,
             interfaces=interfaces,
             imports=manifest.get("imports", []),
-            overrides=manifest.get("overrides"),
             include_kernel=True,
         )
         return res.prompt, res.profile.model_dump()

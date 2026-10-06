@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import time
 from typing import Any
 
@@ -22,33 +21,30 @@ def build_topology_graph(
     """
     t_start = time.perf_counter()
 
-    if (
-        manifest_data
-        and "overrides" in manifest_data
-        and isinstance(manifest_data["overrides"], dict)
-    ):
-        interfaces = copy.deepcopy(interfaces)
-        for lkey, override in manifest_data["overrides"].items():
-            target_lookup = resolve_lookup_by_key(lkey, None, interfaces)
-            if target_lookup:
-                target_lookup["selectors"] = override.get("selectors", [])
-
     nodes: list[dict[str, Any]] = []
     edges: list[dict[str, Any]] = []
     visited_nodes: set[str] = set()
     visited_edges: set[tuple[str, str]] = set()
 
-    def add_edge(source: str, target: str, label: str = ""):
+    def add_edge(
+        source: str,
+        target: str,
+        label: str = "",
+        is_injected: bool = False,
+    ):
         if (source, target) not in visited_edges:
-            edges.append(
-                {
-                    "id": f"e_{source}->{target}",
-                    "source": source,
-                    "target": target,
-                    "label": label,
-                    "animated": True,
-                }
-            )
+            edge_obj = {
+                "id": f"e_{source}->{target}",
+                "source": source,
+                "target": target,
+                "label": label,
+                "animated": True,
+            }
+            if is_injected:
+                edge_obj["style"] = {"stroke": "#a855f7", "strokeWidth": 2}
+                edge_obj["label"] = label or "with (注入)"
+                edge_obj["data"] = {"injected": True}
+            edges.append(edge_obj)
             visited_edges.add((source, target))
 
     def process_lookup(
@@ -56,11 +52,13 @@ def build_topology_graph(
         parent_id: str,
         context_pkg: str | None = None,
         target_override: dict[str, Any] | None = None,
+        env: dict[str, str] | None = None,
+        is_injected: bool = False,
     ):
         lookup_node_id = f"lookup::{lkey}"
 
         if lookup_node_id in visited_nodes:
-            add_edge(parent_id, lookup_node_id)
+            add_edge(parent_id, lookup_node_id, is_injected=is_injected)
             return
 
         target_def = target_override or resolve_lookup_by_key(
@@ -71,10 +69,12 @@ def build_topology_graph(
         is_private_access = False
         pillar = "unknown"
         desc = ""
+        has_contract = False
 
         if target_def:
             pillar = target_def.get("pillar", "unknown")
             desc = target_def.get("description", "")
+            has_contract = bool(target_def.get("contract"))
             target_pkg = target_def.get("package")
             if (
                 target_pkg
@@ -93,11 +93,12 @@ def build_topology_graph(
                     "description": desc,
                     "isBroken": is_broken,
                     "isPrivate": is_private_access,
+                    "hasContract": has_contract,
                 },
             }
         )
         visited_nodes.add(lookup_node_id)
-        add_edge(parent_id, lookup_node_id)
+        add_edge(parent_id, lookup_node_id, is_injected=is_injected)
 
         if not target_def:
             return
@@ -108,13 +109,18 @@ def build_topology_graph(
             matched_atom_ids = set()
 
         for atom_id in matched_atom_ids:
-            process_atom(atom_id, lookup_node_id)
+            process_atom(atom_id, lookup_node_id, env=env)
 
-    def process_atom(atom_id: str, parent_id: str):
+    def process_atom(
+        atom_id: str,
+        parent_id: str,
+        env: dict[str, str] | None = None,
+        is_injected: bool = False,
+    ):
         atom_node_id = f"atom::{atom_id}"
 
         if atom_node_id in visited_nodes:
-            add_edge(parent_id, atom_node_id)
+            add_edge(parent_id, atom_node_id, is_injected=is_injected)
             return
 
         atom = library.get(atom_id)
@@ -122,13 +128,24 @@ def build_topology_graph(
             return
 
         meta = atom.get("meta", {})
-        atom_type = meta.get("type", "unknown")
-        priority = meta.get("priority")
+        atom_type = (
+            meta.get("type")
+            if hasattr(meta, "get")
+            else getattr(meta, "type", "unknown")
+        )
+        priority = (
+            meta.get("priority")
+            if hasattr(meta, "get")
+            else getattr(meta, "priority", None)
+        )
         pkg = atom.get("package")
         content = atom.get("content", "")
 
-        # 提取业务描述：优先取元数据，无则回退取 Markdown 首行一级标题
-        description = meta.get("description", "")
+        description = (
+            meta.get("description", "")
+            if hasattr(meta, "get")
+            else getattr(meta, "description", "")
+        )
         if not description and content:
             for line in content.splitlines():
                 stripped = line.strip()
@@ -152,12 +169,48 @@ def build_topology_graph(
             }
         )
         visited_nodes.add(atom_node_id)
-        add_edge(parent_id, atom_node_id)
+        add_edge(parent_id, atom_node_id, is_injected=is_injected)
 
         if atom_type == "d2":
-            uses = meta.get("uses", [])
+            uses = list(
+                meta.get("uses", [])
+                if hasattr(meta, "get")
+                else getattr(meta, "uses", [])
+            )
+            requires = (
+                meta.get("requires", {})
+                if hasattr(meta, "get")
+                else getattr(meta, "requires", {})
+            )
+            if isinstance(requires, dict):
+                uses.extend(requires.values())
+
             for use_ref in uses:
-                process_lookup(use_ref, atom_node_id, context_pkg=pkg)
+                target_ref = use_ref
+                injected = False
+                short_ref = use_ref.split("::")[-1]
+                if env and use_ref in env:
+                    target_ref = env[use_ref]
+                    injected = True
+                elif env and short_ref in env:
+                    target_ref = env[short_ref]
+                    injected = True
+
+                if target_ref in library:
+                    process_atom(
+                        target_ref,
+                        atom_node_id,
+                        env=env,
+                        is_injected=injected,
+                    )
+                else:
+                    process_lookup(
+                        target_ref,
+                        atom_node_id,
+                        context_pkg=pkg,
+                        env=env,
+                        is_injected=injected,
+                    )
 
     if root_lookup:
         root_key = root_lookup["key"]
@@ -202,7 +255,15 @@ def build_topology_graph(
         imports = (manifest_data or {}).get("imports", [])
         for item in imports:
             if isinstance(item, dict) and "lookup" in item:
-                process_lookup(item["lookup"], manifest_node_id, context_pkg=None)
+                item_env = (
+                    item.get("with", {}) if isinstance(item.get("with"), dict) else {}
+                )
+                process_lookup(
+                    item["lookup"],
+                    manifest_node_id,
+                    context_pkg=None,
+                    env=item_env,
+                )
 
         for atom_id, atom in library.items():
             if atom.get("meta", {}).get("type") == "kernel":

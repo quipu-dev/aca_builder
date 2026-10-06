@@ -72,14 +72,12 @@ export interface LookupAdhocParam {
 export const TopologyGraph = React.memo(function TopologyGraph({
   manifest,
   imports,
-  overrides,
   lookupAdhoc,
   onSelectAtom,
   onSelectLookup,
 }: {
   manifest?: string;
-  imports?: Array<{ lookup: string }>;
-  overrides?: Record<string, unknown>;
+  imports?: Array<{ lookup: string; with?: Record<string, string> }>;
   lookupAdhoc?: LookupAdhocParam;
   onSelectAtom?: (atomId: string) => void;
   onSelectLookup?: (lookupKey: string) => void;
@@ -115,7 +113,6 @@ export const TopologyGraph = React.memo(function TopologyGraph({
                 body: JSON.stringify({
                   name: manifest || 'draft',
                   imports: imports,
-                  overrides: overrides && Object.keys(overrides).length > 0 ? overrides : undefined,
                 }),
               })
             : manifest
@@ -182,7 +179,7 @@ export const TopologyGraph = React.memo(function TopologyGraph({
       isCancelled = true;
       clearTimeout(timer);
     };
-  }, [manifest, imports, overrides, lookupAdhoc, onSelectAtom, onSelectLookup, setNodes, setEdges]);
+  }, [manifest, imports, lookupAdhoc, onSelectAtom, onSelectLookup, setNodes, setEdges]);
 
   if (!manifest && (!imports || imports.length === 0) && !lookupAdhoc) {
     return (

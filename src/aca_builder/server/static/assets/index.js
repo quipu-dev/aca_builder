@@ -9434,6 +9434,19 @@ const Settings = createLucideIcon("Settings", [
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
+const Share2 = createLucideIcon("Share2", [
+  ["circle", { cx: "18", cy: "5", r: "3", key: "gq8acd" }],
+  ["circle", { cx: "6", cy: "12", r: "3", key: "w7nqdw" }],
+  ["circle", { cx: "18", cy: "19", r: "3", key: "1xt0gg" }],
+  ["line", { x1: "8.59", x2: "15.42", y1: "13.51", y2: "17.49", key: "47mynk" }],
+  ["line", { x1: "15.41", x2: "8.59", y1: "6.51", y2: "10.49", key: "1n3mei" }]
+]);
+/**
+ * @license lucide-react v0.468.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
 const ShieldCheck = createLucideIcon("ShieldCheck", [
   [
     "path",
@@ -29376,7 +29389,8 @@ function LookupNode({ data }) {
             /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-semibold", children: [
               (_a2 = data.pillar) == null ? void 0 : _a2.toUpperCase(),
               " 接口"
-            ] })
+            ] }),
+            data.hasContract && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] font-bold px-1 rounded bg-indigo-950 text-indigo-300 border border-indigo-800", children: "契约" })
           ] }),
           isBroken && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-[10px] text-rose-400 font-bold", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(TriangleAlert, { className: "h-3 w-3" }),
@@ -29479,7 +29493,6 @@ function getDagreLayoutedElements(nodes, edges, direction = "LR") {
 const TopologyGraph = React$1.memo(function TopologyGraph2({
   manifest,
   imports,
-  overrides,
   lookupAdhoc,
   onSelectAtom,
   onSelectLookup
@@ -29503,8 +29516,7 @@ const TopologyGraph = React$1.memo(function TopologyGraph2({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: manifest || "draft",
-          imports,
-          overrides: overrides && Object.keys(overrides).length > 0 ? overrides : void 0
+          imports
         })
       }) : manifest ? fetch(`/api/graph?manifest=${encodeURIComponent(manifest)}`) : null;
       if (!fetchPromise) {
@@ -29558,7 +29570,7 @@ const TopologyGraph = React$1.memo(function TopologyGraph2({
       isCancelled = true;
       clearTimeout(timer);
     };
-  }, [manifest, imports, overrides, lookupAdhoc, onSelectAtom, onSelectLookup, setNodes, setEdges]);
+  }, [manifest, imports, lookupAdhoc, onSelectAtom, onSelectLookup, setNodes, setEdges]);
   if (!manifest && (!imports || imports.length === 0) && !lookupAdhoc) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex h-full items-center justify-center text-xs text-slate-500 font-mono", children: "请选择或添加组件以呈现拓扑关系" });
   }
@@ -30445,8 +30457,7 @@ function manifestReducer(state, action) {
         name: action.payload.name,
         version: action.payload.version,
         description: action.payload.description,
-        items: action.payload.items,
-        overrides: action.payload.overrides
+        items: action.payload.items
       };
       return {
         ...action.payload,
@@ -30476,22 +30487,34 @@ function manifestReducer(state, action) {
         isModified: true
       };
     }
-    case "SET_OVERRIDE": {
+    case "SET_IMPORT_WITH": {
       return {
         ...state,
-        overrides: {
-          ...state.overrides,
-          [action.lookup]: { selectors: [{ query: { id: action.queryId } }] }
-        },
+        items: state.items.map((item) => {
+          if (item.id !== action.itemId) return item;
+          return {
+            ...item,
+            with: {
+              ...item.with || {},
+              [action.slotKey]: action.targetValue
+            }
+          };
+        }),
         isModified: true
       };
     }
-    case "REMOVE_OVERRIDE": {
-      const nextOverrides = { ...state.overrides };
-      delete nextOverrides[action.lookup];
+    case "REMOVE_IMPORT_WITH": {
       return {
         ...state,
-        overrides: nextOverrides,
+        items: state.items.map((item) => {
+          if (item.id !== action.itemId) return item;
+          const nextWith = { ...item.with || {} };
+          delete nextWith[action.slotKey];
+          return {
+            ...item,
+            with: Object.keys(nextWith).length > 0 ? nextWith : void 0
+          };
+        }),
         isModified: true
       };
     }
@@ -30503,7 +30526,6 @@ function manifestReducer(state, action) {
         version: state.initialSnapshot.version,
         description: state.initialSnapshot.description,
         items: [...state.initialSnapshot.items],
-        overrides: { ...state.initialSnapshot.overrides },
         isModified: false
       };
     }
@@ -30512,8 +30534,7 @@ function manifestReducer(state, action) {
         name: state.name,
         version: state.version,
         description: state.description,
-        items: [...state.items],
-        overrides: { ...state.overrides }
+        items: [...state.items]
       };
       return {
         ...state,
@@ -30547,22 +30568,14 @@ function ManifestEditorTab({
     version: "1.0.0",
     description: "",
     items: [],
-    overrides: {},
     initialSnapshot: null,
     isModified: false
   });
-  const {
-    identifier: manifestIdentifier,
-    name: name2,
-    version,
-    description,
-    items,
-    overrides,
-    isModified
-  } = state;
+  const { identifier: manifestIdentifier, name: name2, version, description, items, isModified } = state;
   const [selectedLookup, setSelectedLookup] = reactExports.useState("");
-  const [editingOverrideKey, setEditingOverrideKey] = reactExports.useState(null);
-  const [overrideQueryId, setOverrideQueryId] = reactExports.useState("");
+  const [editingWithItemId, setEditingWithItemId] = reactExports.useState(null);
+  const [withSlotKey, setWithSlotKey] = reactExports.useState("");
+  const [withTargetVal, setWithTargetVal] = reactExports.useState("");
   const [saveStatus, setSaveStatus] = reactExports.useState("");
   const [prompt, setPrompt] = reactExports.useState("");
   const [hookedPrompt, setHookedPrompt] = reactExports.useState(null);
@@ -30607,11 +30620,11 @@ function ManifestEditorTab({
       const loadedName = data.name || manifestName;
       const loadedVersion = data.version || "1.0.0";
       const loadedDesc = data.description || "";
-      const loadedOverrides = data.overrides || {};
       const rawImports = data.imports || [];
       const mappedItems = rawImports.filter((imp) => Boolean(imp == null ? void 0 : imp.lookup)).map((imp) => ({
         id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-        lookup: imp.lookup
+        lookup: imp.lookup,
+        with: imp.with && typeof imp.with === "object" ? imp.with : void 0
       }));
       dispatch({
         type: "LOAD_SUCCESS",
@@ -30620,8 +30633,7 @@ function ManifestEditorTab({
           name: loadedName,
           version: loadedVersion,
           description: loadedDesc,
-          items: mappedItems,
-          overrides: loadedOverrides
+          items: mappedItems
         }
       });
     }).catch((err) => {
@@ -30644,8 +30656,10 @@ function ManifestEditorTab({
         }).catch(console.error);
       } else if (items.length > 0) {
         compileAdhocManifest({
-          imports: items.map((item) => ({ lookup: item.lookup })),
-          overrides: Object.keys(overrides).length > 0 ? overrides : void 0,
+          imports: items.map((item) => ({
+            lookup: item.lookup,
+            with: item.with && Object.keys(item.with).length > 0 ? item.with : void 0
+          })),
           apply_hook: hookFlag
         }).then((data) => {
           if (data.prompt) setPrompt(data.prompt);
@@ -30655,7 +30669,7 @@ function ManifestEditorTab({
         }).catch(console.error);
       }
     },
-    [manifestIdentifier, name2, isModified, items, overrides, isHookActive]
+    [manifestIdentifier, name2, isModified, items, isHookActive]
   );
   reactExports.useEffect(() => {
     const timer = setTimeout(() => {
@@ -30687,10 +30701,12 @@ function ManifestEditorTab({
         name: name2.trim(),
         version: version.trim(),
         description: description.trim(),
-        imports: items.map((i) => ({ lookup: i.lookup })),
+        imports: items.map((i) => ({
+          lookup: i.lookup,
+          with: i.with && Object.keys(i.with).length > 0 ? i.with : void 0
+        })),
         identifier: targetIdentifier,
-        workspace_path: workspacePath,
-        overrides: Object.keys(overrides).length > 0 ? overrides : void 0
+        workspace_path: workspacePath
       });
       setSaveStatus("已保存");
       dispatch({ type: "COMMIT_SAVE", newIdentifier: targetIdentifier });
@@ -30716,7 +30732,6 @@ function ManifestEditorTab({
     version,
     description,
     workspacePath,
-    overrides,
     tabId,
     onSaved,
     isDraft,
@@ -30915,25 +30930,32 @@ function ManifestEditorTab({
                     }
                   ) }),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1", children: [
-                    overrides[item.lookup] && /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "d3", className: "text-[9px] px-1 py-0", children: "已覆写" }),
+                    item.with && Object.keys(item.with).length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      Badge,
+                      {
+                        variant: "d2",
+                        className: "text-[9px] px-1.5 py-0 font-bold bg-purple-950/80 text-purple-300 border-purple-700/60",
+                        children: [
+                          "with (",
+                          Object.keys(item.with).length,
+                          ")"
+                        ]
+                      }
+                    ),
                     /* @__PURE__ */ jsxRuntimeExports.jsx(
                       "button",
                       {
                         type: "button",
                         onClick: () => {
-                          var _a2, _b2, _c2;
-                          if (editingOverrideKey === item.lookup) {
-                            setEditingOverrideKey(null);
+                          if (editingWithItemId === item.id) {
+                            setEditingWithItemId(null);
                           } else {
-                            setEditingOverrideKey(item.lookup);
-                            const currentOverride = overrides[item.lookup];
-                            const targetId = (_c2 = (_b2 = (_a2 = currentOverride == null ? void 0 : currentOverride.selectors) == null ? void 0 : _a2[0]) == null ? void 0 : _b2.query) == null ? void 0 : _c2.id;
-                            setOverrideQueryId(typeof targetId === "string" ? targetId : "");
+                            setEditingWithItemId(item.id);
                           }
                         },
-                        className: `p-1 rounded ${editingOverrideKey === item.lookup ? "text-indigo-400 bg-indigo-950" : "text-slate-400 hover:text-white"}`,
-                        title: "配置 Overrides 覆写",
-                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(SlidersVertical, { className: "h-3 w-3" })
+                        className: `p-1 rounded transition-colors cursor-pointer ${editingWithItemId === item.id ? "text-purple-300 bg-purple-950/80 ring-1 ring-purple-600" : "text-slate-400 hover:text-purple-300"}`,
+                        title: "配置作用域依赖注入 (with)",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(Share2, { className: "h-3 w-3" })
                       }
                     ),
                     /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -30941,42 +30963,72 @@ function ManifestEditorTab({
                       {
                         type: "button",
                         onClick: () => handleRemoveLookup(item.id),
-                        className: "p-1 text-slate-500 hover:text-rose-400",
+                        className: "p-1 text-slate-500 hover:text-rose-400 cursor-pointer",
                         title: "移除该接口",
                         children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
                       }
                     )
                   ] })
                 ] }),
-                editingOverrideKey === item.lookup && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded border border-indigo-800/60 bg-indigo-950/30 p-2 text-xs font-mono space-y-2", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-indigo-300 font-semibold text-[11px]", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
-                      "覆写选择器: ",
-                      item.lookup
+                editingWithItemId === item.id && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded border border-purple-800/60 bg-purple-950/25 p-2.5 text-xs font-mono space-y-2", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-purple-300 font-semibold text-[11px]", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1.5", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(Share2, { className: "h-3.5 w-3.5" }),
+                      " 局部依赖注入配置 (Scoped with)"
                     ] }),
-                    overrides[item.lookup] && /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: () => {
-                          dispatch({ type: "REMOVE_OVERRIDE", lookup: item.lookup });
-                        },
-                        className: "text-[10px] text-amber-400 hover:underline flex items-center gap-1",
-                        children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(RotateCcw, { className: "h-3 w-3" }),
-                          " 重置"
-                        ]
-                      }
-                    )
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-slate-400 font-normal", children: [
+                      "仅对 ",
+                      item.lookup,
+                      " 分支生效"
+                    ] })
                   ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2 items-center", children: [
+                  item.with && Object.keys(item.with).length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "space-y-1", children: Object.entries(item.with).map(([slot, target]) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    "div",
+                    {
+                      className: "flex items-center justify-between px-2 py-1 rounded bg-slate-950 border border-slate-800 text-[11px]",
+                      children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 truncate", children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-400 truncate", children: slot }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-purple-400 font-bold", children: "➔" }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-emerald-300 font-semibold truncate", children: target })
+                        ] }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(
+                          "button",
+                          {
+                            type: "button",
+                            onClick: () => {
+                              dispatch({
+                                type: "REMOVE_IMPORT_WITH",
+                                itemId: item.id,
+                                slotKey: slot
+                              });
+                            },
+                            className: "text-slate-500 hover:text-rose-400 p-0.5 ml-2 cursor-pointer",
+                            title: "删除此项注入",
+                            children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "h-3 w-3" })
+                          }
+                        )
+                      ]
+                    },
+                    slot
+                  )) }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2 items-center pt-1", children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
                       Autocomplete,
                       {
-                        value: overrideQueryId,
-                        onChange: setOverrideQueryId,
+                        value: withSlotKey,
+                        onChange: setWithSlotKey,
+                        options: exportLookupOptions,
+                        placeholder: "输入/选择被替换的插槽 (如 d2l-file-skill)"
+                      }
+                    ) }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      Autocomplete,
+                      {
+                        value: withTargetVal,
+                        onChange: setWithTargetVal,
                         options: atomOptions,
-                        placeholder: "搜索选择目标特定原子 ID (如 d1-xxx)"
+                        placeholder: "选择目标实现原子 (如 d2-file-skill-mcp)"
                       }
                     ) }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -30984,18 +31036,20 @@ function ManifestEditorTab({
                       {
                         size: "sm",
                         onClick: () => {
-                          if (overrideQueryId.trim()) {
+                          if (withSlotKey.trim() && withTargetVal.trim()) {
                             dispatch({
-                              type: "SET_OVERRIDE",
-                              lookup: item.lookup,
-                              queryId: overrideQueryId.trim()
+                              type: "SET_IMPORT_WITH",
+                              itemId: item.id,
+                              slotKey: withSlotKey.trim(),
+                              targetValue: withTargetVal.trim()
                             });
-                            setEditingOverrideKey(null);
+                            setWithSlotKey("");
+                            setWithTargetVal("");
                           }
                         },
-                        disabled: !overrideQueryId.trim(),
-                        className: "h-7 text-xs shrink-0",
-                        children: "应用"
+                        disabled: !withSlotKey.trim() || !withTargetVal.trim(),
+                        className: "h-7 text-xs shrink-0 bg-purple-600 hover:bg-purple-500",
+                        children: "注入"
                       }
                     )
                   ] })
@@ -31110,8 +31164,7 @@ function ManifestEditorTab({
             TopologyGraph,
             {
               manifest: manifestIdentifier || name2,
-              imports: items.map((i) => ({ lookup: i.lookup })),
-              overrides,
+              imports: items.map((i) => ({ lookup: i.lookup, with: i.with })),
               onSelectAtom: handleOpenAtom,
               onSelectLookup: handleOpenLookup
             }

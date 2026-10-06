@@ -15,7 +15,6 @@ router = APIRouter()
 class AdhocGraphRequest(BaseModel):
     name: str = "draft"
     imports: list[dict[str, Any]]
-    overrides: dict[str, Any] | None = None
 
 
 class AdhocLookupGraphRequest(BaseModel):
@@ -60,8 +59,6 @@ def get_adhoc_dependency_graph(
         "name": req.name,
         "imports": req.imports,
     }
-    if req.overrides:
-        manifest_data["overrides"] = req.overrides
 
     return build_topology_graph(req.name, manifest_data, library, interfaces)
 

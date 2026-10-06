@@ -6,18 +6,23 @@ export interface ManifestDetailResponse {
   name: string;
   version?: string;
   description?: string;
-  imports?: Array<{ lookup?: string; query?: Record<string, unknown> }>;
-  overrides?: Record<string, { selectors: unknown[] }>;
+  imports?: Array<{
+    lookup?: string;
+    query?: Record<string, unknown>;
+    with?: Record<string, string>;
+  }>;
 }
 
 export interface SaveManifestPayload {
   name: string;
   version: string;
   description: string;
-  imports: Array<{ lookup: string }>;
+  imports: Array<{
+    lookup: string;
+    with?: Record<string, string>;
+  }>;
   identifier?: string;
   workspace_path?: string;
-  overrides?: Record<string, { selectors: unknown[] }>;
 }
 
 export interface BuildManifestPayload {
@@ -27,8 +32,10 @@ export interface BuildManifestPayload {
 }
 
 export interface CompileAdhocPayload {
-  imports: Array<{ lookup: string }>;
-  overrides?: Record<string, unknown>;
+  imports: Array<{
+    lookup: string;
+    with?: Record<string, string>;
+  }>;
   apply_hook?: boolean;
 }
 

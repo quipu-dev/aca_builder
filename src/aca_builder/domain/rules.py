@@ -220,6 +220,54 @@ def diagnose_knowledge_base(
                 diagnostics.append(
                     make_diagnostic("WARN", "linter.lookup.no_atoms_matched", key=key)
                 )
+            else:
+                # 校验结构化契约 (Structural Contract Conformance)
+                contract = l_def.get("contract")
+                if isinstance(contract, dict):
+                    req_domains = contract.get("required_domains", [])
+                    req_meta = contract.get("required_metadata", [])
+                    for aid in matched_ids:
+                        target_atom = library.get(aid)
+                        if not target_atom:
+                            continue
+                        a_meta = target_atom.get("meta", {})
+                        a_domains = (
+                            a_meta.get("domain", [])
+                            if hasattr(a_meta, "get")
+                            else getattr(a_meta, "domain", [])
+                        )
+
+                        missing_domains = [d for d in req_domains if d not in a_domains]
+                        if missing_domains:
+                            diagnostics.append(
+                                make_diagnostic(
+                                    "ERROR",
+                                    "linter.lookup.contract_violation",
+                                    key=key,
+                                    atom_id=aid,
+                                    reason=f"Missing required domain(s): {missing_domains}",
+                                )
+                            )
+
+                        missing_meta = [
+                            m
+                            for m in req_meta
+                            if (
+                                m not in a_meta
+                                if hasattr(a_meta, "__contains__")
+                                else not hasattr(a_meta, m)
+                            )
+                        ]
+                        if missing_meta:
+                            diagnostics.append(
+                                make_diagnostic(
+                                    "ERROR",
+                                    "linter.lookup.contract_violation",
+                                    key=key,
+                                    atom_id=aid,
+                                    reason=f"Missing required metadata key(s): {missing_meta}",
+                                )
+                            )
         except BuildError as e:
             diagnostics.append(
                 make_diagnostic(

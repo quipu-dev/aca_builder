@@ -35,6 +35,7 @@ class AtomMeta(BaseModel):
     priority: int | None = None
     domain: list[str] = Field(default_factory=list)
     uses: list[str] = Field(default_factory=list)
+    requires: dict[str, str] = Field(default_factory=dict)
     description: str = ""
     status: str = "stable"
 

@@ -52,8 +52,13 @@ class InvertedIndex:
                     self.field_presence[k].add(aid)
                     if isinstance(val, list):
                         for item in val:
-                            self.postings[(k, item)].add(aid)
-                    else:
+                            if not isinstance(item, (dict, list, set)):
+                                self.postings[(k, item)].add(aid)
+                    elif isinstance(val, dict):
+                        for sub_k, sub_val in val.items():
+                            if not isinstance(sub_val, (dict, list, set)):
+                                self.postings[(f"{k}.{sub_k}", sub_val)].add(aid)
+                    elif not isinstance(val, set):
                         self.postings[(k, val)].add(aid)
 
     def select(self, query: dict[str, Any]) -> set[str]:

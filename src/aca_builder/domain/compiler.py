@@ -186,7 +186,6 @@ def compile_prompt(
     interfaces: dict[str, Any],
     imports: list[dict[str, Any]] | None = None,
     direct_lookup: tuple[str, dict[str, Any]] | None = None,
-    overrides: dict[str, Any] | None = None,
     include_kernel: bool = True,
 ) -> CompilationResult:
     """统一编译器纯函数主入口：接收知识库与接口，执行依赖求解并输出完整的 CompilationResult。"""
@@ -195,7 +194,6 @@ def compile_prompt(
         interfaces=interfaces,
         imports=imports,
         direct_lookup=direct_lookup,
-        overrides=overrides,
         include_kernel=include_kernel,
     )
     chunks = emit_prompt_chunks(final_atom_map, library)

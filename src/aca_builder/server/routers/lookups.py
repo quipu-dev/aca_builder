@@ -31,6 +31,7 @@ class CreateLookupRequest(BaseModel):
     pillar: str  # d1, d2, d3
     is_public: bool = True
     description: str = ""
+    contract: dict[str, Any] | None = None
     selectors: list[dict[str, Any]] = []
     old_key: str | None = None
 
@@ -195,6 +196,8 @@ def create_or_update_lookup(
         "description": req.description,
         "selectors": req.selectors,
     }
+    if req.contract:
+        lookup_data["contract"] = req.contract
 
     try:
         lookup_name = raw_key
@@ -321,6 +324,93 @@ def create_or_update_lookup(
         return {"status": "ok", "key": full_return_key, "package": req.package}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"保存 Lookup 失败: {e}")
+
+
+@router.get("/lookups/{lookup_key:path}/providers")
+def get_lookup_providers(
+    lookup_key: str,
+    x_aca_workspace: str | None = Header(None),
+) -> dict[str, Any]:
+    """反向扫描全库中满足该 Lookup 契约 (contract) 约束的所有候选实现原子 (Providers)"""
+    from aca_builder.domain.services import resolve_lookup_by_key
+
+    ws_id = get_current_workspace_id(x_aca_workspace)
+    lib_repo, _, _, _, ws_cfg = _bootstrap(ws_id)
+    library_paths = ws_cfg.library_paths
+    library = lib_repo.load_library(library_paths, fail_fast=False)
+    interfaces = lib_repo.load_interfaces(library_paths)
+
+    lookup_def = resolve_lookup_by_key(lookup_key, None, interfaces)
+    if not lookup_def:
+        raise HTTPException(status_code=404, detail=f"Lookup '{lookup_key}' not found")
+
+    contract = lookup_def.get("contract") or {}
+    pillar = lookup_def.get("pillar")
+    req_domains = (
+        contract.get("required_domains", []) if isinstance(contract, dict) else []
+    )
+    req_meta = (
+        contract.get("required_metadata", []) if isinstance(contract, dict) else []
+    )
+
+    try:
+        currently_selected = evaluate_lookup(library, lookup_def, interfaces)
+    except Exception:
+        currently_selected = set()
+
+    providers = []
+    for aid, atom in library.items():
+        meta = atom.get("meta", {})
+        atype = meta.get("type") if hasattr(meta, "get") else getattr(meta, "type", "")
+        if pillar and atype != pillar:
+            continue
+
+        domains = (
+            meta.get("domain", [])
+            if hasattr(meta, "get")
+            else getattr(meta, "domain", [])
+        )
+        if not isinstance(domains, (list, set, tuple)):
+            domains = [domains]
+
+        if req_domains and not all(d in domains for d in req_domains):
+            continue
+
+        if req_meta and not all(
+            (m in meta if hasattr(meta, "__contains__") else hasattr(meta, m))
+            for m in req_meta
+        ):
+            continue
+
+        providers.append(
+            {
+                "id": aid,
+                "type": atype,
+                "priority": (
+                    meta.get("priority")
+                    if hasattr(meta, "get")
+                    else getattr(meta, "priority", None)
+                ),
+                "package": atom.get("package"),
+                "domain": domains,
+                "description": (
+                    meta.get("description", "")
+                    if hasattr(meta, "get")
+                    else getattr(meta, "description", "")
+                ),
+                "source_file": atom.get("source_file"),
+                "is_selected": aid in currently_selected,
+            }
+        )
+
+    return {
+        "lookup_key": lookup_key,
+        "pillar": pillar,
+        "has_contract": bool(contract),
+        "contract": contract,
+        "providers_count": len(providers),
+        "providers": sorted(providers, key=lambda x: (not x["is_selected"], x["id"])),
+    }
 
 
 @router.delete("/lookups/{lookup_key:path}")

@@ -30,7 +30,7 @@ import {
   Plus,
   RotateCcw,
   Save,
-  Sliders,
+  Share2,
   Trash2,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
@@ -40,10 +40,12 @@ export interface ImportItem {
   lookup: string;
   pillar?: string;
   description?: string;
+  with?: Record<string, string>;
 }
 
 interface ManifestImportRaw {
   lookup: string;
+  with?: Record<string, string>;
 }
 
 interface ManifestDraftState {
@@ -52,13 +54,11 @@ interface ManifestDraftState {
   version: string;
   description: string;
   items: ImportItem[];
-  overrides: Record<string, { selectors: unknown[] }>;
   initialSnapshot: {
     name: string;
     version: string;
     description: string;
     items: ImportItem[];
-    overrides: Record<string, { selectors: unknown[] }>;
   } | null;
   isModified: boolean;
 }
@@ -72,14 +72,13 @@ type ManifestAction =
         version: string;
         description: string;
         items: ImportItem[];
-        overrides: Record<string, { selectors: unknown[] }>;
       };
     }
   | { type: 'SET_FIELD'; field: 'identifier' | 'name' | 'version' | 'description'; value: string }
   | { type: 'ADD_IMPORT'; item: ImportItem }
   | { type: 'REMOVE_IMPORT'; id: string }
-  | { type: 'SET_OVERRIDE'; lookup: string; queryId: string }
-  | { type: 'REMOVE_OVERRIDE'; lookup: string }
+  | { type: 'SET_IMPORT_WITH'; itemId: string; slotKey: string; targetValue: string }
+  | { type: 'REMOVE_IMPORT_WITH'; itemId: string; slotKey: string }
   | { type: 'RESET' }
   | { type: 'COMMIT_SAVE'; newIdentifier?: string };
 
@@ -91,7 +90,6 @@ function manifestReducer(state: ManifestDraftState, action: ManifestAction): Man
         version: action.payload.version,
         description: action.payload.description,
         items: action.payload.items,
-        overrides: action.payload.overrides,
       };
       return {
         ...action.payload,
@@ -121,22 +119,34 @@ function manifestReducer(state: ManifestDraftState, action: ManifestAction): Man
         isModified: true,
       };
     }
-    case 'SET_OVERRIDE': {
+    case 'SET_IMPORT_WITH': {
       return {
         ...state,
-        overrides: {
-          ...state.overrides,
-          [action.lookup]: { selectors: [{ query: { id: action.queryId } }] },
-        },
+        items: state.items.map((item) => {
+          if (item.id !== action.itemId) return item;
+          return {
+            ...item,
+            with: {
+              ...(item.with || {}),
+              [action.slotKey]: action.targetValue,
+            },
+          };
+        }),
         isModified: true,
       };
     }
-    case 'REMOVE_OVERRIDE': {
-      const nextOverrides = { ...state.overrides };
-      delete nextOverrides[action.lookup];
+    case 'REMOVE_IMPORT_WITH': {
       return {
         ...state,
-        overrides: nextOverrides,
+        items: state.items.map((item) => {
+          if (item.id !== action.itemId) return item;
+          const nextWith = { ...(item.with || {}) };
+          delete nextWith[action.slotKey];
+          return {
+            ...item,
+            with: Object.keys(nextWith).length > 0 ? nextWith : undefined,
+          };
+        }),
         isModified: true,
       };
     }
@@ -148,7 +158,6 @@ function manifestReducer(state: ManifestDraftState, action: ManifestAction): Man
         version: state.initialSnapshot.version,
         description: state.initialSnapshot.description,
         items: [...state.initialSnapshot.items],
-        overrides: { ...state.initialSnapshot.overrides },
         isModified: false,
       };
     }
@@ -158,7 +167,6 @@ function manifestReducer(state: ManifestDraftState, action: ManifestAction): Man
         version: state.version,
         description: state.description,
         items: [...state.items],
-        overrides: { ...state.overrides },
       };
       return {
         ...state,
@@ -202,24 +210,16 @@ export function ManifestEditorTab({
     version: '1.0.0',
     description: '',
     items: [],
-    overrides: {},
     initialSnapshot: null,
     isModified: false,
   });
 
-  const {
-    identifier: manifestIdentifier,
-    name,
-    version,
-    description,
-    items,
-    overrides,
-    isModified,
-  } = state;
+  const { identifier: manifestIdentifier, name, version, description, items, isModified } = state;
 
   const [selectedLookup, setSelectedLookup] = useState<string>('');
-  const [editingOverrideKey, setEditingOverrideKey] = useState<string | null>(null);
-  const [overrideQueryId, setOverrideQueryId] = useState<string>('');
+  const [editingWithItemId, setEditingWithItemId] = useState<string | null>(null);
+  const [withSlotKey, setWithSlotKey] = useState<string>('');
+  const [withTargetVal, setWithTargetVal] = useState<string>('');
   const [saveStatus, setSaveStatus] = useState('');
 
   const [prompt, setPrompt] = useState<string>('');
@@ -274,13 +274,13 @@ export function ManifestEditorTab({
         const loadedName = data.name || manifestName;
         const loadedVersion = data.version || '1.0.0';
         const loadedDesc = data.description || '';
-        const loadedOverrides = data.overrides || {};
         const rawImports = (data.imports || []) as ManifestImportRaw[];
         const mappedItems = rawImports
           .filter((imp) => Boolean(imp?.lookup))
           .map((imp) => ({
             id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
             lookup: imp.lookup,
+            with: imp.with && typeof imp.with === 'object' ? imp.with : undefined,
           }));
 
         dispatch({
@@ -291,7 +291,6 @@ export function ManifestEditorTab({
             version: loadedVersion,
             description: loadedDesc,
             items: mappedItems,
-            overrides: loadedOverrides,
           },
         });
       })
@@ -318,8 +317,10 @@ export function ManifestEditorTab({
           .catch(console.error);
       } else if (items.length > 0) {
         compileAdhocManifest({
-          imports: items.map((item) => ({ lookup: item.lookup })),
-          overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
+          imports: items.map((item) => ({
+            lookup: item.lookup,
+            with: item.with && Object.keys(item.with).length > 0 ? item.with : undefined,
+          })),
           apply_hook: hookFlag,
         })
           .then((data) => {
@@ -331,7 +332,7 @@ export function ManifestEditorTab({
           .catch(console.error);
       }
     },
-    [manifestIdentifier, name, isModified, items, overrides, isHookActive],
+    [manifestIdentifier, name, isModified, items, isHookActive],
   );
 
   useEffect(() => {
@@ -368,10 +369,12 @@ export function ManifestEditorTab({
         name: name.trim(),
         version: version.trim(),
         description: description.trim(),
-        imports: items.map((i) => ({ lookup: i.lookup })),
+        imports: items.map((i) => ({
+          lookup: i.lookup,
+          with: i.with && Object.keys(i.with).length > 0 ? i.with : undefined,
+        })),
         identifier: targetIdentifier,
         workspace_path: workspacePath,
-        overrides: Object.keys(overrides).length > 0 ? overrides : undefined,
       });
 
       setSaveStatus('已保存');
@@ -399,7 +402,6 @@ export function ManifestEditorTab({
     version,
     description,
     workspacePath,
-    overrides,
     tabId,
     onSaved,
     isDraft,
@@ -606,38 +608,36 @@ export function ManifestEditorTab({
                         </div>
 
                         <div className="flex items-center gap-1">
-                          {overrides[item.lookup] && (
-                            <Badge variant="d3" className="text-[9px] px-1 py-0">
-                              已覆写
+                          {item.with && Object.keys(item.with).length > 0 && (
+                            <Badge
+                              variant="d2"
+                              className="text-[9px] px-1.5 py-0 font-bold bg-purple-950/80 text-purple-300 border-purple-700/60"
+                            >
+                              with ({Object.keys(item.with).length})
                             </Badge>
                           )}
                           <button
                             type="button"
                             onClick={() => {
-                              if (editingOverrideKey === item.lookup) {
-                                setEditingOverrideKey(null);
+                              if (editingWithItemId === item.id) {
+                                setEditingWithItemId(null);
                               } else {
-                                setEditingOverrideKey(item.lookup);
-                                const currentOverride = overrides[item.lookup] as {
-                                  selectors?: Array<{ query?: { id?: string } }>;
-                                };
-                                const targetId = currentOverride?.selectors?.[0]?.query?.id;
-                                setOverrideQueryId(typeof targetId === 'string' ? targetId : '');
+                                setEditingWithItemId(item.id);
                               }
                             }}
-                            className={`p-1 rounded ${
-                              editingOverrideKey === item.lookup
-                                ? 'text-indigo-400 bg-indigo-950'
-                                : 'text-slate-400 hover:text-white'
+                            className={`p-1 rounded transition-colors cursor-pointer ${
+                              editingWithItemId === item.id
+                                ? 'text-purple-300 bg-purple-950/80 ring-1 ring-purple-600'
+                                : 'text-slate-400 hover:text-purple-300'
                             }`}
-                            title="配置 Overrides 覆写"
+                            title="配置作用域依赖注入 (with)"
                           >
-                            <Sliders className="h-3 w-3" />
+                            <Share2 className="h-3 w-3" />
                           </button>
                           <button
                             type="button"
                             onClick={() => handleRemoveLookup(item.id)}
-                            className="p-1 text-slate-500 hover:text-rose-400"
+                            className="p-1 text-slate-500 hover:text-rose-400 cursor-pointer"
                             title="移除该接口"
                           >
                             <Trash2 className="h-3 w-3" />
@@ -645,47 +645,85 @@ export function ManifestEditorTab({
                         </div>
                       </div>
 
-                      {editingOverrideKey === item.lookup && (
-                        <div className="rounded border border-indigo-800/60 bg-indigo-950/30 p-2 text-xs font-mono space-y-2">
-                          <div className="flex items-center justify-between text-indigo-300 font-semibold text-[11px]">
-                            <span>覆写选择器: {item.lookup}</span>
-                            {overrides[item.lookup] && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  dispatch({ type: 'REMOVE_OVERRIDE', lookup: item.lookup });
-                                }}
-                                className="text-[10px] text-amber-400 hover:underline flex items-center gap-1"
-                              >
-                                <RotateCcw className="h-3 w-3" /> 重置
-                              </button>
-                            )}
+                      {editingWithItemId === item.id && (
+                        <div className="rounded border border-purple-800/60 bg-purple-950/25 p-2.5 text-xs font-mono space-y-2">
+                          <div className="flex items-center justify-between text-purple-300 font-semibold text-[11px]">
+                            <span className="flex items-center gap-1.5">
+                              <Share2 className="h-3.5 w-3.5" /> 局部依赖注入配置 (Scoped with)
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-normal">
+                              仅对 {item.lookup} 分支生效
+                            </span>
                           </div>
-                          <div className="flex gap-2 items-center">
+
+                          {item.with && Object.keys(item.with).length > 0 && (
+                            <div className="space-y-1">
+                              {Object.entries(item.with).map(([slot, target]) => (
+                                <div
+                                  key={slot}
+                                  className="flex items-center justify-between px-2 py-1 rounded bg-slate-950 border border-slate-800 text-[11px]"
+                                >
+                                  <div className="flex items-center gap-1.5 truncate">
+                                    <span className="text-slate-400 truncate">{slot}</span>
+                                    <span className="text-purple-400 font-bold">➔</span>
+                                    <span className="text-emerald-300 font-semibold truncate">
+                                      {target}
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      dispatch({
+                                        type: 'REMOVE_IMPORT_WITH',
+                                        itemId: item.id,
+                                        slotKey: slot,
+                                      });
+                                    }}
+                                    className="text-slate-500 hover:text-rose-400 p-0.5 ml-2 cursor-pointer"
+                                    title="删除此项注入"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="flex gap-2 items-center pt-1">
                             <div className="flex-1">
                               <Autocomplete
-                                value={overrideQueryId}
-                                onChange={setOverrideQueryId}
+                                value={withSlotKey}
+                                onChange={setWithSlotKey}
+                                options={exportLookupOptions}
+                                placeholder="输入/选择被替换的插槽 (如 d2l-file-skill)"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <Autocomplete
+                                value={withTargetVal}
+                                onChange={setWithTargetVal}
                                 options={atomOptions}
-                                placeholder="搜索选择目标特定原子 ID (如 d1-xxx)"
+                                placeholder="选择目标实现原子 (如 d2-file-skill-mcp)"
                               />
                             </div>
                             <Button
                               size="sm"
                               onClick={() => {
-                                if (overrideQueryId.trim()) {
+                                if (withSlotKey.trim() && withTargetVal.trim()) {
                                   dispatch({
-                                    type: 'SET_OVERRIDE',
-                                    lookup: item.lookup,
-                                    queryId: overrideQueryId.trim(),
+                                    type: 'SET_IMPORT_WITH',
+                                    itemId: item.id,
+                                    slotKey: withSlotKey.trim(),
+                                    targetValue: withTargetVal.trim(),
                                   });
-                                  setEditingOverrideKey(null);
+                                  setWithSlotKey('');
+                                  setWithTargetVal('');
                                 }
                               }}
-                              disabled={!overrideQueryId.trim()}
-                              className="h-7 text-xs shrink-0"
+                              disabled={!withSlotKey.trim() || !withTargetVal.trim()}
+                              className="h-7 text-xs shrink-0 bg-purple-600 hover:bg-purple-500"
                             >
-                              应用
+                              注入
                             </Button>
                           </div>
                         </div>
@@ -796,8 +834,7 @@ export function ManifestEditorTab({
                     <div className="h-full w-full bg-slate-950 overflow-hidden">
                       <TopologyGraph
                         manifest={manifestIdentifier || name}
-                        imports={items.map((i) => ({ lookup: i.lookup }))}
-                        overrides={overrides}
+                        imports={items.map((i) => ({ lookup: i.lookup, with: i.with }))}
                         onSelectAtom={handleOpenAtom}
                         onSelectLookup={handleOpenLookup}
                       />
