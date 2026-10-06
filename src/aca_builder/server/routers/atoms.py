@@ -8,6 +8,7 @@ from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 
 from aca_builder.commands import _bootstrap
+from aca_builder.infra.atomic import MutationPlan, atomic_write_text
 from aca_builder.server.common import (
     broadcast_change,
     find_package_dir_and_yaml,
@@ -59,7 +60,7 @@ def create_atom(
         target_file = target_dir / "kernel.md"
         full_content = f"---\ntype: kernel\n---\n\n{req.content.strip()}\n"
         try:
-            target_file.write_text(full_content, encoding="utf-8")
+            atomic_write_text(target_file, full_content, encoding="utf-8")
             broadcast_change("LIBRARY_DIRTY")
             return {"status": "ok", "file": str(target_file), "id": "kernel"}
         except OSError as e:
@@ -94,7 +95,7 @@ def create_atom(
     full_content = f"---\n{meta_yaml}\n---\n\n{req.content.strip()}\n"
 
     try:
-        target_file.write_text(full_content, encoding="utf-8")
+        atomic_write_text(target_file, full_content, encoding="utf-8")
         broadcast_change("LIBRARY_DIRTY")
         return {"status": "ok", "file": str(target_file), "id": atom_id}
     except OSError as e:
@@ -147,7 +148,7 @@ def update_atom(
     source_path = Path(atom["source_file"])
     try:
         if req.raw_content is not None:
-            source_path.write_text(req.raw_content, encoding="utf-8")
+            atomic_write_text(source_path, req.raw_content, encoding="utf-8")
         elif req.content is not None or req.meta is not None:
             current_raw = source_path.read_text(encoding="utf-8")
             parts = current_raw.split("---", 2)
@@ -166,19 +167,30 @@ def update_atom(
             new_meta = req.meta if req.meta is not None else existing_meta
             new_content = req.content if req.content is not None else existing_content
 
+            if hasattr(new_meta, "model_dump"):
+                new_meta = new_meta.model_dump()
+            elif hasattr(new_meta, "dict"):
+                new_meta = new_meta.dict()
+            elif not isinstance(new_meta, dict):
+                new_meta = dict(new_meta)
+
             if atom_id == "kernel" or new_meta.get("type") == "kernel":
                 new_meta = {"type": "kernel"}
             else:
                 if "id" not in new_meta:
                     new_meta["id"] = atom_id
                 if "type" not in new_meta and "type" in existing_meta:
-                    new_meta["type"] = existing_meta["type"]
+                    new_meta["type"] = (
+                        existing_meta.get("type")
+                        if hasattr(existing_meta, "get")
+                        else getattr(existing_meta, "type", None)
+                    )
 
             meta_yaml = yaml.safe_dump(
                 new_meta, sort_keys=False, allow_unicode=True
             ).strip()
             new_full = f"---\n{meta_yaml}\n---\n\n{new_content.strip()}\n"
-            source_path.write_text(new_full, encoding="utf-8")
+            atomic_write_text(source_path, new_full, encoding="utf-8")
         else:
             raise HTTPException(
                 status_code=400,
@@ -272,16 +284,17 @@ def rename_atom(
         meta_yaml = yaml.safe_dump(meta, sort_keys=False, allow_unicode=True).strip()
         new_full = f"---\n{meta_yaml}\n---\n\n{content}\n"
 
-        dest_path.write_text(new_full, encoding="utf-8")
-        source_path.unlink()
+        # 构建统一的事务性变更差量计划 (Mutation Plan)
+        plan = MutationPlan()
+        plan.writes[dest_path] = new_full
+        plan.deletions.append(source_path)
 
-        # 级联更新所有 Lookups 中的原子 ID 引用
         cascaded_lookups_count = 0
         if req.cascade:
             for lib_root in library_paths:
                 if not lib_root.exists():
                     continue
-                # 1. 更新 package.yaml 中的 exports
+                # 1. 计划更新 package.yaml 中的 exports
                 for pkg_file in lib_root.rglob("package.yaml"):
                     try:
                         pkg_content = (
@@ -304,16 +317,13 @@ def rename_atom(
                                     pkg_modified = True
                                     cascaded_lookups_count += 1
                         if pkg_modified:
-                            pkg_file.write_text(
-                                yaml.safe_dump(
-                                    pkg_content, sort_keys=False, allow_unicode=True
-                                ),
-                                encoding="utf-8",
+                            plan.writes[pkg_file] = yaml.safe_dump(
+                                pkg_content, sort_keys=False, allow_unicode=True
                             )
                     except (yaml.YAMLError, OSError, KeyError):
                         pass
 
-                # 2. 更新 d4/*.yaml 中的内部私有 lookups
+                # 2. 计划更新 d4/*.yaml 中的内部私有 lookups
                 for d4_file in lib_root.glob("**/d4/*.yaml"):
                     try:
                         d4_content = (
@@ -340,14 +350,14 @@ def rename_atom(
                                         d4_modified = True
                                         cascaded_lookups_count += 1
                             if d4_modified:
-                                d4_file.write_text(
-                                    yaml.safe_dump(
-                                        d4_content, sort_keys=False, allow_unicode=True
-                                    ),
-                                    encoding="utf-8",
+                                plan.writes[d4_file] = yaml.safe_dump(
+                                    d4_content, sort_keys=False, allow_unicode=True
                                 )
                     except (yaml.YAMLError, OSError, KeyError):
                         pass
+
+        # 统一原子提交变更计划
+        plan.execute()
 
         broadcast_change("LIBRARY_DIRTY")
         return {

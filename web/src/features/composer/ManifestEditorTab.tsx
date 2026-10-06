@@ -32,7 +32,7 @@ import {
   Sliders,
   Trash2,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 
 export interface ImportItem {
   id: string;
@@ -43,6 +43,132 @@ export interface ImportItem {
 
 interface ManifestImportRaw {
   lookup: string;
+}
+
+interface ManifestDraftState {
+  identifier: string;
+  name: string;
+  version: string;
+  description: string;
+  items: ImportItem[];
+  overrides: Record<string, { selectors: unknown[] }>;
+  initialSnapshot: {
+    name: string;
+    version: string;
+    description: string;
+    items: ImportItem[];
+    overrides: Record<string, { selectors: unknown[] }>;
+  } | null;
+  isModified: boolean;
+}
+
+type ManifestAction =
+  | {
+      type: 'LOAD_SUCCESS';
+      payload: {
+        identifier: string;
+        name: string;
+        version: string;
+        description: string;
+        items: ImportItem[];
+        overrides: Record<string, { selectors: unknown[] }>;
+      };
+    }
+  | { type: 'SET_FIELD'; field: 'identifier' | 'name' | 'version' | 'description'; value: string }
+  | { type: 'ADD_IMPORT'; item: ImportItem }
+  | { type: 'REMOVE_IMPORT'; id: string }
+  | { type: 'SET_OVERRIDE'; lookup: string; queryId: string }
+  | { type: 'REMOVE_OVERRIDE'; lookup: string }
+  | { type: 'RESET' }
+  | { type: 'COMMIT_SAVE'; newIdentifier?: string };
+
+function manifestReducer(state: ManifestDraftState, action: ManifestAction): ManifestDraftState {
+  switch (action.type) {
+    case 'LOAD_SUCCESS': {
+      const snapshot = {
+        name: action.payload.name,
+        version: action.payload.version,
+        description: action.payload.description,
+        items: action.payload.items,
+        overrides: action.payload.overrides,
+      };
+      return {
+        ...action.payload,
+        initialSnapshot: snapshot,
+        isModified: false,
+      };
+    }
+    case 'SET_FIELD': {
+      return {
+        ...state,
+        [action.field]: action.value,
+        isModified: true,
+      };
+    }
+    case 'ADD_IMPORT': {
+      if (state.items.some((i) => i.lookup === action.item.lookup)) return state;
+      return {
+        ...state,
+        items: [...state.items, action.item],
+        isModified: true,
+      };
+    }
+    case 'REMOVE_IMPORT': {
+      return {
+        ...state,
+        items: state.items.filter((i) => i.id !== action.id),
+        isModified: true,
+      };
+    }
+    case 'SET_OVERRIDE': {
+      return {
+        ...state,
+        overrides: {
+          ...state.overrides,
+          [action.lookup]: { selectors: [{ query: { id: action.queryId } }] },
+        },
+        isModified: true,
+      };
+    }
+    case 'REMOVE_OVERRIDE': {
+      const nextOverrides = { ...state.overrides };
+      delete nextOverrides[action.lookup];
+      return {
+        ...state,
+        overrides: nextOverrides,
+        isModified: true,
+      };
+    }
+    case 'RESET': {
+      if (!state.initialSnapshot) return state;
+      return {
+        ...state,
+        name: state.initialSnapshot.name,
+        version: state.initialSnapshot.version,
+        description: state.initialSnapshot.description,
+        items: [...state.initialSnapshot.items],
+        overrides: { ...state.initialSnapshot.overrides },
+        isModified: false,
+      };
+    }
+    case 'COMMIT_SAVE': {
+      const newSnapshot = {
+        name: state.name,
+        version: state.version,
+        description: state.description,
+        items: [...state.items],
+        overrides: { ...state.overrides },
+      };
+      return {
+        ...state,
+        identifier: action.newIdentifier || state.identifier,
+        initialSnapshot: newSnapshot,
+        isModified: false,
+      };
+    }
+    default:
+      return state;
+  }
 }
 
 export function ManifestEditorTab({
@@ -68,23 +194,27 @@ export function ManifestEditorTab({
   );
   const [showRightPanel, setShowRightPanel] = useState(true);
 
-  const [manifestIdentifier, setManifestIdentifier] = useState(isDraft ? '' : manifestName);
-  const [name, setName] = useState(
-    !isDraft && manifestName ? manifestName.split('/').pop() || manifestName : '',
-  );
-  const [version, setVersion] = useState('1.0.0');
-  const [description, setDescription] = useState('');
-  const [items, setItems] = useState<ImportItem[]>([]);
-  const [overrides, setOverrides] = useState<Record<string, { selectors: unknown[] }>>({});
-  const [isModified, setIsModified] = useState(false);
+  // 单向动作循环 (Unidirectional Action Loop) 状态管理
+  const [state, dispatch] = useReducer(manifestReducer, {
+    identifier: isDraft ? '' : manifestName,
+    name: !isDraft && manifestName ? manifestName.split('/').pop() || manifestName : '',
+    version: '1.0.0',
+    description: '',
+    items: [],
+    overrides: {},
+    initialSnapshot: null,
+    isModified: false,
+  });
 
-  const [initialSnapshot, setInitialSnapshot] = useState<{
-    name: string;
-    version: string;
-    description: string;
-    items: ImportItem[];
-    overrides: Record<string, { selectors: unknown[] }>;
-  } | null>(null);
+  const {
+    identifier: manifestIdentifier,
+    name,
+    version,
+    description,
+    items,
+    overrides,
+    isModified,
+  } = state;
 
   const [selectedLookup, setSelectedLookup] = useState<string>('');
   const [lookupFilterQuery, setLookupFilterQuery] = useState<string>('');
@@ -103,12 +233,9 @@ export function ManifestEditorTab({
 
   const tabId = manifestIdentifier ? `manifest:${manifestIdentifier}` : 'manifest:draft';
 
-  const markDirty = () => {
-    if (!isModified) {
-      setIsModified(true);
-      setTabDirty(tabId, true);
-    }
-  };
+  useEffect(() => {
+    setTabDirty(tabId, isModified);
+  }, [tabId, isModified, setTabDirty]);
 
   const availableExports = useMemo(() => {
     const list: Array<{ key: string; pkg: string; pillar: string; desc: string }> = [];
@@ -143,26 +270,22 @@ export function ManifestEditorTab({
             lookup: imp.lookup,
           }));
 
-        setName(loadedName);
-        setVersion(loadedVersion);
-        setDescription(loadedDesc);
-        setOverrides(loadedOverrides);
-        setItems(mappedItems);
-        setIsModified(false);
-        setTabDirty(tabId, false);
-
-        setInitialSnapshot({
-          name: loadedName,
-          version: loadedVersion,
-          description: loadedDesc,
-          items: mappedItems,
-          overrides: loadedOverrides,
+        dispatch({
+          type: 'LOAD_SUCCESS',
+          payload: {
+            identifier: manifestName,
+            name: loadedName,
+            version: loadedVersion,
+            description: loadedDesc,
+            items: mappedItems,
+            overrides: loadedOverrides,
+          },
         });
       })
       .catch((err) => {
         console.error(err);
       });
-  }, [manifestName, isDraft, tabId, setTabDirty]);
+  }, [manifestName, isDraft]);
 
   const compileCurrent = useCallback(
     (hookFlag = isHookActive) => {
@@ -207,8 +330,6 @@ export function ManifestEditorTab({
 
   const handleAddLookup = () => {
     if (!selectedLookup) return;
-    if (items.some((i) => i.lookup === selectedLookup)) return;
-
     const found = availableExports.find((e) => e.key === selectedLookup);
     const newItem: ImportItem = {
       id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
@@ -216,14 +337,12 @@ export function ManifestEditorTab({
       pillar: found?.pillar,
       description: found?.desc,
     };
-    setItems([...items, newItem]);
+    dispatch({ type: 'ADD_IMPORT', item: newItem });
     setSelectedLookup('');
-    markDirty();
   };
 
   const handleRemoveLookup = (id: string) => {
-    setItems(items.filter((i) => i.id !== id));
-    markDirty();
+    dispatch({ type: 'REMOVE_IMPORT', id });
   };
 
   const handleSaveManifest = useCallback(async () => {
@@ -243,16 +362,7 @@ export function ManifestEditorTab({
       });
 
       setSaveStatus('已保存');
-      setIsModified(false);
-      setTabDirty(tabId, false);
-      setManifestIdentifier(targetIdentifier);
-      setInitialSnapshot({
-        name: name.trim(),
-        version: version.trim(),
-        description: description.trim(),
-        items: [...items],
-        overrides: { ...overrides },
-      });
+      dispatch({ type: 'COMMIT_SAVE', newIdentifier: targetIdentifier });
       onSaved?.();
 
       if (isDraft) {
@@ -278,7 +388,6 @@ export function ManifestEditorTab({
     workspacePath,
     overrides,
     tabId,
-    setTabDirty,
     onSaved,
     isDraft,
     replaceTab,
@@ -299,23 +408,7 @@ export function ManifestEditorTab({
   const handleResetManifest = () => {
     if (!isModified) return;
     if (!window.confirm('确定要放弃所有未保存的修改并恢复吗？')) return;
-
-    if (initialSnapshot) {
-      setName(initialSnapshot.name);
-      setVersion(initialSnapshot.version);
-      setDescription(initialSnapshot.description);
-      setItems([...initialSnapshot.items]);
-      setOverrides({ ...initialSnapshot.overrides });
-    } else {
-      setName(manifestName ? manifestName.split('/').pop() || manifestName : 'new_agent');
-      setVersion('1.0.0');
-      setDescription('');
-      setItems([]);
-      setOverrides({});
-    }
-
-    setIsModified(false);
-    setTabDirty(tabId, false);
+    dispatch({ type: 'RESET' });
   };
 
   const handleOpenAtom = useCallback(
@@ -361,8 +454,7 @@ export function ManifestEditorTab({
               type="text"
               value={manifestIdentifier}
               onChange={(e) => {
-                setManifestIdentifier(e.target.value);
-                markDirty();
+                dispatch({ type: 'SET_FIELD', field: 'identifier', value: e.target.value });
               }}
               placeholder="例如: smart-contract-auditor"
             />
@@ -376,8 +468,7 @@ export function ManifestEditorTab({
               type="text"
               value={name}
               onChange={(e) => {
-                setName(e.target.value);
-                markDirty();
+                dispatch({ type: 'SET_FIELD', field: 'name', value: e.target.value });
               }}
               placeholder="智能体装配名称"
             />
@@ -391,8 +482,7 @@ export function ManifestEditorTab({
               type="text"
               value={version}
               onChange={(e) => {
-                setVersion(e.target.value);
-                markDirty();
+                dispatch({ type: 'SET_FIELD', field: 'version', value: e.target.value });
               }}
             />
           </div>
@@ -405,8 +495,7 @@ export function ManifestEditorTab({
               type="text"
               value={description}
               onChange={(e) => {
-                setDescription(e.target.value);
-                markDirty();
+                dispatch({ type: 'SET_FIELD', field: 'description', value: e.target.value });
               }}
             />
           </div>
@@ -564,10 +653,7 @@ export function ManifestEditorTab({
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const nextOverrides = { ...overrides };
-                                  delete nextOverrides[item.lookup];
-                                  setOverrides(nextOverrides);
-                                  markDirty();
+                                  dispatch({ type: 'REMOVE_OVERRIDE', lookup: item.lookup });
                                 }}
                                 className="text-[10px] text-amber-400 hover:underline flex items-center gap-1"
                               >
@@ -587,14 +673,12 @@ export function ManifestEditorTab({
                               size="sm"
                               onClick={() => {
                                 if (overrideQueryId.trim()) {
-                                  setOverrides({
-                                    ...overrides,
-                                    [item.lookup]: {
-                                      selectors: [{ query: { id: overrideQueryId.trim() } }],
-                                    },
+                                  dispatch({
+                                    type: 'SET_OVERRIDE',
+                                    lookup: item.lookup,
+                                    queryId: overrideQueryId.trim(),
                                   });
                                   setEditingOverrideKey(null);
-                                  markDirty();
                                 }
                               }}
                               disabled={!overrideQueryId.trim()}

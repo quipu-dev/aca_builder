@@ -6,6 +6,7 @@ from typing import Any
 import yaml
 
 from aca_builder.domain.events import BuildError
+from aca_builder.domain.models import Atom, AtomMeta
 from aca_builder.domain.ports import LibraryRepository, ManifestRepository
 
 
@@ -35,13 +36,14 @@ class FSLibraryRepository(LibraryRepository):
             else:
                 atom_id = meta["id"]
 
-            return {
-                "id": atom_id,
-                "meta": meta,
-                "content": content_str.strip(),
-                "package": package_name,
-                "source_file": str(file_path),
-            }
+            atom_meta = AtomMeta(**meta)
+            return Atom(
+                id=atom_id,
+                meta=atom_meta,
+                content=content_str.strip(),
+                package=package_name,
+                source_file=str(file_path),
+            )
         except (yaml.YAMLError, ValueError, OSError) as e:
             from aca_builder.messages import MESSAGES
 

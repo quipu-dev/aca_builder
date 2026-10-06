@@ -9,9 +9,8 @@ from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 
 from aca_builder.commands import _bootstrap
-from aca_builder.domain.events import BuildError
+from aca_builder.infra.atomic import atomic_write_text
 from aca_builder.server.common import (
-    CollectingMessageBus,
     broadcast_change,
     find_package_dir_and_yaml,
     get_current_workspace_id,
@@ -247,13 +246,14 @@ def create_package(
             "description": req.description,
             "exports": {},
         }
-        pkg_yaml.write_text(
+        atomic_write_text(
+            pkg_yaml,
             yaml.safe_dump(pkg_content, sort_keys=False, allow_unicode=True),
             encoding="utf-8",
         )
 
         d4_lookups = pkg_dir / "d4" / "lookups.yaml"
-        d4_lookups.write_text("type: d4\nlookups: {}\n", encoding="utf-8")
+        atomic_write_text(d4_lookups, "type: d4\nlookups: {}\n", encoding="utf-8")
 
         broadcast_change("LIBRARY_DIRTY")
         return {"status": "ok", "package": req.name, "path": str(pkg_dir)}
@@ -289,7 +289,8 @@ def update_package(
         if req.description is not None:
             pkg_data["description"] = req.description.strip()
 
-        target_pkg_yaml.write_text(
+        atomic_write_text(
+            target_pkg_yaml,
             yaml.safe_dump(pkg_data, sort_keys=False, allow_unicode=True),
             encoding="utf-8",
         )
@@ -332,6 +333,7 @@ def delete_package(
 @router.get("/lint")
 def run_linter(x_aca_workspace: str | None = Header(None)) -> dict[str, Any]:
     """运行当前活动工作区的全量规范检查，返回结构化诊断报告"""
+    from aca_builder.infra.bus import ConsoleMessageBus
     from aca_builder.use_cases.linter import LinterService
 
     ws_id = get_current_workspace_id(x_aca_workspace)
@@ -339,17 +341,16 @@ def run_linter(x_aca_workspace: str | None = Header(None)) -> dict[str, Any]:
     library_paths = ws_cfg.library_paths
     manifest_paths = ws_cfg.manifest_paths
 
-    bus = CollectingMessageBus()
-    linter = LinterService(bus, lib_repo, man_repo)
+    # 直接调用纯规则管线，免除 CollectingMessageBus 拦截中介
+    linter = LinterService(ConsoleMessageBus(), lib_repo, man_repo)
+    diagnostics = linter.diagnose(library_paths, manifest_paths)
 
-    try:
-        linter.lint(library_paths, manifest_paths)
-    except BuildError:
-        pass
+    error_count = sum(1 for d in diagnostics if d.level == "ERROR")
+    warn_count = sum(1 for d in diagnostics if d.level == "WARN")
 
     return {
         "workspace": ws_id,
-        "error_count": bus.error_count,
-        "warn_count": bus.warn_count,
-        "issues": bus.issues,
+        "error_count": error_count,
+        "warn_count": warn_count,
+        "issues": [d.to_dict() for d in diagnostics if d.level in ("ERROR", "WARN")],
     }

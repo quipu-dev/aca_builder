@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from aca_builder.commands import _bootstrap
 from aca_builder.domain.services import evaluate_lookup
+from aca_builder.infra.atomic import atomic_write_text
 from aca_builder.server.common import (
     broadcast_change,
     find_package_dir_and_yaml,
@@ -43,9 +44,7 @@ def _perform_delete_lookup(
     lookup_def = None
     if "::internal::" in lookup_key:
         pkg_part, name_part = lookup_key.split("::internal::", 1)
-        lookup_def = (
-            interfaces.get("internals", {}).get(pkg_part, {}).get(name_part)
-        )
+        lookup_def = interfaces.get("internals", {}).get(pkg_part, {}).get(name_part)
     elif "::" in lookup_key:
         lookup_def = interfaces.get("exports", {}).get(lookup_key)
     else:
@@ -83,7 +82,8 @@ def _perform_delete_lookup(
         exports = pkg_content.get("exports", {})
         if raw_key in exports:
             del exports[raw_key]
-            target_pkg_yaml.write_text(
+            atomic_write_text(
+                target_pkg_yaml,
                 yaml.safe_dump(pkg_content, sort_keys=False, allow_unicode=True),
                 encoding="utf-8",
             )
@@ -103,7 +103,8 @@ def _perform_delete_lookup(
                         and raw_key in d4_content["lookups"]
                     ):
                         del d4_content["lookups"][raw_key]
-                        d4_file.write_text(
+                        atomic_write_text(
+                            d4_file,
                             yaml.safe_dump(
                                 d4_content, sort_keys=False, allow_unicode=True
                             ),
@@ -204,7 +205,8 @@ def create_or_update_lookup(
             )
             exports = pkg_content.setdefault("exports", {})
             exports[lookup_name] = lookup_data
-            target_pkg_yaml.write_text(
+            atomic_write_text(
+                target_pkg_yaml,
                 yaml.safe_dump(pkg_content, sort_keys=False, allow_unicode=True),
                 encoding="utf-8",
             )
@@ -223,7 +225,8 @@ def create_or_update_lookup(
                             and lookup_name in d4_c["lookups"]
                         ):
                             del d4_c["lookups"][lookup_name]
-                            d4_file.write_text(
+                            atomic_write_text(
+                                d4_file,
                                 yaml.safe_dump(
                                     d4_c, sort_keys=False, allow_unicode=True
                                 ),
@@ -249,7 +252,8 @@ def create_or_update_lookup(
             d4_content["type"] = "d4"
             lookups = d4_content.setdefault("lookups", {})
             lookups[lookup_name] = lookup_data
-            d4_file.write_text(
+            atomic_write_text(
+                d4_file,
                 yaml.safe_dump(d4_content, sort_keys=False, allow_unicode=True),
                 encoding="utf-8",
             )
@@ -263,7 +267,8 @@ def create_or_update_lookup(
                 exports = pkg_content.get("exports", {})
                 if lookup_name in exports:
                     del exports[lookup_name]
-                    target_pkg_yaml.write_text(
+                    atomic_write_text(
+                        target_pkg_yaml,
                         yaml.safe_dump(
                             pkg_content, sort_keys=False, allow_unicode=True
                         ),
@@ -302,7 +307,8 @@ def create_or_update_lookup(
                                     imp["lookup"] = full_return_key
                                     m_modified = True
                             if m_modified:
-                                m_file.write_text(
+                                atomic_write_text(
+                                    m_file,
                                     yaml.safe_dump(
                                         m_data, sort_keys=False, allow_unicode=True
                                     ),

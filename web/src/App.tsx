@@ -47,6 +47,14 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 const EMPTY_MANIFESTS: ManifestItemObj[] = [];
 const EMPTY_PACKAGES: PackageItem[] = [];
 
+export type ActiveModal =
+  | null
+  | { type: 'CREATE_PACKAGE' }
+  | { type: 'EDIT_PACKAGE'; pkg: PackageItem }
+  | { type: 'CREATE_FOLDER'; parentPath: string }
+  | { type: 'CREATE_WORKSPACE' }
+  | { type: 'COMMAND_PALETTE' };
+
 export function App() {
   const ideStore = useIdeStore();
   const wsStore = useWorkspaceStore();
@@ -55,20 +63,12 @@ export function App() {
   const [status, setStatus] = useState<string>('检测中...');
   const [explorerTab, setExplorerTab] = useState<'manifests' | 'packages'>('manifests');
 
-  // 新建与编辑资产 Modal
-  const [isCreatePkgOpen, setIsCreatePkgOpen] = useState(false);
+  // 单一活跃模态框判别联合体
+  const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [newPkgName, setNewPkgName] = useState('');
   const [newPkgWs, _setNewPkgWs] = useState('');
-
-  const [editingPkg, setEditingPkg] = useState<PackageItem | null>(null);
-  const [isEditPkgOpen, setIsEditPkgOpen] = useState(false);
-
-  const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
-  const [targetParentFolder, setTargetParentFolder] = useState('');
-
-  const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
   const [isWsDropdownOpen, setIsWsDropdownOpen] = useState(false);
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const closeModal = useCallback(() => setActiveModal(null), []);
 
   // 1. 使用 React Query 接管工作区资产数据
   const { data: assetsData } = useQuery<{
@@ -147,7 +147,9 @@ export function App() {
         window.dispatchEvent(new CustomEvent('aca:save-active-tab'));
       } else if (isMod && e.key.toLowerCase() === 'p') {
         e.preventDefault();
-        setIsCommandPaletteOpen((prev) => !prev);
+        setActiveModal((curr) =>
+          curr?.type === 'COMMAND_PALETTE' ? null : { type: 'COMMAND_PALETTE' },
+        );
       } else if (isMod && e.key.toLowerCase() === 't') {
         e.preventDefault();
         useIdeStore.getState().openTab(
@@ -329,8 +331,7 @@ export function App() {
   };
 
   const handleOpenCreateFolder = (parent = '') => {
-    setTargetParentFolder(parent);
-    setIsCreateFolderOpen(true);
+    setActiveModal({ type: 'CREATE_FOLDER', parentPath: parent });
   };
 
   const handleSubmitCreateFolder = async (folderPath: string) => {
@@ -475,12 +476,12 @@ export function App() {
 
   const handleCreatePackage = useCallback(() => {
     setNewPkgName('');
-    setIsCreatePkgOpen(true);
+    setActiveModal({ type: 'CREATE_PACKAGE' });
   }, []);
 
   const submitCreatePackage = useCallback(() => {
     if (!newPkgName.trim()) return;
-    setIsCreatePkgOpen(false);
+    closeModal();
 
     fetch('/api/packages', {
       method: 'POST',
@@ -500,7 +501,7 @@ export function App() {
         }
       })
       .catch(() => toast.error('创建组件包网络异常'));
-  }, [newPkgName, newPkgWs, invalidateAll]);
+  }, [newPkgName, newPkgWs, invalidateAll, closeModal]);
 
   const handleDeletePackage = useCallback(
     (pkgName: string, e: React.MouseEvent) => {
@@ -782,8 +783,7 @@ export function App() {
                         onOpenLookup={(lKey, e) => handleOpenLookupTab(lKey, e)}
                         onCreateKernel={handleCreateKernelDraft}
                         onEditPackage={(pkg) => {
-                          setEditingPkg(pkg);
-                          setIsEditPkgOpen(true);
+                          setActiveModal({ type: 'EDIT_PACKAGE', pkg });
                         }}
                         onDeletePackage={handleDeletePackage}
                         onDeleteLookup={handleDeleteLookup}
@@ -892,7 +892,7 @@ export function App() {
                     manifestsCount={manifests.length}
                     onSaved={handleTabSaved}
                     onDeleted={handleTabDeleted}
-                    onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+                    onOpenCommandPalette={() => setActiveModal({ type: 'COMMAND_PALETTE' })}
                     onCreateManifest={handleCreateNewManifest}
                     onCreateAtom={handleCreateNewAtomDraft}
                   />
@@ -1035,7 +1035,7 @@ export function App() {
                       type="button"
                       onClick={() => {
                         setIsWsDropdownOpen(false);
-                        setIsCreateWorkspaceOpen(true);
+                        setActiveModal({ type: 'CREATE_WORKSPACE' });
                       }}
                       className="w-full flex items-center gap-1.5 px-2.5 py-1.5 text-indigo-300 hover:bg-indigo-950/40 rounded-lg text-left cursor-pointer transition-colors"
                     >
@@ -1092,7 +1092,7 @@ export function App() {
           <span className="text-slate-600 hidden sm:inline">·</span>
           <button
             type="button"
-            onClick={() => setIsCommandPaletteOpen(true)}
+            onClick={() => setActiveModal({ type: 'COMMAND_PALETTE' })}
             className="flex items-center gap-1 px-1.5 py-0.5 rounded text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
             title="打开命令面板 (Ctrl+P)"
           >
@@ -1102,41 +1102,43 @@ export function App() {
         </div>
       </footer>
 
-      <CommandPalette
-        isOpen={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
-        manifests={manifests}
-        packages={packages}
-        kernel={kernel}
-      />
+      {activeModal?.type === 'COMMAND_PALETTE' && (
+        <CommandPalette
+          isOpen={true}
+          onClose={closeModal}
+          manifests={manifests}
+          packages={packages}
+          kernel={kernel}
+        />
+      )}
 
-      <CreatePackageModal
-        isOpen={isCreatePkgOpen}
-        onClose={() => setIsCreatePkgOpen(false)}
-        newPkgName={newPkgName}
-        setNewPkgName={setNewPkgName}
-        onSubmit={submitCreatePackage}
-      />
+      {activeModal?.type === 'CREATE_PACKAGE' && (
+        <CreatePackageModal
+          isOpen={true}
+          onClose={closeModal}
+          newPkgName={newPkgName}
+          setNewPkgName={setNewPkgName}
+          onSubmit={submitCreatePackage}
+        />
+      )}
 
-      {editingPkg && (
+      {activeModal?.type === 'EDIT_PACKAGE' && (
         <EditPackageModal
-          isOpen={isEditPkgOpen}
-          onClose={() => {
-            setIsEditPkgOpen(false);
-            setEditingPkg(null);
-          }}
-          packageName={editingPkg.name}
-          initialVersion={editingPkg.version}
-          initialDescription={editingPkg.description}
+          isOpen={true}
+          onClose={closeModal}
+          packageName={activeModal.pkg.name}
+          initialVersion={activeModal.pkg.version}
+          initialDescription={activeModal.pkg.description}
           onSubmit={({ version, description }) => {
-            fetch(`/api/packages/${encodeURIComponent(editingPkg.name)}`, {
+            const pkgName = activeModal.pkg.name;
+            fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ version, description }),
             })
               .then(async (res) => {
                 if (res.ok) {
-                  toast.success(`组件包 "${editingPkg.name}" 元数据已更新`);
+                  toast.success(`组件包 "${pkgName}" 元数据已更新`);
                   invalidateAll();
                 } else {
                   const data = await res.json();
@@ -1148,21 +1150,25 @@ export function App() {
         />
       )}
 
-      <CreateFolderModal
-        isOpen={isCreateFolderOpen}
-        onClose={() => setIsCreateFolderOpen(false)}
-        parentPath={targetParentFolder}
-        onSubmit={handleSubmitCreateFolder}
-      />
+      {activeModal?.type === 'CREATE_FOLDER' && (
+        <CreateFolderModal
+          isOpen={true}
+          onClose={closeModal}
+          parentPath={activeModal.parentPath}
+          onSubmit={handleSubmitCreateFolder}
+        />
+      )}
 
-      <CreateWorkspaceModal
-        isOpen={isCreateWorkspaceOpen}
-        onClose={() => setIsCreateWorkspaceOpen(false)}
-        onSubmit={async (params) => {
-          await wsStore.createWorkspace(params);
-          await handleSelectWorkspace(params.id);
-        }}
-      />
+      {activeModal?.type === 'CREATE_WORKSPACE' && (
+        <CreateWorkspaceModal
+          isOpen={true}
+          onClose={closeModal}
+          onSubmit={async (params) => {
+            await wsStore.createWorkspace(params);
+            await handleSelectWorkspace(params.id);
+          }}
+        />
+      )}
 
       <ToastContainer />
     </div>

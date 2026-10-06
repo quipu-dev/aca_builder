@@ -1,5 +1,6 @@
 import { ConfirmIconButton } from '@/components/ui/confirm-button';
 import { useIdeStore } from '@/stores/ide-store';
+import { type PathTreeNode, PathTrie } from '@/utils/trie';
 import {
   ChevronDown,
   ChevronRight,
@@ -19,6 +20,8 @@ export interface ManifestItemObj {
   workspace_path?: string;
 }
 
+export type ManifestTreeNode = PathTreeNode<ManifestItemObj>;
+
 export interface ManifestExplorerProps {
   manifests: ManifestItemObj[];
   activeManifestName?: string;
@@ -30,75 +33,12 @@ export interface ManifestExplorerProps {
   onMoveItem?: (srcPath: string, destFolder: string, isFolder: boolean) => void;
 }
 
-interface ManifestTreeNode {
-  name: string;
-  path: string;
-  isFolder: boolean;
-  children: ManifestTreeNode[];
-}
-
 function buildTree(items: ManifestItemObj[]): ManifestTreeNode[] {
-  interface TempNode {
-    name: string;
-    path: string;
-    isFolder: boolean;
-    children: Map<string, TempNode>;
-  }
-
-  const root: TempNode = {
-    name: '',
-    path: '',
-    isFolder: true,
-    children: new Map(),
-  };
-
+  const trie = new PathTrie<ManifestItemObj>();
   for (const item of items) {
-    const isExplicitDir = item.type === 'directory';
-    const p = item.name;
-    const parts = p.split('/').filter(Boolean);
-    let curr = root;
-
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      const isLeaf = i === parts.length - 1;
-      const subPath = parts.slice(0, i + 1).join('/');
-      const isFolder = !isLeaf || isExplicitDir;
-
-      let nextNode = curr.children.get(part);
-      if (!nextNode) {
-        nextNode = {
-          name: part,
-          path: isLeaf && !isExplicitDir ? p : subPath,
-          isFolder,
-          children: new Map(),
-        };
-        curr.children.set(part, nextNode);
-      } else if (isFolder) {
-        nextNode.isFolder = true;
-      }
-      curr = nextNode;
-    }
+    trie.insert(item.name, item.type === 'directory', item);
   }
-
-  function toSortedNodes(node: TempNode): ManifestTreeNode[] {
-    const list: ManifestTreeNode[] = [];
-    for (const child of node.children.values()) {
-      list.push({
-        name: child.name,
-        path: child.path,
-        isFolder: child.isFolder,
-        children: toSortedNodes(child),
-      });
-    }
-
-    return list.sort((a, b) => {
-      if (a.isFolder && !b.isFolder) return -1;
-      if (!a.isFolder && b.isFolder) return 1;
-      return a.name.localeCompare(b.name);
-    });
-  }
-
-  return toSortedNodes(root);
+  return trie.toHierarchy();
 }
 
 function ManifestTreeItem({

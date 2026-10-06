@@ -8,6 +8,7 @@ from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 
 from aca_builder.commands import _bootstrap
+from aca_builder.infra.atomic import atomic_write_text
 from aca_builder.server.common import broadcast_change, get_current_workspace_id
 
 router = APIRouter()
@@ -54,7 +55,8 @@ def save_manifest(
         manifest_content["overrides"] = req.overrides
 
     try:
-        target_file.write_text(
+        atomic_write_text(
+            target_file,
             yaml.safe_dump(manifest_content, sort_keys=False, allow_unicode=True),
             encoding="utf-8",
         )

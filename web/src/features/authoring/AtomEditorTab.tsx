@@ -55,9 +55,18 @@ export function AtomEditorTab({
   const draftParts = isDraft ? atomId.split(':') : [];
   const draftInitialPkg = isDraft && draftParts[1] !== 'kernel' ? draftParts[1] : '';
 
-  const [loading, setLoading] = useState(!isDraft);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  // 显式有限状态机 (FSM)
+  type EditorPhase =
+    | { state: 'LOADING' }
+    | { state: 'IDLE' }
+    | { state: 'SAVING' }
+    | { state: 'SUCCESS' }
+    | { state: 'ERROR'; error: string }
+    | { state: 'CONFIRM_DELETE' };
+
+  const [phase, setPhase] = useState<EditorPhase>(
+    isDraft ? { state: 'IDLE' } : { state: 'LOADING' },
+  );
 
   // 基础数据与草稿字段
   const [currentId, setCurrentId] = useState(isDraft ? (isKernel ? 'kernel' : '') : atomId);
@@ -87,7 +96,6 @@ export function AtomEditorTab({
       : '',
   );
   const [isModified, setIsModified] = useState(false);
-  const [confirmDeleting, setConfirmDeleting] = useState(false);
 
   // 重命名与引用状态
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
@@ -100,16 +108,19 @@ export function AtomEditorTab({
   const createAtomMutation = useCreateAtomMutation();
   const updateAtomMutation = useUpdateAtomMutation();
   const deleteAtomMutation = useDeleteAtomMutation();
-  const saving = createAtomMutation.isPending || updateAtomMutation.isPending;
+  const saving =
+    phase.state === 'SAVING' || createAtomMutation.isPending || updateAtomMutation.isPending;
+  const saveSuccess = phase.state === 'SUCCESS';
+  const errorMsg = phase.state === 'ERROR' ? phase.error : '';
+  const confirmDeleting = phase.state === 'CONFIRM_DELETE';
 
   useEffect(() => {
     if (isDraft) {
-      setLoading(false);
+      setPhase({ state: 'IDLE' });
       return;
     }
 
-    setLoading(true);
-    setErrorMsg('');
+    setPhase({ state: 'LOADING' });
     fetchAtomDetail(atomId)
       .then((data) => {
         const meta = data.meta || {};
@@ -124,6 +135,7 @@ export function AtomEditorTab({
         setContent(data.content || '');
         setIsModified(false);
         setTabDirty(tabId, false);
+        setPhase({ state: 'IDLE' });
 
         // 加载被引用数
         if (!isKernel) {
@@ -133,9 +145,8 @@ export function AtomEditorTab({
         }
       })
       .catch((err) => {
-        setErrorMsg(err.message || '加载异常');
-      })
-      .finally(() => setLoading(false));
+        setPhase({ state: 'ERROR', error: err.message || '加载异常' });
+      });
   }, [atomId, isDraft, isKernel, setTabDirty, tabId]);
 
   const markDirty = () => {
@@ -155,12 +166,12 @@ export function AtomEditorTab({
   };
 
   const handleSave = useCallback(async () => {
-    setErrorMsg('');
+    setPhase({ state: 'SAVING' });
 
     if (isDraft) {
       if (isKernel) {
         if (!content.trim()) {
-          setErrorMsg('Kernel 协议正文不可为空');
+          setPhase({ state: 'ERROR', error: 'Kernel 协议正文不可为空' });
           return;
         }
         try {
@@ -168,7 +179,7 @@ export function AtomEditorTab({
             type: 'kernel',
             content: content,
           });
-          setSaveSuccess(true);
+          setPhase({ state: 'SUCCESS' });
           setIsModified(false);
           setTabDirty(tabId, false);
           onSaved?.();
@@ -180,7 +191,10 @@ export function AtomEditorTab({
             atomId: 'kernel',
           });
         } catch (err: unknown) {
-          setErrorMsg(err instanceof Error ? err.message : '创建 Kernel 失败');
+          setPhase({
+            state: 'ERROR',
+            error: err instanceof Error ? err.message : '创建 Kernel 失败',
+          });
         }
         return;
       }
@@ -192,7 +206,7 @@ export function AtomEditorTab({
       const generatedId = `${atomType}-${cleanSuffix}`;
 
       if (!pkgName || !cleanSuffix || !content.trim()) {
-        setErrorMsg('请填写完整的所属包、标识后缀与正文');
+        setPhase({ state: 'ERROR', error: '请填写完整的所属包、标识后缀与正文' });
         return;
       }
 
@@ -208,7 +222,7 @@ export function AtomEditorTab({
           content: content,
         });
 
-        setSaveSuccess(true);
+        setPhase({ state: 'SUCCESS' });
         setIsModified(false);
         setTabDirty(tabId, false);
         onSaved?.();
@@ -220,7 +234,7 @@ export function AtomEditorTab({
           atomId: generatedId,
         });
       } catch (err: unknown) {
-        setErrorMsg(err instanceof Error ? err.message : '创建原子失败');
+        setPhase({ state: 'ERROR', error: err instanceof Error ? err.message : '创建原子失败' });
       }
       return;
     }
@@ -251,13 +265,13 @@ export function AtomEditorTab({
         },
       });
 
-      setSaveSuccess(true);
+      setPhase({ state: 'SUCCESS' });
       setIsModified(false);
       setTabDirty(tabId, false);
       onSaved?.();
-      setTimeout(() => setSaveSuccess(false), 2000);
+      setTimeout(() => setPhase({ state: 'IDLE' }), 2000);
     } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : '保存原子失败');
+      setPhase({ state: 'ERROR', error: err instanceof Error ? err.message : '保存原子失败' });
     }
   }, [
     isDraft,
@@ -323,19 +337,19 @@ export function AtomEditorTab({
     }
 
     if (e?.shiftKey || confirmDeleting) {
-      setConfirmDeleting(false);
+      setPhase({ state: 'IDLE' });
       try {
         await deleteAtomMutation.mutateAsync(currentId);
         toast.success(`原子 "${currentId}" 已物理删除`);
         onDeleted?.();
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : '删除原子失败';
-        setErrorMsg(msg);
+        setPhase({ state: 'ERROR', error: msg });
         toast.error(msg);
       }
     } else {
-      setConfirmDeleting(true);
-      setTimeout(() => setConfirmDeleting(false), 3000);
+      setPhase({ state: 'CONFIRM_DELETE' });
+      setTimeout(() => setPhase({ state: 'IDLE' }), 3000);
     }
   };
 
@@ -417,7 +431,7 @@ export function AtomEditorTab({
     return pkgName && pkgName !== '全局' ? `${pkgName}::${ref}` : ref;
   };
 
-  if (loading) {
+  if (phase.state === 'LOADING') {
     return (
       <div className="flex h-full items-center justify-center text-xs text-slate-500 font-mono gap-2">
         <Loader2 className="h-4 w-4 animate-spin text-indigo-400" />

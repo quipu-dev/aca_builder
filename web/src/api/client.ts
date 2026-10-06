@@ -1,4 +1,10 @@
-export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
+import type { TypeValidator } from './validator';
+
+export async function apiFetch<T>(
+  url: string,
+  options?: RequestInit,
+  validator?: TypeValidator<T>,
+): Promise<T> {
   const res = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
@@ -18,5 +24,9 @@ export async function apiFetch<T>(url: string, options?: RequestInit): Promise<T
     throw new Error(errorDetail);
   }
 
-  return res.json();
+  const json = await res.json();
+  if (validator) {
+    return validator.parse(json);
+  }
+  return json as T;
 }

@@ -3,11 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from aca_builder.domain.compiler import compile_prompt
 from aca_builder.domain.events import BuildError
 from aca_builder.domain.ports import LibraryRepository, ManifestRepository
-from aca_builder.domain.services import compile_prompt_closure
 from aca_builder.messages import MESSAGES
-from aca_builder.server.compile_service import generate_prompt_profile
 
 
 class BuilderService:
@@ -57,14 +56,14 @@ class BuilderService:
         manifest, library, interfaces = self._load_manifest_and_resources(
             manifest_identifier, library_paths, manifest_paths, is_file_path
         )
-        _, prompt = compile_prompt_closure(
+        res = compile_prompt(
             library=library,
             interfaces=interfaces,
             imports=manifest.get("imports", []),
             overrides=manifest.get("overrides"),
             include_kernel=True,
         )
-        return prompt
+        return res.prompt
 
     def build_with_profile(
         self,
@@ -76,12 +75,11 @@ class BuilderService:
         manifest, library, interfaces = self._load_manifest_and_resources(
             manifest_identifier, library_paths, manifest_paths, is_file_path
         )
-        final_atom_map, prompt = compile_prompt_closure(
+        res = compile_prompt(
             library=library,
             interfaces=interfaces,
             imports=manifest.get("imports", []),
             overrides=manifest.get("overrides"),
             include_kernel=True,
         )
-        profile = generate_prompt_profile(final_atom_map, library)
-        return prompt, profile
+        return res.prompt, res.profile.model_dump()

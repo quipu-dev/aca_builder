@@ -3,45 +3,16 @@ from __future__ import annotations
 import copy
 from typing import Any
 
+from aca_builder.domain.indexing import InvertedIndex
+
 from .events import BuildError
 
 # --- Query and Resolution Logic (Pure Domain) ---
 
 
 def select_atoms_by_query(library: dict[str, Any], query: dict[str, Any]) -> set[str]:
-    selected_ids = set()
-    for atom_id, atom in library.items():
-        match = True
-        for key, query_value in query.items():
-            atom_value = atom["meta"].get(key)
-            if key == "package":
-                atom_value = atom.get("package")
-
-            if isinstance(query_value, list) and isinstance(atom_value, list):
-                required = {
-                    v
-                    for v in query_value
-                    if isinstance(v, str) and not v.startswith("-")
-                }
-                excluded = {
-                    v[1:]
-                    for v in query_value
-                    if isinstance(v, str) and v.startswith("-")
-                }
-                atom_set = set(atom_value)
-                if not required.issubset(atom_set):
-                    match = False
-                    break
-                if not excluded.isdisjoint(atom_set):
-                    match = False
-                    break
-            else:
-                if atom_value != query_value:
-                    match = False
-                    break
-        if match:
-            selected_ids.add(atom_id)
-    return selected_ids
+    """通过内存倒排索引执行正反条件检索，替代原有的 O(N*K) 逐项线性遍历。"""
+    return InvertedIndex(library).select(query)
 
 
 def resolve_lookup_by_key(
@@ -196,31 +167,15 @@ def resolve_dependencies(
     return final_deps
 
 
+from aca_builder.domain.dag import sort_atoms_canonically
+
+
 def serialize_prompt(
     atom_lookup_map: dict[str, set[str]], library: dict[str, Any]
 ) -> str:
     final_ids = atom_lookup_map.keys()
     atoms_to_serialize = [library[atom_id] for atom_id in final_ids]
-
-    def sort_key(atom):
-        meta = atom["meta"]
-        if meta["type"] == "kernel":
-            return (-1,)
-        priority = meta.get("priority", 99)
-        if meta["type"] == "d3":
-            if priority == 0:
-                return (0,)
-            if priority == 1:
-                return (1,)
-            if priority == 2:
-                return (4,)
-        elif meta["type"] == "d1":
-            return (2,)
-        elif meta["type"] == "d2":
-            return (3,)
-        return (99,)
-
-    atoms_to_serialize.sort(key=sort_key)
+    atoms_to_serialize = sort_atoms_canonically(atoms_to_serialize)
     prompt_parts = []
 
     for atom in atoms_to_serialize:
