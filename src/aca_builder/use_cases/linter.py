@@ -257,7 +257,4 @@ class LinterService:
         if error_count == 0:
             self.bus.success("linter.success")  # Using msg_id
         else:
-            self.bus.lint_error(
-                "linter.fail_summary", count=error_count
-            )  # Using msg_id
             raise BuildError("LINT_FAILED_SILENTLY")

@@ -42,8 +42,6 @@ class CreateWorkspaceRequest(BaseModel):
     id: str
     name: str
     root: str | None = None
-    libraries: list[str] = []
-    manifests: list[str] = []
     post_process_hook: str | None = None
     set_default: bool = False
 
@@ -55,8 +53,6 @@ class SetDefaultWorkspaceRequest(BaseModel):
 class UpdateWorkspaceConfigRequest(BaseModel):
     name: str | None = None
     root: str | None = None
-    library_paths: list[str] | None = None
-    manifest_paths: list[str] | None = None
     post_process_hook: str | None = None
 
 
@@ -121,10 +117,6 @@ def create_workspace(req: CreateWorkspaceRequest):
     ws_data: dict[str, Any] = {"name": req.name}
     if req.root:
         ws_data["root"] = req.root
-    if req.libraries:
-        ws_data["libraries"] = req.libraries
-    if req.manifests:
-        ws_data["manifests"] = req.manifests
     if req.post_process_hook:
         ws_data["post_process_hook"] = req.post_process_hook
 
@@ -206,10 +198,11 @@ def update_current_workspace_config(
         ws_entry["name"] = req.name
     if req.root is not None:
         ws_entry["root"] = req.root
-    if req.library_paths is not None:
-        ws_entry["libraries"] = req.library_paths
-    if req.manifest_paths is not None:
-        ws_entry["manifests"] = req.manifest_paths
+    # 彻底清理多余的多目录字段，由 root 统一约定推导
+    ws_entry.pop("libraries", None)
+    ws_entry.pop("library_paths", None)
+    ws_entry.pop("manifests", None)
+    ws_entry.pop("manifest_paths", None)
     if req.post_process_hook is not None:
         ws_entry["post_process_hook"] = req.post_process_hook
 

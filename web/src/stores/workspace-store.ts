@@ -23,8 +23,6 @@ interface WorkspaceState {
     id: string;
     name: string;
     root?: string;
-    libraries?: string[];
-    manifests?: string[];
     post_process_hook?: string;
     set_default?: boolean;
   }) => Promise<void>;

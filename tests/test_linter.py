@@ -104,11 +104,12 @@ Beta Public Content
 
 @pytest.fixture
 def setup_lint_environment(tmp_path: Path, monkeypatch):
-    lib_path = tmp_path / "lint_test_lib"
-    lib_path.mkdir()
+    ws_root = tmp_path / "lint_ws"
+    lib_path = ws_root / "library"
+    lib_path.mkdir(parents=True)
 
-    manifests_path = tmp_path / "lint_test_manifests"
-    manifests_path.mkdir()
+    manifests_path = ws_root / "manifests"
+    manifests_path.mkdir(parents=True)
 
     (lib_path / "d1").mkdir()
     (lib_path / "d2").mkdir()
@@ -151,8 +152,7 @@ def setup_lint_environment(tmp_path: Path, monkeypatch):
         "workspaces": {
             "lint_ws": {
                 "name": "Lint Workspace",
-                "libraries": [str(lib_path)],
-                "manifests": [str(manifests_path)],
+                "root": str(ws_root),
             }
         },
     }
@@ -442,20 +442,10 @@ imports:
 
 
 def test_lint_manifest_no_manifests_configured(setup_lint_environment, mock_deps):
-    lib_path, _ = setup_lint_environment
-    config_dir = lib_path.parent / "config"
-    config_file = config_dir / "config.yaml"
-    config_data = {
-        "default_workspace": "lint_ws",
-        "workspaces": {
-            "lint_ws": {
-                "name": "Lint Workspace",
-                "libraries": [str(lib_path)],
-                "manifests": [],
-            }
-        },
-    }
-    config_file.write_text(yaml.dump(config_data), encoding="utf-8")
+    _, manifests_path = setup_lint_environment
+    # 彻底清理 manifests 目录下的文件，模拟零清单场景
+    for f in manifests_path.glob("*.yaml"):
+        f.unlink()
 
     result = runner.invoke(app, ["lint"])
     assert result.exit_code == 0

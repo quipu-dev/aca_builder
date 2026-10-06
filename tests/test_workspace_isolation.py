@@ -39,18 +39,18 @@ def test_two_workspaces_with_different_kernels_isolated(tmp_path: Path, monkeypa
     ws1_root = tmp_path / "ws_zh"
     ws2_root = tmp_path / "ws_en"
 
-    (ws1_root / "packages" / "pkg").mkdir(parents=True)
-    (ws2_root / "packages" / "pkg").mkdir(parents=True)
+    (ws1_root / "library" / "pkg").mkdir(parents=True)
+    (ws2_root / "library" / "pkg").mkdir(parents=True)
     (ws1_root / "manifests").mkdir(parents=True)
     (ws2_root / "manifests").mkdir(parents=True)
 
     # 两个工作区各自拥有一个 kernel.md
-    (ws1_root / "packages" / "kernel.md").write_text(KERNEL_ZH, encoding="utf-8")
-    (ws2_root / "packages" / "kernel.md").write_text(KERNEL_EN, encoding="utf-8")
+    (ws1_root / "library" / "kernel.md").write_text(KERNEL_ZH, encoding="utf-8")
+    (ws2_root / "library" / "kernel.md").write_text(KERNEL_EN, encoding="utf-8")
 
     # 两个工作区拥有同名原子 d1-intro
-    (ws1_root / "packages" / "pkg" / "intro.md").write_text(ATOM_ZH, encoding="utf-8")
-    (ws2_root / "packages" / "pkg" / "intro.md").write_text(ATOM_EN, encoding="utf-8")
+    (ws1_root / "library" / "pkg" / "intro.md").write_text(ATOM_ZH, encoding="utf-8")
+    (ws2_root / "library" / "pkg" / "intro.md").write_text(ATOM_EN, encoding="utf-8")
 
     (ws1_root / "manifests" / "main.yaml").write_text(
         "name: agent\nimports:\n  - query: {id: 'd1-intro'}\n", encoding="utf-8"

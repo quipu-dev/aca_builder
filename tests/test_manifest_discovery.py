@@ -14,7 +14,8 @@ runner = CliRunner()
 @pytest.fixture
 def setup_manifest_fs(tmp_path: Path, monkeypatch):
     """Creates a complex manifest structure and a mock global config."""
-    manifests_root = tmp_path / "test_manifests"
+    ws_root = tmp_path / "ws"
+    manifests_root = ws_root / "manifests"
 
     # Create package directories
     (manifests_root / "pkg1").mkdir(parents=True)
@@ -26,17 +27,22 @@ def setup_manifest_fs(tmp_path: Path, monkeypatch):
     (manifests_root / "pkg2/sub_pkg/agent_three.yaml").write_text("name: agent_three")
     (manifests_root / "root_agent.yaml").write_text("name: root_agent")
 
+    # Create default library path
+    (ws_root / "library").mkdir(parents=True)
+
     # --- Config File Setup ---
     config_dir = tmp_path / "config"
     config_dir.mkdir()
     config_file = config_dir / "config.yaml"
 
-    # We must point to the actual dummy library path we will create in the test functions
-    dummy_lib_path = tmp_path / "dummy_lib"
-
     config_data = {
-        "manifest_paths": [str(manifests_root)],
-        "library_paths": [str(dummy_lib_path)],
+        "default_workspace": "default",
+        "workspaces": {
+            "default": {
+                "name": "Default Workspace",
+                "root": str(ws_root),
+            }
+        },
     }
     config_file.write_text(yaml.dump(config_data))
 
@@ -66,8 +72,8 @@ def test_list_manifests_discovery(setup_manifest_fs):
 def test_build_resolves_nested_manifest_name(setup_manifest_fs):
     """Test that `build` can resolve a manifest name from a nested package."""
     # We need a minimal valid library for the build to proceed far enough
-    dummy_lib_path = setup_manifest_fs.parent / "dummy_lib"
-    dummy_lib_path.mkdir()
+    dummy_lib_path = setup_manifest_fs.parent / "library"
+    dummy_lib_path.mkdir(exist_ok=True)
     (dummy_lib_path / "kernel.md").write_text("---\ntype: kernel\n---\nKernel")
     (dummy_lib_path / "dummy.md").write_text("---\nid: dummy\ntype: d1\n---\nContent")
 
@@ -88,13 +94,11 @@ imports:
 
 def test_build_resolves_root_manifest_name(setup_manifest_fs):
     """Test that `build` can resolve a manifest name from the root."""
-    dummy_lib_path = setup_manifest_fs.parent / "dummy_lib"
+    dummy_lib_path = setup_manifest_fs.parent / "library"
     if not dummy_lib_path.exists():
-        dummy_lib_path.mkdir()
-        (dummy_lib_path / "kernel.md").write_text("---\ntype: kernel\n---\nKernel")
-        (dummy_lib_path / "dummy.md").write_text(
-            "---\nid: dummy\ntype: d1\n---\nContent"
-        )
+        dummy_lib_path.mkdir(exist_ok=True)
+    (dummy_lib_path / "kernel.md").write_text("---\ntype: kernel\n---\nKernel")
+    (dummy_lib_path / "dummy.md").write_text("---\nid: dummy\ntype: d1\n---\nContent")
 
     manifest_file = setup_manifest_fs / "root_agent.yaml"
     manifest_file.write_text("""

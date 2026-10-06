@@ -16,8 +16,6 @@ export function SettingsTab() {
   const [activeWsId, setActiveWsId] = useState<string>('');
   const [wsName, setWsName] = useState<string>('');
   const [wsRoot, setWsRoot] = useState<string>('');
-  const [libPaths, setLibPaths] = useState<string>('');
-  const [manPaths, setManPaths] = useState<string>('');
   const [hookCommand, setHookCommand] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
@@ -31,23 +29,12 @@ export function SettingsTab() {
       setActiveWsId(current.id);
       setWsName(current.name);
       setWsRoot(current.root || '');
-      setLibPaths(current.library_paths.join('\n'));
-      setManPaths(current.manifest_paths.join('\n'));
       setHookCommand(current.post_process_hook || '');
     }
   }, [wsStore.workspaces, wsStore.activeWorkspaceId]);
 
   const handleSaveActiveWorkspace = async () => {
     setSaving(true);
-    const newLibPaths = libPaths
-      .split('\n')
-      .map((p) => p.trim())
-      .filter(Boolean);
-    const newManPaths = manPaths
-      .split('\n')
-      .map((p) => p.trim())
-      .filter(Boolean);
-
     try {
       const res = await fetch('/api/system/config', {
         method: 'PUT',
@@ -55,8 +42,6 @@ export function SettingsTab() {
         body: JSON.stringify({
           name: wsName.trim(),
           root: wsRoot.trim() || undefined,
-          library_paths: newLibPaths,
-          manifest_paths: newManPaths,
           post_process_hook: hookCommand.trim() || undefined,
         }),
       });
@@ -174,7 +159,7 @@ export function SettingsTab() {
         {/* 当前工作区路径与钩子细粒度配置 */}
         <section className="space-y-4">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 font-mono">
-            <Sliders className="h-4 w-4" /> 当前工作区详细路径 ({activeWsId})
+            <Sliders className="h-4 w-4" /> 当前工作区基础设置 ({activeWsId})
           </h3>
           <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-5 space-y-5 text-sm">
             <div className="grid grid-cols-2 gap-4 font-mono text-xs">
@@ -202,36 +187,25 @@ export function SettingsTab() {
               </div>
             </div>
 
-            <div>
-              <label
-                htmlFor="settings-lib-paths"
-                className="font-medium block mb-1 flex items-center gap-2"
-              >
-                <Database className="h-4 w-4 text-indigo-400" /> 知识库目录 (每行一个)
-              </label>
-              <textarea
-                id="settings-lib-paths"
-                value={libPaths}
-                onChange={(e) => setLibPaths(e.target.value)}
-                rows={2}
-                className="w-full font-mono text-xs bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="settings-man-paths"
-                className="font-medium block mb-1 flex items-center gap-2"
-              >
-                <Database className="h-4 w-4 text-emerald-400" /> 清单蓝图目录 (每行一个)
-              </label>
-              <textarea
-                id="settings-man-paths"
-                value={manPaths}
-                onChange={(e) => setManPaths(e.target.value)}
-                rows={2}
-                className="w-full font-mono text-xs bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 focus:outline-none focus:border-emerald-500"
-              />
+            {/* 自动推导的约定路径展示卡片 */}
+            <div className="rounded-lg border border-slate-800/80 bg-slate-950/60 p-3 space-y-2 font-mono text-xs">
+              <div className="text-[11px] text-slate-400 font-semibold mb-1">
+                已固化的资源约定路径（由根目录自动确定）：
+              </div>
+              <div className="flex items-center gap-2 text-slate-300">
+                <Database className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                <span className="text-slate-500">知识库目录:</span>
+                <span className="text-slate-200">
+                  {wsRoot ? `${wsRoot}/library` : '(未设置根目录)'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-slate-300">
+                <Database className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                <span className="text-slate-500">清单蓝图目录:</span>
+                <span className="text-slate-200">
+                  {wsRoot ? `${wsRoot}/manifests` : '(未设置根目录)'}
+                </span>
+              </div>
             </div>
 
             <div>

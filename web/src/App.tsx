@@ -60,7 +60,7 @@ export function App() {
   // 新建与编辑资产 Modal
   const [isCreatePkgOpen, setIsCreatePkgOpen] = useState(false);
   const [newPkgName, setNewPkgName] = useState('');
-  const [newPkgWs, setNewPkgWs] = useState('');
+  const [newPkgWs, _setNewPkgWs] = useState('');
 
   const [editingPkg, setEditingPkg] = useState<PackageItem | null>(null);
   const [isEditPkgOpen, setIsEditPkgOpen] = useState(false);
@@ -480,10 +480,8 @@ export function App() {
 
   const handleCreatePackage = useCallback(() => {
     setNewPkgName('');
-    const activeWs = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
-    setNewPkgWs(activeWs?.library_paths?.[0] || '');
     setIsCreatePkgOpen(true);
-  }, [wsStore.workspaces, wsStore.activeWorkspaceId]);
+  }, []);
 
   const submitCreatePackage = useCallback(() => {
     if (!newPkgName.trim()) return;
@@ -1122,9 +1120,6 @@ export function App() {
         onClose={() => setIsCreatePkgOpen(false)}
         newPkgName={newPkgName}
         setNewPkgName={setNewPkgName}
-        newPkgWs={newPkgWs}
-        setNewPkgWs={setNewPkgWs}
-        libraryPaths={currentWsObj?.library_paths}
         onSubmit={submitCreatePackage}
       />
 

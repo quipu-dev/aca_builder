@@ -54,30 +54,7 @@ def get_workspaces(
         config_data = load_config()
 
     base_dir = CONFIG_PATH.parent
-
-    # 统一预处理：若输入为平铺单工作区格式，自动规范为 workspaces 字典
-    raw_workspaces = config_data.get("workspaces")
-    if not raw_workspaces and (
-        "libraries" in config_data
-        or "library_paths" in config_data
-        or "manifests" in config_data
-        or "manifest_paths" in config_data
-    ):
-        raw_workspaces = {
-            "default": {
-                "name": "Default Workspace",
-                "libraries": config_data.get("libraries")
-                or config_data.get("library_paths")
-                or [],
-                "manifests": config_data.get("manifests")
-                or config_data.get("manifest_paths")
-                or [],
-                "post_process_hook": config_data.get("post_process_hook"),
-            }
-        }
-    elif not raw_workspaces:
-        raw_workspaces = {}
-
+    raw_workspaces = config_data.get("workspaces") or {}
     result: dict[str, WorkspaceConfig] = {}
 
     for ws_id, ws_data in raw_workspaces.items():
@@ -86,37 +63,12 @@ def get_workspaces(
 
         display_name = ws_data.get("name", ws_id)
         raw_root = ws_data.get("root")
-        root_path = _expand_path(raw_root, base_dir) if raw_root else None
+        root_path = (
+            _expand_path(raw_root, base_dir) if raw_root else Path.cwd().resolve()
+        )
 
-        # 解析 library_paths
-        raw_libs = ws_data.get("libraries") or ws_data.get("library_paths")
-        if raw_libs:
-            lib_paths = [_expand_path(p, root_path or base_dir) for p in raw_libs]
-        elif root_path and root_path.exists():
-            cand_lib = root_path / "library"
-            cand_pkg = root_path / "packages"
-            if cand_lib.exists():
-                lib_paths = [cand_lib]
-            elif cand_pkg.exists():
-                lib_paths = [cand_pkg]
-            else:
-                lib_paths = [root_path]
-        else:
-            lib_paths = []
-
-        # 解析 manifest_paths
-        raw_mans = ws_data.get("manifests") or ws_data.get("manifest_paths")
-        if raw_mans:
-            man_paths = [_expand_path(p, root_path or base_dir) for p in raw_mans]
-        elif root_path and root_path.exists():
-            cand_man = root_path / "manifests"
-            if cand_man.exists():
-                man_paths = [cand_man]
-            else:
-                man_paths = [root_path]
-        else:
-            man_paths = []
-
+        lib_paths = [root_path / "library"]
+        man_paths = [root_path / "manifests"]
         hook = ws_data.get("post_process_hook")
 
         result[ws_id] = WorkspaceConfig(
@@ -181,8 +133,8 @@ def resolve_workspace(
         id=fallback_id,
         name="Default Workspace",
         root=current_cwd,
-        library_paths=[current_cwd],
-        manifest_paths=[current_cwd],
+        library_paths=[current_cwd / "library"],
+        manifest_paths=[current_cwd / "manifests"],
         post_process_hook=None,
     )
     return fallback_id, fallback_ws

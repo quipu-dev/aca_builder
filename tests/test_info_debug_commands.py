@@ -68,8 +68,10 @@ Content from Atom B
 @pytest.fixture
 def setup_test_env(tmp_path: Path, monkeypatch):
     """Set up a test environment with multiple packages for info/debug commands."""
-    lib_path = tmp_path / "test_lib"
-    lib_path.mkdir()
+    ws_root = tmp_path / "ws"
+    lib_path = ws_root / "library"
+    lib_path.mkdir(parents=True)
+    (ws_root / "manifests").mkdir(parents=True)
 
     # Package A setup
     pkg_a_path = lib_path / "pkg_a"
@@ -94,8 +96,7 @@ def setup_test_env(tmp_path: Path, monkeypatch):
         "workspaces": {
             "default": {
                 "name": "Default",
-                "libraries": [str(lib_path)],
-                "manifests": [],
+                "root": str(ws_root),
             }
         },
     }

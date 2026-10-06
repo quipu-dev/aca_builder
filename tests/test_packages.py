@@ -63,10 +63,13 @@ Kernel
 @pytest.fixture
 def setup_package_env(tmp_path: Path, monkeypatch):
     """
-    Creates a library with 'pkg_a' (with package.yaml) and a 'pkg_b' (implicit/no-config for now or just root).
+    Creates a workspace with 'library' containing 'pkg_a' and 'pkg_b', and 'manifests'.
     """
-    lib_path = tmp_path / "lib"
-    lib_path.mkdir()
+    ws_root = tmp_path / "ws"
+    lib_path = ws_root / "library"
+    manifests_path = ws_root / "manifests"
+    lib_path.mkdir(parents=True)
+    manifests_path.mkdir(parents=True)
 
     # pkg_a setup
     pkg_a = lib_path / "pkg_a"
@@ -86,7 +89,19 @@ def setup_package_env(tmp_path: Path, monkeypatch):
     config_dir = tmp_path / "config"
     config_dir.mkdir()
     config_file = config_dir / "config.yaml"
-    config_file.write_text(yaml.dump({"library_paths": [str(lib_path)]}))
+    config_file.write_text(
+        yaml.dump(
+            {
+                "default_workspace": "default",
+                "workspaces": {
+                    "default": {
+                        "name": "Default Workspace",
+                        "root": str(ws_root),
+                    }
+                },
+            }
+        )
+    )
 
     monkeypatch.setattr("aca_builder.config.CONFIG_PATH", config_file)
 

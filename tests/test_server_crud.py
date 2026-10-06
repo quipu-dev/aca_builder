@@ -35,11 +35,11 @@ lookups:
 
 @pytest.fixture
 def setup_crud_env(tmp_path: Path, monkeypatch):
-    lib_path = tmp_path / "lib"
-    lib_path.mkdir()
-
-    man_path = tmp_path / "manifests"
-    man_path.mkdir()
+    ws_root = tmp_path / "ws"
+    lib_path = ws_root / "library"
+    man_path = ws_root / "manifests"
+    lib_path.mkdir(parents=True)
+    man_path.mkdir(parents=True)
 
     pkg_dir = lib_path / "pkg_crud"
     pkg_dir.mkdir()
@@ -58,7 +58,15 @@ def setup_crud_env(tmp_path: Path, monkeypatch):
     config_file = config_dir / "config.yaml"
     config_file.write_text(
         yaml.dump(
-            {"library_paths": [str(lib_path)], "manifest_paths": [str(man_path)]}
+            {
+                "default_workspace": "default",
+                "workspaces": {
+                    "default": {
+                        "name": "Default Workspace",
+                        "root": str(ws_root),
+                    }
+                },
+            }
         ),
         encoding="utf-8",
     )

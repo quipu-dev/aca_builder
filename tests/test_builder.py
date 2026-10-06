@@ -68,8 +68,9 @@ imports:
 @pytest.fixture
 def setup_test_environment(tmp_path: Path, monkeypatch):
     """Creates a temporary file system with libraries, manifests, and a mock global config."""
-    lib_path = tmp_path / "test_lib"
-    manifests_root = tmp_path / "manifests"
+    ws_root = tmp_path / "ws"
+    lib_path = ws_root / "library"
+    manifests_root = ws_root / "manifests"
     manifest_pkg_path = manifests_root / "test_pkg"
 
     (lib_path / "d1").mkdir(parents=True)
@@ -94,8 +95,7 @@ def setup_test_environment(tmp_path: Path, monkeypatch):
         "workspaces": {
             "test_ws": {
                 "name": "Test Workspace",
-                "libraries": [str(lib_path)],
-                "manifests": [str(manifests_root)],
+                "root": str(ws_root),
                 "post_process_hook": "cat",
             }
         },
