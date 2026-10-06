@@ -9,14 +9,15 @@ import {
   type PromptChunk,
   PromptViewer,
 } from '@/components/editor/PromptViewer';
+import { Autocomplete, type AutocompleteOption } from '@/components/ui/autocomplete';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { Select } from '@/components/ui/select';
 import { SplitPane } from '@/components/ui/split-pane';
 import type { LookupExportItem, PackageItem } from '@/features/explorer/PackageExplorer';
 import { TopologyGraph } from '@/features/graph/TopologyGraph';
+import { useWorkspaceCandidates } from '@/hooks/use-workspace-candidates';
 import { useIdeStore } from '@/stores/ide-store';
 import {
   Box,
@@ -217,7 +218,6 @@ export function ManifestEditorTab({
   } = state;
 
   const [selectedLookup, setSelectedLookup] = useState<string>('');
-  const [lookupFilterQuery, setLookupFilterQuery] = useState<string>('');
   const [editingOverrideKey, setEditingOverrideKey] = useState<string | null>(null);
   const [overrideQueryId, setOverrideQueryId] = useState<string>('');
   const [saveStatus, setSaveStatus] = useState('');
@@ -227,6 +227,8 @@ export function ManifestEditorTab({
   const [chunks, setChunks] = useState<PromptChunk[]>([]);
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [isHookActive, setIsHookActive] = useState(false);
+
+  const { atomOptions } = useWorkspaceCandidates(packages);
 
   const saveManifestMutation = useSaveManifestMutation();
   const isSaving = saveManifestMutation.isPending;
@@ -252,6 +254,17 @@ export function ManifestEditorTab({
     }
     return list;
   }, [packages]);
+
+  const exportLookupOptions = useMemo<AutocompleteOption[]>(() => {
+    return availableExports.map((exp) => ({
+      value: exp.key,
+      label: exp.key,
+      badge: exp.pillar.toUpperCase(),
+      badgeVariant: exp.pillar.toLowerCase() as 'd1' | 'd2' | 'd3',
+      group: `@${exp.pkg}`,
+      description: exp.desc || undefined,
+    }));
+  }, [availableExports]);
 
   useEffect(() => {
     if (!manifestName || isDraft) return;
@@ -503,43 +516,30 @@ export function ManifestEditorTab({
       </div>
 
       <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-2">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Filter className="h-3.5 w-3.5 text-slate-500 absolute left-2.5 top-2" />
-            <Input
-              type="text"
-              value={lookupFilterQuery}
-              onChange={(e) => setLookupFilterQuery(e.target.value)}
-              placeholder="过滤可用公开接口 (按包名或键名搜索)..."
-              className="pl-8 pr-2.5"
-            />
+        <div className="flex items-center justify-between text-xs font-mono text-slate-300">
+          <div className="flex items-center gap-1.5 font-semibold text-indigo-400">
+            <Filter className="h-3.5 w-3.5" />
+            <span>注入公开查找接口 (Imports)</span>
           </div>
+          <span className="text-[10px] text-slate-500">输入包名或键名即可实时模糊过滤与预览</span>
         </div>
 
-        <div className="flex gap-2">
-          <Select
-            value={selectedLookup}
-            onChange={(e) => setSelectedLookup(e.target.value)}
-            className="flex-1"
-          >
-            <option value="">-- 选择要注入的公开查找接口 --</option>
-            {availableExports
-              .filter(
-                (exp) =>
-                  !lookupFilterQuery.trim() ||
-                  exp.key.toLowerCase().includes(lookupFilterQuery.trim().toLowerCase()) ||
-                  exp.pkg.toLowerCase().includes(lookupFilterQuery.trim().toLowerCase()),
-              )
-              .map((exp) => (
-                <option key={exp.key} value={exp.key}>
-                  [{exp.pkg}] {exp.key} ({exp.pillar.toUpperCase()})
-                </option>
-              ))}
-          </Select>
+        <div className="flex gap-2 items-center">
+          <div className="flex-1">
+            <Autocomplete
+              value={selectedLookup}
+              onChange={setSelectedLookup}
+              options={exportLookupOptions}
+              placeholder="搜索或输入要注入的公开查找接口 (如 pkg::d1l-xxx)..."
+              onSelectOption={(opt) => {
+                setSelectedLookup(opt.value);
+              }}
+            />
+          </div>
           <Button
             size="sm"
             onClick={handleAddLookup}
-            disabled={!selectedLookup}
+            disabled={!selectedLookup.trim()}
             className="h-7 text-xs flex items-center gap-1 shrink-0"
           >
             <Plus className="h-3.5 w-3.5" /> 注入蓝图
@@ -661,14 +661,15 @@ export function ManifestEditorTab({
                               </button>
                             )}
                           </div>
-                          <div className="flex gap-2">
-                            <Input
-                              type="text"
-                              value={overrideQueryId}
-                              onChange={(e) => setOverrideQueryId(e.target.value)}
-                              placeholder="目标特定原子 ID，如 d1-custom"
-                              className="flex-1"
-                            />
+                          <div className="flex gap-2 items-center">
+                            <div className="flex-1">
+                              <Autocomplete
+                                value={overrideQueryId}
+                                onChange={setOverrideQueryId}
+                                options={atomOptions}
+                                placeholder="搜索选择目标特定原子 ID (如 d1-xxx)"
+                              />
+                            </div>
                             <Button
                               size="sm"
                               onClick={() => {
@@ -682,7 +683,7 @@ export function ManifestEditorTab({
                                 }
                               }}
                               disabled={!overrideQueryId.trim()}
-                              className="h-7 text-xs"
+                              className="h-7 text-xs shrink-0"
                             >
                               应用
                             </Button>

@@ -7,6 +7,7 @@ import {
   useUpdateAtomMutation,
 } from '@/api/atoms';
 import { openInObsidian } from '@/api/system';
+import { TagAutocomplete } from '@/components/ui/autocomplete';
 import { Badge, getPillarVariant } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 import { toast } from '@/components/ui/toast';
 import type { PackageItem } from '@/features/explorer/PackageExplorer';
+import { useWorkspaceCandidates } from '@/hooks/use-workspace-candidates';
 import { useIdeStore } from '@/stores/ide-store';
 import { generateIdSuffix } from '@/utils/ulid';
 import { markdown } from '@codemirror/lang-markdown';
@@ -83,9 +85,9 @@ export function AtomEditorTab({
   const [description, setDescription] = useState<string>('');
   const [priority, setPriority] = useState<number>(1);
   const [domainList, setDomainList] = useState<string[]>([]);
-  const [domainInput, setDomainInput] = useState<string>('');
   const [usesList, setUsesList] = useState<string[]>([]);
-  const [usesInput, setUsesInput] = useState<string>('');
+
+  const { domainOptions, lookupOptions } = useWorkspaceCandidates(packages);
 
   // Markdown 正文
   const [content, setContent] = useState<string>(
@@ -371,34 +373,6 @@ export function AtomEditorTab({
     return () => window.removeEventListener('aca:save-active-tab', handleGlobalSave);
   }, [tabId, isModified, saving, handleSave]);
 
-  const addDomainTag = () => {
-    const trimmed = domainInput.trim().toLowerCase();
-    if (trimmed && !domainList.includes(trimmed)) {
-      setDomainList([...domainList, trimmed]);
-      setDomainInput('');
-      markDirty();
-    }
-  };
-
-  const removeDomainTag = (tag: string) => {
-    setDomainList(domainList.filter((t) => t !== tag));
-    markDirty();
-  };
-
-  const addUsesRef = () => {
-    const trimmed = usesInput.trim();
-    if (trimmed && !usesList.includes(trimmed)) {
-      setUsesList([...usesList, trimmed]);
-      setUsesInput('');
-      markDirty();
-    }
-  };
-
-  const removeUsesRef = (ref: string) => {
-    setUsesList(usesList.filter((u) => u !== ref));
-    markDirty();
-  };
-
   // 智能解析非限定 Lookup 键的目标完整限定名称
   const resolveLookupRef = (ref: string): string => {
     if (ref.includes('::')) return ref;
@@ -657,92 +631,49 @@ export function AtomEditorTab({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 pt-1 border-t border-slate-800/40">
-            <span className="text-slate-400 flex items-center gap-1 shrink-0">
+          <div className="flex items-start gap-2 pt-1 border-t border-slate-800/40">
+            <span className="text-slate-400 flex items-center gap-1 shrink-0 mt-1">
               <Tag className="h-3.5 w-3.5 text-indigo-400" /> 领域标签:
             </span>
-            <div className="flex flex-wrap items-center gap-1.5 flex-1">
-              {domainList.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1 bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full text-[11px] border border-slate-700"
-                >
-                  <span>{tag}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeDomainTag(tag)}
-                    className="hover:text-rose-400"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-              <Input
-                type="text"
-                value={domainInput}
-                onChange={(e) => setDomainInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addDomainTag();
-                  }
+            <div className="flex-1">
+              <TagAutocomplete
+                values={domainList}
+                onChange={(newTags) => {
+                  setDomainList(newTags);
+                  markDirty();
                 }}
-                placeholder="+ 添加标签 (回车)"
-                className="border-slate-800/80 py-0.5 text-[11px] w-32"
+                options={domainOptions}
+                placeholder="输入标签 (回车添加，支持下拉联想推荐已用标签)"
+                badgeVariant="default"
               />
             </div>
           </div>
 
           {atomType === 'd2' && (
-            <div className="flex items-center gap-2 pt-1 border-t border-slate-800/40">
-              <span className="text-slate-400 flex items-center gap-1 shrink-0">
+            <div className="flex items-start gap-2 pt-1 border-t border-slate-800/40">
+              <span className="text-slate-400 flex items-center gap-1 shrink-0 mt-1">
                 <Layers className="h-3.5 w-3.5 text-emerald-400" /> 依赖引用 (Uses):
               </span>
-              <div className="flex flex-wrap items-center gap-1.5 flex-1">
-                {usesList.map((ref) => (
-                  <span
-                    key={ref}
-                    className="inline-flex items-center gap-1 bg-emerald-950/60 text-emerald-300 px-2 py-0.5 rounded text-[11px] border border-emerald-800/60"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const targetKey = resolveLookupRef(ref);
-                        openTab({
-                          id: `lookup:${targetKey}`,
-                          type: 'lookup',
-                          title: targetKey.split('::').pop() || targetKey,
-                          closable: true,
-                          lookupKey: targetKey,
-                        });
-                      }}
-                      className="hover:underline hover:text-emerald-200 cursor-pointer text-left truncate max-w-[200px]"
-                      title={`点击打开 Lookup 接口: ${ref}`}
-                    >
-                      {ref}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeUsesRef(ref)}
-                      className="hover:text-rose-400 ml-1 cursor-pointer"
-                      title="移除该依赖引用"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-                <Input
-                  type="text"
-                  value={usesInput}
-                  onChange={(e) => setUsesInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addUsesRef();
-                    }
+              <div className="flex-1">
+                <TagAutocomplete
+                  values={usesList}
+                  onChange={(newRefs) => {
+                    setUsesList(newRefs);
+                    markDirty();
                   }}
-                  placeholder="+ 关联 lookup (回车，例如 pkg::d1l-name)"
-                  className="border-slate-800/80 py-0.5 text-[11px] focus:border-emerald-500 w-64"
+                  options={lookupOptions}
+                  placeholder="关联 Lookup (输入 d1l- 或包名自动检索)"
+                  badgeVariant="d2"
+                  onTagClick={(ref) => {
+                    const targetKey = resolveLookupRef(ref);
+                    openTab({
+                      id: `lookup:${targetKey}`,
+                      type: 'lookup',
+                      title: targetKey.split('::').pop() || targetKey,
+                      closable: true,
+                      lookupKey: targetKey,
+                    });
+                  }}
                 />
               </div>
             </div>

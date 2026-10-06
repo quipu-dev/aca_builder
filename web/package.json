@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@dagrejs/dagre": "^1.1.4",
+    "@floating-ui/react": "^0.27.20",
     "@tanstack/react-query": "^5.62.8",
     "@uiw/react-codemirror": "^4.23.7",
     "@xyflow/react": "^12.3.6",

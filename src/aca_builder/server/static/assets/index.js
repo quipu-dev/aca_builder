@@ -1,6 +1,9 @@
+var __defProp = Object.defineProperty;
 var __typeError = (msg) => {
   throw TypeError(msg);
 };
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 var __accessCheck = (obj, member, msg) => member.has(obj) || __typeError("Cannot " + msg);
 var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read from private field"), getter ? getter.call(obj) : member.get(obj));
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
@@ -17,7 +20,7 @@ var __privateWrapper = (obj, member, setter, getter) => ({
 var _provider, _providerCalled, _a, _focused, _cleanup, _setup, _b, _online, _cleanup2, _setup2, _c, _gcTimeout, _d, _queryType, _initialState, _revertState, _cache, _client, _retryer, _defaultOptions, _abortSignalConsumed, _Query_instances, dispatch_fn, _e2, _client2, _currentQuery, _currentQueryInitialState, _currentResult, _currentResultState, _currentResultOptions, _selectError, _selectFn, _selectResult, _lastQueryWithDefinedData, _staleTimeoutId, _refetchIntervalId, _currentRefetchInterval, _trackedProps, _QueryObserver_instances, executeFetch_fn, shouldScheduleTimer_fn, updateStaleTimeout_fn, computeRefetchInterval_fn, updateRefetchInterval_fn, updateTimers_fn, clearStaleTimeout_fn, clearRefetchInterval_fn, updateQuery_fn, _f, _client3, _observers, _mutationCache, _retryer2, _Mutation_instances, dispatch_fn2, _g, _mutations, _scopes, _mutationId, _h, _client4, _currentResult2, _currentMutation, _mutateOptions, _MutationObserver_instances, updateResult_fn, notify_fn, _i, _queries, _j, _queryCache, _mutationCache2, _defaultOptions2, _queryDefaults, _mutationDefaults, _mountCount, _unsubscribeFocus, _unsubscribeOnline, _k;
 import { r as reactExports, j as jsxRuntimeExports, a as create$1, p as persist, R as React, b as reactDomExports, d as React$1, g as getDefaultExportFromCjs, e as ReactDOM } from "./vendor-react.js";
 import { R as ReactCodeMirror, m as markdown } from "./vendor-codemirror.js";
-import { H as Handle, P as Position, u as useNodesState, a as useEdgesState, i as index$1, B as Background, b as BackgroundVariant, C as Controls, d as dagre } from "./vendor-xyflow.js";
+import { H as Handle, P as Position, u as useNodesState, a as useEdgesState, i as index$3, B as Background, b as BackgroundVariant, C as Controls, d as dagre } from "./vendor-xyflow.js";
 (function polyfill() {
   const relList = document.createElement("link").relList;
   if (relList && relList.supports && relList.supports("modulepreload")) {
@@ -201,7 +204,7 @@ function systemSetTimeoutZero(callback) {
   setTimeout(callback, 0);
 }
 const isServer$1 = typeof window === "undefined" || "Deno" in globalThis;
-function noop() {
+function noop$2() {
 }
 function functionalUpdate(updater, input) {
   return typeof updater === "function" ? updater(input) : updater;
@@ -333,13 +336,13 @@ function replaceData(prevData, data, options) {
   }
   return data;
 }
-function addToEnd(items, item, max = 0) {
+function addToEnd(items, item, max2 = 0) {
   const newItems = [...items, item];
-  return max && newItems.length > max ? newItems.slice(1) : newItems;
+  return max2 && newItems.length > max2 ? newItems.slice(1) : newItems;
 }
-function addToStart(items, item, max = 0) {
+function addToStart(items, item, max2 = 0) {
   const newItems = [item, ...items];
-  return max && newItems.length > max ? newItems.slice(0, -1) : newItems;
+  return max2 && newItems.length > max2 ? newItems.slice(0, -1) : newItems;
 }
 const skipToken = Symbol();
 function ensureQueryFn(options, fetchOptions) {
@@ -725,7 +728,7 @@ function createRetryer(config) {
     promiseResolve = resolve2;
     promiseReject = reject2;
   });
-  promise.catch(noop);
+  promise.catch(noop$2);
   const isResolved = () => status !== "pending";
   const cancel = (cancelOptions) => {
     var _a2;
@@ -1023,7 +1026,7 @@ var Query = (_e2 = class extends Removable {
     var _a2, _b2;
     const promise = (_a2 = __privateGet(this, _retryer)) == null ? void 0 : _a2.promise;
     (_b2 = __privateGet(this, _retryer)) == null ? void 0 : _b2.cancel(options);
-    return promise ? promise.then(noop).catch(noop) : Promise.resolve();
+    return promise ? promise.then(noop$2).catch(noop$2) : Promise.resolve();
   }
   /**
   * Clears the query's garbage collection timeout and silently cancels any
@@ -1784,7 +1787,7 @@ var QueryObserver = (_f = class extends Subscribable {
 }, _client2 = new WeakMap(), _currentQuery = new WeakMap(), _currentQueryInitialState = new WeakMap(), _currentResult = new WeakMap(), _currentResultState = new WeakMap(), _currentResultOptions = new WeakMap(), _selectError = new WeakMap(), _selectFn = new WeakMap(), _selectResult = new WeakMap(), _lastQueryWithDefinedData = new WeakMap(), _staleTimeoutId = new WeakMap(), _refetchIntervalId = new WeakMap(), _currentRefetchInterval = new WeakMap(), _trackedProps = new WeakMap(), _QueryObserver_instances = new WeakSet(), executeFetch_fn = function(fetchOptions) {
   __privateMethod(this, _QueryObserver_instances, updateQuery_fn).call(this);
   let promise = __privateGet(this, _currentQuery).fetch(this.options, fetchOptions);
-  if (!(fetchOptions == null ? void 0 : fetchOptions.throwOnError)) promise = promise.catch(noop);
+  if (!(fetchOptions == null ? void 0 : fetchOptions.throwOnError)) promise = promise.catch(noop$2);
   return promise;
 }, shouldScheduleTimer_fn = function(timeout) {
   return !isServer() && resolveQueryValue(this.options.enabled, __privateGet(this, _currentQuery)) !== false && isValidTimeout(timeout);
@@ -2289,7 +2292,7 @@ var MutationCache = (_h = class extends Subscribable {
   /** @internal */
   resumePausedMutations() {
     const pausedMutations = this.getAll().filter((x) => x.state.isPaused);
-    return notifyManager.batch(() => Promise.all(pausedMutations.map((mutation) => mutation.continue().catch(noop))));
+    return notifyManager.batch(() => Promise.all(pausedMutations.map((mutation) => mutation.continue().catch(noop$2))));
   }
 }, _mutations = new WeakMap(), _scopes = new WeakMap(), _mutationId = new WeakMap(), _h);
 function scopeFor(mutation) {
@@ -2924,7 +2927,7 @@ var QueryClient = (_k = class {
       ...cancelOptions
     };
     const promises = notifyManager.batch(() => __privateGet(this, _queryCache).findAll(filters).map((query) => query.cancel(defaultedCancelOptions)));
-    return Promise.all(promises).then(noop).catch(noop);
+    return Promise.all(promises).then(noop$2).catch(noop$2);
   }
   /**
   * Marks queries matching the given filters as invalidated. Unlike
@@ -2973,10 +2976,10 @@ var QueryClient = (_k = class {
     };
     const promises = notifyManager.batch(() => __privateGet(this, _queryCache).findAll(filters).filter((query) => !query.isDisabled() && !query.isStatic()).map((query) => {
       let promise = query.fetch(void 0, fetchOptions);
-      if (!fetchOptions.throwOnError) promise = promise.catch(noop);
+      if (!fetchOptions.throwOnError) promise = promise.catch(noop$2);
       return query.state.fetchStatus === "paused" ? Promise.resolve() : promise;
     }));
-    return Promise.all(promises).then(noop);
+    return Promise.all(promises).then(noop$2);
   }
   /**
   * Asynchronous method to fetch and cache a query, resolving with the data or throwing with
@@ -3031,7 +3034,7 @@ var QueryClient = (_k = class {
   * @deprecated Use queryClient.query(options) instead. You can swallow errors with `.catch(noop)`. This method will be removed in the next major version.
   */
   prefetchQuery(options) {
-    return this.fetchQuery(options).then(noop).catch(noop);
+    return this.fetchQuery(options).then(noop$2).catch(noop$2);
   }
   /**
   * Asynchronous method to fetch and cache an infinite query, resolving with an
@@ -3069,7 +3072,7 @@ var QueryClient = (_k = class {
   * @deprecated Use queryClient.infiniteQuery(options) instead. You can swallow errors with `.catch(noop)`. This method will be removed in the next major version.
   */
   prefetchInfiniteQuery(options) {
-    return this.fetchInfiniteQuery(options).then(noop).catch(noop);
+    return this.fetchInfiniteQuery(options).then(noop$2).catch(noop$2);
   }
   /**
   * @deprecated Use queryClient.infiniteQuery({ ...options, staleTime: 'static' }) instead. This method will be removed in the next major version.
@@ -3330,9 +3333,9 @@ const getHasError = ({ result, errorResetBoundary, throwOnError, query, suspense
 const ensureSuspenseTimers = (defaultedOptions) => {
   if (defaultedOptions.suspense) {
     const MIN_SUSPENSE_TIME_MS = 1e3;
-    const clamp = (value) => value === "static" ? value : Math.max(value ?? MIN_SUSPENSE_TIME_MS, MIN_SUSPENSE_TIME_MS);
+    const clamp2 = (value) => value === "static" ? value : Math.max(value ?? MIN_SUSPENSE_TIME_MS, MIN_SUSPENSE_TIME_MS);
     const originalStaleTime = defaultedOptions.staleTime;
-    defaultedOptions.staleTime = typeof originalStaleTime === "function" ? (...args) => clamp(originalStaleTime(...args)) : clamp(originalStaleTime);
+    defaultedOptions.staleTime = typeof originalStaleTime === "function" ? (...args) => clamp2(originalStaleTime(...args)) : clamp2(originalStaleTime);
     if (typeof defaultedOptions.gcTime === "number") defaultedOptions.gcTime = Math.max(defaultedOptions.gcTime, MIN_SUSPENSE_TIME_MS);
   }
 };
@@ -3355,7 +3358,7 @@ function useBaseQuery(options, Observer, queryClient2) {
   const result = observer.getOptimisticResult(defaultedOptions);
   const shouldSubscribe = !isRestoring && subscribed;
   reactExports.useSyncExternalStore(reactExports.useCallback((onStoreChange) => {
-    const unsubscribe = shouldSubscribe ? observer.subscribe(notifyManager.batchCalls(onStoreChange)) : noop;
+    const unsubscribe = shouldSubscribe ? observer.subscribe(notifyManager.batchCalls(onStoreChange)) : noop$2;
     observer.updateResult();
     return unsubscribe;
   }, [observer, shouldSubscribe]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
@@ -3383,7 +3386,7 @@ function useMutation(options, queryClient2) {
   }, [observer, options]);
   const result = reactExports.useSyncExternalStore(reactExports.useCallback((onStoreChange) => observer.subscribe(notifyManager.batchCalls(onStoreChange)), [observer]), () => observer.getCurrentResult(), () => observer.getCurrentResult());
   const mutate = reactExports.useCallback((...args) => {
-    observer.mutate(args[0], args[1]).catch(noop);
+    observer.mutate(args[0], args[1]).catch(noop$2);
   }, [observer]);
   if (result.error && shouldThrowError(observer.options.throwOnError, [result.error])) throw result.error;
   return {
@@ -3392,7 +3395,7 @@ function useMutation(options, queryClient2) {
     mutateAsync: result.mutate
   };
 }
-async function apiFetch(url, options) {
+async function apiFetch(url, options, validator) {
   const res = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
@@ -3409,7 +3412,8 @@ async function apiFetch(url, options) {
     }
     throw new Error(errorDetail);
   }
-  return res.json();
+  const json = await res.json();
+  return json;
 }
 async function createFolderFs(payload) {
   return apiFetch("/api/fs/mkdir", {
@@ -6040,11 +6044,11 @@ const useIdeStore = create$1()(
           navigationHistory: updatedHistory
         });
       },
-      openTab: (tab2, options = false) => {
+      openTab: (tab2, options) => {
         const { tabs, navigationHistory, historyIndex } = get();
-        const newTab = typeof options === "boolean" ? options : !!(options == null ? void 0 : options.newTab);
-        const fromHistory = typeof options === "object" && !!(options == null ? void 0 : options.fromHistory);
-        const isPreview = typeof options === "object" && (options == null ? void 0 : options.isPreview) !== void 0 ? options.isPreview : tab2.isPreview ?? false;
+        const newTab = !!(options == null ? void 0 : options.newTab);
+        const fromHistory = !!(options == null ? void 0 : options.fromHistory);
+        const isPreview = (options == null ? void 0 : options.isPreview) !== void 0 ? options.isPreview : tab2.isPreview ?? false;
         const tabToOpen = { ...tab2, isPreview };
         if (!fromHistory) {
           const currentEntry = navigationHistory[historyIndex];
@@ -6199,23 +6203,23 @@ function getOwnerDocument(element2) {
 }
 __name$e(getOwnerDocument, "getOwnerDocument");
 function getActiveElement(node2, activeDescendant = false) {
-  const { activeElement } = getOwnerDocument(node2);
-  if (!(activeElement == null ? void 0 : activeElement.nodeName)) {
+  const { activeElement: activeElement2 } = getOwnerDocument(node2);
+  if (!(activeElement2 == null ? void 0 : activeElement2.nodeName)) {
     return null;
   }
-  if (isFrame(activeElement) && activeElement.contentDocument) {
-    return getActiveElement(activeElement.contentDocument.body, activeDescendant);
+  if (isFrame(activeElement2) && activeElement2.contentDocument) {
+    return getActiveElement(activeElement2.contentDocument.body, activeDescendant);
   }
   if (activeDescendant) {
-    const id = activeElement.getAttribute("aria-activedescendant");
+    const id = activeElement2.getAttribute("aria-activedescendant");
     if (id) {
-      const element2 = getOwnerDocument(activeElement).getElementById(id);
+      const element2 = getOwnerDocument(activeElement2).getElementById(id);
       if (element2) {
         return element2;
       }
     }
   }
-  return activeElement;
+  return activeElement2;
 }
 __name$e(getActiveElement, "getActiveElement");
 function isFrame(element2) {
@@ -6356,21 +6360,21 @@ var useLayoutEffect2 = (globalThis == null ? void 0 : globalThis.document) ? rea
 };
 var __defProp$b = Object.defineProperty;
 var __name$b = (target, value) => __defProp$b(target, "name", { value, configurable: true });
-var useReactId = React[" useId ".trim().toString()] || (() => void 0);
-var count$1 = 0;
-function useId$1(deterministicId) {
-  const [id, setId] = reactExports.useState(useReactId());
+var useReactId$1 = React[" useId ".trim().toString()] || (() => void 0);
+var count$2 = 0;
+function useId$2(deterministicId) {
+  const [id, setId] = reactExports.useState(useReactId$1());
   useLayoutEffect2(() => {
-    if (!deterministicId) setId((reactId) => reactId ?? String(count$1++));
+    if (!deterministicId) setId((reactId) => reactId ?? String(count$2++));
   }, [deterministicId]);
   return deterministicId || (id ? `radix-${id}` : "");
 }
-__name$b(useId$1, "useId");
+__name$b(useId$2, "useId");
 var __defProp$a = Object.defineProperty;
 var __name$a = (target, value) => __defProp$a(target, "name", { value, configurable: true });
 var useReactEffectEvent = React[" useEffectEvent ".trim().toString()];
 var useReactInsertionEffect = React[" useInsertionEffect ".trim().toString()];
-function useEffectEvent(callback) {
+function useEffectEvent$1(callback) {
   if (typeof useReactEffectEvent === "function") {
     return useReactEffectEvent(callback);
   }
@@ -6391,10 +6395,10 @@ function useEffectEvent(callback) {
     return (_a2 = ref.current) == null ? void 0 : _a2.call(ref, ...args);
   }), []);
 }
-__name$a(useEffectEvent, "useEffectEvent");
+__name$a(useEffectEvent$1, "useEffectEvent");
 var __defProp$9 = Object.defineProperty;
 var __name$9 = (target, value) => __defProp$9(target, "name", { value, configurable: true });
-var useInsertionEffect = React[" useInsertionEffect ".trim().toString()] || useLayoutEffect2;
+var useInsertionEffect$1 = React[" useInsertionEffect ".trim().toString()] || useLayoutEffect2;
 function useControllableState({
   prop,
   defaultProp,
@@ -6432,7 +6436,7 @@ function useUncontrolledState({
   const [value, setValue] = reactExports.useState(defaultProp);
   const prevValueRef = reactExports.useRef(value);
   const onChangeRef = reactExports.useRef(onChange);
-  useInsertionEffect(() => {
+  useInsertionEffect$1(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
   reactExports.useEffect(() => {
@@ -6453,7 +6457,7 @@ var SYNC_STATE = Symbol("RADIX:SYNC_STATE");
 function useControllableStateReducer(reducer, userArgs, initialArg, init) {
   const { prop: controlledState, defaultProp, onChange: onChangeProp, caller } = userArgs;
   const isControlled = controlledState !== void 0;
-  const onChange = useEffectEvent(onChangeProp);
+  const onChange = useEffectEvent$1(onChangeProp);
   const args = [{ ...initialArg, state: defaultProp }];
   if (init) {
     args.push(init);
@@ -6544,7 +6548,7 @@ function createSlot(ownerName) {
       }
       return children;
     }
-    const mergedProps = mergeProps(slotProps, slottableElement.props ?? {});
+    const mergedProps = mergeProps$1(slotProps, slottableElement.props ?? {});
     if (slottableElement.type !== reactExports.Fragment) {
       mergedProps.ref = forwardedRef ? composedRef : slottableElementRef;
     }
@@ -6571,7 +6575,7 @@ var getSlottableElementFromSlottable = /* @__PURE__ */ __name$8((slottable, chil
   }
   return reactExports.isValidElement(child) ? child : null;
 }, "getSlottableElementFromSlottable");
-function mergeProps(slotProps, childProps) {
+function mergeProps$1(slotProps, childProps) {
   const overrideProps = { ...childProps };
   for (const propName in childProps) {
     const slotPropValue = slotProps[propName];
@@ -6595,7 +6599,7 @@ function mergeProps(slotProps, childProps) {
   }
   return { ...slotProps, ...overrideProps };
 }
-__name$8(mergeProps, "mergeProps");
+__name$8(mergeProps$1, "mergeProps");
 function getElementRef$1(element2) {
   var _a2, _b2;
   let getter = (_a2 = Object.getOwnPropertyDescriptor(element2.props, "ref")) == null ? void 0 : _a2.get;
@@ -7155,8 +7159,8 @@ function getTabbableCandidates(container) {
   const nodes = [];
   const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, {
     acceptNode: /* @__PURE__ */ __name$4((node2) => {
-      const isHiddenInput = node2.tagName === "INPUT" && node2.type === "hidden";
-      if (node2.disabled || node2.hidden || isHiddenInput) return NodeFilter.FILTER_SKIP;
+      const isHiddenInput3 = node2.tagName === "INPUT" && node2.type === "hidden";
+      if (node2.disabled || node2.hidden || isHiddenInput3) return NodeFilter.FILTER_SKIP;
       return node2.tabIndex >= 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
     }, "acceptNode")
   });
@@ -7167,14 +7171,14 @@ __name$4(getTabbableCandidates, "getTabbableCandidates");
 function findVisible(elements, container) {
   const canUseCheckVisibility = typeof container.checkVisibility === "function" && container.checkVisibility({ checkVisibilityCSS: true });
   for (const element2 of elements) {
-    const hidden = canUseCheckVisibility ? !element2.checkVisibility({ checkVisibilityCSS: true }) : isHidden(element2, { upTo: container });
+    const hidden = canUseCheckVisibility ? !element2.checkVisibility({ checkVisibilityCSS: true }) : isHidden$1(element2, { upTo: container });
     if (!hidden) {
       return element2;
     }
   }
 }
 __name$4(findVisible, "findVisible");
-function isHidden(node2, { upTo }) {
+function isHidden$1(node2, { upTo }) {
   if (getComputedStyle(node2).visibility === "hidden") return true;
   while (node2) {
     if (upTo !== void 0 && node2 === upTo) return false;
@@ -7183,7 +7187,7 @@ function isHidden(node2, { upTo }) {
   }
   return false;
 }
-__name$4(isHidden, "isHidden");
+__name$4(isHidden$1, "isHidden");
 function isSelectableInput(element2) {
   return element2 instanceof HTMLInputElement && "select" in element2;
 }
@@ -7420,7 +7424,7 @@ function getElementRef(element2) {
 __name$2(getElementRef, "getElementRef");
 var __defProp$1 = Object.defineProperty;
 var __name$1 = (target, value) => __defProp$1(target, "name", { value, configurable: true });
-var count = 0;
+var count$1 = 0;
 var guards = null;
 function FocusGuards(props2) {
   useFocusGuards();
@@ -7439,14 +7443,14 @@ function useFocusGuards() {
     if (document.body.lastElementChild !== end) {
       document.body.insertAdjacentElement("beforeend", end);
     }
-    count++;
+    count$1++;
     return () => {
-      if (count === 1) {
+      if (count$1 === 1) {
         guards == null ? void 0 : guards.start.remove();
         guards == null ? void 0 : guards.end.remove();
         guards = null;
       }
-      count = Math.max(0, count - 1);
+      count$1 = Math.max(0, count$1 - 1);
     };
   }, []);
 }
@@ -8177,8 +8181,8 @@ var applyAttributeToOthers = function(originalTarget, parentNode, markerName, co
         deep(node2);
       } else {
         try {
-          var attr = node2.getAttribute(controlAttribute);
-          var alreadyHidden = attr !== null && attr !== "false";
+          var attr2 = node2.getAttribute(controlAttribute);
+          var alreadyHidden = attr2 !== null && attr2 !== "false";
           var counterValue = (counterMap.get(node2) || 0) + 1;
           var markerValue = (markerCounter.get(node2) || 0) + 1;
           counterMap.set(node2, counterValue);
@@ -8241,8 +8245,8 @@ var hideOthers = function(originalTarget, parentNode, markerName) {
   targets.push.apply(targets, Array.from(activeParentNode.querySelectorAll("[aria-live], script")));
   return applyAttributeToOthers(targets, activeParentNode, markerName, "aria-hidden");
 };
-var __defProp = Object.defineProperty;
-var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
+var __defProp2 = Object.defineProperty;
+var __name = (target, value) => __defProp2(target, "name", { value, configurable: true });
 var DIALOG_NAME = "Dialog";
 var [createDialogContext, createDialogScope] = /* @__PURE__ */ createContextScope(DIALOG_NAME);
 var [DialogProvider, useDialogContext] = createDialogContext(DIALOG_NAME);
@@ -8271,9 +8275,9 @@ var Dialog = /* @__PURE__ */ __name((props2) => {
       scope: __scopeDialog,
       triggerRef,
       contentRef,
-      contentId: useId$1(),
-      titleId: useId$1(),
-      descriptionId: useId$1(),
+      contentId: useId$2(),
+      titleId: useId$2(),
+      descriptionId: useId$2(),
       titlePresent: titleCount > 0,
       descriptionPresent: descriptionCount > 0,
       setTitleCount,
@@ -8287,7 +8291,7 @@ var Dialog = /* @__PURE__ */ __name((props2) => {
   );
 }, "Dialog");
 var PORTAL_NAME = "DialogPortal";
-var [PortalProvider, usePortalContext] = createDialogContext(PORTAL_NAME, {
+var [PortalProvider, usePortalContext$1] = createDialogContext(PORTAL_NAME, {
   forceMount: void 0
 });
 var DialogPortal = /* @__PURE__ */ __name((props2) => {
@@ -8298,7 +8302,7 @@ var DialogPortal = /* @__PURE__ */ __name((props2) => {
 var OVERLAY_NAME = "DialogOverlay";
 var DialogOverlay = /* @__PURE__ */ reactExports.forwardRef(
   /* @__PURE__ */ __name(function DialogOverlay2(props2, forwardedRef) {
-    const portalContext = usePortalContext(OVERLAY_NAME, props2.__scopeDialog);
+    const portalContext = usePortalContext$1(OVERLAY_NAME, props2.__scopeDialog);
     const { forceMount = portalContext.forceMount, ...overlayProps } = props2;
     const context = useDialogContext(OVERLAY_NAME, props2.__scopeDialog);
     return context.modal ? /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: /* @__PURE__ */ jsxRuntimeExports.jsx(DialogOverlayImpl, { ...overlayProps, ref: forwardedRef }) }) : null;
@@ -8330,7 +8334,7 @@ var DialogOverlayImpl = /* @__PURE__ */ reactExports.forwardRef(
 var CONTENT_NAME = "DialogContent";
 var DialogContent = /* @__PURE__ */ reactExports.forwardRef(
   /* @__PURE__ */ __name(function DialogContent2(props2, forwardedRef) {
-    const portalContext = usePortalContext(CONTENT_NAME, props2.__scopeDialog);
+    const portalContext = usePortalContext$1(CONTENT_NAME, props2.__scopeDialog);
     const { forceMount = portalContext.forceMount, ...contentProps } = props2;
     const context = useDialogContext(CONTENT_NAME, props2.__scopeDialog);
     return /* @__PURE__ */ jsxRuntimeExports.jsx(Presence, { present: forceMount || context.open, children: context.modal ? /* @__PURE__ */ jsxRuntimeExports.jsx(DialogContentModal, { ...contentProps, ref: forwardedRef }) : /* @__PURE__ */ jsxRuntimeExports.jsx(DialogContentNonModal, { ...contentProps, ref: forwardedRef }) });
@@ -8455,7 +8459,7 @@ var N = '[cmdk-group=""]', Y = '[cmdk-group-items=""]', be = '[cmdk-group-headin
   let n = L(() => {
     var e, a;
     return { search: "", value: (a = (e = r2.value) != null ? e : r2.defaultValue) != null ? a : "", selectedItemId: void 0, filtered: { count: 0, items: /* @__PURE__ */ new Map(), groups: /* @__PURE__ */ new Set() } };
-  }), u2 = L(() => /* @__PURE__ */ new Set()), c = L(() => /* @__PURE__ */ new Map()), d = L(() => /* @__PURE__ */ new Map()), f = L(() => /* @__PURE__ */ new Set()), p2 = pe(r2), { label: b, children: m2, value: R, onValueChange: x, filter: C, shouldFilter: S, loop: A, disablePointerSelection: ge = false, vimBindings: j = true, ...O } = r2, $2 = useId$1(), q = useId$1(), _ = useId$1(), I = reactExports.useRef(null), v = ke();
+  }), u2 = L(() => /* @__PURE__ */ new Set()), c = L(() => /* @__PURE__ */ new Map()), d = L(() => /* @__PURE__ */ new Map()), f = L(() => /* @__PURE__ */ new Set()), p2 = pe(r2), { label: b, children: m2, value: R, onValueChange: x, filter: C, shouldFilter: S, loop: A, disablePointerSelection: ge = false, vimBindings: j = true, ...O } = r2, $2 = useId$2(), q = useId$2(), _ = useId$2(), I = reactExports.useRef(null), v = ke();
   k(() => {
     if (R !== void 0) {
       let e = R.trim();
@@ -8628,7 +8632,7 @@ var N = '[cmdk-group=""]', Y = '[cmdk-group-items=""]', be = '[cmdk-group-headin
   } }, reactExports.createElement("label", { "cmdk-label": "", htmlFor: U2.inputId, id: U2.labelId, style: Te }, b), B(r2, (e) => reactExports.createElement(de.Provider, { value: E }, reactExports.createElement(ue.Provider, { value: U2 }, e))));
 }), he = reactExports.forwardRef((r2, o) => {
   var _, I;
-  let n = useId$1(), u2 = reactExports.useRef(null), c = reactExports.useContext(fe), d = K(), f = pe(r2), p2 = (I = (_ = f.current) == null ? void 0 : _.forceMount) != null ? I : c == null ? void 0 : c.forceMount;
+  let n = useId$2(), u2 = reactExports.useRef(null), c = reactExports.useContext(fe), d = K(), f = pe(r2), p2 = (I = (_ = f.current) == null ? void 0 : _.forceMount) != null ? I : c == null ? void 0 : c.forceMount;
   k(() => {
     if (!p2) return d.item(n, c == null ? void 0 : c.id);
   }, [p2]);
@@ -8648,7 +8652,7 @@ var N = '[cmdk-group=""]', Y = '[cmdk-group-items=""]', be = '[cmdk-group-headin
   let { disabled: A, value: ge, onSelect: j, forceMount: O, keywords: $2, ...q } = r2;
   return reactExports.createElement(Primitive.div, { ref: composeRefs(u2, o), ...q, id: n, "cmdk-item": "", role: "option", "aria-disabled": !!A, "aria-selected": !!R, "data-disabled": !!A, "data-selected": !!R, onPointerMove: A || d.getDisablePointerSelection() ? void 0 : S, onClick: A ? void 0 : C }, r2.children);
 }), Ee = reactExports.forwardRef((r2, o) => {
-  let { heading: n, children: u2, forceMount: c, ...d } = r2, f = useId$1(), p2 = reactExports.useRef(null), b = reactExports.useRef(null), m2 = useId$1(), R = K(), x = P((S) => c || R.filter() === false ? true : S.search ? S.filtered.groups.has(f) : true);
+  let { heading: n, children: u2, forceMount: c, ...d } = r2, f = useId$2(), p2 = reactExports.useRef(null), b = reactExports.useRef(null), m2 = useId$2(), R = K(), x = P((S) => c || R.filter() === false ? true : S.search ? S.filtered.groups.has(f) : true);
   k(() => R.group(f), []), ve(f, p2, [r2.value, r2.heading, b]);
   let C = reactExports.useMemo(() => ({ id: f, forceMount: c }), [c]);
   return reactExports.createElement(Primitive.div, { ref: composeRefs(p2, o), ...d, "cmdk-group": "", role: "presentation", hidden: x ? void 0 : true }, n && reactExports.createElement("div", { ref: b, "cmdk-group-heading": "", "aria-hidden": true, id: m2 }, n), B(r2, (S) => reactExports.createElement("div", { "cmdk-group-items": "", role: "group", "aria-labelledby": n ? m2 : void 0 }, reactExports.createElement(fe.Provider, { value: C }, S))));
@@ -8779,7 +8783,7 @@ var defaultAttributes = {
 const Icon = reactExports.forwardRef(
   ({
     color: color2 = "currentColor",
-    size = 24,
+    size: size2 = 24,
     strokeWidth = 2,
     absoluteStrokeWidth,
     className = "",
@@ -8792,10 +8796,10 @@ const Icon = reactExports.forwardRef(
       {
         ref,
         ...defaultAttributes,
-        width: size,
-        height: size,
+        width: size2,
+        height: size2,
         stroke: color2,
-        strokeWidth: absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size) : strokeWidth,
+        strokeWidth: absoluteStrokeWidth ? Number(strokeWidth) * 24 / Number(size2) : strokeWidth,
         className: mergeClasses("lucide", className),
         ...rest
       },
@@ -9590,8 +9594,8 @@ function CommandPalette({
       });
     }
     for (const item of manifests) {
-      const mName = typeof item === "string" ? item : item.name;
-      const mWs = typeof item === "string" ? void 0 : item.workspace;
+      const mName = item.name;
+      const mWs = item.workspace;
       list2.push({
         id: `manifest:${mName}`,
         type: "manifest",
@@ -9789,8 +9793,3335 @@ async function openInObsidian(filePath) {
     body: JSON.stringify({ file_path: filePath })
   });
 }
+const Input = React$1.forwardRef(
+  ({ className, type = "text", ...props2 }, ref) => {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "input",
+      {
+        type,
+        ref,
+        className: cn(
+          "w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 text-xs font-mono placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-colors disabled:opacity-50 disabled:pointer-events-none",
+          className
+        ),
+        ...props2
+      }
+    );
+  }
+);
+Input.displayName = "Input";
+function hasWindow() {
+  return typeof window !== "undefined";
+}
+function getNodeName(node2) {
+  if (isNode(node2)) {
+    return (node2.nodeName || "").toLowerCase();
+  }
+  return "#document";
+}
+function getWindow(node2) {
+  var _node$ownerDocument;
+  return (node2 == null || (_node$ownerDocument = node2.ownerDocument) == null ? void 0 : _node$ownerDocument.defaultView) || window;
+}
+function getDocumentElement(node2) {
+  var _ref;
+  return (_ref = (isNode(node2) ? node2.ownerDocument : node2.document) || window.document) == null ? void 0 : _ref.documentElement;
+}
+function isNode(value) {
+  if (!hasWindow()) {
+    return false;
+  }
+  return value instanceof Node || value instanceof getWindow(value).Node;
+}
+function isElement(value) {
+  if (!hasWindow()) {
+    return false;
+  }
+  return value instanceof Element || value instanceof getWindow(value).Element;
+}
+function isHTMLElement(value) {
+  if (!hasWindow()) {
+    return false;
+  }
+  return value instanceof HTMLElement || value instanceof getWindow(value).HTMLElement;
+}
+function isShadowRoot(value) {
+  if (!hasWindow() || typeof ShadowRoot === "undefined") {
+    return false;
+  }
+  return value instanceof ShadowRoot || value instanceof getWindow(value).ShadowRoot;
+}
+function isOverflowElement(element2) {
+  const {
+    overflow,
+    overflowX,
+    overflowY,
+    display
+  } = getComputedStyle$1(element2);
+  return /auto|scroll|overlay|hidden|clip/.test(overflow + overflowY + overflowX) && display !== "inline" && display !== "contents";
+}
+function isTableElement(element2) {
+  return /^(table|td|th)$/.test(getNodeName(element2));
+}
+function isTopLayer(element2) {
+  try {
+    if (element2.matches(":popover-open")) {
+      return true;
+    }
+  } catch (_e3) {
+  }
+  try {
+    return element2.matches(":modal");
+  } catch (_e3) {
+    return false;
+  }
+}
+const willChangeRe = /transform|translate|scale|rotate|perspective|filter/;
+const containRe = /paint|layout|strict|content/;
+const isNotNone = (value) => !!value && value !== "none";
+let isWebKitValue;
+function isContainingBlock(elementOrCss) {
+  const css = isElement(elementOrCss) ? getComputedStyle$1(elementOrCss) : elementOrCss;
+  return isNotNone(css.transform) || isNotNone(css.translate) || isNotNone(css.scale) || isNotNone(css.rotate) || isNotNone(css.perspective) || !isWebKit() && (isNotNone(css.backdropFilter) || isNotNone(css.filter)) || willChangeRe.test(css.willChange || "") || containRe.test(css.contain || "");
+}
+function getContainingBlock(element2) {
+  let currentNode = getParentNode(element2);
+  while (isHTMLElement(currentNode) && !isLastTraversableNode(currentNode)) {
+    if (isContainingBlock(currentNode)) {
+      return currentNode;
+    } else if (isTopLayer(currentNode)) {
+      return null;
+    }
+    currentNode = getParentNode(currentNode);
+  }
+  return null;
+}
+function isWebKit() {
+  if (isWebKitValue == null) {
+    isWebKitValue = typeof CSS !== "undefined" && CSS.supports && CSS.supports("-webkit-backdrop-filter", "none");
+  }
+  return isWebKitValue;
+}
+function isLastTraversableNode(node2) {
+  return /^(html|body|#document)$/.test(getNodeName(node2));
+}
+function getComputedStyle$1(element2) {
+  return getWindow(element2).getComputedStyle(element2);
+}
+function getNodeScroll(element2) {
+  if (isElement(element2)) {
+    return {
+      scrollLeft: element2.scrollLeft,
+      scrollTop: element2.scrollTop
+    };
+  }
+  return {
+    scrollLeft: element2.scrollX,
+    scrollTop: element2.scrollY
+  };
+}
+function getParentNode(node2) {
+  if (getNodeName(node2) === "html") {
+    return node2;
+  }
+  const result = (
+    // Step into the shadow DOM of the parent of a slotted node.
+    node2.assignedSlot || // DOM Element detected.
+    node2.parentNode || // ShadowRoot detected.
+    isShadowRoot(node2) && node2.host || // Fallback.
+    getDocumentElement(node2)
+  );
+  return isShadowRoot(result) ? result.host : result;
+}
+function getNearestOverflowAncestor(node2) {
+  const parentNode = getParentNode(node2);
+  if (isLastTraversableNode(parentNode)) {
+    return (node2.ownerDocument || node2).body;
+  }
+  if (isHTMLElement(parentNode) && isOverflowElement(parentNode)) {
+    return parentNode;
+  }
+  return getNearestOverflowAncestor(parentNode);
+}
+function getOverflowAncestors(node2, list2, traverseIframes) {
+  var _node$ownerDocument2;
+  if (list2 === void 0) {
+    list2 = [];
+  }
+  if (traverseIframes === void 0) {
+    traverseIframes = true;
+  }
+  const scrollableAncestor = getNearestOverflowAncestor(node2);
+  const isBody = scrollableAncestor === ((_node$ownerDocument2 = node2.ownerDocument) == null ? void 0 : _node$ownerDocument2.body);
+  const win = getWindow(scrollableAncestor);
+  if (isBody) {
+    const frameElement = getFrameElement(win);
+    return list2.concat(win, win.visualViewport || [], isOverflowElement(scrollableAncestor) ? scrollableAncestor : [], frameElement && traverseIframes ? getOverflowAncestors(frameElement) : []);
+  } else {
+    return list2.concat(scrollableAncestor, getOverflowAncestors(scrollableAncestor, [], traverseIframes));
+  }
+}
+function getFrameElement(win) {
+  return win.parent && Object.getPrototypeOf(win.parent) ? win.frameElement : null;
+}
+const min = Math.min;
+const max = Math.max;
+const round = Math.round;
+const floor = Math.floor;
+const createCoords = (v) => ({
+  x: v,
+  y: v
+});
+const oppositeSideMap = {
+  left: "right",
+  right: "left",
+  bottom: "top",
+  top: "bottom"
+};
+function clamp(start, value, end) {
+  return max(start, min(value, end));
+}
+function evaluate(value, param) {
+  return typeof value === "function" ? value(param) : value;
+}
+function getSide(placement) {
+  return placement.split("-")[0];
+}
+function getAlignment(placement) {
+  return placement.split("-")[1];
+}
+function getOppositeAxis(axis) {
+  return axis === "x" ? "y" : "x";
+}
+function getAxisLength(axis) {
+  return axis === "y" ? "height" : "width";
+}
+function getSideAxis(placement) {
+  const firstChar = placement[0];
+  return firstChar === "t" || firstChar === "b" ? "y" : "x";
+}
+function getAlignmentAxis(placement) {
+  return getOppositeAxis(getSideAxis(placement));
+}
+function getAlignmentSides(placement, rects, rtl) {
+  if (rtl === void 0) {
+    rtl = false;
+  }
+  const alignment = getAlignment(placement);
+  const alignmentAxis = getAlignmentAxis(placement);
+  const length = getAxisLength(alignmentAxis);
+  let mainAlignmentSide = alignmentAxis === "x" ? alignment === (rtl ? "end" : "start") ? "right" : "left" : alignment === "start" ? "bottom" : "top";
+  if (rects.reference[length] > rects.floating[length]) {
+    mainAlignmentSide = getOppositePlacement(mainAlignmentSide);
+  }
+  return [mainAlignmentSide, getOppositePlacement(mainAlignmentSide)];
+}
+function getExpandedPlacements(placement) {
+  const oppositePlacement = getOppositePlacement(placement);
+  return [getOppositeAlignmentPlacement(placement), oppositePlacement, getOppositeAlignmentPlacement(oppositePlacement)];
+}
+function getOppositeAlignmentPlacement(placement) {
+  return placement.includes("start") ? placement.replace("start", "end") : placement.replace("end", "start");
+}
+const lrPlacement = ["left", "right"];
+const rlPlacement = ["right", "left"];
+const tbPlacement = ["top", "bottom"];
+const btPlacement = ["bottom", "top"];
+function getSideList(side, isStart, rtl) {
+  switch (side) {
+    case "top":
+    case "bottom":
+      if (rtl) return isStart ? rlPlacement : lrPlacement;
+      return isStart ? lrPlacement : rlPlacement;
+    case "left":
+    case "right":
+      return isStart ? tbPlacement : btPlacement;
+    default:
+      return [];
+  }
+}
+function getOppositeAxisPlacements(placement, flipAlignment, direction, rtl) {
+  const alignment = getAlignment(placement);
+  let list2 = getSideList(getSide(placement), direction === "start", rtl);
+  if (alignment) {
+    list2 = list2.map((side) => side + "-" + alignment);
+    if (flipAlignment) {
+      list2 = list2.concat(list2.map(getOppositeAlignmentPlacement));
+    }
+  }
+  return list2;
+}
+function getOppositePlacement(placement) {
+  const side = getSide(placement);
+  return oppositeSideMap[side] + placement.slice(side.length);
+}
+function expandPaddingObject(padding) {
+  var _padding$top, _padding$right, _padding$bottom, _padding$left;
+  return {
+    top: (_padding$top = padding.top) != null ? _padding$top : 0,
+    right: (_padding$right = padding.right) != null ? _padding$right : 0,
+    bottom: (_padding$bottom = padding.bottom) != null ? _padding$bottom : 0,
+    left: (_padding$left = padding.left) != null ? _padding$left : 0
+  };
+}
+function getPaddingObject(padding) {
+  return typeof padding !== "number" ? expandPaddingObject(padding) : {
+    top: padding,
+    right: padding,
+    bottom: padding,
+    left: padding
+  };
+}
+function rectToClientRect(rect) {
+  const {
+    x,
+    y,
+    width,
+    height
+  } = rect;
+  return {
+    width,
+    height,
+    top: y,
+    left: x,
+    right: x + width,
+    bottom: y + height,
+    x,
+    y
+  };
+}
+/*!
+* tabbable 6.5.0
+* @license MIT, https://github.com/focus-trap/tabbable/blob/master/LICENSE
+*/
+var candidateSelectors = ["input:not([inert]):not([inert] *)", "select:not([inert]):not([inert] *)", "textarea:not([inert]):not([inert] *)", "a[href]:not([inert]):not([inert] *)", "area[href]:not([inert]):not([inert] *)", "button:not([inert]):not([inert] *)", "[tabindex]:not(slot):not([inert]):not([inert] *)", "audio[controls]:not([inert]):not([inert] *)", "video[controls]:not([inert]):not([inert] *)", '[contenteditable]:not([contenteditable="false"]):not([inert]):not([inert] *)', "details>summary:first-of-type:not([inert]):not([inert] *)", "details:not([inert]):not([inert] *)"];
+var candidateSelector = /* @__PURE__ */ candidateSelectors.join(",");
+var NoElement = typeof Element === "undefined";
+var matches = NoElement ? function() {
+} : Element.prototype.matches || Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
+var getRootNode = !NoElement && Element.prototype.getRootNode ? function(element2) {
+  var _element$getRootNode;
+  return element2 === null || element2 === void 0 ? void 0 : (_element$getRootNode = element2.getRootNode) === null || _element$getRootNode === void 0 ? void 0 : _element$getRootNode.call(element2);
+} : function(element2) {
+  return element2 === null || element2 === void 0 ? void 0 : element2.ownerDocument;
+};
+var _isInert = function isInert(node2, lookUp) {
+  var _node$getAttribute;
+  if (lookUp === void 0) {
+    lookUp = true;
+  }
+  var inertAtt = node2 === null || node2 === void 0 ? void 0 : (_node$getAttribute = node2.getAttribute) === null || _node$getAttribute === void 0 ? void 0 : _node$getAttribute.call(node2, "inert");
+  var inert = inertAtt === "" || inertAtt === "true";
+  var result = inert || lookUp && node2 && // closest does not exist on shadow roots, so we fall back to a manual
+  // lookup upward, in case it is not defined.
+  (typeof node2.closest === "function" ? node2.closest("[inert]") : _isInert(node2.parentNode));
+  return result;
+};
+var isContentEditable = function isContentEditable2(node2) {
+  var _node$getAttribute2;
+  var attValue = node2 === null || node2 === void 0 ? void 0 : (_node$getAttribute2 = node2.getAttribute) === null || _node$getAttribute2 === void 0 ? void 0 : _node$getAttribute2.call(node2, "contenteditable");
+  return attValue === "" || attValue === "true";
+};
+var getCandidates = function getCandidates2(el, includeContainer, filter) {
+  if (_isInert(el)) {
+    return [];
+  }
+  var candidates = Array.prototype.slice.apply(el.querySelectorAll(candidateSelector));
+  if (includeContainer && matches.call(el, candidateSelector)) {
+    candidates.unshift(el);
+  }
+  candidates = candidates.filter(filter);
+  return candidates;
+};
+var _getCandidatesIteratively = function getCandidatesIteratively(elements, includeContainer, options) {
+  var candidates = [];
+  var elementsToCheck = Array.from(elements);
+  while (elementsToCheck.length) {
+    var element2 = elementsToCheck.shift();
+    if (_isInert(element2, false)) {
+      continue;
+    }
+    if (element2.tagName === "SLOT") {
+      var assigned = element2.assignedElements();
+      var content2 = assigned.length ? assigned : element2.children;
+      var nestedCandidates = _getCandidatesIteratively(content2, true, options);
+      if (options.flatten) {
+        candidates.push.apply(candidates, nestedCandidates);
+      } else {
+        candidates.push({
+          scopeParent: element2,
+          candidates: nestedCandidates
+        });
+      }
+    } else {
+      var validCandidate = matches.call(element2, candidateSelector);
+      if (validCandidate && options.filter(element2) && (includeContainer || !elements.includes(element2))) {
+        candidates.push(element2);
+      }
+      var shadowRoot = element2.shadowRoot || // check for an undisclosed shadow
+      typeof options.getShadowRoot === "function" && options.getShadowRoot(element2);
+      var validShadowRoot = !_isInert(shadowRoot, false) && (!options.shadowRootFilter || options.shadowRootFilter(element2));
+      if (shadowRoot && validShadowRoot) {
+        var _nestedCandidates = _getCandidatesIteratively(shadowRoot === true ? element2.children : shadowRoot.children, true, options);
+        if (options.flatten) {
+          candidates.push.apply(candidates, _nestedCandidates);
+        } else {
+          candidates.push({
+            scopeParent: element2,
+            candidates: _nestedCandidates
+          });
+        }
+      } else {
+        elementsToCheck.unshift.apply(elementsToCheck, element2.children);
+      }
+    }
+  }
+  return candidates;
+};
+var hasTabIndex = function hasTabIndex2(node2) {
+  return !isNaN(parseInt(node2.getAttribute("tabindex"), 10));
+};
+var getTabIndex = function getTabIndex2(node2) {
+  if (!node2) {
+    throw new Error("No node provided");
+  }
+  if (node2.tabIndex < 0) {
+    if ((/^(AUDIO|VIDEO|DETAILS)$/.test(node2.tagName) || isContentEditable(node2)) && !hasTabIndex(node2)) {
+      return 0;
+    }
+  }
+  return node2.tabIndex;
+};
+var getSortOrderTabIndex = function getSortOrderTabIndex2(node2, isScope) {
+  var tabIndex = getTabIndex(node2);
+  if (tabIndex < 0 && isScope && !hasTabIndex(node2)) {
+    return 0;
+  }
+  return tabIndex;
+};
+var sortOrderedTabbables = function sortOrderedTabbables2(a, b) {
+  return a.tabIndex === b.tabIndex ? a.documentOrder - b.documentOrder : a.tabIndex - b.tabIndex;
+};
+var isInput = function isInput2(node2) {
+  return node2.tagName === "INPUT";
+};
+var isHiddenInput = function isHiddenInput2(node2) {
+  return isInput(node2) && node2.type === "hidden";
+};
+var isDetailsWithSummary = function isDetailsWithSummary2(node2) {
+  var r2 = node2.tagName === "DETAILS" && Array.prototype.slice.apply(node2.children).some(function(child) {
+    return child.tagName === "SUMMARY";
+  });
+  return r2;
+};
+var getCheckedRadio = function getCheckedRadio2(nodes, form) {
+  for (var i = 0; i < nodes.length; i++) {
+    if (nodes[i].checked && nodes[i].form === form) {
+      return nodes[i];
+    }
+  }
+};
+var isTabbableRadio = function isTabbableRadio2(node2) {
+  if (!node2.name) {
+    return true;
+  }
+  var radioScope = node2.form || getRootNode(node2);
+  var queryRadios = function queryRadios2(name2) {
+    return radioScope.querySelectorAll('input[type="radio"][name="' + name2 + '"]');
+  };
+  var radioSet;
+  if (typeof window !== "undefined" && typeof window.CSS !== "undefined" && typeof window.CSS.escape === "function") {
+    radioSet = queryRadios(window.CSS.escape(node2.name));
+  } else {
+    try {
+      radioSet = queryRadios(node2.name);
+    } catch (err) {
+      console.error("Looks like you have a radio button with a name attribute containing invalid CSS selector characters and need the CSS.escape polyfill: %s", err.message);
+      return false;
+    }
+  }
+  var checked = getCheckedRadio(radioSet, node2.form);
+  return !checked || checked === node2;
+};
+var isRadio = function isRadio2(node2) {
+  return isInput(node2) && node2.type === "radio";
+};
+var isNonTabbableRadio = function isNonTabbableRadio2(node2) {
+  return isRadio(node2) && !isTabbableRadio(node2);
+};
+var isNodeAttached = function isNodeAttached2(node2) {
+  var _nodeRoot;
+  var nodeRoot = node2 && getRootNode(node2);
+  var nodeRootHost = (_nodeRoot = nodeRoot) === null || _nodeRoot === void 0 ? void 0 : _nodeRoot.host;
+  var attached = false;
+  if (nodeRoot && nodeRoot !== node2) {
+    var _nodeRootHost, _nodeRootHost$ownerDo, _node$ownerDocument;
+    attached = !!((_nodeRootHost = nodeRootHost) !== null && _nodeRootHost !== void 0 && (_nodeRootHost$ownerDo = _nodeRootHost.ownerDocument) !== null && _nodeRootHost$ownerDo !== void 0 && _nodeRootHost$ownerDo.contains(nodeRootHost) || node2 !== null && node2 !== void 0 && (_node$ownerDocument = node2.ownerDocument) !== null && _node$ownerDocument !== void 0 && _node$ownerDocument.contains(node2));
+    while (!attached && nodeRootHost) {
+      var _nodeRoot2, _nodeRootHost2, _nodeRootHost2$ownerD;
+      nodeRoot = getRootNode(nodeRootHost);
+      nodeRootHost = (_nodeRoot2 = nodeRoot) === null || _nodeRoot2 === void 0 ? void 0 : _nodeRoot2.host;
+      attached = !!((_nodeRootHost2 = nodeRootHost) !== null && _nodeRootHost2 !== void 0 && (_nodeRootHost2$ownerD = _nodeRootHost2.ownerDocument) !== null && _nodeRootHost2$ownerD !== void 0 && _nodeRootHost2$ownerD.contains(nodeRootHost));
+    }
+  }
+  return attached;
+};
+var isZeroArea = function isZeroArea2(node2) {
+  var _node$getBoundingClie = node2.getBoundingClientRect(), width = _node$getBoundingClie.width, height = _node$getBoundingClie.height;
+  return width === 0 && height === 0;
+};
+var isHidden = function isHidden2(node2, _ref) {
+  var displayCheck = _ref.displayCheck, getShadowRoot = _ref.getShadowRoot;
+  if (displayCheck === "full-native") {
+    if ("checkVisibility" in node2) {
+      var visible = node2.checkVisibility({
+        // Checking opacity might be desirable for some use cases, but natively,
+        // opacity zero elements _are_ focusable and tabbable.
+        checkOpacity: false,
+        opacityProperty: false,
+        contentVisibilityAuto: true,
+        visibilityProperty: true,
+        // This is an alias for `visibilityProperty`. Contemporary browsers
+        // support both. However, this alias has wider browser support (Chrome
+        // >= 105 and Firefox >= 106, vs. Chrome >= 121 and Firefox >= 122), so
+        // we include it anyway.
+        checkVisibilityCSS: true
+      });
+      return !visible;
+    }
+  }
+  var _getComputedStyle = getComputedStyle(node2), visibility = _getComputedStyle.visibility;
+  if (visibility === "hidden" || visibility === "collapse") {
+    return true;
+  }
+  var isDirectSummary = matches.call(node2, "details>summary:first-of-type");
+  var nodeUnderDetails = isDirectSummary ? node2.parentElement : node2;
+  if (matches.call(nodeUnderDetails, "details:not([open]) *")) {
+    return true;
+  }
+  if (!displayCheck || displayCheck === "full" || // full-native can run this branch when it falls through in case
+  // Element#checkVisibility is unsupported
+  displayCheck === "full-native" || displayCheck === "legacy-full") {
+    if (typeof getShadowRoot === "function") {
+      var originalNode = node2;
+      while (node2) {
+        var parentElement = node2.parentElement;
+        var rootNode = getRootNode(node2);
+        if (parentElement && !parentElement.shadowRoot && getShadowRoot(parentElement) === true) {
+          return isZeroArea(node2);
+        } else if (node2.assignedSlot) {
+          node2 = node2.assignedSlot;
+        } else if (!parentElement && rootNode !== node2.ownerDocument) {
+          node2 = rootNode.host;
+        } else {
+          node2 = parentElement;
+        }
+      }
+      node2 = originalNode;
+    }
+    if (isNodeAttached(node2)) {
+      return !node2.getClientRects().length;
+    }
+    if (displayCheck !== "legacy-full") {
+      return true;
+    }
+  } else if (displayCheck === "non-zero-area") {
+    return isZeroArea(node2);
+  }
+  return false;
+};
+var isDisabledFromFieldset = function isDisabledFromFieldset2(node2) {
+  if (/^(INPUT|BUTTON|SELECT|TEXTAREA)$/.test(node2.tagName)) {
+    var parentNode = node2.parentElement;
+    while (parentNode) {
+      if (parentNode.tagName === "FIELDSET" && parentNode.disabled) {
+        for (var i = 0; i < parentNode.children.length; i++) {
+          var child = parentNode.children.item(i);
+          if (child.tagName === "LEGEND") {
+            return matches.call(parentNode, "fieldset[disabled] *") ? true : !child.contains(node2);
+          }
+        }
+        return true;
+      }
+      parentNode = parentNode.parentElement;
+    }
+  }
+  return false;
+};
+var isNodeMatchingSelectorFocusable = function isNodeMatchingSelectorFocusable2(options, node2) {
+  if (node2.disabled || isHiddenInput(node2) || isHidden(node2, options) || // For a details element with a summary, the summary element gets the focus
+  isDetailsWithSummary(node2) || isDisabledFromFieldset(node2)) {
+    return false;
+  }
+  return true;
+};
+var isNodeMatchingSelectorTabbable = function isNodeMatchingSelectorTabbable2(options, node2) {
+  if (isNonTabbableRadio(node2) || getTabIndex(node2) < 0 || !isNodeMatchingSelectorFocusable(options, node2)) {
+    return false;
+  }
+  return true;
+};
+var isShadowRootTabbable = function isShadowRootTabbable2(shadowHostNode) {
+  var tabIndex = parseInt(shadowHostNode.getAttribute("tabindex"), 10);
+  if (isNaN(tabIndex) || tabIndex >= 0) {
+    return true;
+  }
+  return false;
+};
+var _sortByOrder = function sortByOrder(candidates) {
+  var regularTabbables = [];
+  var orderedTabbables = [];
+  candidates.forEach(function(item, i) {
+    var isScope = !!item.scopeParent;
+    var element2 = isScope ? item.scopeParent : item;
+    var candidateTabindex = getSortOrderTabIndex(element2, isScope);
+    var elements = isScope ? _sortByOrder(item.candidates) : element2;
+    if (candidateTabindex === 0) {
+      isScope ? regularTabbables.push.apply(regularTabbables, elements) : regularTabbables.push(element2);
+    } else {
+      orderedTabbables.push({
+        documentOrder: i,
+        tabIndex: candidateTabindex,
+        item,
+        isScope,
+        content: elements
+      });
+    }
+  });
+  return orderedTabbables.sort(sortOrderedTabbables).reduce(function(acc, sortable) {
+    sortable.isScope ? acc.push.apply(acc, sortable.content) : acc.push(sortable.content);
+    return acc;
+  }, []).concat(regularTabbables);
+};
+var tabbable = function tabbable2(container, options) {
+  options = options || {};
+  var candidates;
+  if (options.getShadowRoot) {
+    candidates = _getCandidatesIteratively([container], options.includeContainer, {
+      filter: isNodeMatchingSelectorTabbable.bind(null, options),
+      flatten: false,
+      getShadowRoot: options.getShadowRoot,
+      shadowRootFilter: isShadowRootTabbable
+    });
+  } else {
+    candidates = getCandidates(container, options.includeContainer, isNodeMatchingSelectorTabbable.bind(null, options));
+  }
+  return _sortByOrder(candidates);
+};
+function isSafari() {
+  return /apple/i.test(navigator.vendor);
+}
+const FOCUSABLE_ATTRIBUTE$1 = "data-floating-ui-focusable";
+function activeElement(doc) {
+  let activeElement2 = doc.activeElement;
+  while (((_activeElement = activeElement2) == null || (_activeElement = _activeElement.shadowRoot) == null ? void 0 : _activeElement.activeElement) != null) {
+    var _activeElement;
+    activeElement2 = activeElement2.shadowRoot.activeElement;
+  }
+  return activeElement2;
+}
+function contains(parent, child) {
+  if (!parent || !child) {
+    return false;
+  }
+  const rootNode = child.getRootNode == null ? void 0 : child.getRootNode();
+  if (parent.contains(child)) {
+    return true;
+  }
+  if (rootNode && isShadowRoot(rootNode)) {
+    let next = child;
+    while (next) {
+      if (parent === next) {
+        return true;
+      }
+      next = next.parentNode || next.host;
+    }
+  }
+  return false;
+}
+function getTarget(event) {
+  if ("composedPath" in event) {
+    return event.composedPath()[0];
+  }
+  return event.target;
+}
+function isEventTargetWithin(event, node2) {
+  if (node2 == null) {
+    return false;
+  }
+  if ("composedPath" in event) {
+    return event.composedPath().includes(node2);
+  }
+  const e = event;
+  return e.target != null && node2.contains(e.target);
+}
+function isRootElement(element2) {
+  return element2.matches("html,body");
+}
+function getDocument(node2) {
+  return (node2 == null ? void 0 : node2.ownerDocument) || document;
+}
+function getFloatingFocusElement(floatingElement) {
+  if (!floatingElement) {
+    return null;
+  }
+  return floatingElement.hasAttribute(FOCUSABLE_ATTRIBUTE$1) ? floatingElement : floatingElement.querySelector("[" + FOCUSABLE_ATTRIBUTE$1 + "]") || floatingElement;
+}
+function getNodeChildren(nodes, id, onlyOpenChildren) {
+  if (onlyOpenChildren === void 0) {
+    onlyOpenChildren = true;
+  }
+  const directChildren = nodes.filter((node2) => {
+    var _node$context;
+    return node2.parentId === id && (!onlyOpenChildren || ((_node$context = node2.context) == null ? void 0 : _node$context.open));
+  });
+  return directChildren.flatMap((child) => [child, ...getNodeChildren(nodes, child.id, onlyOpenChildren)]);
+}
+function isReactEvent(event) {
+  return "nativeEvent" in event;
+}
+var isClient$1 = typeof document !== "undefined";
+var noop$1 = function noop2() {
+};
+var index$2 = isClient$1 ? reactExports.useLayoutEffect : noop$1;
+const SafeReact$1 = {
+  ...React
+};
+const useInsertionEffect = SafeReact$1.useInsertionEffect;
+const useSafeInsertionEffect = useInsertionEffect || ((fn) => fn());
+function useEffectEvent(callback) {
+  const ref = reactExports.useRef(() => {
+  });
+  useSafeInsertionEffect(() => {
+    ref.current = callback;
+  });
+  return reactExports.useCallback(function() {
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+    return ref.current == null ? void 0 : ref.current(...args);
+  }, []);
+}
+const getTabbableOptions = () => ({
+  getShadowRoot: true,
+  displayCheck: (
+    // JSDOM does not support the `tabbable` library. To solve this we can
+    // check if `ResizeObserver` is a real function (not polyfilled), which
+    // determines if the current environment is JSDOM-like.
+    typeof ResizeObserver === "function" && ResizeObserver.toString().includes("[native code]") ? "full" : "none"
+  )
+});
+function getTabbableIn(container, dir) {
+  const list2 = tabbable(container, getTabbableOptions());
+  const len = list2.length;
+  if (len === 0) return;
+  const active = activeElement(getDocument(container));
+  const index2 = list2.indexOf(active);
+  const nextIndex = index2 === -1 ? dir === 1 ? 0 : len - 1 : index2 + dir;
+  return list2[nextIndex];
+}
+function getNextTabbable(referenceElement) {
+  return getTabbableIn(getDocument(referenceElement).body, 1) || referenceElement;
+}
+function getPreviousTabbable(referenceElement) {
+  return getTabbableIn(getDocument(referenceElement).body, -1) || referenceElement;
+}
+function isOutsideEvent(event, container) {
+  const containerElement = container || event.currentTarget;
+  const relatedTarget = event.relatedTarget;
+  return !relatedTarget || !contains(containerElement, relatedTarget);
+}
+function disableFocusInside(container) {
+  const tabbableElements = tabbable(container, getTabbableOptions());
+  tabbableElements.forEach((element2) => {
+    element2.dataset.tabindex = element2.getAttribute("tabindex") || "";
+    element2.setAttribute("tabindex", "-1");
+  });
+}
+function enableFocusInside(container) {
+  const elements = container.querySelectorAll("[data-tabindex]");
+  elements.forEach((element2) => {
+    const tabindex = element2.dataset.tabindex;
+    delete element2.dataset.tabindex;
+    if (tabindex) {
+      element2.setAttribute("tabindex", tabindex);
+    } else {
+      element2.removeAttribute("tabindex");
+    }
+  });
+}
+function computeCoordsFromPlacement(_ref, placement, rtl) {
+  let {
+    reference,
+    floating
+  } = _ref;
+  const sideAxis = getSideAxis(placement);
+  const alignmentAxis = getAlignmentAxis(placement);
+  const alignLength = getAxisLength(alignmentAxis);
+  const side = getSide(placement);
+  const isVertical = sideAxis === "y";
+  const commonX = reference.x + reference.width / 2 - floating.width / 2;
+  const commonY = reference.y + reference.height / 2 - floating.height / 2;
+  const commonAlign = reference[alignLength] / 2 - floating[alignLength] / 2;
+  let coords;
+  switch (side) {
+    case "top":
+      coords = {
+        x: commonX,
+        y: reference.y - floating.height
+      };
+      break;
+    case "bottom":
+      coords = {
+        x: commonX,
+        y: reference.y + reference.height
+      };
+      break;
+    case "right":
+      coords = {
+        x: reference.x + reference.width,
+        y: commonY
+      };
+      break;
+    case "left":
+      coords = {
+        x: reference.x - floating.width,
+        y: commonY
+      };
+      break;
+    default:
+      coords = {
+        x: reference.x,
+        y: reference.y
+      };
+  }
+  const alignment = getAlignment(placement);
+  if (alignment) {
+    coords[alignmentAxis] += commonAlign * (alignment === "end" ? 1 : -1) * (rtl && isVertical ? -1 : 1);
+  }
+  return coords;
+}
+async function detectOverflow(state, options) {
+  var _await$platform$isEle;
+  if (options === void 0) {
+    options = {};
+  }
+  const {
+    x,
+    y,
+    platform: platform2,
+    rects,
+    elements,
+    strategy
+  } = state;
+  const {
+    boundary = "clippingAncestors",
+    rootBoundary = "viewport",
+    elementContext = "floating",
+    altBoundary = false,
+    padding = 0
+  } = evaluate(options, state);
+  const paddingObject = getPaddingObject(padding);
+  const altContext = elementContext === "floating" ? "reference" : "floating";
+  const element2 = elements[altBoundary ? altContext : elementContext];
+  const clippingClientRect = rectToClientRect(await platform2.getClippingRect({
+    element: ((_await$platform$isEle = await (platform2.isElement == null ? void 0 : platform2.isElement(element2))) != null ? _await$platform$isEle : true) ? element2 : element2.contextElement || await (platform2.getDocumentElement == null ? void 0 : platform2.getDocumentElement(elements.floating)),
+    boundary,
+    rootBoundary,
+    strategy
+  }));
+  const rect = elementContext === "floating" ? {
+    x,
+    y,
+    width: rects.floating.width,
+    height: rects.floating.height
+  } : rects.reference;
+  const offsetParent = await (platform2.getOffsetParent == null ? void 0 : platform2.getOffsetParent(elements.floating));
+  const offsetScale = await (platform2.isElement == null ? void 0 : platform2.isElement(offsetParent)) && await (platform2.getScale == null ? void 0 : platform2.getScale(offsetParent)) || {
+    x: 1,
+    y: 1
+  };
+  const elementClientRect = rectToClientRect(platform2.convertOffsetParentRelativeRectToViewportRelativeRect ? await platform2.convertOffsetParentRelativeRectToViewportRelativeRect({
+    elements,
+    rect,
+    offsetParent,
+    strategy
+  }) : rect);
+  return {
+    top: (clippingClientRect.top - elementClientRect.top + paddingObject.top) / offsetScale.y,
+    bottom: (elementClientRect.bottom - clippingClientRect.bottom + paddingObject.bottom) / offsetScale.y,
+    left: (clippingClientRect.left - elementClientRect.left + paddingObject.left) / offsetScale.x,
+    right: (elementClientRect.right - clippingClientRect.right + paddingObject.right) / offsetScale.x
+  };
+}
+const MAX_RESET_COUNT = 50;
+const computePosition$1 = async (reference, floating, config) => {
+  const {
+    placement = "bottom",
+    strategy = "absolute",
+    middleware = [],
+    platform: platform2
+  } = config;
+  const platformWithDetectOverflow = platform2.detectOverflow ? platform2 : {
+    ...platform2,
+    detectOverflow
+  };
+  const rtl = await (platform2.isRTL == null ? void 0 : platform2.isRTL(floating));
+  let rects = await platform2.getElementRects({
+    reference,
+    floating,
+    strategy
+  });
+  let {
+    x,
+    y
+  } = computeCoordsFromPlacement(rects, placement, rtl);
+  let statefulPlacement = placement;
+  let resetCount = 0;
+  const middlewareData = {};
+  for (let i = 0; i < middleware.length; i++) {
+    const currentMiddleware = middleware[i];
+    if (!currentMiddleware) {
+      continue;
+    }
+    const {
+      name: name2,
+      fn
+    } = currentMiddleware;
+    const {
+      x: nextX,
+      y: nextY,
+      data,
+      reset
+    } = await fn({
+      x,
+      y,
+      initialPlacement: placement,
+      placement: statefulPlacement,
+      strategy,
+      middlewareData,
+      rects,
+      platform: platformWithDetectOverflow,
+      elements: {
+        reference,
+        floating
+      }
+    });
+    x = nextX != null ? nextX : x;
+    y = nextY != null ? nextY : y;
+    middlewareData[name2] = {
+      ...middlewareData[name2],
+      ...data
+    };
+    if (reset && resetCount < MAX_RESET_COUNT) {
+      resetCount++;
+      if (typeof reset === "object") {
+        if (reset.placement) {
+          statefulPlacement = reset.placement;
+        }
+        if (reset.rects) {
+          rects = reset.rects === true ? await platform2.getElementRects({
+            reference,
+            floating,
+            strategy
+          }) : reset.rects;
+        }
+        ({
+          x,
+          y
+        } = computeCoordsFromPlacement(rects, statefulPlacement, rtl));
+      }
+      i = -1;
+    }
+  }
+  return {
+    x,
+    y,
+    placement: statefulPlacement,
+    strategy,
+    middlewareData
+  };
+};
+const flip$2 = function(options) {
+  if (options === void 0) {
+    options = {};
+  }
+  return {
+    name: "flip",
+    options,
+    async fn(state) {
+      var _middlewareData$arrow, _middlewareData$flip;
+      const {
+        placement,
+        middlewareData,
+        rects,
+        initialPlacement,
+        platform: platform2,
+        elements
+      } = state;
+      const {
+        mainAxis: checkMainAxis = true,
+        crossAxis: checkCrossAxis = true,
+        fallbackPlacements: specifiedFallbackPlacements,
+        fallbackStrategy = "bestFit",
+        fallbackAxisSideDirection = "none",
+        flipAlignment = true,
+        ...detectOverflowOptions
+      } = evaluate(options, state);
+      if ((_middlewareData$arrow = middlewareData.arrow) != null && _middlewareData$arrow.alignmentOffset) {
+        return {};
+      }
+      const side = getSide(placement);
+      const initialSideAxis = getSideAxis(initialPlacement);
+      const isBasePlacement = getSide(initialPlacement) === initialPlacement;
+      const rtl = await (platform2.isRTL == null ? void 0 : platform2.isRTL(elements.floating));
+      const fallbackPlacements = specifiedFallbackPlacements || (isBasePlacement || !flipAlignment ? [getOppositePlacement(initialPlacement)] : getExpandedPlacements(initialPlacement));
+      const hasFallbackAxisSideDirection = fallbackAxisSideDirection !== "none";
+      if (!specifiedFallbackPlacements && hasFallbackAxisSideDirection) {
+        fallbackPlacements.push(...getOppositeAxisPlacements(initialPlacement, flipAlignment, fallbackAxisSideDirection, rtl));
+      }
+      const placements = [initialPlacement, ...fallbackPlacements];
+      const overflow = await platform2.detectOverflow(state, detectOverflowOptions);
+      const overflows = [];
+      let overflowsData = ((_middlewareData$flip = middlewareData.flip) == null ? void 0 : _middlewareData$flip.overflows) || [];
+      if (checkMainAxis) {
+        overflows.push(overflow[side]);
+      }
+      if (checkCrossAxis) {
+        const sides = getAlignmentSides(placement, rects, rtl);
+        overflows.push(overflow[sides[0]], overflow[sides[1]]);
+      }
+      overflowsData = [...overflowsData, {
+        placement,
+        overflows
+      }];
+      if (!overflows.every((side2) => side2 <= 0)) {
+        var _middlewareData$flip2, _overflowsData$filter;
+        const nextIndex = (((_middlewareData$flip2 = middlewareData.flip) == null ? void 0 : _middlewareData$flip2.index) || 0) + 1;
+        const nextPlacement = placements[nextIndex];
+        if (nextPlacement) {
+          const ignoreCrossAxisOverflow = checkCrossAxis === "alignment" ? initialSideAxis !== getSideAxis(nextPlacement) : false;
+          if (!ignoreCrossAxisOverflow || // We leave the current main axis only if every placement on that axis
+          // overflows the main axis.
+          overflowsData.every((d) => getSideAxis(d.placement) === initialSideAxis ? d.overflows[0] > 0 : true)) {
+            return {
+              data: {
+                index: nextIndex,
+                overflows: overflowsData
+              },
+              reset: {
+                placement: nextPlacement
+              }
+            };
+          }
+        }
+        let resetPlacement = (_overflowsData$filter = overflowsData.filter((d) => d.overflows[0] <= 0).sort((a, b) => a.overflows[1] - b.overflows[1])[0]) == null ? void 0 : _overflowsData$filter.placement;
+        if (!resetPlacement) {
+          switch (fallbackStrategy) {
+            case "bestFit": {
+              var _overflowsData$filter2;
+              const placement2 = (_overflowsData$filter2 = overflowsData.filter((d) => {
+                if (hasFallbackAxisSideDirection) {
+                  const currentSideAxis = getSideAxis(d.placement);
+                  return currentSideAxis === initialSideAxis || // Create a bias to the `y` side axis due to horizontal
+                  // reading directions favoring greater width.
+                  currentSideAxis === "y";
+                }
+                return true;
+              }).map((d) => [d.placement, d.overflows.filter((overflow2) => overflow2 > 0).reduce((acc, overflow2) => acc + overflow2, 0)]).sort((a, b) => a[1] - b[1])[0]) == null ? void 0 : _overflowsData$filter2[0];
+              if (placement2) {
+                resetPlacement = placement2;
+              }
+              break;
+            }
+            case "initialPlacement":
+              resetPlacement = initialPlacement;
+              break;
+          }
+        }
+        if (placement !== resetPlacement) {
+          return {
+            reset: {
+              placement: resetPlacement
+            }
+          };
+        }
+      }
+      return {};
+    }
+  };
+};
+const originSides = /* @__PURE__ */ new Set(["left", "top"]);
+async function convertValueToCoords(state, options) {
+  const {
+    placement,
+    platform: platform2,
+    elements
+  } = state;
+  const rtl = await (platform2.isRTL == null ? void 0 : platform2.isRTL(elements.floating));
+  const side = getSide(placement);
+  const alignment = getAlignment(placement);
+  const isVertical = getSideAxis(placement) === "y";
+  const mainAxisMulti = originSides.has(side) ? -1 : 1;
+  const crossAxisMulti = rtl && isVertical ? -1 : 1;
+  const rawValue = evaluate(options, state);
+  let {
+    mainAxis,
+    crossAxis,
+    alignmentAxis
+  } = typeof rawValue === "number" ? {
+    mainAxis: rawValue,
+    crossAxis: 0,
+    alignmentAxis: null
+  } : {
+    mainAxis: rawValue.mainAxis || 0,
+    crossAxis: rawValue.crossAxis || 0,
+    alignmentAxis: rawValue.alignmentAxis
+  };
+  if (alignment && typeof alignmentAxis === "number") {
+    crossAxis = alignment === "end" ? alignmentAxis * -1 : alignmentAxis;
+  }
+  return isVertical ? {
+    x: crossAxis * crossAxisMulti,
+    y: mainAxis * mainAxisMulti
+  } : {
+    x: mainAxis * mainAxisMulti,
+    y: crossAxis * crossAxisMulti
+  };
+}
+const offset$2 = function(options) {
+  if (options === void 0) {
+    options = 0;
+  }
+  return {
+    name: "offset",
+    options,
+    async fn(state) {
+      var _middlewareData$offse, _middlewareData$arrow;
+      const {
+        x,
+        y,
+        placement,
+        middlewareData
+      } = state;
+      const diffCoords = await convertValueToCoords(state, options);
+      if (placement === ((_middlewareData$offse = middlewareData.offset) == null ? void 0 : _middlewareData$offse.placement) && (_middlewareData$arrow = middlewareData.arrow) != null && _middlewareData$arrow.alignmentOffset) {
+        return {};
+      }
+      return {
+        x: x + diffCoords.x,
+        y: y + diffCoords.y,
+        data: {
+          ...diffCoords,
+          placement
+        }
+      };
+    }
+  };
+};
+const shift$2 = function(options) {
+  if (options === void 0) {
+    options = {};
+  }
+  return {
+    name: "shift",
+    options,
+    async fn(state) {
+      const {
+        x,
+        y,
+        placement,
+        platform: platform2
+      } = state;
+      const {
+        mainAxis: checkMainAxis = true,
+        crossAxis: checkCrossAxis = false,
+        limiter = {
+          fn: (_ref) => {
+            let {
+              x: x2,
+              y: y2
+            } = _ref;
+            return {
+              x: x2,
+              y: y2
+            };
+          }
+        },
+        ...detectOverflowOptions
+      } = evaluate(options, state);
+      const coords = {
+        x,
+        y
+      };
+      const overflow = await platform2.detectOverflow(state, detectOverflowOptions);
+      const crossAxis = getSideAxis(placement);
+      const mainAxis = getOppositeAxis(crossAxis);
+      let mainAxisCoord = coords[mainAxis];
+      let crossAxisCoord = coords[crossAxis];
+      const clampCoord = (axis, coord) => clamp(coord + overflow[axis === "y" ? "top" : "left"], coord, coord - overflow[axis === "y" ? "bottom" : "right"]);
+      if (checkMainAxis) {
+        mainAxisCoord = clampCoord(mainAxis, mainAxisCoord);
+      }
+      if (checkCrossAxis) {
+        crossAxisCoord = clampCoord(crossAxis, crossAxisCoord);
+      }
+      const limitedCoords = limiter.fn({
+        ...state,
+        [mainAxis]: mainAxisCoord,
+        [crossAxis]: crossAxisCoord
+      });
+      return {
+        ...limitedCoords,
+        data: {
+          x: limitedCoords.x - x,
+          y: limitedCoords.y - y,
+          enabled: {
+            [mainAxis]: checkMainAxis,
+            [crossAxis]: checkCrossAxis
+          }
+        }
+      };
+    }
+  };
+};
+const size$2 = function(options) {
+  if (options === void 0) {
+    options = {};
+  }
+  return {
+    name: "size",
+    options,
+    async fn(state) {
+      const {
+        placement,
+        rects,
+        platform: platform2,
+        elements
+      } = state;
+      const {
+        apply = () => {
+        },
+        ...detectOverflowOptions
+      } = evaluate(options, state);
+      const overflow = await platform2.detectOverflow(state, detectOverflowOptions);
+      const side = getSide(placement);
+      const alignment = getAlignment(placement);
+      const isYAxis = getSideAxis(placement) === "y";
+      const {
+        width,
+        height
+      } = rects.floating;
+      let heightSide;
+      let widthSide;
+      if (side === "top" || side === "bottom") {
+        heightSide = side;
+        widthSide = alignment === (await (platform2.isRTL == null ? void 0 : platform2.isRTL(elements.floating)) ? "start" : "end") ? "left" : "right";
+      } else {
+        widthSide = side;
+        heightSide = alignment === "end" ? "top" : "bottom";
+      }
+      const maximumClippingHeight = height - overflow.top - overflow.bottom;
+      const maximumClippingWidth = width - overflow.left - overflow.right;
+      const overflowAvailableHeight = min(height - overflow[heightSide], maximumClippingHeight);
+      const overflowAvailableWidth = min(width - overflow[widthSide], maximumClippingWidth);
+      const shiftData = state.middlewareData.shift;
+      const noShift = !shiftData;
+      let availableHeight = overflowAvailableHeight;
+      let availableWidth = overflowAvailableWidth;
+      if (shiftData != null && shiftData.enabled.x) {
+        availableWidth = maximumClippingWidth;
+      }
+      if (shiftData != null && shiftData.enabled.y) {
+        availableHeight = maximumClippingHeight;
+      }
+      if (noShift && !alignment) {
+        if (isYAxis) {
+          availableWidth = width - 2 * max(overflow.left, overflow.right);
+        } else {
+          availableHeight = height - 2 * max(overflow.top, overflow.bottom);
+        }
+      }
+      await apply({
+        ...state,
+        availableWidth,
+        availableHeight
+      });
+      const nextDimensions = await platform2.getDimensions(elements.floating);
+      if (width !== nextDimensions.width || height !== nextDimensions.height) {
+        return {
+          reset: {
+            rects: true
+          }
+        };
+      }
+      return {};
+    }
+  };
+};
+function getCssDimensions(element2) {
+  const css = getComputedStyle$1(element2);
+  let width = parseFloat(css.width) || 0;
+  let height = parseFloat(css.height) || 0;
+  const hasOffset = isHTMLElement(element2);
+  const offsetWidth = hasOffset ? element2.offsetWidth : width;
+  const offsetHeight = hasOffset ? element2.offsetHeight : height;
+  const shouldFallback = round(width) !== offsetWidth || round(height) !== offsetHeight;
+  if (shouldFallback) {
+    width = offsetWidth;
+    height = offsetHeight;
+  }
+  return {
+    width,
+    height,
+    $: shouldFallback
+  };
+}
+function unwrapElement(element2) {
+  return !isElement(element2) ? element2.contextElement : element2;
+}
+function getScale(element2) {
+  const domElement = unwrapElement(element2);
+  if (!isHTMLElement(domElement)) {
+    return createCoords(1);
+  }
+  const rect = domElement.getBoundingClientRect();
+  const {
+    width,
+    height,
+    $: $2
+  } = getCssDimensions(domElement);
+  let x = ($2 ? round(rect.width) : rect.width) / width;
+  let y = ($2 ? round(rect.height) : rect.height) / height;
+  if (!x || !Number.isFinite(x)) {
+    x = 1;
+  }
+  if (!y || !Number.isFinite(y)) {
+    y = 1;
+  }
+  return {
+    x,
+    y
+  };
+}
+const noOffsets = /* @__PURE__ */ createCoords(0);
+function getVisualOffsets(element2) {
+  const win = getWindow(element2);
+  if (!isWebKit() || !win.visualViewport) {
+    return noOffsets;
+  }
+  return {
+    x: win.visualViewport.offsetLeft,
+    y: win.visualViewport.offsetTop
+  };
+}
+function shouldAddVisualOffsets(element2, isFixed, floatingOffsetParent) {
+  if (isFixed === void 0) {
+    isFixed = false;
+  }
+  return !!floatingOffsetParent && isFixed && floatingOffsetParent === getWindow(element2);
+}
+function getBoundingClientRect(element2, includeScale, isFixedStrategy, offsetParent) {
+  if (includeScale === void 0) {
+    includeScale = false;
+  }
+  if (isFixedStrategy === void 0) {
+    isFixedStrategy = false;
+  }
+  const clientRect = element2.getBoundingClientRect();
+  const domElement = unwrapElement(element2);
+  let scale = createCoords(1);
+  if (includeScale) {
+    if (offsetParent) {
+      if (isElement(offsetParent)) {
+        scale = getScale(offsetParent);
+      }
+    } else {
+      scale = getScale(element2);
+    }
+  }
+  const visualOffsets = shouldAddVisualOffsets(domElement, isFixedStrategy, offsetParent) ? getVisualOffsets(domElement) : createCoords(0);
+  let x = (clientRect.left + visualOffsets.x) / scale.x;
+  let y = (clientRect.top + visualOffsets.y) / scale.y;
+  let width = clientRect.width / scale.x;
+  let height = clientRect.height / scale.y;
+  if (domElement && offsetParent) {
+    const win = getWindow(domElement);
+    const offsetWin = isElement(offsetParent) ? getWindow(offsetParent) : offsetParent;
+    let currentWin = win;
+    let currentIFrame = getFrameElement(currentWin);
+    while (currentIFrame && offsetWin !== currentWin) {
+      const iframeScale = getScale(currentIFrame);
+      const iframeRect = currentIFrame.getBoundingClientRect();
+      const css = getComputedStyle$1(currentIFrame);
+      const left = iframeRect.left + (currentIFrame.clientLeft + parseFloat(css.paddingLeft)) * iframeScale.x;
+      const top = iframeRect.top + (currentIFrame.clientTop + parseFloat(css.paddingTop)) * iframeScale.y;
+      x *= iframeScale.x;
+      y *= iframeScale.y;
+      width *= iframeScale.x;
+      height *= iframeScale.y;
+      x += left;
+      y += top;
+      currentWin = getWindow(currentIFrame);
+      currentIFrame = getFrameElement(currentWin);
+    }
+  }
+  return rectToClientRect({
+    width,
+    height,
+    x,
+    y
+  });
+}
+function getWindowScrollBarX(element2, rect) {
+  const leftScroll = getNodeScroll(element2).scrollLeft;
+  if (!rect) {
+    return getBoundingClientRect(getDocumentElement(element2)).left + leftScroll;
+  }
+  return rect.left + leftScroll;
+}
+function getHTMLOffset(documentElement, scroll) {
+  const htmlRect = documentElement.getBoundingClientRect();
+  const x = htmlRect.left + scroll.scrollLeft - getWindowScrollBarX(documentElement, htmlRect);
+  const y = htmlRect.top + scroll.scrollTop;
+  return {
+    x,
+    y
+  };
+}
+function convertOffsetParentRelativeRectToViewportRelativeRect(_ref) {
+  let {
+    elements,
+    rect,
+    offsetParent,
+    strategy
+  } = _ref;
+  const isFixed = strategy === "fixed";
+  const documentElement = getDocumentElement(offsetParent);
+  const topLayer = elements ? isTopLayer(elements.floating) : false;
+  if (offsetParent === documentElement || topLayer && isFixed) {
+    return rect;
+  }
+  let scroll = {
+    scrollLeft: 0,
+    scrollTop: 0
+  };
+  let scale = createCoords(1);
+  const offsets = createCoords(0);
+  const isOffsetParentAnElement = isHTMLElement(offsetParent);
+  if (isOffsetParentAnElement || !isFixed) {
+    if (getNodeName(offsetParent) !== "body" || isOverflowElement(documentElement)) {
+      scroll = getNodeScroll(offsetParent);
+    }
+    if (isOffsetParentAnElement) {
+      const offsetRect = getBoundingClientRect(offsetParent);
+      scale = getScale(offsetParent);
+      offsets.x = offsetRect.x + offsetParent.clientLeft;
+      offsets.y = offsetRect.y + offsetParent.clientTop;
+    }
+  }
+  const htmlOffset = documentElement && !isOffsetParentAnElement && !isFixed ? getHTMLOffset(documentElement, scroll) : createCoords(0);
+  return {
+    width: rect.width * scale.x,
+    height: rect.height * scale.y,
+    x: rect.x * scale.x - scroll.scrollLeft * scale.x + offsets.x + htmlOffset.x,
+    y: rect.y * scale.y - scroll.scrollTop * scale.y + offsets.y + htmlOffset.y
+  };
+}
+function getClientRects(element2) {
+  return element2.getClientRects ? Array.from(element2.getClientRects()) : [];
+}
+function getDocumentRect(html2) {
+  const scroll = getNodeScroll(html2);
+  const body = html2.ownerDocument.body;
+  const width = max(html2.scrollWidth, html2.clientWidth, body.scrollWidth, body.clientWidth);
+  const height = max(html2.scrollHeight, html2.clientHeight, body.scrollHeight, body.clientHeight);
+  let x = -scroll.scrollLeft + getWindowScrollBarX(html2);
+  const y = -scroll.scrollTop;
+  if (getComputedStyle$1(body).direction === "rtl") {
+    x += max(html2.clientWidth, body.clientWidth) - width;
+  }
+  return {
+    width,
+    height,
+    x,
+    y
+  };
+}
+const SCROLLBAR_MAX = 25;
+function getViewportRect(element2, strategy, rootBoundary) {
+  if (rootBoundary === void 0) {
+    rootBoundary = "viewport";
+  }
+  const isLayoutViewport = rootBoundary === "layoutViewport";
+  const win = getWindow(element2);
+  const html2 = getDocumentElement(element2);
+  const visualViewport = win.visualViewport;
+  let width = html2.clientWidth;
+  let height = html2.clientHeight;
+  let x = 0;
+  let y = 0;
+  if (visualViewport) {
+    const layoutRelativeClientCoords = !isWebKit() || strategy === "fixed";
+    if (isLayoutViewport) {
+      if (!layoutRelativeClientCoords) {
+        x = -visualViewport.offsetLeft;
+        y = -visualViewport.offsetTop;
+      }
+    } else {
+      width = visualViewport.width;
+      height = visualViewport.height;
+      if (layoutRelativeClientCoords) {
+        x = visualViewport.offsetLeft;
+        y = visualViewport.offsetTop;
+      }
+    }
+  }
+  const windowScrollbarX = getWindowScrollBarX(html2);
+  if (windowScrollbarX <= 0) {
+    const doc = html2.ownerDocument;
+    const body = doc.body;
+    const bodyStyles = getComputedStyle(body);
+    const bodyMarginInline = doc.compatMode === "CSS1Compat" ? parseFloat(bodyStyles.marginLeft) + parseFloat(bodyStyles.marginRight) || 0 : 0;
+    const reservedWidth = Math.abs(html2.clientWidth - body.clientWidth - bodyMarginInline);
+    const gutter = getComputedStyle(html2).scrollbarGutter === "stable both-edges" ? reservedWidth / 2 : reservedWidth;
+    if (gutter <= SCROLLBAR_MAX) {
+      width -= gutter;
+    }
+  }
+  return {
+    width,
+    height,
+    x,
+    y
+  };
+}
+function getInnerBoundingClientRect(element2, strategy) {
+  const clientRect = getBoundingClientRect(element2, true, strategy === "fixed");
+  const top = clientRect.top + element2.clientTop;
+  const left = clientRect.left + element2.clientLeft;
+  const scale = getScale(element2);
+  const width = element2.clientWidth * scale.x;
+  const height = element2.clientHeight * scale.y;
+  const x = left * scale.x;
+  const y = top * scale.y;
+  return {
+    width,
+    height,
+    x,
+    y
+  };
+}
+function getClientRectFromClippingAncestor(element2, clippingAncestor, strategy) {
+  let rect;
+  if (clippingAncestor === "viewport" || clippingAncestor === "layoutViewport") {
+    rect = getViewportRect(element2, strategy, clippingAncestor);
+  } else if (clippingAncestor === "document") {
+    rect = getDocumentRect(getDocumentElement(element2));
+  } else if (isElement(clippingAncestor)) {
+    rect = getInnerBoundingClientRect(clippingAncestor, strategy);
+  } else {
+    const visualOffsets = getVisualOffsets(element2);
+    rect = {
+      x: clippingAncestor.x - visualOffsets.x,
+      y: clippingAncestor.y - visualOffsets.y,
+      width: clippingAncestor.width,
+      height: clippingAncestor.height
+    };
+  }
+  return rectToClientRect(rect);
+}
+function getClippingElementAncestors(element2, cache) {
+  const cachedResult = cache.get(element2);
+  if (cachedResult) {
+    return cachedResult;
+  }
+  let result = getOverflowAncestors(element2, [], false).filter((el) => isElement(el) && getNodeName(el) !== "body");
+  let lastKeptComputedStyle = null;
+  const elementIsFixed = getComputedStyle$1(element2).position === "fixed";
+  let currentNode = elementIsFixed ? getParentNode(element2) : element2;
+  while (isElement(currentNode) && !isLastTraversableNode(currentNode)) {
+    const computedStyle = getComputedStyle$1(currentNode);
+    const currentNodeIsContaining = isContainingBlock(currentNode);
+    const lastPosition = lastKeptComputedStyle ? lastKeptComputedStyle.position : elementIsFixed ? "fixed" : "";
+    const shouldDropCurrentNode = !currentNodeIsContaining && (lastPosition === "fixed" || lastPosition === "absolute" && computedStyle.position === "static");
+    if (shouldDropCurrentNode) {
+      result = result.filter((ancestor) => ancestor !== currentNode);
+    } else {
+      lastKeptComputedStyle = computedStyle;
+    }
+    currentNode = getParentNode(currentNode);
+  }
+  cache.set(element2, result);
+  return result;
+}
+function getClippingRect(_ref) {
+  let {
+    element: element2,
+    boundary,
+    rootBoundary,
+    strategy
+  } = _ref;
+  const elementClippingAncestors = boundary === "clippingAncestors" ? isTopLayer(element2) ? [] : getClippingElementAncestors(element2, this._c) : [].concat(boundary);
+  const clippingAncestors = [...elementClippingAncestors, rootBoundary];
+  const firstRect = getClientRectFromClippingAncestor(element2, clippingAncestors[0], strategy);
+  let top = firstRect.top;
+  let right = firstRect.right;
+  let bottom = firstRect.bottom;
+  let left = firstRect.left;
+  for (let i = 1; i < clippingAncestors.length; i++) {
+    const rect = getClientRectFromClippingAncestor(element2, clippingAncestors[i], strategy);
+    top = max(rect.top, top);
+    right = min(rect.right, right);
+    bottom = min(rect.bottom, bottom);
+    left = max(rect.left, left);
+  }
+  return {
+    width: right - left,
+    height: bottom - top,
+    x: left,
+    y: top
+  };
+}
+function getDimensions(element2) {
+  const {
+    width,
+    height
+  } = getCssDimensions(element2);
+  return {
+    width,
+    height
+  };
+}
+function getRectRelativeToOffsetParent(element2, offsetParent, strategy) {
+  const isOffsetParentAnElement = isHTMLElement(offsetParent);
+  const documentElement = getDocumentElement(offsetParent);
+  const isFixed = strategy === "fixed";
+  const rect = getBoundingClientRect(element2, true, isFixed, offsetParent);
+  let scroll = {
+    scrollLeft: 0,
+    scrollTop: 0
+  };
+  const offsets = createCoords(0);
+  if (isOffsetParentAnElement || !isFixed) {
+    if (getNodeName(offsetParent) !== "body" || isOverflowElement(documentElement)) {
+      scroll = getNodeScroll(offsetParent);
+    }
+    if (isOffsetParentAnElement) {
+      const offsetRect = getBoundingClientRect(offsetParent, true, isFixed, offsetParent);
+      offsets.x = offsetRect.x + offsetParent.clientLeft;
+      offsets.y = offsetRect.y + offsetParent.clientTop;
+    }
+  }
+  if (!isOffsetParentAnElement && documentElement) {
+    offsets.x = getWindowScrollBarX(documentElement);
+  }
+  const htmlOffset = documentElement && !isOffsetParentAnElement && !isFixed ? getHTMLOffset(documentElement, scroll) : createCoords(0);
+  const x = rect.left + scroll.scrollLeft - offsets.x - htmlOffset.x;
+  const y = rect.top + scroll.scrollTop - offsets.y - htmlOffset.y;
+  return {
+    x,
+    y,
+    width: rect.width,
+    height: rect.height
+  };
+}
+function isStaticPositioned(element2) {
+  return getComputedStyle$1(element2).position === "static";
+}
+function getTrueOffsetParent(element2, polyfill2) {
+  if (!isHTMLElement(element2) || getComputedStyle$1(element2).position === "fixed") {
+    return null;
+  }
+  if (polyfill2) {
+    return polyfill2(element2);
+  }
+  let rawOffsetParent = element2.offsetParent;
+  if (getDocumentElement(element2) === rawOffsetParent) {
+    rawOffsetParent = rawOffsetParent.ownerDocument.body;
+  }
+  return rawOffsetParent;
+}
+function getOffsetParent(element2, polyfill2) {
+  const win = getWindow(element2);
+  if (isTopLayer(element2)) {
+    return win;
+  }
+  if (!isHTMLElement(element2)) {
+    let svgOffsetParent = getParentNode(element2);
+    while (svgOffsetParent && !isLastTraversableNode(svgOffsetParent)) {
+      if (isElement(svgOffsetParent) && !isStaticPositioned(svgOffsetParent)) {
+        return svgOffsetParent;
+      }
+      svgOffsetParent = getParentNode(svgOffsetParent);
+    }
+    return win;
+  }
+  let offsetParent = getTrueOffsetParent(element2, polyfill2);
+  while (offsetParent && isTableElement(offsetParent) && isStaticPositioned(offsetParent)) {
+    offsetParent = getTrueOffsetParent(offsetParent, polyfill2);
+  }
+  if (offsetParent && isLastTraversableNode(offsetParent) && isStaticPositioned(offsetParent) && !isContainingBlock(offsetParent)) {
+    return win;
+  }
+  return offsetParent || getContainingBlock(element2) || win;
+}
+const getElementRects = async function(data) {
+  const getOffsetParentFn = this.getOffsetParent || getOffsetParent;
+  const getDimensionsFn = this.getDimensions;
+  const floatingDimensions = await getDimensionsFn(data.floating);
+  return {
+    reference: getRectRelativeToOffsetParent(data.reference, await getOffsetParentFn(data.floating), data.strategy),
+    floating: {
+      x: 0,
+      y: 0,
+      width: floatingDimensions.width,
+      height: floatingDimensions.height
+    }
+  };
+};
+function isRTL(element2) {
+  return getComputedStyle$1(element2).direction === "rtl";
+}
+const platform = {
+  convertOffsetParentRelativeRectToViewportRelativeRect,
+  getDocumentElement,
+  getClippingRect,
+  getOffsetParent,
+  getElementRects,
+  getClientRects,
+  getDimensions,
+  getScale,
+  isElement,
+  isRTL
+};
+function rectsAreEqual(a, b) {
+  return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+}
+function observeMove(element2, onMove, ancestorResize) {
+  let io = null;
+  let timeoutId;
+  const root2 = getDocumentElement(element2);
+  function cleanup() {
+    var _io;
+    clearTimeout(timeoutId);
+    (_io = io) == null || _io.disconnect();
+    io = null;
+  }
+  function refresh(skip, threshold) {
+    if (skip === void 0) {
+      skip = false;
+    }
+    if (threshold === void 0) {
+      threshold = 1;
+    }
+    cleanup();
+    const elementRectForRootMargin = element2.getBoundingClientRect();
+    const {
+      left,
+      top,
+      width,
+      height
+    } = elementRectForRootMargin;
+    if (!skip) {
+      onMove();
+    }
+    if (!width || !height) {
+      return;
+    }
+    const insetTop = floor(top);
+    const insetRight = floor(root2.clientWidth - (left + width));
+    const insetBottom = floor(root2.clientHeight - (top + height));
+    const insetLeft = floor(left);
+    const rootMargin = -insetTop + "px " + -insetRight + "px " + -insetBottom + "px " + -insetLeft + "px";
+    const options = {
+      rootMargin,
+      threshold: max(0, min(1, threshold)) || 1
+    };
+    let isFirstUpdate = true;
+    function handleObserve(entries) {
+      const ratio = entries[0].intersectionRatio;
+      if (!rectsAreEqual(elementRectForRootMargin, element2.getBoundingClientRect())) {
+        return refresh();
+      }
+      if (ratio !== threshold) {
+        if (!isFirstUpdate) {
+          return refresh();
+        }
+        if (!ratio) {
+          timeoutId = setTimeout(() => {
+            refresh(false, 1e-7);
+          }, 1e3);
+        } else {
+          refresh(false, ratio);
+        }
+      }
+      isFirstUpdate = false;
+    }
+    try {
+      io = new IntersectionObserver(handleObserve, {
+        ...options,
+        // Handle <iframe>s
+        root: root2.ownerDocument
+      });
+    } catch (_e3) {
+      io = new IntersectionObserver(handleObserve, options);
+    }
+    io.observe(element2);
+  }
+  const win = getWindow(element2);
+  const handleResize = () => refresh(ancestorResize);
+  win.addEventListener("resize", handleResize);
+  refresh(true);
+  return () => {
+    win.removeEventListener("resize", handleResize);
+    cleanup();
+  };
+}
+function autoUpdate(reference, floating, update, options) {
+  if (options === void 0) {
+    options = {};
+  }
+  const {
+    ancestorScroll = true,
+    ancestorResize = true,
+    elementResize = typeof ResizeObserver === "function",
+    layoutShift = typeof IntersectionObserver === "function",
+    animationFrame = false
+  } = options;
+  const referenceEl = unwrapElement(reference);
+  const ancestors = ancestorScroll || ancestorResize ? [...referenceEl ? getOverflowAncestors(referenceEl) : [], ...floating ? getOverflowAncestors(floating) : []] : [];
+  ancestors.forEach((ancestor) => {
+    ancestorScroll && ancestor.addEventListener("scroll", update);
+    ancestorResize && ancestor.addEventListener("resize", update);
+  });
+  const cleanupIo = referenceEl && layoutShift ? observeMove(referenceEl, update, ancestorResize) : null;
+  let reobserveFrame = -1;
+  let resizeObserver = null;
+  if (elementResize) {
+    resizeObserver = new ResizeObserver((_ref) => {
+      let [firstEntry] = _ref;
+      if (firstEntry && firstEntry.target === referenceEl && resizeObserver && floating) {
+        resizeObserver.unobserve(floating);
+        cancelAnimationFrame(reobserveFrame);
+        reobserveFrame = requestAnimationFrame(() => {
+          var _resizeObserver;
+          (_resizeObserver = resizeObserver) == null || _resizeObserver.observe(floating);
+        });
+      }
+      update();
+    });
+    if (referenceEl && !animationFrame) {
+      resizeObserver.observe(referenceEl);
+    }
+    if (floating) {
+      resizeObserver.observe(floating);
+    }
+  }
+  let frameId;
+  let prevRefRect = animationFrame ? getBoundingClientRect(reference) : null;
+  if (animationFrame) {
+    frameLoop();
+  }
+  function frameLoop() {
+    const nextRefRect = getBoundingClientRect(reference);
+    if (prevRefRect && !rectsAreEqual(prevRefRect, nextRefRect)) {
+      update();
+    }
+    prevRefRect = nextRefRect;
+    frameId = requestAnimationFrame(frameLoop);
+  }
+  update();
+  return () => {
+    var _resizeObserver2;
+    ancestors.forEach((ancestor) => {
+      ancestorScroll && ancestor.removeEventListener("scroll", update);
+      ancestorResize && ancestor.removeEventListener("resize", update);
+    });
+    cleanupIo == null || cleanupIo();
+    (_resizeObserver2 = resizeObserver) == null || _resizeObserver2.disconnect();
+    resizeObserver = null;
+    if (animationFrame) {
+      cancelAnimationFrame(frameId);
+    }
+  };
+}
+const offset$1 = offset$2;
+const shift$1 = shift$2;
+const flip$1 = flip$2;
+const size$1 = size$2;
+const computePosition = (reference, floating, options) => {
+  const cache = /* @__PURE__ */ new Map();
+  const mergedOptions = options != null ? options : {};
+  const platformWithCache = {
+    ...platform,
+    ...mergedOptions.platform,
+    _c: cache
+  };
+  return computePosition$1(reference, floating, {
+    ...mergedOptions,
+    platform: platformWithCache
+  });
+};
+var isClient = typeof document !== "undefined";
+var noop = function noop3() {
+};
+var index$1 = isClient ? reactExports.useLayoutEffect : noop;
+function deepEqual(a, b) {
+  if (a === b) {
+    return true;
+  }
+  if (typeof a !== typeof b) {
+    return false;
+  }
+  if (typeof a === "function" && a.toString() === b.toString()) {
+    return true;
+  }
+  let length;
+  let i;
+  let keys2;
+  if (a && b && typeof a === "object") {
+    if (Array.isArray(a)) {
+      length = a.length;
+      if (length !== b.length) return false;
+      for (i = length; i-- !== 0; ) {
+        if (!deepEqual(a[i], b[i])) {
+          return false;
+        }
+      }
+      return true;
+    }
+    keys2 = Object.keys(a);
+    length = keys2.length;
+    if (length !== Object.keys(b).length) {
+      return false;
+    }
+    for (i = length; i-- !== 0; ) {
+      if (!{}.hasOwnProperty.call(b, keys2[i])) {
+        return false;
+      }
+    }
+    for (i = length; i-- !== 0; ) {
+      const key = keys2[i];
+      if (key === "_owner" && a.$$typeof) {
+        continue;
+      }
+      if (!deepEqual(a[key], b[key])) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return a !== a && b !== b;
+}
+function getDPR(element2) {
+  if (typeof window === "undefined") {
+    return 1;
+  }
+  const win = element2.ownerDocument.defaultView || window;
+  return win.devicePixelRatio || 1;
+}
+function roundByDPR(element2, value) {
+  const dpr = getDPR(element2);
+  return Math.round(value * dpr) / dpr;
+}
+function useLatestRef(value) {
+  const ref = reactExports.useRef(value);
+  index$1(() => {
+    ref.current = value;
+  });
+  return ref;
+}
+function useFloating$1(options) {
+  if (options === void 0) {
+    options = {};
+  }
+  const {
+    placement = "bottom",
+    strategy = "absolute",
+    middleware = [],
+    platform: platform2,
+    elements: {
+      reference: externalReference,
+      floating: externalFloating
+    } = {},
+    transform = true,
+    whileElementsMounted,
+    open
+  } = options;
+  const [data, setData] = reactExports.useState({
+    x: 0,
+    y: 0,
+    strategy,
+    placement,
+    middlewareData: {},
+    isPositioned: false
+  });
+  const [latestMiddleware, setLatestMiddleware] = reactExports.useState(middleware);
+  if (!deepEqual(latestMiddleware, middleware)) {
+    setLatestMiddleware(middleware);
+  }
+  const [_reference, _setReference] = reactExports.useState(null);
+  const [_floating, _setFloating] = reactExports.useState(null);
+  const setReference = reactExports.useCallback((node2) => {
+    if (node2 !== referenceRef.current) {
+      referenceRef.current = node2;
+      _setReference(node2);
+    }
+  }, []);
+  const setFloating = reactExports.useCallback((node2) => {
+    if (node2 !== floatingRef.current) {
+      floatingRef.current = node2;
+      _setFloating(node2);
+    }
+  }, []);
+  const referenceEl = externalReference || _reference;
+  const floatingEl = externalFloating || _floating;
+  const referenceRef = reactExports.useRef(null);
+  const floatingRef = reactExports.useRef(null);
+  const dataRef = reactExports.useRef(data);
+  const hasWhileElementsMounted = whileElementsMounted != null;
+  const whileElementsMountedRef = useLatestRef(whileElementsMounted);
+  const platformRef = useLatestRef(platform2);
+  const openRef = useLatestRef(open);
+  const update = reactExports.useCallback(() => {
+    if (!referenceRef.current || !floatingRef.current) {
+      return;
+    }
+    const config = {
+      placement,
+      strategy,
+      middleware: latestMiddleware
+    };
+    if (platformRef.current) {
+      config.platform = platformRef.current;
+    }
+    computePosition(referenceRef.current, floatingRef.current, config).then((data2) => {
+      const fullData = {
+        ...data2,
+        // The floating element's position may be recomputed while it's closed
+        // but still mounted (such as when transitioning out). To ensure
+        // `isPositioned` will be `false` initially on the next open, avoid
+        // setting it to `true` when `open === false` (must be specified).
+        isPositioned: openRef.current !== false
+      };
+      if (isMountedRef.current && !deepEqual(dataRef.current, fullData)) {
+        dataRef.current = fullData;
+        reactDomExports.flushSync(() => {
+          setData(fullData);
+        });
+      }
+    });
+  }, [latestMiddleware, placement, strategy, platformRef, openRef]);
+  index$1(() => {
+    if (open === false && dataRef.current.isPositioned) {
+      dataRef.current.isPositioned = false;
+      setData((data2) => ({
+        ...data2,
+        isPositioned: false
+      }));
+    }
+  }, [open]);
+  const isMountedRef = reactExports.useRef(false);
+  index$1(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+  index$1(() => {
+    if (referenceEl) referenceRef.current = referenceEl;
+    if (floatingEl) floatingRef.current = floatingEl;
+    if (referenceEl && floatingEl) {
+      if (whileElementsMountedRef.current) {
+        return whileElementsMountedRef.current(referenceEl, floatingEl, update);
+      }
+      update();
+    }
+  }, [referenceEl, floatingEl, update, whileElementsMountedRef, hasWhileElementsMounted]);
+  const refs = reactExports.useMemo(() => ({
+    reference: referenceRef,
+    floating: floatingRef,
+    setReference,
+    setFloating
+  }), [setReference, setFloating]);
+  const elements = reactExports.useMemo(() => ({
+    reference: referenceEl,
+    floating: floatingEl
+  }), [referenceEl, floatingEl]);
+  const floatingStyles = reactExports.useMemo(() => {
+    const initialStyles = {
+      position: strategy,
+      left: 0,
+      top: 0
+    };
+    if (!elements.floating) {
+      return initialStyles;
+    }
+    const x = roundByDPR(elements.floating, data.x);
+    const y = roundByDPR(elements.floating, data.y);
+    if (transform) {
+      return {
+        ...initialStyles,
+        transform: "translate(" + x + "px, " + y + "px)",
+        ...getDPR(elements.floating) >= 1.5 && {
+          willChange: "transform"
+        }
+      };
+    }
+    return {
+      position: strategy,
+      left: x,
+      top: y
+    };
+  }, [strategy, transform, elements.floating, data.x, data.y]);
+  return reactExports.useMemo(() => ({
+    ...data,
+    update,
+    refs,
+    elements,
+    floatingStyles
+  }), [data, update, refs, elements, floatingStyles]);
+}
+const offset = (options, deps) => {
+  const result = offset$1(options);
+  return {
+    name: result.name,
+    fn: result.fn,
+    options: [options, deps]
+  };
+};
+const shift = (options, deps) => {
+  const result = shift$1(options);
+  return {
+    name: result.name,
+    fn: result.fn,
+    options: [options, deps]
+  };
+};
+const flip = (options, deps) => {
+  const result = flip$1(options);
+  return {
+    name: result.name,
+    fn: result.fn,
+    options: [options, deps]
+  };
+};
+const size = (options, deps) => {
+  const result = size$1(options);
+  return {
+    name: result.name,
+    fn: result.fn,
+    options: [options, deps]
+  };
+};
+const FOCUSABLE_ATTRIBUTE = "data-floating-ui-focusable";
+const ACTIVE_KEY = "active";
+const SELECTED_KEY = "selected";
+const SafeReact = {
+  ...React
+};
+let serverHandoffComplete = false;
+let count = 0;
+const genId = () => (
+  // Ensure the id is unique with multiple independent versions of Floating UI
+  // on <React 18
+  "floating-ui-" + Math.random().toString(36).slice(2, 6) + count++
+);
+function useFloatingId() {
+  const [id, setId] = reactExports.useState(() => serverHandoffComplete ? genId() : void 0);
+  index$2(() => {
+    if (id == null) {
+      setId(genId());
+    }
+  }, []);
+  reactExports.useEffect(() => {
+    serverHandoffComplete = true;
+  }, []);
+  return id;
+}
+const useReactId = SafeReact.useId;
+const useId$1 = useReactId || useFloatingId;
+function createEventEmitter() {
+  const map2 = /* @__PURE__ */ new Map();
+  return {
+    emit(event, data) {
+      var _map$get;
+      (_map$get = map2.get(event)) == null || _map$get.forEach((listener) => listener(data));
+    },
+    on(event, listener) {
+      if (!map2.has(event)) {
+        map2.set(event, /* @__PURE__ */ new Set());
+      }
+      map2.get(event).add(listener);
+    },
+    off(event, listener) {
+      var _map$get2;
+      (_map$get2 = map2.get(event)) == null || _map$get2.delete(listener);
+    }
+  };
+}
+const FloatingNodeContext = /* @__PURE__ */ reactExports.createContext(null);
+const FloatingTreeContext = /* @__PURE__ */ reactExports.createContext(null);
+const useFloatingParentNodeId = () => {
+  var _React$useContext;
+  return ((_React$useContext = reactExports.useContext(FloatingNodeContext)) == null ? void 0 : _React$useContext.id) || null;
+};
+const useFloatingTree = () => reactExports.useContext(FloatingTreeContext);
+function createAttribute(name2) {
+  return "data-floating-ui-" + name2;
+}
+const HIDDEN_STYLES = {
+  border: 0,
+  clip: "rect(0 0 0 0)",
+  height: "1px",
+  margin: "-1px",
+  overflow: "hidden",
+  padding: 0,
+  position: "fixed",
+  whiteSpace: "nowrap",
+  width: "1px",
+  top: 0,
+  left: 0
+};
+const FocusGuard = /* @__PURE__ */ reactExports.forwardRef(function FocusGuard2(props2, ref) {
+  const [role, setRole] = reactExports.useState();
+  index$2(() => {
+    if (isSafari()) {
+      setRole("button");
+    }
+  }, []);
+  const restProps = {
+    ref,
+    tabIndex: 0,
+    // Role is only for VoiceOver
+    role,
+    "aria-hidden": role ? void 0 : true,
+    [createAttribute("focus-guard")]: "",
+    style: HIDDEN_STYLES
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("span", {
+    ...props2,
+    ...restProps
+  });
+});
+const HIDDEN_OWNER_STYLES = {
+  clipPath: "inset(50%)",
+  position: "fixed",
+  top: 0,
+  left: 0
+};
+const PortalContext = /* @__PURE__ */ reactExports.createContext(null);
+const attr = /* @__PURE__ */ createAttribute("portal");
+function useFloatingPortalNode(props2) {
+  if (props2 === void 0) {
+    props2 = {};
+  }
+  const {
+    id,
+    root: root2
+  } = props2;
+  const uniqueId = useId$1();
+  const portalContext = usePortalContext();
+  const [portalNode, setPortalNode] = reactExports.useState(null);
+  const portalNodeRef = reactExports.useRef(null);
+  index$2(() => {
+    return () => {
+      portalNode == null || portalNode.remove();
+      queueMicrotask(() => {
+        portalNodeRef.current = null;
+      });
+    };
+  }, [portalNode]);
+  index$2(() => {
+    if (!uniqueId) return;
+    if (portalNodeRef.current) return;
+    const existingIdRoot = id ? document.getElementById(id) : null;
+    if (!existingIdRoot) return;
+    const subRoot = document.createElement("div");
+    subRoot.id = uniqueId;
+    subRoot.setAttribute(attr, "");
+    existingIdRoot.appendChild(subRoot);
+    portalNodeRef.current = subRoot;
+    setPortalNode(subRoot);
+  }, [id, uniqueId]);
+  index$2(() => {
+    if (root2 === null) return;
+    if (!uniqueId) return;
+    if (portalNodeRef.current) return;
+    let container = root2 || (portalContext == null ? void 0 : portalContext.portalNode);
+    if (container && !isNode(container)) container = container.current;
+    container = container || document.body;
+    let idWrapper = null;
+    if (id) {
+      idWrapper = document.createElement("div");
+      idWrapper.id = id;
+      container.appendChild(idWrapper);
+    }
+    const subRoot = document.createElement("div");
+    subRoot.id = uniqueId;
+    subRoot.setAttribute(attr, "");
+    container = idWrapper || container;
+    container.appendChild(subRoot);
+    portalNodeRef.current = subRoot;
+    setPortalNode(subRoot);
+  }, [id, root2, uniqueId, portalContext]);
+  return portalNode;
+}
+function FloatingPortal(props2) {
+  const {
+    children,
+    id,
+    root: root2,
+    preserveTabOrder = true
+  } = props2;
+  const portalNode = useFloatingPortalNode({
+    id,
+    root: root2
+  });
+  const [focusManagerState, setFocusManagerState] = reactExports.useState(null);
+  const beforeOutsideRef = reactExports.useRef(null);
+  const afterOutsideRef = reactExports.useRef(null);
+  const beforeInsideRef = reactExports.useRef(null);
+  const afterInsideRef = reactExports.useRef(null);
+  const modal = focusManagerState == null ? void 0 : focusManagerState.modal;
+  const open = focusManagerState == null ? void 0 : focusManagerState.open;
+  const shouldRenderGuards = (
+    // The FocusManager and therefore floating element are currently open/
+    // rendered.
+    !!focusManagerState && // Guards are only for non-modal focus management.
+    !focusManagerState.modal && // Don't render if unmount is transitioning.
+    focusManagerState.open && preserveTabOrder && !!(root2 || portalNode)
+  );
+  reactExports.useEffect(() => {
+    if (!portalNode || !preserveTabOrder || modal) {
+      return;
+    }
+    function onFocus(event) {
+      if (portalNode && isOutsideEvent(event)) {
+        const focusing = event.type === "focusin";
+        const manageFocus = focusing ? enableFocusInside : disableFocusInside;
+        manageFocus(portalNode);
+      }
+    }
+    portalNode.addEventListener("focusin", onFocus, true);
+    portalNode.addEventListener("focusout", onFocus, true);
+    return () => {
+      portalNode.removeEventListener("focusin", onFocus, true);
+      portalNode.removeEventListener("focusout", onFocus, true);
+    };
+  }, [portalNode, preserveTabOrder, modal]);
+  reactExports.useEffect(() => {
+    if (!portalNode) return;
+    if (open) return;
+    enableFocusInside(portalNode);
+  }, [open, portalNode]);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(PortalContext.Provider, {
+    value: reactExports.useMemo(() => ({
+      preserveTabOrder,
+      beforeOutsideRef,
+      afterOutsideRef,
+      beforeInsideRef,
+      afterInsideRef,
+      portalNode,
+      setFocusManagerState
+    }), [preserveTabOrder, portalNode]),
+    children: [shouldRenderGuards && portalNode && /* @__PURE__ */ jsxRuntimeExports.jsx(FocusGuard, {
+      "data-type": "outside",
+      ref: beforeOutsideRef,
+      onFocus: (event) => {
+        if (isOutsideEvent(event, portalNode)) {
+          var _beforeInsideRef$curr;
+          (_beforeInsideRef$curr = beforeInsideRef.current) == null || _beforeInsideRef$curr.focus();
+        } else {
+          const domReference = focusManagerState ? focusManagerState.domReference : null;
+          const prevTabbable = getPreviousTabbable(domReference);
+          prevTabbable == null || prevTabbable.focus();
+        }
+      }
+    }), shouldRenderGuards && portalNode && /* @__PURE__ */ jsxRuntimeExports.jsx("span", {
+      "aria-owns": portalNode.id,
+      style: HIDDEN_OWNER_STYLES
+    }), portalNode && /* @__PURE__ */ reactDomExports.createPortal(children, portalNode), shouldRenderGuards && portalNode && /* @__PURE__ */ jsxRuntimeExports.jsx(FocusGuard, {
+      "data-type": "outside",
+      ref: afterOutsideRef,
+      onFocus: (event) => {
+        if (isOutsideEvent(event, portalNode)) {
+          var _afterInsideRef$curre;
+          (_afterInsideRef$curre = afterInsideRef.current) == null || _afterInsideRef$curre.focus();
+        } else {
+          const domReference = focusManagerState ? focusManagerState.domReference : null;
+          const nextTabbable = getNextTabbable(domReference);
+          nextTabbable == null || nextTabbable.focus();
+          (focusManagerState == null ? void 0 : focusManagerState.closeOnFocusOut) && (focusManagerState == null ? void 0 : focusManagerState.onOpenChange(false, event.nativeEvent, "focus-out"));
+        }
+      }
+    })]
+  });
+}
+const usePortalContext = () => reactExports.useContext(PortalContext);
+const bubbleHandlerKeys = {
+  pointerdown: "onPointerDown",
+  mousedown: "onMouseDown",
+  click: "onClick"
+};
+const captureHandlerKeys = {
+  pointerdown: "onPointerDownCapture",
+  mousedown: "onMouseDownCapture",
+  click: "onClickCapture"
+};
+const normalizeProp = (normalizable) => {
+  var _normalizable$escapeK, _normalizable$outside;
+  return {
+    escapeKey: typeof normalizable === "boolean" ? normalizable : (_normalizable$escapeK = normalizable == null ? void 0 : normalizable.escapeKey) != null ? _normalizable$escapeK : false,
+    outsidePress: typeof normalizable === "boolean" ? normalizable : (_normalizable$outside = normalizable == null ? void 0 : normalizable.outsidePress) != null ? _normalizable$outside : true
+  };
+};
+function useDismiss(context, props2) {
+  if (props2 === void 0) {
+    props2 = {};
+  }
+  const {
+    open,
+    onOpenChange,
+    elements,
+    dataRef
+  } = context;
+  const {
+    enabled = true,
+    escapeKey = true,
+    outsidePress: unstable_outsidePress = true,
+    outsidePressEvent = "pointerdown",
+    referencePress = false,
+    referencePressEvent = "pointerdown",
+    ancestorScroll = false,
+    bubbles,
+    capture
+  } = props2;
+  const tree = useFloatingTree();
+  const outsidePressFn = useEffectEvent(typeof unstable_outsidePress === "function" ? unstable_outsidePress : () => false);
+  const outsidePress = typeof unstable_outsidePress === "function" ? outsidePressFn : unstable_outsidePress;
+  const endedOrStartedInsideRef = reactExports.useRef(false);
+  const {
+    escapeKey: escapeKeyBubbles,
+    outsidePress: outsidePressBubbles
+  } = normalizeProp(bubbles);
+  const {
+    escapeKey: escapeKeyCapture,
+    outsidePress: outsidePressCapture
+  } = normalizeProp(capture);
+  const isComposingRef = reactExports.useRef(false);
+  const closeOnEscapeKeyDown = useEffectEvent((event) => {
+    var _dataRef$current$floa;
+    if (!open || !enabled || !escapeKey || event.key !== "Escape") {
+      return;
+    }
+    if (isComposingRef.current) {
+      return;
+    }
+    const nodeId = (_dataRef$current$floa = dataRef.current.floatingContext) == null ? void 0 : _dataRef$current$floa.nodeId;
+    const children = tree ? getNodeChildren(tree.nodesRef.current, nodeId) : [];
+    if (!escapeKeyBubbles) {
+      event.stopPropagation();
+      if (children.length > 0) {
+        let shouldDismiss = true;
+        children.forEach((child) => {
+          var _child$context;
+          if ((_child$context = child.context) != null && _child$context.open && !child.context.dataRef.current.__escapeKeyBubbles) {
+            shouldDismiss = false;
+            return;
+          }
+        });
+        if (!shouldDismiss) {
+          return;
+        }
+      }
+    }
+    onOpenChange(false, isReactEvent(event) ? event.nativeEvent : event, "escape-key");
+  });
+  const closeOnEscapeKeyDownCapture = useEffectEvent((event) => {
+    var _getTarget2;
+    const callback = () => {
+      var _getTarget;
+      closeOnEscapeKeyDown(event);
+      (_getTarget = getTarget(event)) == null || _getTarget.removeEventListener("keydown", callback);
+    };
+    (_getTarget2 = getTarget(event)) == null || _getTarget2.addEventListener("keydown", callback);
+  });
+  const closeOnPressOutside = useEffectEvent((event) => {
+    var _dataRef$current$floa2;
+    const insideReactTree = dataRef.current.insideReactTree;
+    dataRef.current.insideReactTree = false;
+    const endedOrStartedInside = endedOrStartedInsideRef.current;
+    endedOrStartedInsideRef.current = false;
+    if (outsidePressEvent === "click" && endedOrStartedInside) {
+      return;
+    }
+    if (insideReactTree) {
+      return;
+    }
+    if (typeof outsidePress === "function" && !outsidePress(event)) {
+      return;
+    }
+    const target = getTarget(event);
+    const inertSelector = "[" + createAttribute("inert") + "]";
+    const markers = getDocument(elements.floating).querySelectorAll(inertSelector);
+    let targetRootAncestor = isElement(target) ? target : null;
+    while (targetRootAncestor && !isLastTraversableNode(targetRootAncestor)) {
+      const nextParent = getParentNode(targetRootAncestor);
+      if (isLastTraversableNode(nextParent) || !isElement(nextParent)) {
+        break;
+      }
+      targetRootAncestor = nextParent;
+    }
+    if (markers.length && isElement(target) && !isRootElement(target) && // Clicked on a direct ancestor (e.g. FloatingOverlay).
+    !contains(target, elements.floating) && // If the target root element contains none of the markers, then the
+    // element was injected after the floating element rendered.
+    Array.from(markers).every((marker) => !contains(targetRootAncestor, marker))) {
+      return;
+    }
+    if (isHTMLElement(target) && floating) {
+      const lastTraversableNode = isLastTraversableNode(target);
+      const style = getComputedStyle$1(target);
+      const scrollRe = /auto|scroll/;
+      const isScrollableX = lastTraversableNode || scrollRe.test(style.overflowX);
+      const isScrollableY = lastTraversableNode || scrollRe.test(style.overflowY);
+      const canScrollX = isScrollableX && target.clientWidth > 0 && target.scrollWidth > target.clientWidth;
+      const canScrollY = isScrollableY && target.clientHeight > 0 && target.scrollHeight > target.clientHeight;
+      const isRTL2 = style.direction === "rtl";
+      const pressedVerticalScrollbar = canScrollY && (isRTL2 ? event.offsetX <= target.offsetWidth - target.clientWidth : event.offsetX > target.clientWidth);
+      const pressedHorizontalScrollbar = canScrollX && event.offsetY > target.clientHeight;
+      if (pressedVerticalScrollbar || pressedHorizontalScrollbar) {
+        return;
+      }
+    }
+    const nodeId = (_dataRef$current$floa2 = dataRef.current.floatingContext) == null ? void 0 : _dataRef$current$floa2.nodeId;
+    const targetIsInsideChildren = tree && getNodeChildren(tree.nodesRef.current, nodeId).some((node2) => {
+      var _node$context;
+      return isEventTargetWithin(event, (_node$context = node2.context) == null ? void 0 : _node$context.elements.floating);
+    });
+    if (isEventTargetWithin(event, elements.floating) || isEventTargetWithin(event, elements.domReference) || targetIsInsideChildren) {
+      return;
+    }
+    const children = tree ? getNodeChildren(tree.nodesRef.current, nodeId) : [];
+    if (children.length > 0) {
+      let shouldDismiss = true;
+      children.forEach((child) => {
+        var _child$context2;
+        if ((_child$context2 = child.context) != null && _child$context2.open && !child.context.dataRef.current.__outsidePressBubbles) {
+          shouldDismiss = false;
+          return;
+        }
+      });
+      if (!shouldDismiss) {
+        return;
+      }
+    }
+    onOpenChange(false, event, "outside-press");
+  });
+  const closeOnPressOutsideCapture = useEffectEvent((event) => {
+    var _getTarget4;
+    const callback = () => {
+      var _getTarget3;
+      closeOnPressOutside(event);
+      (_getTarget3 = getTarget(event)) == null || _getTarget3.removeEventListener(outsidePressEvent, callback);
+    };
+    (_getTarget4 = getTarget(event)) == null || _getTarget4.addEventListener(outsidePressEvent, callback);
+  });
+  reactExports.useEffect(() => {
+    if (!open || !enabled) {
+      return;
+    }
+    dataRef.current.__escapeKeyBubbles = escapeKeyBubbles;
+    dataRef.current.__outsidePressBubbles = outsidePressBubbles;
+    let compositionTimeout = -1;
+    function onScroll(event) {
+      onOpenChange(false, event, "ancestor-scroll");
+    }
+    function handleCompositionStart() {
+      window.clearTimeout(compositionTimeout);
+      isComposingRef.current = true;
+    }
+    function handleCompositionEnd() {
+      compositionTimeout = window.setTimeout(
+        () => {
+          isComposingRef.current = false;
+        },
+        // 0ms or 1ms don't work in Safari. 5ms appears to consistently work.
+        // Only apply to WebKit for the test to remain 0ms.
+        isWebKit() ? 5 : 0
+      );
+    }
+    const doc = getDocument(elements.floating);
+    if (escapeKey) {
+      doc.addEventListener("keydown", escapeKeyCapture ? closeOnEscapeKeyDownCapture : closeOnEscapeKeyDown, escapeKeyCapture);
+      doc.addEventListener("compositionstart", handleCompositionStart);
+      doc.addEventListener("compositionend", handleCompositionEnd);
+    }
+    outsidePress && doc.addEventListener(outsidePressEvent, outsidePressCapture ? closeOnPressOutsideCapture : closeOnPressOutside, outsidePressCapture);
+    let ancestors = [];
+    if (ancestorScroll) {
+      if (isElement(elements.domReference)) {
+        ancestors = getOverflowAncestors(elements.domReference);
+      }
+      if (isElement(elements.floating)) {
+        ancestors = ancestors.concat(getOverflowAncestors(elements.floating));
+      }
+      if (!isElement(elements.reference) && elements.reference && elements.reference.contextElement) {
+        ancestors = ancestors.concat(getOverflowAncestors(elements.reference.contextElement));
+      }
+    }
+    ancestors = ancestors.filter((ancestor) => {
+      var _doc$defaultView;
+      return ancestor !== ((_doc$defaultView = doc.defaultView) == null ? void 0 : _doc$defaultView.visualViewport);
+    });
+    ancestors.forEach((ancestor) => {
+      ancestor.addEventListener("scroll", onScroll);
+    });
+    return () => {
+      if (escapeKey) {
+        doc.removeEventListener("keydown", escapeKeyCapture ? closeOnEscapeKeyDownCapture : closeOnEscapeKeyDown, escapeKeyCapture);
+        doc.removeEventListener("compositionstart", handleCompositionStart);
+        doc.removeEventListener("compositionend", handleCompositionEnd);
+      }
+      outsidePress && doc.removeEventListener(outsidePressEvent, outsidePressCapture ? closeOnPressOutsideCapture : closeOnPressOutside, outsidePressCapture);
+      ancestors.forEach((ancestor) => {
+        ancestor.removeEventListener("scroll", onScroll);
+      });
+      window.clearTimeout(compositionTimeout);
+    };
+  }, [dataRef, elements, escapeKey, outsidePress, outsidePressEvent, open, onOpenChange, ancestorScroll, enabled, escapeKeyBubbles, outsidePressBubbles, closeOnEscapeKeyDown, escapeKeyCapture, closeOnEscapeKeyDownCapture, closeOnPressOutside, outsidePressCapture, closeOnPressOutsideCapture]);
+  reactExports.useEffect(() => {
+    dataRef.current.insideReactTree = false;
+  }, [dataRef, outsidePress, outsidePressEvent]);
+  const reference = reactExports.useMemo(() => ({
+    onKeyDown: closeOnEscapeKeyDown,
+    ...referencePress && {
+      [bubbleHandlerKeys[referencePressEvent]]: (event) => {
+        onOpenChange(false, event.nativeEvent, "reference-press");
+      },
+      ...referencePressEvent !== "click" && {
+        onClick(event) {
+          onOpenChange(false, event.nativeEvent, "reference-press");
+        }
+      }
+    }
+  }), [closeOnEscapeKeyDown, onOpenChange, referencePress, referencePressEvent]);
+  const floating = reactExports.useMemo(() => {
+    function setMouseDownOrUpInside(event) {
+      if (event.button !== 0) {
+        return;
+      }
+      endedOrStartedInsideRef.current = true;
+    }
+    return {
+      onKeyDown: closeOnEscapeKeyDown,
+      onMouseDown: setMouseDownOrUpInside,
+      onMouseUp: setMouseDownOrUpInside,
+      [captureHandlerKeys[outsidePressEvent]]: () => {
+        dataRef.current.insideReactTree = true;
+      }
+    };
+  }, [closeOnEscapeKeyDown, outsidePressEvent, dataRef]);
+  return reactExports.useMemo(() => enabled ? {
+    reference,
+    floating
+  } : {}, [enabled, reference, floating]);
+}
+function useFloatingRootContext(options) {
+  const {
+    open = false,
+    onOpenChange: onOpenChangeProp,
+    elements: elementsProp
+  } = options;
+  const floatingId = useId$1();
+  const dataRef = reactExports.useRef({});
+  const [events] = reactExports.useState(() => createEventEmitter());
+  const nested = useFloatingParentNodeId() != null;
+  const [positionReference, setPositionReference] = reactExports.useState(elementsProp.reference);
+  const onOpenChange = useEffectEvent((open2, event, reason) => {
+    dataRef.current.openEvent = open2 ? event : void 0;
+    events.emit("openchange", {
+      open: open2,
+      event,
+      reason,
+      nested
+    });
+    onOpenChangeProp == null || onOpenChangeProp(open2, event, reason);
+  });
+  const refs = reactExports.useMemo(() => ({
+    setPositionReference
+  }), []);
+  const elements = reactExports.useMemo(() => ({
+    reference: positionReference || elementsProp.reference || null,
+    floating: elementsProp.floating || null,
+    domReference: elementsProp.reference
+  }), [positionReference, elementsProp.reference, elementsProp.floating]);
+  return reactExports.useMemo(() => ({
+    dataRef,
+    open,
+    onOpenChange,
+    elements,
+    events,
+    floatingId,
+    refs
+  }), [open, onOpenChange, elements, events, floatingId, refs]);
+}
+function useFloating(_temp) {
+  var _elementsOption$refer, _elementsOption$float;
+  let {
+    elements: elementsOption,
+    ...options
+  } = _temp === void 0 ? {} : _temp;
+  const {
+    nodeId
+  } = options;
+  const internalRootContext = useFloatingRootContext({
+    ...options,
+    elements: {
+      reference: (_elementsOption$refer = elementsOption == null ? void 0 : elementsOption.reference) != null ? _elementsOption$refer : null,
+      floating: (_elementsOption$float = elementsOption == null ? void 0 : elementsOption.floating) != null ? _elementsOption$float : null
+    }
+  });
+  const rootContext = options.rootContext || internalRootContext;
+  const computedElements = rootContext.elements;
+  const [_domReference, setDomReference] = reactExports.useState(null);
+  const [positionReference, _setPositionReference] = reactExports.useState(null);
+  const optionDomReference = computedElements == null ? void 0 : computedElements.domReference;
+  const domReference = optionDomReference || _domReference;
+  const domReferenceRef = reactExports.useRef(null);
+  const tree = useFloatingTree();
+  index$2(() => {
+    if (domReference) {
+      domReferenceRef.current = domReference;
+    }
+  }, [domReference]);
+  const position2 = useFloating$1({
+    ...options,
+    elements: {
+      ...computedElements,
+      ...positionReference && {
+        reference: positionReference
+      }
+    }
+  });
+  const setPositionReference = reactExports.useCallback((node2) => {
+    const computedPositionReference = isElement(node2) ? {
+      getBoundingClientRect: () => node2.getBoundingClientRect(),
+      getClientRects: () => node2.getClientRects(),
+      contextElement: node2
+    } : node2;
+    _setPositionReference(computedPositionReference);
+    position2.refs.setReference(computedPositionReference);
+  }, [position2.refs]);
+  const setReference = reactExports.useCallback((node2) => {
+    if (isElement(node2) || node2 === null) {
+      domReferenceRef.current = node2;
+      setDomReference(node2);
+    }
+    if (isElement(position2.refs.reference.current) || position2.refs.reference.current === null || // Don't allow setting virtual elements using the old technique back to
+    // `null` to support `positionReference` + an unstable `reference`
+    // callback ref.
+    node2 !== null && !isElement(node2)) {
+      position2.refs.setReference(node2);
+    }
+  }, [position2.refs]);
+  const refs = reactExports.useMemo(() => ({
+    ...position2.refs,
+    setReference,
+    setPositionReference,
+    domReference: domReferenceRef
+  }), [position2.refs, setReference, setPositionReference]);
+  const elements = reactExports.useMemo(() => ({
+    ...position2.elements,
+    domReference
+  }), [position2.elements, domReference]);
+  const context = reactExports.useMemo(() => ({
+    ...position2,
+    ...rootContext,
+    refs,
+    elements,
+    nodeId
+  }), [position2, refs, elements, nodeId, rootContext]);
+  index$2(() => {
+    rootContext.dataRef.current.floatingContext = context;
+    const node2 = tree == null ? void 0 : tree.nodesRef.current.find((node22) => node22.id === nodeId);
+    if (node2) {
+      node2.context = context;
+    }
+  });
+  return reactExports.useMemo(() => ({
+    ...position2,
+    context,
+    refs,
+    elements
+  }), [position2, refs, elements, context]);
+}
+function mergeProps(userProps, propsList, elementKey) {
+  const map2 = /* @__PURE__ */ new Map();
+  const isItem = elementKey === "item";
+  let domUserProps = userProps;
+  if (isItem && userProps) {
+    const {
+      [ACTIVE_KEY]: _,
+      [SELECTED_KEY]: __,
+      ...validProps
+    } = userProps;
+    domUserProps = validProps;
+  }
+  return {
+    ...elementKey === "floating" && {
+      tabIndex: -1,
+      [FOCUSABLE_ATTRIBUTE]: ""
+    },
+    ...domUserProps,
+    ...propsList.map((value) => {
+      const propsOrGetProps = value ? value[elementKey] : null;
+      if (typeof propsOrGetProps === "function") {
+        return userProps ? propsOrGetProps(userProps) : null;
+      }
+      return propsOrGetProps;
+    }).concat(userProps).reduce((acc, props2) => {
+      if (!props2) {
+        return acc;
+      }
+      Object.entries(props2).forEach((_ref) => {
+        let [key, value] = _ref;
+        if (isItem && [ACTIVE_KEY, SELECTED_KEY].includes(key)) {
+          return;
+        }
+        if (key.indexOf("on") === 0) {
+          if (!map2.has(key)) {
+            map2.set(key, []);
+          }
+          if (typeof value === "function") {
+            var _map$get;
+            (_map$get = map2.get(key)) == null || _map$get.push(value);
+            acc[key] = function() {
+              var _map$get2;
+              for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+                args[_key] = arguments[_key];
+              }
+              return (_map$get2 = map2.get(key)) == null ? void 0 : _map$get2.map((fn) => fn(...args)).find((val) => val !== void 0);
+            };
+          }
+        } else {
+          acc[key] = value;
+        }
+      });
+      return acc;
+    }, {})
+  };
+}
+function useInteractions(propsList) {
+  if (propsList === void 0) {
+    propsList = [];
+  }
+  const referenceDeps = propsList.map((key) => key == null ? void 0 : key.reference);
+  const floatingDeps = propsList.map((key) => key == null ? void 0 : key.floating);
+  const itemDeps = propsList.map((key) => key == null ? void 0 : key.item);
+  const getReferenceProps = reactExports.useCallback(
+    (userProps) => mergeProps(userProps, propsList, "reference"),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    referenceDeps
+  );
+  const getFloatingProps = reactExports.useCallback(
+    (userProps) => mergeProps(userProps, propsList, "floating"),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    floatingDeps
+  );
+  const getItemProps = reactExports.useCallback(
+    (userProps) => mergeProps(userProps, propsList, "item"),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    itemDeps
+  );
+  return reactExports.useMemo(() => ({
+    getReferenceProps,
+    getFloatingProps,
+    getItemProps
+  }), [getReferenceProps, getFloatingProps, getItemProps]);
+}
+const componentRoleToAriaRoleMap = /* @__PURE__ */ new Map([["select", "listbox"], ["combobox", "listbox"], ["label", false]]);
+function useRole(context, props2) {
+  var _elements$domReferenc, _componentRoleToAriaR;
+  if (props2 === void 0) {
+    props2 = {};
+  }
+  const {
+    open,
+    elements,
+    floatingId: defaultFloatingId
+  } = context;
+  const {
+    enabled = true,
+    role = "dialog"
+  } = props2;
+  const defaultReferenceId = useId$1();
+  const referenceId = ((_elements$domReferenc = elements.domReference) == null ? void 0 : _elements$domReferenc.id) || defaultReferenceId;
+  const floatingId = reactExports.useMemo(() => {
+    var _getFloatingFocusElem;
+    return ((_getFloatingFocusElem = getFloatingFocusElement(elements.floating)) == null ? void 0 : _getFloatingFocusElem.id) || defaultFloatingId;
+  }, [elements.floating, defaultFloatingId]);
+  const ariaRole = (_componentRoleToAriaR = componentRoleToAriaRoleMap.get(role)) != null ? _componentRoleToAriaR : role;
+  const parentId = useFloatingParentNodeId();
+  const isNested = parentId != null;
+  const reference = reactExports.useMemo(() => {
+    if (ariaRole === "tooltip" || role === "label") {
+      return {
+        ["aria-" + (role === "label" ? "labelledby" : "describedby")]: open ? floatingId : void 0
+      };
+    }
+    return {
+      "aria-expanded": open ? "true" : "false",
+      "aria-haspopup": ariaRole === "alertdialog" ? "dialog" : ariaRole,
+      "aria-controls": open ? floatingId : void 0,
+      ...ariaRole === "listbox" && {
+        role: "combobox"
+      },
+      ...ariaRole === "menu" && {
+        id: referenceId
+      },
+      ...ariaRole === "menu" && isNested && {
+        role: "menuitem"
+      },
+      ...role === "select" && {
+        "aria-autocomplete": "none"
+      },
+      ...role === "combobox" && {
+        "aria-autocomplete": "list"
+      }
+    };
+  }, [ariaRole, floatingId, isNested, open, referenceId, role]);
+  const floating = reactExports.useMemo(() => {
+    const floatingProps = {
+      id: floatingId,
+      ...ariaRole && {
+        role: ariaRole
+      }
+    };
+    if (ariaRole === "tooltip" || role === "label") {
+      return floatingProps;
+    }
+    return {
+      ...floatingProps,
+      ...ariaRole === "menu" && {
+        "aria-labelledby": referenceId
+      }
+    };
+  }, [ariaRole, floatingId, referenceId, role]);
+  const item = reactExports.useCallback((_ref) => {
+    let {
+      active,
+      selected
+    } = _ref;
+    const commonProps = {
+      role: "option",
+      ...active && {
+        id: floatingId + "-fui-option"
+      }
+    };
+    switch (role) {
+      case "select":
+      case "combobox":
+        return {
+          ...commonProps,
+          "aria-selected": selected
+        };
+    }
+    return {};
+  }, [floatingId, role]);
+  return reactExports.useMemo(() => enabled ? {
+    reference,
+    floating,
+    item
+  } : {}, [enabled, reference, floating, item]);
+}
+function Autocomplete({
+  value,
+  onChange,
+  options,
+  onSelectOption,
+  placeholder,
+  allowCustom = true,
+  className,
+  disabled = false,
+  id
+}) {
+  const [isOpen, setIsOpen] = reactExports.useState(false);
+  const [highlightedIndex, setHighlightedIndex] = reactExports.useState(0);
+  const { refs, floatingStyles, context } = useFloating({
+    open: isOpen,
+    onOpenChange: setIsOpen,
+    middleware: [
+      offset(4),
+      flip({ padding: 8 }),
+      shift({ padding: 8 }),
+      size({
+        apply({ rects, elements }) {
+          Object.assign(elements.floating.style, {
+            width: `${Math.max(rects.reference.width, 240)}px`,
+            maxHeight: "260px"
+          });
+        }
+      })
+    ],
+    whileElementsMounted: autoUpdate
+  });
+  const dismiss = useDismiss(context);
+  const role = useRole(context, { role: "listbox" });
+  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, role]);
+  const listRef = reactExports.useRef(null);
+  const filteredOptions = reactExports.useMemo(() => {
+    const rawQuery = value.trim().toLowerCase();
+    const isNegation = rawQuery.startsWith("-");
+    const query = isNegation ? rawQuery.slice(1) : rawQuery;
+    if (!query) {
+      return options.slice(0, 50);
+    }
+    return options.filter((opt) => {
+      var _a2;
+      const target = opt.label.toLowerCase();
+      const grp = ((_a2 = opt.group) == null ? void 0 : _a2.toLowerCase()) || "";
+      return target.includes(query) || grp.includes(query);
+    }).slice(0, 50);
+  }, [options, value]);
+  reactExports.useEffect(() => {
+    if (isOpen && listRef.current && highlightedIndex >= 0) {
+      const activeEl = listRef.current.querySelector('[data-highlighted="true"]');
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: "nearest" });
+      }
+    }
+  }, [highlightedIndex, isOpen]);
+  const selectItem = reactExports.useCallback(
+    (opt) => {
+      const isNegation = value.trim().startsWith("-");
+      const finalVal = isNegation ? `-${opt.value}` : opt.value;
+      onChange(finalVal);
+      onSelectOption == null ? void 0 : onSelectOption(opt);
+      setIsOpen(false);
+    },
+    [value, onChange, onSelectOption]
+  );
+  const handleKeyDown = (e) => {
+    if (!isOpen) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setIsOpen(true);
+      }
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev + 1) % Math.max(1, filteredOptions.length));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedIndex(
+        (prev) => prev <= 0 ? Math.max(0, filteredOptions.length - 1) : prev - 1
+      );
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredOptions.length > 0 && highlightedIndex < filteredOptions.length) {
+        selectItem(filteredOptions[highlightedIndex]);
+      } else if (allowCustom) {
+        setIsOpen(false);
+      }
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
+    } else if (e.key === "Tab") {
+      if (filteredOptions.length > 0 && highlightedIndex < filteredOptions.length) {
+        selectItem(filteredOptions[highlightedIndex]);
+      }
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative w-full", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Input,
+      {
+        id,
+        ref: refs.setReference,
+        ...getReferenceProps(),
+        type: "text",
+        value,
+        onChange: (e) => {
+          onChange(e.target.value);
+          setHighlightedIndex(0);
+          if (!isOpen) setIsOpen(true);
+        },
+        onFocus: () => setIsOpen(true),
+        onKeyDown: handleKeyDown,
+        placeholder,
+        disabled,
+        className: cn("text-xs font-mono", className),
+        autoComplete: "off"
+      }
+    ),
+    isOpen && filteredOptions.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(FloatingPortal, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "div",
+      {
+        ref: (node2) => {
+          refs.setFloating(node2);
+          listRef.current = node2;
+        },
+        style: floatingStyles,
+        ...getFloatingProps(),
+        className: "z-[9999] overflow-y-auto rounded-lg border border-slate-800 bg-slate-900/95 p-1 shadow-2xl backdrop-blur-md font-mono text-xs text-slate-200",
+        children: filteredOptions.map((opt, idx) => {
+          const isHighlighted = idx === highlightedIndex;
+          return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              type: "button",
+              "data-highlighted": isHighlighted ? "true" : "false",
+              onMouseEnter: () => setHighlightedIndex(idx),
+              onClick: () => selectItem(opt),
+              className: cn(
+                "w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded text-left transition-colors cursor-pointer outline-none border border-transparent",
+                isHighlighted ? "bg-indigo-600/30 text-indigo-200 border-indigo-500/40" : "text-slate-300 hover:bg-slate-800/60"
+              ),
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col truncate flex-1 min-w-0", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 truncate", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold truncate", children: opt.label }),
+                    opt.group && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 shrink-0", children: opt.group })
+                  ] }),
+                  opt.description && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-400 truncate mt-0.5 font-sans leading-tight", children: opt.description })
+                ] }),
+                opt.badge && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  Badge,
+                  {
+                    variant: opt.badgeVariant || getPillarVariant(opt.badge.toLowerCase(), "secondary"),
+                    className: "text-[9px] uppercase px-1.5 py-0 shrink-0 font-bold",
+                    children: opt.badge
+                  }
+                )
+              ]
+            },
+            `${opt.value}-${idx}`
+          );
+        })
+      }
+    ) })
+  ] });
+}
+function TagAutocomplete({
+  values,
+  onChange,
+  options,
+  placeholder = "+ 添加 (回车/逗号)",
+  allowCustom = true,
+  className,
+  disabled = false,
+  badgeVariant = "default",
+  onTagClick
+}) {
+  const [inputVal, setInputVal] = reactExports.useState("");
+  const [isOpen, setIsOpen] = reactExports.useState(false);
+  const [highlightedIndex, setHighlightedIndex] = reactExports.useState(0);
+  const containerRef = reactExports.useRef(null);
+  const listRef = reactExports.useRef(null);
+  const { refs, floatingStyles, context } = useFloating({
+    open: isOpen,
+    onOpenChange: setIsOpen,
+    middleware: [
+      offset(4),
+      flip({ padding: 8 }),
+      shift({ padding: 8 }),
+      size({
+        apply({ rects, elements }) {
+          Object.assign(elements.floating.style, {
+            width: `${Math.max(rects.reference.width, 240)}px`,
+            maxHeight: "240px"
+          });
+        }
+      })
+    ],
+    whileElementsMounted: autoUpdate
+  });
+  const dismiss = useDismiss(context);
+  const role = useRole(context, { role: "listbox" });
+  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, role]);
+  const addTag = reactExports.useCallback(
+    (tag) => {
+      const clean = tag.trim().toLowerCase();
+      if (!clean) return;
+      if (!values.includes(clean)) {
+        onChange([...values, clean]);
+      }
+      setInputVal("");
+      setIsOpen(false);
+    },
+    [values, onChange]
+  );
+  const removeTag = reactExports.useCallback(
+    (tagToRemove) => {
+      onChange(values.filter((t) => t !== tagToRemove));
+    },
+    [values, onChange]
+  );
+  const filteredOptions = reactExports.useMemo(() => {
+    const raw = inputVal.trim().toLowerCase();
+    const isNeg = raw.startsWith("-");
+    const query = isNeg ? raw.slice(1) : raw;
+    return options.filter((opt) => {
+      var _a2;
+      if (values.includes(opt.value.toLowerCase())) return false;
+      if (!query) return true;
+      return opt.label.toLowerCase().includes(query) || ((_a2 = opt.group) == null ? void 0 : _a2.toLowerCase().includes(query)) || opt.value.toLowerCase().includes(query);
+    }).slice(0, 40);
+  }, [options, values, inputVal]);
+  const handleKeyDown = (e) => {
+    if (e.key === "Backspace" && !inputVal && values.length > 0) {
+      removeTag(values[values.length - 1]);
+      return;
+    }
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      if (isOpen && filteredOptions.length > 0 && highlightedIndex < filteredOptions.length) {
+        const selected = filteredOptions[highlightedIndex];
+        const isNeg = inputVal.trim().startsWith("-");
+        addTag(isNeg ? `-${selected.value}` : selected.value);
+      } else if (allowCustom && inputVal.trim()) {
+        addTag(inputVal.trim());
+      }
+      return;
+    }
+    if (!isOpen) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setIsOpen(true);
+      }
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev + 1) % Math.max(1, filteredOptions.length));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedIndex(
+        (prev) => prev <= 0 ? Math.max(0, filteredOptions.length - 1) : prev - 1
+      );
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      ref: containerRef,
+      className: cn(
+        "w-full flex flex-wrap items-center gap-1.5 rounded border border-slate-800 bg-slate-950 p-1.5 text-xs font-mono transition-colors focus-within:border-indigo-500",
+        className
+      ),
+      children: [
+        values.map((tag) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "span",
+          {
+            className: cn(
+              "inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] border font-medium transition-colors",
+              badgeVariant === "d2" ? "bg-emerald-950/60 text-emerald-300 border-emerald-800/60" : badgeVariant === "d3" ? "bg-purple-950/60 text-purple-300 border-purple-800/60" : badgeVariant === "d1" ? "bg-cyan-950/60 text-cyan-300 border-cyan-800/60" : "bg-slate-850 bg-slate-800/80 text-slate-300 border-slate-700"
+            ),
+            children: [
+              onTagClick ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => onTagClick(tag),
+                  className: "hover:underline cursor-pointer truncate max-w-[220px]",
+                  title: `点击打开契约定义: ${tag}`,
+                  children: tag
+                }
+              ) : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate max-w-[220px]", children: tag }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => removeTag(tag),
+                  className: "text-slate-400 hover:text-rose-400 ml-0.5 cursor-pointer leading-none",
+                  title: "移除",
+                  children: "×"
+                }
+              )
+            ]
+          },
+          tag
+        )),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative flex-1 min-w-[140px]", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "input",
+            {
+              ref: refs.setReference,
+              ...getReferenceProps(),
+              type: "text",
+              value: inputVal,
+              onChange: (e) => {
+                setInputVal(e.target.value);
+                setHighlightedIndex(0);
+                if (!isOpen) setIsOpen(true);
+              },
+              onFocus: () => setIsOpen(true),
+              onKeyDown: handleKeyDown,
+              placeholder: values.length === 0 ? placeholder : "+",
+              disabled,
+              className: "w-full bg-transparent text-slate-200 placeholder:text-slate-600 focus:outline-none text-xs font-mono py-0.5",
+              autoComplete: "off"
+            }
+          ),
+          isOpen && filteredOptions.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(FloatingPortal, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "div",
+            {
+              ref: (node2) => {
+                refs.setFloating(node2);
+                listRef.current = node2;
+              },
+              style: floatingStyles,
+              ...getFloatingProps(),
+              className: "z-[9999] overflow-y-auto rounded-lg border border-slate-800 bg-slate-900/95 p-1 shadow-2xl backdrop-blur-md font-mono text-xs text-slate-200",
+              children: filteredOptions.map((opt, idx) => {
+                const isHighlighted = idx === highlightedIndex;
+                return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "button",
+                  {
+                    type: "button",
+                    onMouseEnter: () => setHighlightedIndex(idx),
+                    onClick: () => {
+                      const isNeg = inputVal.trim().startsWith("-");
+                      addTag(isNeg ? `-${opt.value}` : opt.value);
+                    },
+                    className: cn(
+                      "w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded text-left transition-colors cursor-pointer outline-none border border-transparent",
+                      isHighlighted ? "bg-indigo-600/30 text-indigo-200 border-indigo-500/40" : "text-slate-300 hover:bg-slate-800/60"
+                    ),
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col truncate flex-1 min-w-0", children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 truncate", children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold truncate", children: opt.label }),
+                          opt.group && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500 shrink-0", children: opt.group })
+                        ] }),
+                        opt.description && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-400 truncate mt-0.5 font-sans leading-tight", children: opt.description })
+                      ] }),
+                      opt.badge && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        Badge,
+                        {
+                          variant: opt.badgeVariant || getPillarVariant(opt.badge.toLowerCase(), "secondary"),
+                          className: "text-[9px] uppercase px-1.5 py-0 shrink-0 font-bold",
+                          children: opt.badge
+                        }
+                      )
+                    ]
+                  },
+                  `${opt.value}-${idx}`
+                );
+              })
+            }
+          ) })
+        ] })
+      ]
+    }
+  );
+}
 const Button = React$1.forwardRef(
-  ({ className, variant = "default", size = "default", ...props2 }, ref) => {
+  ({ className, variant = "default", size: size2 = "default", ...props2 }, ref) => {
     const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-400 disabled:pointer-events-none disabled:opacity-50";
     const variants = {
       default: "bg-indigo-600 text-white shadow hover:bg-indigo-500",
@@ -9809,30 +13140,13 @@ const Button = React$1.forwardRef(
       "button",
       {
         ref,
-        className: cn(baseStyles, variants[variant], sizes[size], className),
+        className: cn(baseStyles, variants[variant], sizes[size2], className),
         ...props2
       }
     );
   }
 );
 Button.displayName = "Button";
-const Input = React$1.forwardRef(
-  ({ className, type = "text", ...props2 }, ref) => {
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(
-      "input",
-      {
-        type,
-        ref,
-        className: cn(
-          "w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-slate-200 text-xs font-mono placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-colors disabled:opacity-50 disabled:pointer-events-none",
-          className
-        ),
-        ...props2
-      }
-    );
-  }
-);
-Input.displayName = "Input";
 function Modal({
   isOpen,
   onClose,
@@ -9929,6 +13243,66 @@ function ToastContainer() {
     t.id
   )) });
 }
+function useWorkspaceCandidates(packages) {
+  return reactExports.useMemo(() => {
+    const lookupOptions = [];
+    const domainSet = /* @__PURE__ */ new Set();
+    const atomOptions = [];
+    for (const pkg of packages) {
+      for (const [key, def] of Object.entries(pkg.exports || {})) {
+        const pillar = (def.pillar || "d1").toLowerCase();
+        lookupOptions.push({
+          value: key,
+          label: key,
+          badge: pillar.toUpperCase(),
+          badgeVariant: pillar,
+          group: `@${pkg.name} (公开导出)`,
+          description: def.description || void 0
+        });
+      }
+      for (const [key, def] of Object.entries(pkg.internal_lookups || {})) {
+        const pillar = (def.pillar || "d1").toLowerCase();
+        const displayLabel = key.includes("::") ? key : `${pkg.name}::internal::${key}`;
+        lookupOptions.push({
+          value: displayLabel,
+          label: displayLabel,
+          badge: pillar.toUpperCase(),
+          badgeVariant: pillar,
+          group: `@${pkg.name} (内部私有)`,
+          description: def.description || void 0
+        });
+      }
+      for (const atom of pkg.atoms || []) {
+        const atype = (atom.type || "d1").toLowerCase();
+        atomOptions.push({
+          value: atom.id,
+          label: atom.id,
+          badge: typeof atom.priority === "number" ? `${atype}-P${atom.priority}` : atype.toUpperCase(),
+          badgeVariant: atype,
+          group: `@${pkg.name}`
+        });
+        if (Array.isArray(atom.domain)) {
+          for (const d of atom.domain) {
+            if (d && typeof d === "string") {
+              domainSet.add(d.trim().toLowerCase());
+            }
+          }
+        }
+      }
+    }
+    const domainOptions = Array.from(domainSet).sort().map((d) => ({
+      value: d,
+      label: d,
+      badge: "TAG",
+      badgeVariant: "default"
+    }));
+    return {
+      lookupOptions,
+      domainOptions,
+      atomOptions
+    };
+  }, [packages]);
+}
 const ENCODING = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 const ENCODING_LEN = ENCODING.length;
 function ulid(seedTime = Date.now()) {
@@ -9958,14 +13332,15 @@ function AtomEditorTab({
   var _a2;
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const replaceTab = useIdeStore((state) => state.replaceTab);
+  const openTab = useIdeStore((state) => state.openTab);
   const tabId = `atom:${atomId}`;
   const isKernel = atomId === "kernel" || atomId.startsWith("draft:kernel");
   const isDraft = atomId.startsWith("draft:") || atomId === "new_atom";
   const draftParts = isDraft ? atomId.split(":") : [];
   const draftInitialPkg = isDraft && draftParts[1] !== "kernel" ? draftParts[1] : "";
-  const [loading, setLoading] = reactExports.useState(!isDraft);
-  const [saveSuccess, setSaveSuccess] = reactExports.useState(false);
-  const [errorMsg, setErrorMsg] = reactExports.useState("");
+  const [phase, setPhase] = reactExports.useState(
+    isDraft ? { state: "IDLE" } : { state: "LOADING" }
+  );
   const [currentId, setCurrentId] = reactExports.useState(isDraft ? isKernel ? "kernel" : "" : atomId);
   const [draftSuffix, setDraftSuffix] = reactExports.useState(
     () => isKernel ? "kernel" : isDraft ? generateIdSuffix() : ""
@@ -9978,14 +13353,12 @@ function AtomEditorTab({
   const [description, setDescription] = reactExports.useState("");
   const [priority, setPriority] = reactExports.useState(1);
   const [domainList, setDomainList] = reactExports.useState([]);
-  const [domainInput, setDomainInput] = reactExports.useState("");
   const [usesList, setUsesList] = reactExports.useState([]);
-  const [usesInput, setUsesInput] = reactExports.useState("");
+  const { domainOptions, lookupOptions } = useWorkspaceCandidates(packages);
   const [content2, setContent] = reactExports.useState(
     isDraft ? isKernel ? "# ACA 运行时协议 v1.0\n\n## 1. 系统声明\n本文档定义了当前工作区的公理边界与核心执行契约。\n" : "# 新建原子组件\n\n在此输入具体的规则规范或程序技能..." : ""
   );
   const [isModified, setIsModified] = reactExports.useState(false);
-  const [confirmDeleting, setConfirmDeleting] = reactExports.useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = reactExports.useState(false);
   const [renameInput, setRenameInput] = reactExports.useState("");
   const [cascadeRename, setCascadeRename] = reactExports.useState(true);
@@ -9994,14 +13367,16 @@ function AtomEditorTab({
   const createAtomMutation = useCreateAtomMutation();
   const updateAtomMutation = useUpdateAtomMutation();
   const deleteAtomMutation = useDeleteAtomMutation();
-  const saving = createAtomMutation.isPending || updateAtomMutation.isPending;
+  const saving = phase.state === "SAVING" || createAtomMutation.isPending || updateAtomMutation.isPending;
+  const saveSuccess = phase.state === "SUCCESS";
+  const errorMsg = phase.state === "ERROR" ? phase.error : "";
+  const confirmDeleting = phase.state === "CONFIRM_DELETE";
   reactExports.useEffect(() => {
     if (isDraft) {
-      setLoading(false);
+      setPhase({ state: "IDLE" });
       return;
     }
-    setLoading(true);
-    setErrorMsg("");
+    setPhase({ state: "LOADING" });
     fetchAtomDetail(atomId).then((data) => {
       const meta = data.meta || {};
       setCurrentId(atomId);
@@ -10015,13 +13390,14 @@ function AtomEditorTab({
       setContent(data.content || "");
       setIsModified(false);
       setTabDirty(tabId, false);
+      setPhase({ state: "IDLE" });
       if (!isKernel) {
         fetchAtomReferences(atomId).then((refRes) => setReferenceCount(refRes.reference_count)).catch(() => {
         });
       }
     }).catch((err) => {
-      setErrorMsg(err.message || "加载异常");
-    }).finally(() => setLoading(false));
+      setPhase({ state: "ERROR", error: err.message || "加载异常" });
+    });
   }, [atomId, isDraft, isKernel, setTabDirty, tabId]);
   const markDirty = () => {
     if (!isModified) {
@@ -10037,11 +13413,11 @@ function AtomEditorTab({
     }
   };
   const handleSave = reactExports.useCallback(async () => {
-    setErrorMsg("");
+    setPhase({ state: "SAVING" });
     if (isDraft) {
       if (isKernel) {
         if (!content2.trim()) {
-          setErrorMsg("Kernel 协议正文不可为空");
+          setPhase({ state: "ERROR", error: "Kernel 协议正文不可为空" });
           return;
         }
         try {
@@ -10049,7 +13425,7 @@ function AtomEditorTab({
             type: "kernel",
             content: content2
           });
-          setSaveSuccess(true);
+          setPhase({ state: "SUCCESS" });
           setIsModified(false);
           setTabDirty(tabId, false);
           onSaved == null ? void 0 : onSaved();
@@ -10061,14 +13437,17 @@ function AtomEditorTab({
             atomId: "kernel"
           });
         } catch (err) {
-          setErrorMsg(err instanceof Error ? err.message : "创建 Kernel 失败");
+          setPhase({
+            state: "ERROR",
+            error: err instanceof Error ? err.message : "创建 Kernel 失败"
+          });
         }
         return;
       }
       const cleanSuffix = draftSuffix.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-");
       const generatedId = `${atomType}-${cleanSuffix}`;
       if (!pkgName || !cleanSuffix || !content2.trim()) {
-        setErrorMsg("请填写完整的所属包、标识后缀与正文");
+        setPhase({ state: "ERROR", error: "请填写完整的所属包、标识后缀与正文" });
         return;
       }
       try {
@@ -10082,7 +13461,7 @@ function AtomEditorTab({
           uses: atomType === "d2" ? usesList : [],
           content: content2
         });
-        setSaveSuccess(true);
+        setPhase({ state: "SUCCESS" });
         setIsModified(false);
         setTabDirty(tabId, false);
         onSaved == null ? void 0 : onSaved();
@@ -10094,7 +13473,7 @@ function AtomEditorTab({
           atomId: generatedId
         });
       } catch (err) {
-        setErrorMsg(err instanceof Error ? err.message : "创建原子失败");
+        setPhase({ state: "ERROR", error: err instanceof Error ? err.message : "创建原子失败" });
       }
       return;
     }
@@ -10121,13 +13500,13 @@ function AtomEditorTab({
           content: content2
         }
       });
-      setSaveSuccess(true);
+      setPhase({ state: "SUCCESS" });
       setIsModified(false);
       setTabDirty(tabId, false);
       onSaved == null ? void 0 : onSaved();
-      setTimeout(() => setSaveSuccess(false), 2e3);
+      setTimeout(() => setPhase({ state: "IDLE" }), 2e3);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "保存原子失败");
+      setPhase({ state: "ERROR", error: err instanceof Error ? err.message : "保存原子失败" });
     }
   }, [
     isDraft,
@@ -10188,19 +13567,19 @@ function AtomEditorTab({
       if (!confirmForce) return;
     }
     if ((e == null ? void 0 : e.shiftKey) || confirmDeleting) {
-      setConfirmDeleting(false);
+      setPhase({ state: "IDLE" });
       try {
         await deleteAtomMutation.mutateAsync(currentId);
         toast.success(`原子 "${currentId}" 已物理删除`);
         onDeleted == null ? void 0 : onDeleted();
       } catch (err) {
         const msg = err instanceof Error ? err.message : "删除原子失败";
-        setErrorMsg(msg);
+        setPhase({ state: "ERROR", error: msg });
         toast.error(msg);
       }
     } else {
-      setConfirmDeleting(true);
-      setTimeout(() => setConfirmDeleting(false), 3e3);
+      setPhase({ state: "CONFIRM_DELETE" });
+      setTimeout(() => setPhase({ state: "IDLE" }), 3e3);
     }
   };
   const handleKeyDown = (e) => {
@@ -10219,31 +13598,29 @@ function AtomEditorTab({
     window.addEventListener("aca:save-active-tab", handleGlobalSave);
     return () => window.removeEventListener("aca:save-active-tab", handleGlobalSave);
   }, [tabId, isModified, saving, handleSave]);
-  const addDomainTag = () => {
-    const trimmed = domainInput.trim().toLowerCase();
-    if (trimmed && !domainList.includes(trimmed)) {
-      setDomainList([...domainList, trimmed]);
-      setDomainInput("");
-      markDirty();
+  const resolveLookupRef = (ref) => {
+    var _a3, _b2, _c2, _d2, _e3, _f2, _g2, _h2;
+    if (ref.includes("::")) return ref;
+    const currentPkgObj = packages.find((p2) => p2.name === pkgName);
+    if (currentPkgObj) {
+      if (((_a3 = currentPkgObj.exports) == null ? void 0 : _a3[ref]) || ((_b2 = currentPkgObj.exports) == null ? void 0 : _b2[`${pkgName}::${ref}`])) {
+        return `${pkgName}::${ref}`;
+      }
+      if (((_c2 = currentPkgObj.internal_lookups) == null ? void 0 : _c2[ref]) || ((_d2 = currentPkgObj.internal_lookups) == null ? void 0 : _d2[`${pkgName}::internal::${ref}`])) {
+        return `${pkgName}::internal::${ref}`;
+      }
     }
-  };
-  const removeDomainTag = (tag) => {
-    setDomainList(domainList.filter((t) => t !== tag));
-    markDirty();
-  };
-  const addUsesRef = () => {
-    const trimmed = usesInput.trim();
-    if (trimmed && !usesList.includes(trimmed)) {
-      setUsesList([...usesList, trimmed]);
-      setUsesInput("");
-      markDirty();
+    for (const pkg of packages) {
+      if (((_e3 = pkg.exports) == null ? void 0 : _e3[ref]) || ((_f2 = pkg.exports) == null ? void 0 : _f2[`${pkg.name}::${ref}`])) {
+        return `${pkg.name}::${ref}`;
+      }
+      if (((_g2 = pkg.internal_lookups) == null ? void 0 : _g2[ref]) || ((_h2 = pkg.internal_lookups) == null ? void 0 : _h2[`${pkg.name}::internal::${ref}`])) {
+        return `${pkg.name}::internal::${ref}`;
+      }
     }
+    return pkgName && pkgName !== "全局" ? `${pkgName}::${ref}` : ref;
   };
-  const removeUsesRef = (ref) => {
-    setUsesList(usesList.filter((u2) => u2 !== ref));
-    markDirty();
-  };
-  if (loading) {
+  if (phase.state === "LOADING") {
     return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-full items-center justify-center text-xs text-slate-500 font-mono gap-2", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "h-4 w-4 animate-spin text-indigo-400" }),
       "正在加载原子组件: ",
@@ -10478,91 +13855,53 @@ function AtomEditorTab({
               )
             ] })
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 pt-1 border-t border-slate-800/40", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-400 flex items-center gap-1 shrink-0", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start gap-2 pt-1 border-t border-slate-800/40", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-400 flex items-center gap-1 shrink-0 mt-1", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { className: "h-3.5 w-3.5 text-indigo-400" }),
               " 领域标签:"
             ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-wrap items-center gap-1.5 flex-1", children: [
-              domainList.map((tag) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "span",
-                {
-                  className: "inline-flex items-center gap-1 bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full text-[11px] border border-slate-700",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: tag }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: () => removeDomainTag(tag),
-                        className: "hover:text-rose-400",
-                        children: "×"
-                      }
-                    )
-                  ]
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+              TagAutocomplete,
+              {
+                values: domainList,
+                onChange: (newTags) => {
+                  setDomainList(newTags);
+                  markDirty();
                 },
-                tag
-              )),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                Input,
-                {
-                  type: "text",
-                  value: domainInput,
-                  onChange: (e) => setDomainInput(e.target.value),
-                  onKeyDown: (e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addDomainTag();
-                    }
-                  },
-                  placeholder: "+ 添加标签 (回车)",
-                  className: "border-slate-800/80 py-0.5 text-[11px] w-32"
-                }
-              )
-            ] })
+                options: domainOptions,
+                placeholder: "输入标签 (回车添加，支持下拉联想推荐已用标签)",
+                badgeVariant: "default"
+              }
+            ) })
           ] }),
-          atomType === "d2" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 pt-1 border-t border-slate-800/40", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-400 flex items-center gap-1 shrink-0", children: [
+          atomType === "d2" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start gap-2 pt-1 border-t border-slate-800/40", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-slate-400 flex items-center gap-1 shrink-0 mt-1", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(Layers, { className: "h-3.5 w-3.5 text-emerald-400" }),
               " 依赖引用 (Uses):"
             ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-wrap items-center gap-1.5 flex-1", children: [
-              usesList.map((ref) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                "span",
-                {
-                  className: "inline-flex items-center gap-1 bg-emerald-950/60 text-emerald-300 px-2 py-0.5 rounded text-[11px] border border-emerald-800/60",
-                  children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: ref }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: () => removeUsesRef(ref),
-                        className: "hover:text-rose-400 ml-1",
-                        children: "×"
-                      }
-                    )
-                  ]
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+              TagAutocomplete,
+              {
+                values: usesList,
+                onChange: (newRefs) => {
+                  setUsesList(newRefs);
+                  markDirty();
                 },
-                ref
-              )),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                Input,
-                {
-                  type: "text",
-                  value: usesInput,
-                  onChange: (e) => setUsesInput(e.target.value),
-                  onKeyDown: (e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addUsesRef();
-                    }
-                  },
-                  placeholder: "+ 关联 lookup (回车，例如 pkg::d1l-name)",
-                  className: "border-slate-800/80 py-0.5 text-[11px] focus:border-emerald-500 w-64"
+                options: lookupOptions,
+                placeholder: "关联 Lookup (输入 d1l- 或包名自动检索)",
+                badgeVariant: "d2",
+                onTagClick: (ref) => {
+                  const targetKey = resolveLookupRef(ref);
+                  openTab({
+                    id: `lookup:${targetKey}`,
+                    type: "lookup",
+                    title: targetKey.split("::").pop() || targetKey,
+                    closable: true,
+                    lookupKey: targetKey
+                  });
                 }
-              )
-            ] })
+              }
+            ) })
           ] })
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1 overflow-hidden p-2 bg-slate-950", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -10687,7 +14026,7 @@ function SegmentedControl({
   value,
   onChange,
   className,
-  size = "default",
+  size: size2 = "default",
   fullWidth = false
 }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -10709,7 +14048,7 @@ function SegmentedControl({
             className: cn(
               "flex items-center justify-center gap-1 rounded transition-colors font-medium cursor-pointer",
               fullWidth && "flex-1",
-              size === "sm" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs",
+              size2 === "sm" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs",
               isActive ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"
             ),
             children: [
@@ -12986,9 +16325,9 @@ function normalizeUri(value) {
   }
   return result.join("") + value.slice(start);
 }
-function factorySpace(effects, ok2, type, max) {
-  const limit = max ? max - 1 : Infinity;
-  let size = 0;
+function factorySpace(effects, ok2, type, max2) {
+  const limit = max2 ? max2 - 1 : Infinity;
+  let size2 = 0;
   return start;
   function start(code2) {
     if (markdownSpace(code2)) {
@@ -12998,7 +16337,7 @@ function factorySpace(effects, ok2, type, max) {
     return ok2(code2);
   }
   function prefix(code2) {
-    if (markdownSpace(code2) && size++ < limit) {
+    if (markdownSpace(code2) && size2++ < limit) {
       effects.consume(code2);
       return prefix;
     }
@@ -13006,8 +16345,8 @@ function factorySpace(effects, ok2, type, max) {
     return ok2(code2);
   }
 }
-function factorySpaceMinMax(effects, ok2, nok, type, min, max) {
-  let size = 0;
+function factorySpaceMinMax(effects, ok2, nok, type, min2, max2) {
+  let size2 = 0;
   return start;
   function start(code2) {
     if (markdownSpace(code2)) {
@@ -13017,16 +16356,16 @@ function factorySpaceMinMax(effects, ok2, nok, type, min, max) {
     return after(code2);
   }
   function prefix(code2) {
-    if (markdownSpace(code2) && size < max) {
+    if (markdownSpace(code2) && size2 < max2) {
       effects.consume(code2);
-      size++;
+      size2++;
       return prefix;
     }
     effects.exit(type);
     return after(code2);
   }
   function after(code2) {
-    return size >= min ? ok2(code2) : nok(code2);
+    return size2 >= min2 ? ok2(code2) : nok(code2);
   }
 }
 const content$1 = {
@@ -13346,14 +16685,14 @@ function initializeDocument(effects) {
       editMap.consume(self2.events);
     }
   }
-  function exitContainers(size) {
+  function exitContainers(size2) {
     let index2 = stack.length;
-    while (index2-- > size) {
+    while (index2-- > size2) {
       const entry = stack[index2];
       self2.containerState = entry[1];
       entry[0].exit.call(self2, effects);
     }
-    stack.length = size;
+    stack.length = size2;
   }
   function closeFlow() {
     childFlow.write([null]);
@@ -13456,13 +16795,13 @@ function resolveAllAttention(events, context) {
           nextEvents = push(nextEvents, [["enter", group, context], ["enter", openingSequence, context], ["exit", openingSequence, context], ["enter", text2, context]]);
           nextEvents = push(nextEvents, resolveAll(context.parser.constructs.insideSpan.null, events.slice(open + 1, index2), context));
           nextEvents = push(nextEvents, [["exit", text2, context], ["enter", closingSequence, context], ["exit", closingSequence, context], ["exit", group, context]]);
-          let offset = 0;
+          let offset2 = 0;
           if (events[index2][1].end.offset - events[index2][1].start.offset) {
-            offset = 2;
+            offset2 = 2;
             nextEvents = push(nextEvents, [["enter", events[index2][1], context], ["exit", events[index2][1], context]]);
           }
           splice(events, open - 1, index2 - open + 3, nextEvents);
-          index2 = open + nextEvents.length - offset - 2;
+          index2 = open + nextEvents.length - offset2 - 2;
           break;
         }
       }
@@ -13501,17 +16840,17 @@ function tokenizeAttention(effects, ok2) {
     return ok2(code2);
   }
 }
-function movePoint(point2, offset) {
-  point2.column += offset;
-  point2.offset += offset;
-  point2._bufferIndex += offset;
+function movePoint(point2, offset2) {
+  point2.column += offset2;
+  point2.offset += offset2;
+  point2._bufferIndex += offset2;
 }
 const autolink = {
   name: "autolink",
   tokenize: tokenizeAutolink
 };
 function tokenizeAutolink(effects, ok2, nok) {
-  let size = 0;
+  let size2 = 0;
   return start;
   function start(code2) {
     effects.enter("autolink");
@@ -13533,7 +16872,7 @@ function tokenizeAutolink(effects, ok2, nok) {
   }
   function schemeOrEmailAtext(code2) {
     if (code2 === 43 || code2 === 45 || code2 === 46 || asciiAlphanumeric(code2)) {
-      size = 1;
+      size2 = 1;
       return schemeInsideOrEmailAtext(code2);
     }
     return emailAtext(code2);
@@ -13541,14 +16880,14 @@ function tokenizeAutolink(effects, ok2, nok) {
   function schemeInsideOrEmailAtext(code2) {
     if (code2 === 58) {
       effects.consume(code2);
-      size = 0;
+      size2 = 0;
       return urlInside;
     }
-    if ((code2 === 43 || code2 === 45 || code2 === 46 || asciiAlphanumeric(code2)) && size++ < 32) {
+    if ((code2 === 43 || code2 === 45 || code2 === 46 || asciiAlphanumeric(code2)) && size2++ < 32) {
       effects.consume(code2);
       return schemeInsideOrEmailAtext;
     }
-    size = 0;
+    size2 = 0;
     return emailAtext(code2);
   }
   function urlInside(code2) {
@@ -13583,7 +16922,7 @@ function tokenizeAutolink(effects, ok2, nok) {
   function emailLabel(code2) {
     if (code2 === 46) {
       effects.consume(code2);
-      size = 0;
+      size2 = 0;
       return emailAtSignOrDot;
     }
     if (code2 === 62) {
@@ -13597,7 +16936,7 @@ function tokenizeAutolink(effects, ok2, nok) {
     return emailValue(code2);
   }
   function emailValue(code2) {
-    if ((code2 === 45 || asciiAlphanumeric(code2)) && size++ < 63) {
+    if ((code2 === 45 || asciiAlphanumeric(code2)) && size2++ < 63) {
       const next = code2 === 45 ? emailValue : emailLabel;
       effects.consume(code2);
       return next;
@@ -13704,8 +17043,8 @@ const characterReference = {
 };
 function tokenizeCharacterReference(effects, ok2, nok) {
   const self2 = this;
-  let size = 0;
-  let max;
+  let size2 = 0;
+  let max2;
   let test;
   return start;
   function start(code2) {
@@ -13723,7 +17062,7 @@ function tokenizeCharacterReference(effects, ok2, nok) {
       return numeric;
     }
     effects.enter("characterReferenceValue");
-    max = 31;
+    max2 = 31;
     test = asciiAlphanumeric;
     return value(code2);
   }
@@ -13733,17 +17072,17 @@ function tokenizeCharacterReference(effects, ok2, nok) {
       effects.consume(code2);
       effects.exit("characterReferenceMarkerHexadecimal");
       effects.enter("characterReferenceValue");
-      max = 6;
+      max2 = 6;
       test = asciiHexDigit;
       return value;
     }
     effects.enter("characterReferenceValue");
-    max = 7;
+    max2 = 7;
     test = asciiDigit;
     return value(code2);
   }
   function value(code2) {
-    if (code2 === 59 && size) {
+    if (code2 === 59 && size2) {
       const token = effects.exit("characterReferenceValue");
       if (test === asciiAlphanumeric && !decodeNamedCharacterReference(self2.sliceSerialize(token))) {
         return nok(code2);
@@ -13754,7 +17093,7 @@ function tokenizeCharacterReference(effects, ok2, nok) {
       effects.exit("characterReference");
       return ok2;
     }
-    if (test(code2) && size++ < max) {
+    if (test(code2) && size2++ < max2) {
       effects.consume(code2);
       return value;
     }
@@ -13902,7 +17241,7 @@ function tokenizeCodeFenced(effects, ok2, nok) {
     return ok2(code2);
   }
   function tokenizeCloseStart(effects2, ok3, nok2) {
-    let size = 0;
+    let size2 = 0;
     return startBefore;
     function startBefore(code2) {
       effects2.enter("lineEnding");
@@ -13923,11 +17262,11 @@ function tokenizeCodeFenced(effects, ok2, nok) {
     }
     function sequenceClose(code2) {
       if (code2 === marker) {
-        size++;
+        size2++;
         effects2.consume(code2);
         return sequenceClose;
       }
-      if (size >= sizeOpen) {
+      if (size2 >= sizeOpen) {
         effects2.exit("codeFencedFenceSequence");
         return markdownSpace(code2) ? factorySpace(effects2, sequenceCloseAfter, "whitespace")(code2) : sequenceCloseAfter(code2);
       }
@@ -14046,7 +17385,7 @@ function previous$1(code2) {
 }
 function tokenizeCodeText(effects, ok2, nok) {
   let sizeOpen = 0;
-  let size;
+  let size2;
   let token;
   return start;
   function start(code2) {
@@ -14075,7 +17414,7 @@ function tokenizeCodeText(effects, ok2, nok) {
     }
     if (code2 === 96) {
       token = effects.enter("codeTextSequence");
-      size = 0;
+      size2 = 0;
       return sequenceClose(code2);
     }
     if (markdownLineEnding(code2)) {
@@ -14098,10 +17437,10 @@ function tokenizeCodeText(effects, ok2, nok) {
   function sequenceClose(code2) {
     if (code2 === 96) {
       effects.consume(code2);
-      size++;
+      size2++;
       return sequenceClose;
     }
-    if (size === sizeOpen) {
+    if (size2 === sizeOpen) {
       effects.exit("codeTextSequence");
       effects.exit("codeText");
       return ok2(code2);
@@ -14521,8 +17860,8 @@ function tokenizeContinuation(effects, ok2, nok) {
     return effects.interrupt(self2.parser.constructs.flow, nok, ok2)(code2);
   }
 }
-function factoryDestination(effects, ok2, nok, type, literalType, literalMarkerType, rawType, stringType, max) {
-  const limit = max || Number.POSITIVE_INFINITY;
+function factoryDestination(effects, ok2, nok, type, literalType, literalMarkerType, rawType, stringType, max2) {
+  const limit = max2 || Number.POSITIVE_INFINITY;
   let balance = 0;
   return start;
   function start(code2) {
@@ -14613,7 +17952,7 @@ function factoryDestination(effects, ok2, nok, type, literalType, literalMarkerT
 }
 function factoryLabel(effects, ok2, nok, type, markerType, stringType) {
   const self2 = this;
-  let size = 0;
+  let size2 = 0;
   let seen;
   return start;
   function start(code2) {
@@ -14625,12 +17964,12 @@ function factoryLabel(effects, ok2, nok, type, markerType, stringType) {
     return atBreak;
   }
   function atBreak(code2) {
-    if (size > 999 || code2 === null || code2 === 91 || code2 === 93 && !seen || // To do: remove in the future once we’ve switched from
+    if (size2 > 999 || code2 === null || code2 === 91 || code2 === 93 && !seen || // To do: remove in the future once we’ve switched from
     // `micromark-extension-footnote` to `micromark-extension-gfm-footnote`,
     // which doesn’t need this.
     // Hidden footnotes hook.
     /* c8 ignore next 3 */
-    code2 === 94 && !size && "_hiddenFootnoteSupport" in self2.parser.constructs) {
+    code2 === 94 && !size2 && "_hiddenFootnoteSupport" in self2.parser.constructs) {
       return nok(code2);
     }
     if (code2 === 93) {
@@ -14653,7 +17992,7 @@ function factoryLabel(effects, ok2, nok, type, markerType, stringType) {
     return labelInside(code2);
   }
   function labelInside(code2) {
-    if (code2 === null || code2 === 91 || code2 === 93 || markdownLineEnding(code2) || size++ > 999) {
+    if (code2 === null || code2 === 91 || code2 === 93 || markdownLineEnding(code2) || size2++ > 999) {
       effects.exit("chunkString");
       return atBreak(code2);
     }
@@ -14664,7 +18003,7 @@ function factoryLabel(effects, ok2, nok, type, markerType, stringType) {
   function labelEscape(code2) {
     if (code2 === 91 || code2 === 92 || code2 === 93) {
       effects.consume(code2);
-      size++;
+      size2++;
       return labelInside;
     }
     return labelInside(code2);
@@ -14884,7 +18223,7 @@ function resolveHeadingAtx(events, context) {
   return events;
 }
 function tokenizeHeadingAtx(effects, ok2, nok) {
-  let size = 0;
+  let size2 = 0;
   return start;
   function start(code2) {
     effects.enter("atxHeading");
@@ -14895,7 +18234,7 @@ function tokenizeHeadingAtx(effects, ok2, nok) {
     return sequenceOpen(code2);
   }
   function sequenceOpen(code2) {
-    if (code2 === 35 && size++ < 6) {
+    if (code2 === 35 && size2++ < 6) {
       effects.consume(code2);
       return sequenceOpen;
     }
@@ -15685,9 +19024,9 @@ function resolveAllLabelEnd(events) {
     const token = events[index2][1];
     newEvents.push(events[index2]);
     if (token.type === "labelImage" || token.type === "labelLink" || token.type === "labelEnd") {
-      const offset = token.type === "labelImage" ? 4 : 2;
+      const offset2 = token.type === "labelImage" ? 4 : 2;
       token.type = "data";
-      index2 += offset;
+      index2 += offset2;
     }
   }
   if (events.length !== newEvents.length) {
@@ -15697,7 +19036,7 @@ function resolveAllLabelEnd(events) {
 }
 function resolveToLabelEnd(events, context) {
   let index2 = events.length;
-  let offset = 0;
+  let offset2 = 0;
   let open;
   let close;
   let media;
@@ -15714,7 +19053,7 @@ function resolveToLabelEnd(events, context) {
       if (events[index2][0] === "enter" && (token.type === "labelImage" || token.type === "labelLink") && !token._balanced) {
         open = index2;
         if (token.type !== "labelLink") {
-          offset = 2;
+          offset2 = 2;
           break;
         }
       }
@@ -15743,16 +19082,16 @@ function resolveToLabelEnd(events, context) {
   const text2 = {
     type: "labelText",
     start: {
-      ...events[open + offset + 2][1].end
+      ...events[open + offset2 + 2][1].end
     },
     end: {
       ...events[close - 2][1].start
     }
   };
   media = [["enter", group, context], ["enter", label, context]];
-  media = push(media, events.slice(open + 1, open + offset + 3));
+  media = push(media, events.slice(open + 1, open + offset2 + 3));
   media = push(media, [["enter", text2, context]]);
-  media = push(media, resolveAll(context.parser.constructs.insideSpan.null, events.slice(open + offset + 4, close - 3), context));
+  media = push(media, resolveAll(context.parser.constructs.insideSpan.null, events.slice(open + offset2 + 4, close - 3), context));
   media = push(media, [["exit", text2, context], events[close - 2], events[close - 1], ["exit", label, context]]);
   media = push(media, events.slice(close + 1));
   media = push(media, [["exit", group, context]]);
@@ -15966,7 +19305,7 @@ const thematicBreak$2 = {
   tokenize: tokenizeThematicBreak
 };
 function tokenizeThematicBreak(effects, ok2, nok) {
-  let size = 0;
+  let size2 = 0;
   let marker;
   return start;
   function start(code2) {
@@ -15982,7 +19321,7 @@ function tokenizeThematicBreak(effects, ok2, nok) {
       effects.enter("thematicBreakSequence");
       return sequence(code2);
     }
-    if (size >= 3 && (code2 === null || markdownLineEnding(code2))) {
+    if (size2 >= 3 && (code2 === null || markdownLineEnding(code2))) {
       effects.exit("thematicBreak");
       return ok2(code2);
     }
@@ -15991,7 +19330,7 @@ function tokenizeThematicBreak(effects, ok2, nok) {
   function sequence(code2) {
     if (code2 === marker) {
       effects.consume(code2);
-      size++;
+      size2++;
       return sequence;
     }
     effects.exit("thematicBreakSequence");
@@ -16018,7 +19357,7 @@ function tokenizeListStart(effects, ok2, nok) {
   const self2 = this;
   const tail = self2.events[self2.events.length - 1];
   let initialSize = tail && tail[1].type === "linePrefix" ? tail[2].sliceSerialize(tail[1], true).length : 0;
-  let size = 0;
+  let size2 = 0;
   return start;
   function start(code2) {
     const kind = self2.containerState.type || (code2 === 42 || code2 === 43 || code2 === 45 ? "listUnordered" : "listOrdered");
@@ -16042,11 +19381,11 @@ function tokenizeListStart(effects, ok2, nok) {
     return nok(code2);
   }
   function inside(code2) {
-    if (asciiDigit(code2) && ++size < 10) {
+    if (asciiDigit(code2) && ++size2 < 10) {
       effects.consume(code2);
       return inside;
     }
-    if ((!self2.interrupt || size < 2) && (self2.containerState.marker ? code2 === self2.containerState.marker : code2 === 41 || code2 === 46)) {
+    if ((!self2.interrupt || size2 < 2) && (self2.containerState.marker ? code2 === self2.containerState.marker : code2 === 41 || code2 === 46)) {
       effects.exit("listItemValue");
       return atMarker(code2);
     }
@@ -16339,14 +19678,14 @@ function resolveAllLineSuffixes(events, context) {
       const chunks = context.sliceStream(data);
       let index2 = chunks.length;
       let bufferIndex = -1;
-      let size = 0;
+      let size2 = 0;
       let tabs;
       while (index2--) {
         const chunk = chunks[index2];
         if (typeof chunk === "string") {
           bufferIndex = chunk.length;
           while (chunk.charCodeAt(bufferIndex - 1) === 32) {
-            size++;
+            size2++;
             bufferIndex--;
           }
           if (bufferIndex) {
@@ -16355,7 +19694,7 @@ function resolveAllLineSuffixes(events, context) {
           bufferIndex = -1;
         } else if (chunk === -2) {
           tabs = true;
-          size++;
+          size2++;
         } else if (chunk === -1) ;
         else {
           index2++;
@@ -16363,17 +19702,17 @@ function resolveAllLineSuffixes(events, context) {
         }
       }
       if (context._contentTypeTextTrailing && eventIndex === events.length) {
-        size = 0;
+        size2 = 0;
       }
-      if (size) {
+      if (size2) {
         const token = {
-          type: eventIndex === events.length || tabs || size < 2 ? "lineSuffix" : "hardBreakTrailing",
+          type: eventIndex === events.length || tabs || size2 < 2 ? "lineSuffix" : "hardBreakTrailing",
           start: {
             _bufferIndex: index2 ? bufferIndex : data.start._bufferIndex + bufferIndex,
             _index: data.start._index + index2,
             line: data.end.line,
-            column: data.end.column - size,
-            offset: data.end.offset - size
+            column: data.end.column - size2,
+            offset: data.end.offset - size2
           },
           end: {
             ...data.end
@@ -16528,14 +19867,14 @@ function createTokenizer(parser, initialize, from) {
       _index,
       line,
       column,
-      offset
+      offset: offset2
     } = point2;
     return {
       _bufferIndex,
       _index,
       line,
       column,
-      offset
+      offset: offset2
     };
   }
   function defineSkip(value) {
@@ -18594,7 +21933,7 @@ function visitParents(tree, test, visitor, reverse) {
     function visit2() {
       let result = empty;
       let subresult;
-      let offset;
+      let offset2;
       let grandparents;
       if (!test || is2(node2, index2, parents[parents.length - 1] || void 0)) {
         result = toResult(visitor(node2, parents));
@@ -18608,15 +21947,15 @@ function visitParents(tree, test, visitor, reverse) {
           node2
         );
         if (nodeAsParent.children && result[0] !== SKIP) {
-          offset = (reverse ? nodeAsParent.children.length : -1) + step;
+          offset2 = (reverse ? nodeAsParent.children.length : -1) + step;
           grandparents = parents.concat(nodeAsParent);
-          while (offset > -1 && offset < nodeAsParent.children.length) {
-            const child = nodeAsParent.children[offset];
-            subresult = factory(child, offset, grandparents)();
+          while (offset2 > -1 && offset2 < nodeAsParent.children.length) {
+            const child = nodeAsParent.children[offset2];
+            subresult = factory(child, offset2, grandparents)();
             if (subresult[0] === EXIT) {
               return subresult;
             }
-            offset = typeof subresult[1] === "number" ? subresult[1] : offset + step;
+            offset2 = typeof subresult[1] === "number" ? subresult[1] : offset2 + step;
           }
         }
       }
@@ -20970,10 +24309,10 @@ function markdownTable(table2, options) {
     while (++columnIndex2 < table2[rowIndex].length) {
       const cell = serialize(table2[rowIndex][columnIndex2]);
       if (settings.alignDelimiters !== false) {
-        const size = stringLength(cell);
-        sizes2[columnIndex2] = size;
-        if (longestCellByColumn[columnIndex2] === void 0 || size > longestCellByColumn[columnIndex2]) {
-          longestCellByColumn[columnIndex2] = size;
+        const size2 = stringLength(cell);
+        sizes2[columnIndex2] = size2;
+        if (longestCellByColumn[columnIndex2] === void 0 || size2 > longestCellByColumn[columnIndex2]) {
+          longestCellByColumn[columnIndex2] = size2;
         }
       }
       row2.push(cell);
@@ -21007,17 +24346,17 @@ function markdownTable(table2, options) {
     } else if (code2 === 114) {
       after = ":";
     }
-    let size = settings.alignDelimiters === false ? 1 : Math.max(
+    let size2 = settings.alignDelimiters === false ? 1 : Math.max(
       1,
       longestCellByColumn[columnIndex] - before.length - after.length
     );
-    const cell = before + "-".repeat(size) + after;
+    const cell = before + "-".repeat(size2) + after;
     if (settings.alignDelimiters !== false) {
-      size = before.length + size + after.length;
-      if (size > longestCellByColumn[columnIndex]) {
-        longestCellByColumn[columnIndex] = size;
+      size2 = before.length + size2 + after.length;
+      if (size2 > longestCellByColumn[columnIndex]) {
+        longestCellByColumn[columnIndex] = size2;
       }
-      sizes[columnIndex] = size;
+      sizes[columnIndex] = size2;
     }
     row[columnIndex] = cell;
   }
@@ -21035,20 +24374,20 @@ function markdownTable(table2, options) {
       let before = "";
       let after = "";
       if (settings.alignDelimiters !== false) {
-        const size = longestCellByColumn[columnIndex] - (sizes2[columnIndex] || 0);
+        const size2 = longestCellByColumn[columnIndex] - (sizes2[columnIndex] || 0);
         const code2 = alignments[columnIndex];
         if (code2 === 114) {
-          before = " ".repeat(size);
+          before = " ".repeat(size2);
         } else if (code2 === 99) {
-          if (size % 2) {
-            before = " ".repeat(size / 2 + 0.5);
-            after = " ".repeat(size / 2 - 0.5);
+          if (size2 % 2) {
+            before = " ".repeat(size2 / 2 + 0.5);
+            after = " ".repeat(size2 / 2 - 0.5);
           } else {
-            before = " ".repeat(size / 2);
+            before = " ".repeat(size2 / 2);
             after = before;
           }
         } else {
-          after = " ".repeat(size);
+          after = " ".repeat(size2);
         }
       }
       if (settings.delimiterStart !== false && !columnIndex) {
@@ -21160,14 +24499,14 @@ function longestStreak(value, substring) {
   let index2 = source.indexOf(substring);
   let expected = index2;
   let count2 = 0;
-  let max = 0;
+  let max2 = 0;
   if (typeof substring !== "string") {
     throw new TypeError("Expected substring");
   }
   while (index2 !== -1) {
     if (index2 === expected) {
-      if (++count2 > max) {
-        max = count2;
+      if (++count2 > max2) {
+        max2 = count2;
       }
     } else {
       count2 = 1;
@@ -21175,7 +24514,7 @@ function longestStreak(value, substring) {
     expected = index2 + substring.length;
     index2 = source.indexOf(substring, expected);
   }
-  return max;
+  return max2;
 }
 function formatCodeAsIndented(node2, state) {
   return Boolean(
@@ -21749,13 +25088,13 @@ function listItem(node2, parent, state, info) {
   if (parent && parent.type === "list" && parent.ordered) {
     bullet = (typeof parent.start === "number" && parent.start > -1 ? parent.start : 1) + (state.options.incrementListMarker === false ? 0 : parent.children.indexOf(node2)) + bullet;
   }
-  let size = bullet.length + 1;
+  let size2 = bullet.length + 1;
   if (listItemIndent === "tab" || listItemIndent === "mixed" && (parent && parent.type === "list" && parent.spread || node2.spread)) {
-    size = Math.ceil(size / 4) * 4;
+    size2 = Math.ceil(size2 / 4) * 4;
   }
   const tracker = state.createTracker(info);
-  tracker.move(bullet + " ".repeat(size - bullet.length));
-  tracker.shift(size);
+  tracker.move(bullet + " ".repeat(size2 - bullet.length));
+  tracker.shift(size2);
   const exit2 = state.enter("listItem");
   const value = state.indentLines(
     state.containerFlow(node2, tracker.current()),
@@ -21765,9 +25104,9 @@ function listItem(node2, parent, state, info) {
   return value;
   function map2(line, index2, blank) {
     if (index2) {
-      return (blank ? "" : " ".repeat(size)) + line;
+      return (blank ? "" : " ".repeat(size2)) + line;
     }
-    return (blank ? bullet : bullet + " ".repeat(size - bullet.length)) + line;
+    return (blank ? bullet : bullet + " ".repeat(size2 - bullet.length)) + line;
   }
 }
 function paragraph(node2, _, state, info) {
@@ -22268,15 +25607,15 @@ function tokenizeProtocolAutolink(effects, ok2, nok) {
   }
 }
 function tokenizeWwwPrefix(effects, ok2, nok) {
-  let size = 0;
+  let size2 = 0;
   return wwwPrefixInside;
   function wwwPrefixInside(code2) {
-    if ((code2 === 87 || code2 === 119) && size < 3) {
-      size++;
+    if ((code2 === 87 || code2 === 119) && size2 < 3) {
+      size2++;
       effects.consume(code2);
       return wwwPrefixInside;
     }
-    if (code2 === 46 && size === 3) {
+    if (code2 === 46 && size2 === 3) {
       effects.consume(code2);
       return wwwPrefixAfter;
     }
@@ -22559,7 +25898,7 @@ function resolveToPotentialGfmFootnoteCall(events, context) {
 function tokenizeGfmFootnoteCall(effects, ok2, nok) {
   const self2 = this;
   const defined = self2.parser.gfmFootnotes || (self2.parser.gfmFootnotes = []);
-  let size = 0;
+  let size2 = 0;
   let data;
   return start;
   function start(code2) {
@@ -22581,7 +25920,7 @@ function tokenizeGfmFootnoteCall(effects, ok2, nok) {
   function callData(code2) {
     if (
       // Too long.
-      size > 999 || // Closing brace with nothing.
+      size2 > 999 || // Closing brace with nothing.
       code2 === 93 && !data || // Space or tab is not supported by GFM for some reason.
       // `\n` and `[` not being supported makes sense.
       code2 === null || code2 === 91 || markdownLineEndingOrSpace(code2)
@@ -22603,14 +25942,14 @@ function tokenizeGfmFootnoteCall(effects, ok2, nok) {
     if (!markdownLineEndingOrSpace(code2)) {
       data = true;
     }
-    size++;
+    size2++;
     effects.consume(code2);
     return code2 === 92 ? callEscape : callData;
   }
   function callEscape(code2) {
     if (code2 === 91 || code2 === 92 || code2 === 93) {
       effects.consume(code2);
-      size++;
+      size2++;
       return callData;
     }
     return callData(code2);
@@ -22620,7 +25959,7 @@ function tokenizeDefinitionStart(effects, ok2, nok) {
   const self2 = this;
   const defined = self2.parser.gfmFootnotes || (self2.parser.gfmFootnotes = []);
   let identifier;
-  let size = 0;
+  let size2 = 0;
   let data;
   return start;
   function start(code2) {
@@ -22645,7 +25984,7 @@ function tokenizeDefinitionStart(effects, ok2, nok) {
   function labelInside(code2) {
     if (
       // Too long.
-      size > 999 || // Closing brace with nothing.
+      size2 > 999 || // Closing brace with nothing.
       code2 === 93 && !data || // Space or tab is not supported by GFM for some reason.
       // `\n` and `[` not being supported makes sense.
       code2 === null || code2 === 91 || markdownLineEndingOrSpace(code2)
@@ -22665,14 +26004,14 @@ function tokenizeDefinitionStart(effects, ok2, nok) {
     if (!markdownLineEndingOrSpace(code2)) {
       data = true;
     }
-    size++;
+    size2++;
     effects.consume(code2);
     return code2 === 92 ? labelEscape : labelInside;
   }
   function labelEscape(code2) {
     if (code2 === 91 || code2 === 92 || code2 === 93) {
       effects.consume(code2);
-      size++;
+      size2++;
       return labelInside;
     }
     return labelInside(code2);
@@ -22773,7 +26112,7 @@ function gfmStrikethrough(options) {
   function tokenizeStrikethrough(effects, ok2, nok) {
     const previous2 = this.previous;
     const events = this.events;
-    let size = 0;
+    let size2 = 0;
     return start;
     function start(code2) {
       if (previous2 === 126 && events[events.length - 1][1].type !== "characterEscape") {
@@ -22785,12 +26124,12 @@ function gfmStrikethrough(options) {
     function more(code2) {
       const before = classifyCharacter(previous2);
       if (code2 === 126) {
-        if (size > 1) return nok(code2);
+        if (size2 > 1) return nok(code2);
         effects.consume(code2);
-        size++;
+        size2++;
         return more;
       }
-      if (size < 2 && !single) return nok(code2);
+      if (size2 < 2 && !single) return nok(code2);
       const token = effects.exit("strikethroughSequenceTemporary");
       const after = classifyCharacter(code2);
       token._open = !after || after === 2 && Boolean(before);
@@ -22921,7 +26260,7 @@ function gfmTable() {
 }
 function tokenizeTable(effects, ok2, nok) {
   const self2 = this;
-  let size = 0;
+  let size2 = 0;
   let sizeB = 0;
   let seen;
   return start;
@@ -22980,7 +26319,7 @@ function tokenizeTable(effects, ok2, nok) {
     sizeB += 1;
     if (seen) {
       seen = false;
-      size += 1;
+      size2 += 1;
     }
     if (code2 === 124) {
       effects.enter("tableCellDivider");
@@ -23090,7 +26429,7 @@ function tokenizeTable(effects, ok2, nok) {
       return headDelimiterBefore(code2);
     }
     if (code2 === null || markdownLineEnding(code2)) {
-      if (!seen || size !== sizeB) {
+      if (!seen || size2 !== sizeB) {
         return headDelimiterNok(code2);
       }
       effects.exit("tableDelimiterRow");
@@ -24007,8 +27346,8 @@ function PanelWithForwardedRef({
     isExpanded() {
       return !isPanelCollapsed(panelDataRef.current);
     },
-    resize: (size) => {
-      resizePanel2(panelDataRef.current, size);
+    resize: (size2) => {
+      resizePanel2(panelDataRef.current, size2);
     }
   }), [collapsePanel, expandPanel, getPanelSize, isPanelCollapsed, panelId, resizePanel2]);
   const style = getPanelStyle(panelDataRef.current, defaultSize);
@@ -24512,7 +27851,7 @@ function fuzzyLayoutsEqual(actual, expected, fractionDigits) {
 function resizePanel({
   panelConstraints: panelConstraintsArray,
   panelIndex,
-  size
+  size: size2
 }) {
   const panelConstraints = panelConstraintsArray[panelIndex];
   assert(panelConstraints != null, `Panel constraints not found for index ${panelIndex}`);
@@ -24522,21 +27861,21 @@ function resizePanel({
     maxSize = 100,
     minSize = 0
   } = panelConstraints;
-  if (fuzzyCompareNumbers(size, minSize) < 0) {
+  if (fuzzyCompareNumbers(size2, minSize) < 0) {
     if (collapsible) {
       const halfwayPoint = (collapsedSize + minSize) / 2;
-      if (fuzzyCompareNumbers(size, halfwayPoint) < 0) {
-        size = collapsedSize;
+      if (fuzzyCompareNumbers(size2, halfwayPoint) < 0) {
+        size2 = collapsedSize;
       } else {
-        size = minSize;
+        size2 = minSize;
       }
     } else {
-      size = minSize;
+      size2 = minSize;
     }
   }
-  size = Math.min(maxSize, size);
-  size = parseFloat(size.toFixed(PRECISION));
-  return size;
+  size2 = Math.min(maxSize, size2);
+  size2 = parseFloat(size2.toFixed(PRECISION));
+  return size2;
 }
 function adjustLayoutByDelta({
   delta,
@@ -24691,7 +28030,7 @@ function adjustLayoutByDelta({
       }
     }
   }
-  const totalSize = nextLayout.reduce((total, size) => size + total, 0);
+  const totalSize = nextLayout.reduce((total, size2) => size2 + total, 0);
   if (!fuzzyNumbersEqual(totalSize, 100)) {
     return prevLayout;
   }
@@ -24851,15 +28190,15 @@ function useWindowSplitterPanelGroupBehavior({
             if (index2 >= 0) {
               const panelData = panelDataArray2[index2];
               assert(panelData, `No panel data found for index ${index2}`);
-              const size = layout[index2];
+              const size2 = layout[index2];
               const {
                 collapsedSize = 0,
                 collapsible,
                 minSize = 0
               } = panelData.constraints;
-              if (size != null && collapsible) {
+              if (size2 != null && collapsible) {
                 const nextLayout = adjustLayoutByDelta({
-                  delta: fuzzyNumbersEqual(size, collapsedSize) ? minSize - collapsedSize : collapsedSize - size,
+                  delta: fuzzyNumbersEqual(size2, collapsedSize) ? minSize - collapsedSize : collapsedSize - size2,
                   initialLayout: layout,
                   panelConstraints: panelDataArray2.map((panelData2) => panelData2.constraints),
                   pivotIndices: determinePivotIndices(groupId, handleId, panelGroupElement),
@@ -24991,15 +28330,15 @@ function calculateUnsafeDefaultLayout({
       continue;
     }
     const numRemainingPanels = panelDataArray.length - numPanelsWithSizes;
-    const size = remainingSize / numRemainingPanels;
+    const size2 = remainingSize / numRemainingPanels;
     numPanelsWithSizes++;
-    layout[index2] = size;
-    remainingSize -= size;
+    layout[index2] = size2;
+    remainingSize -= size2;
   }
   return layout;
 }
 function callPanelCallbacks(panelsArray, layout, panelIdToLastNotifiedSizeMap) {
-  layout.forEach((size, index2) => {
+  layout.forEach((size2, index2) => {
     const panelData = panelsArray[index2];
     assert(panelData, `Panel data not found for index ${index2}`);
     const {
@@ -25012,21 +28351,21 @@ function callPanelCallbacks(panelsArray, layout, panelIdToLastNotifiedSizeMap) {
       collapsible
     } = constraints;
     const lastNotifiedSize = panelIdToLastNotifiedSizeMap[panelId];
-    if (lastNotifiedSize == null || size !== lastNotifiedSize) {
-      panelIdToLastNotifiedSizeMap[panelId] = size;
+    if (lastNotifiedSize == null || size2 !== lastNotifiedSize) {
+      panelIdToLastNotifiedSizeMap[panelId] = size2;
       const {
         onCollapse,
         onExpand,
         onResize
       } = callbacks;
       if (onResize) {
-        onResize(size, lastNotifiedSize);
+        onResize(size2, lastNotifiedSize);
       }
       if (collapsible && (onCollapse || onExpand)) {
-        if (onExpand && (lastNotifiedSize == null || fuzzyNumbersEqual$1(lastNotifiedSize, collapsedSize)) && !fuzzyNumbersEqual$1(size, collapsedSize)) {
+        if (onExpand && (lastNotifiedSize == null || fuzzyNumbersEqual$1(lastNotifiedSize, collapsedSize)) && !fuzzyNumbersEqual$1(size2, collapsedSize)) {
           onExpand();
         }
-        if (onCollapse && (lastNotifiedSize == null || !fuzzyNumbersEqual$1(lastNotifiedSize, collapsedSize)) && fuzzyNumbersEqual$1(size, collapsedSize)) {
+        if (onCollapse && (lastNotifiedSize == null || !fuzzyNumbersEqual$1(lastNotifiedSize, collapsedSize)) && fuzzyNumbersEqual$1(size2, collapsedSize)) {
           onCollapse();
         }
       }
@@ -25053,14 +28392,14 @@ function computePanelFlexBoxStyle({
   panelIndex,
   precision = 3
 }) {
-  const size = layout[panelIndex];
+  const size2 = layout[panelIndex];
   let flexGrow;
-  if (size == null) {
+  if (size2 == null) {
     flexGrow = defaultSize != void 0 ? defaultSize.toPrecision(precision) : "1";
   } else if (panelData.length === 1) {
     flexGrow = "1";
   } else {
-    flexGrow = size.toPrecision(precision);
+    flexGrow = size2.toPrecision(precision);
   }
   return {
     flexBasis: 0,
@@ -25164,7 +28503,7 @@ function validatePanelGroupLayout({
   const nextLayout = [...prevLayout];
   const nextLayoutTotalSize = nextLayout.reduce((accumulated, current) => accumulated + current, 0);
   if (nextLayout.length !== panelConstraints.length) {
-    throw Error(`Invalid ${panelConstraints.length} panel layout: ${nextLayout.map((size) => `${size}%`).join(", ")}`);
+    throw Error(`Invalid ${panelConstraints.length} panel layout: ${nextLayout.map((size2) => `${size2}%`).join(", ")}`);
   } else if (!fuzzyNumbersEqual(nextLayoutTotalSize, 100) && nextLayout.length > 0) {
     for (let index2 = 0; index2 < panelConstraints.length; index2++) {
       const unsafeSize = nextLayout[index2];
@@ -25525,12 +28864,12 @@ function PanelGroupWithForwardedRef({
     };
   }, []);
   const registerResizeHandle2 = reactExports.useCallback((dragHandleId) => {
-    let isRTL = false;
+    let isRTL2 = false;
     const panelGroupElement = panelGroupElementRef.current;
     if (panelGroupElement) {
       const style2 = window.getComputedStyle(panelGroupElement, null);
       if (style2.getPropertyValue("direction") === "rtl") {
-        isRTL = true;
+        isRTL2 = true;
       }
     }
     return function resizeHandler(event) {
@@ -25556,7 +28895,7 @@ function PanelGroupWithForwardedRef({
       const pivotIndices = determinePivotIndices(groupId2, dragHandleId, panelGroupElement2);
       let delta = calculateDeltaPercentage(event, dragHandleId, direction2, dragState2, keyboardResizeBy2, panelGroupElement2);
       const isHorizontal = direction2 === "horizontal";
-      if (isHorizontal && isRTL) {
+      if (isHorizontal && isRTL2) {
         delta = -delta;
       }
       const panelConstraints = panelDataArray.map((panelData) => panelData.constraints);
@@ -26251,7 +29590,7 @@ const TopologyGraph = React$1.memo(function TopologyGraph2({
       ] })
     ] }) : null }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs(
-      index$1,
+      index$3,
       {
         nodes,
         edges,
@@ -26285,10 +29624,15 @@ function LookupEditorTab({
   const isInternalKey = lookupKey.includes("::internal::");
   const initialPkg = isDraft ? draftParts[1] || "" : lookupKey.includes("::") ? lookupKey.split("::")[0] : "";
   const initialPublic = isDraft ? !((_a2 = draftParts[2]) == null ? void 0 : _a2.startsWith("private")) : !isInternalKey;
+  const cleanRawName = lookupKey.split("::").pop() || lookupKey;
+  const inferPillarFromKey = reactExports.useCallback((key) => {
+    const m2 = key.match(/^d([1-3])l-/i);
+    if (m2) return `d${m2[1]}`.toLowerCase();
+    return "d1";
+  }, []);
   const [pkgName, setPkgName] = reactExports.useState(initialPkg || ((_b2 = packages[0]) == null ? void 0 : _b2.name) || "");
   const [isPublic, setIsPublic] = reactExports.useState(initialPublic);
-  const [pillar, setPillar] = reactExports.useState("d1");
-  const cleanRawName = lookupKey.split("::").pop() || lookupKey;
+  const [pillar, setPillar] = reactExports.useState(() => inferPillarFromKey(cleanRawName));
   const [rawKeyName, setRawKeyName] = reactExports.useState(
     !isDraft ? cleanRawName.replace(/^d[1-3]l-/, "") : ""
   );
@@ -26315,16 +29659,25 @@ function LookupEditorTab({
   const saveLookupMutation = useSaveLookupMutation();
   const deleteLookupMutation = useDeleteLookupMutation();
   const saving = saveLookupMutation.isPending;
-  const candidateLookupRefs = packages.flatMap((pkg) => {
-    const list2 = [];
-    for (const key of Object.keys(pkg.exports || {})) {
-      list2.push(key);
-    }
-    for (const key of Object.keys(pkg.internal_lookups || {})) {
-      list2.push(key);
-    }
-    return list2;
-  });
+  const { lookupOptions, domainOptions } = useWorkspaceCandidates(packages);
+  const currentPkgObj = packages.find((p2) => p2.name === pkgName);
+  const currentPkgAtomOptions = reactExports.useMemo(() => {
+    if (!currentPkgObj || !currentPkgObj.atoms) return [];
+    const pillarMatched = currentPkgObj.atoms.filter(
+      (a) => (a.type || "").toLowerCase() === pillar.toLowerCase()
+    );
+    const targetAtoms = pillarMatched.length > 0 ? pillarMatched : currentPkgObj.atoms;
+    return targetAtoms.map((a) => {
+      const atype = (a.type || "d1").toLowerCase();
+      return {
+        value: a.id,
+        label: a.id,
+        badge: typeof a.priority === "number" ? `${atype}-P${a.priority}` : atype.toUpperCase(),
+        badgeVariant: atype,
+        group: `@${currentPkgObj.name}`
+      };
+    });
+  }, [currentPkgObj, pillar]);
   const tabId = `lookup:${lookupKey}`;
   const markDirty = () => {
     if (!isModified) {
@@ -26340,32 +29693,30 @@ function LookupEditorTab({
     const targetPkg = lookupKey.includes("::") ? lookupKey.split("::")[0] : null;
     for (const pkg of packages) {
       if (targetPkg && pkg.name !== targetPkg) continue;
-      if (lookupKey.includes("::internal::") || !isPublic) {
-        const internalDef = ((_a3 = pkg.internal_lookups) == null ? void 0 : _a3[lookupKey]) || ((_b3 = pkg.internal_lookups) == null ? void 0 : _b3[`${pkg.name}::internal::${rawKey}`]) || ((_c2 = pkg.internal_lookups) == null ? void 0 : _c2[rawKey]);
-        if (internalDef) {
-          setPkgName(pkg.name);
-          setPillar(internalDef.pillar || "d1");
-          setIsPublic(false);
-          setDescription(internalDef.description || "");
-          setRawKeyName(rawKey.replace(/^d[1-3]l-/, "") || "");
-          setSelectors(internalDef.selectors || []);
-          setInitialKey(lookupKey);
-          return;
-        }
-      }
-      const exportDef = ((_d2 = pkg.exports) == null ? void 0 : _d2[lookupKey]) || ((_e3 = pkg.exports) == null ? void 0 : _e3[`${pkg.name}::${rawKey}`]) || ((_f2 = pkg.exports) == null ? void 0 : _f2[rawKey]);
+      const exportDef = ((_a3 = pkg.exports) == null ? void 0 : _a3[lookupKey]) || ((_b3 = pkg.exports) == null ? void 0 : _b3[`${pkg.name}::${rawKey}`]) || ((_c2 = pkg.exports) == null ? void 0 : _c2[rawKey]);
       if (exportDef) {
         setPkgName(pkg.name);
-        setPillar(exportDef.pillar || "d1");
+        setPillar(exportDef.pillar || inferPillarFromKey(rawKey));
         setIsPublic(true);
         setDescription(exportDef.description || "");
         setRawKeyName(rawKey.replace(/^d[1-3]l-/, "") || "");
         setSelectors(exportDef.selectors || []);
-        setInitialKey(lookupKey);
+        setInitialKey(lookupKey.includes("::") ? lookupKey : `${pkg.name}::${rawKey}`);
+        return;
+      }
+      const internalDef = ((_d2 = pkg.internal_lookups) == null ? void 0 : _d2[lookupKey]) || ((_e3 = pkg.internal_lookups) == null ? void 0 : _e3[`${pkg.name}::internal::${rawKey}`]) || ((_f2 = pkg.internal_lookups) == null ? void 0 : _f2[rawKey]);
+      if (internalDef) {
+        setPkgName(pkg.name);
+        setPillar(internalDef.pillar || inferPillarFromKey(rawKey));
+        setIsPublic(false);
+        setDescription(internalDef.description || "");
+        setRawKeyName(rawKey.replace(/^d[1-3]l-/, "") || "");
+        setSelectors(internalDef.selectors || []);
+        setInitialKey(lookupKey.includes("::") ? lookupKey : `${pkg.name}::internal::${rawKey}`);
         return;
       }
     }
-  }, [lookupKey, packages, isDraft, isPublic]);
+  }, [lookupKey, packages, isDraft, inferPillarFromKey]);
   const runLiveDebug = reactExports.useCallback(() => {
     if (selectors.length === 0) {
       setMatchedAtoms([]);
@@ -26414,8 +29765,6 @@ function LookupEditorTab({
     }, 200);
     return () => clearTimeout(timer);
   }, [runLiveDebug]);
-  const currentPkgObj = packages.find((p2) => p2.name === pkgName);
-  const currentPillarAtoms = ((currentPkgObj == null ? void 0 : currentPkgObj.atoms) || []).filter((a) => a.type === pillar);
   const handleAddSelector = () => {
     if (selectorMode === "id" && queryIdInput.trim()) {
       setSelectors([...selectors, { query: { id: queryIdInput.trim() } }]);
@@ -26744,59 +30093,34 @@ function LookupEditorTab({
                     }
                   )
                 ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
-                  selectorMode === "id" && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1 flex gap-2", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                      Select,
-                      {
-                        value: queryIdInput,
-                        onChange: (e) => setQueryIdInput(e.target.value),
-                        className: "flex-1",
-                        children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: "", children: [
-                            "-- 点选当前包内的 ",
-                            pillar.toUpperCase(),
-                            " 原子 --"
-                          ] }),
-                          currentPillarAtoms.map((a) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: a.id, children: a.id }, a.id))
-                        ]
-                      }
-                    ),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      Input,
-                      {
-                        type: "text",
-                        value: queryIdInput,
-                        onChange: (e) => setQueryIdInput(e.target.value),
-                        placeholder: "或直接手填 ID",
-                        className: "w-40"
-                      }
-                    )
-                  ] }),
-                  selectorMode === "domain" && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    Input,
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2 items-center", children: [
+                  selectorMode === "id" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    Autocomplete,
                     {
-                      type: "text",
-                      value: domainInput,
-                      onChange: (e) => setDomainInput(e.target.value),
-                      placeholder: "输入领域标签，用逗号分隔，支持 - 排除，如: reasoning, -experimental",
-                      className: "flex-1"
+                      value: queryIdInput,
+                      onChange: setQueryIdInput,
+                      options: currentPkgAtomOptions,
+                      placeholder: `选择或搜索当前包 (@${pkgName || "本包"}) 内的 ${pillar.toUpperCase()} 原子 ID`
                     }
-                  ),
-                  selectorMode === "ref" && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      Input,
-                      {
-                        type: "text",
-                        list: "lookup-ref-candidates",
-                        value: refInput,
-                        onChange: (e) => setRefInput(e.target.value),
-                        placeholder: "输入或选择引用的另一个 lookup，如 pkg::d1l-name",
-                        className: "flex-1"
-                      }
-                    ),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("datalist", { id: "lookup-ref-candidates", children: candidateLookupRefs.map((refKey) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: refKey }, refKey)) })
-                  ] }),
+                  ) }),
+                  selectorMode === "domain" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    Autocomplete,
+                    {
+                      value: domainInput,
+                      onChange: setDomainInput,
+                      options: domainOptions,
+                      placeholder: "输入领域标签，支持 - 排除 (如 reasoning 或 -deprecated)"
+                    }
+                  ) }),
+                  selectorMode === "ref" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    Autocomplete,
+                    {
+                      value: refInput,
+                      onChange: setRefInput,
+                      options: lookupOptions,
+                      placeholder: "搜索并引用已有的 Lookup 接口 (pkg::d1l-xxx 或短名)"
+                    }
+                  ) }),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs(
                     Button,
                     {
@@ -26829,19 +30153,58 @@ function LookupEditorTab({
                               "."
                             ] }),
                             ((_a3 = sel.query) == null ? void 0 : _a3.id) && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-indigo-300", children: [
-                              /* @__PURE__ */ jsxRuntimeExports.jsx(Box, { className: "h-3 w-3 text-slate-400" }),
-                              "精确 ID: ",
-                              /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: sel.query.id })
+                              /* @__PURE__ */ jsxRuntimeExports.jsx(Box, { className: "h-3 w-3 text-slate-400 shrink-0" }),
+                              "精确 ID:",
+                              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                                "button",
+                                {
+                                  type: "button",
+                                  onClick: () => {
+                                    var _a4;
+                                    if (typeof ((_a4 = sel.query) == null ? void 0 : _a4.id) === "string") {
+                                      openTab({
+                                        id: `atom:${sel.query.id}`,
+                                        type: "atom",
+                                        title: sel.query.id,
+                                        closable: true,
+                                        atomId: sel.query.id
+                                      });
+                                    }
+                                  },
+                                  className: "font-semibold underline hover:text-indigo-200 cursor-pointer",
+                                  title: `点击跳转到原子: ${sel.query.id}`,
+                                  children: sel.query.id
+                                }
+                              )
                             ] }),
                             ((_b3 = sel.query) == null ? void 0 : _b3.domain) && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-emerald-300", children: [
-                              /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { className: "h-3 w-3 text-slate-400" }),
+                              /* @__PURE__ */ jsxRuntimeExports.jsx(Tag, { className: "h-3 w-3 text-slate-400 shrink-0" }),
                               "Domain 匹配: ",
                               /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: JSON.stringify(sel.query.domain) })
                             ] }),
                             sel.ref && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex items-center gap-1 text-purple-300", children: [
-                              /* @__PURE__ */ jsxRuntimeExports.jsx(Link2, { className: "h-3 w-3 text-slate-400" }),
-                              "跨接口引用: ",
-                              /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: sel.ref })
+                              /* @__PURE__ */ jsxRuntimeExports.jsx(Link2, { className: "h-3 w-3 text-slate-400 shrink-0" }),
+                              "跨接口引用:",
+                              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                                "button",
+                                {
+                                  type: "button",
+                                  onClick: () => {
+                                    if (sel.ref) {
+                                      openTab({
+                                        id: `lookup:${sel.ref}`,
+                                        type: "lookup",
+                                        title: sel.ref.split("::").pop() || sel.ref,
+                                        closable: true,
+                                        lookupKey: sel.ref
+                                      });
+                                    }
+                                  },
+                                  className: "font-semibold underline hover:text-purple-200 cursor-pointer",
+                                  title: `点击跳转到接口: ${sel.ref}`,
+                                  children: sel.ref
+                                }
+                              )
                             ] })
                           ] }),
                           /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -26917,7 +30280,7 @@ function LookupEditorTab({
                           /* @__PURE__ */ jsxRuntimeExports.jsxs(
                             Badge,
                             {
-                              variant: atom.type === "d1" ? "d1" : atom.type === "d2" ? "d2" : atom.type === "d3" ? "d3" : "kernel",
+                              variant: getPillarVariant(atom.type, "kernel"),
                               className: "text-[10px] uppercase font-bold px-1.5 py-0",
                               children: [
                                 atom.type,
@@ -26925,13 +30288,30 @@ function LookupEditorTab({
                               ]
                             }
                           ),
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200 truncate", children: atom.id }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(
+                            "button",
+                            {
+                              type: "button",
+                              onClick: () => {
+                                openTab({
+                                  id: `atom:${atom.id}`,
+                                  type: "atom",
+                                  title: atom.id,
+                                  closable: true,
+                                  atomId: atom.id
+                                });
+                              },
+                              className: "font-semibold text-slate-200 truncate hover:text-indigo-300 hover:underline cursor-pointer text-left",
+                              title: `点击打开原子: ${atom.id}`,
+                              children: atom.id
+                            }
+                          ),
                           /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-slate-500 truncate", children: [
                             "@",
                             atom.package || "全局"
                           ] })
                         ] }),
-                        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(
                           "button",
                           {
                             type: "button",
@@ -26944,12 +30324,9 @@ function LookupEditorTab({
                                 atomId: atom.id
                               });
                             },
-                            className: "flex items-center gap-1 text-[11px] text-slate-400 hover:text-indigo-300 hover:bg-slate-800 px-2 py-0.5 rounded transition-colors shrink-0",
+                            className: "p-1 text-slate-400 hover:text-indigo-300 hover:bg-slate-800 rounded transition-colors shrink-0 cursor-pointer",
                             title: "在新 Tab 中打开编辑该原子",
-                            children: [
-                              /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "h-3 w-3" }),
-                              " 打开编辑"
-                            ]
+                            children: /* @__PURE__ */ jsxRuntimeExports.jsx(ExternalLink, { className: "h-3.5 w-3.5" })
                           }
                         )
                       ] }),
@@ -27061,33 +30438,129 @@ function useSaveManifestMutation() {
     }
   });
 }
+function manifestReducer(state, action) {
+  switch (action.type) {
+    case "LOAD_SUCCESS": {
+      const snapshot = {
+        name: action.payload.name,
+        version: action.payload.version,
+        description: action.payload.description,
+        items: action.payload.items,
+        overrides: action.payload.overrides
+      };
+      return {
+        ...action.payload,
+        initialSnapshot: snapshot,
+        isModified: false
+      };
+    }
+    case "SET_FIELD": {
+      return {
+        ...state,
+        [action.field]: action.value,
+        isModified: true
+      };
+    }
+    case "ADD_IMPORT": {
+      if (state.items.some((i) => i.lookup === action.item.lookup)) return state;
+      return {
+        ...state,
+        items: [...state.items, action.item],
+        isModified: true
+      };
+    }
+    case "REMOVE_IMPORT": {
+      return {
+        ...state,
+        items: state.items.filter((i) => i.id !== action.id),
+        isModified: true
+      };
+    }
+    case "SET_OVERRIDE": {
+      return {
+        ...state,
+        overrides: {
+          ...state.overrides,
+          [action.lookup]: { selectors: [{ query: { id: action.queryId } }] }
+        },
+        isModified: true
+      };
+    }
+    case "REMOVE_OVERRIDE": {
+      const nextOverrides = { ...state.overrides };
+      delete nextOverrides[action.lookup];
+      return {
+        ...state,
+        overrides: nextOverrides,
+        isModified: true
+      };
+    }
+    case "RESET": {
+      if (!state.initialSnapshot) return state;
+      return {
+        ...state,
+        name: state.initialSnapshot.name,
+        version: state.initialSnapshot.version,
+        description: state.initialSnapshot.description,
+        items: [...state.initialSnapshot.items],
+        overrides: { ...state.initialSnapshot.overrides },
+        isModified: false
+      };
+    }
+    case "COMMIT_SAVE": {
+      const newSnapshot = {
+        name: state.name,
+        version: state.version,
+        description: state.description,
+        items: [...state.items],
+        overrides: { ...state.overrides }
+      };
+      return {
+        ...state,
+        identifier: action.newIdentifier || state.identifier,
+        initialSnapshot: newSnapshot,
+        isModified: false
+      };
+    }
+    default:
+      return state;
+  }
+}
 function ManifestEditorTab({
   manifestName,
   workspacePath,
   packages,
   onSaved
 }) {
-  const setTabDirty = useIdeStore((state) => state.setTabDirty);
-  const openTab = useIdeStore((state) => state.openTab);
-  const replaceTab = useIdeStore((state) => state.replaceTab);
-  const preferences = useIdeStore((state) => state.preferences);
+  const setTabDirty = useIdeStore((state2) => state2.setTabDirty);
+  const openTab = useIdeStore((state2) => state2.openTab);
+  const replaceTab = useIdeStore((state2) => state2.replaceTab);
+  const preferences = useIdeStore((state2) => state2.preferences);
   const isDraft = !manifestName || manifestName.startsWith("draft_");
   const [rightView, setRightView] = reactExports.useState(
     (preferences == null ? void 0 : preferences.defaultRightPanel) === "prompt" ? "prompt" : "graph"
   );
   const [showRightPanel, setShowRightPanel] = reactExports.useState(true);
-  const [manifestIdentifier, setManifestIdentifier] = reactExports.useState(isDraft ? "" : manifestName);
-  const [name2, setName] = reactExports.useState(
-    !isDraft && manifestName ? manifestName.split("/").pop() || manifestName : ""
-  );
-  const [version, setVersion] = reactExports.useState("1.0.0");
-  const [description, setDescription] = reactExports.useState("");
-  const [items, setItems] = reactExports.useState([]);
-  const [overrides, setOverrides] = reactExports.useState({});
-  const [isModified, setIsModified] = reactExports.useState(false);
-  const [initialSnapshot, setInitialSnapshot] = reactExports.useState(null);
+  const [state, dispatch] = reactExports.useReducer(manifestReducer, {
+    identifier: isDraft ? "" : manifestName,
+    name: !isDraft && manifestName ? manifestName.split("/").pop() || manifestName : "",
+    version: "1.0.0",
+    description: "",
+    items: [],
+    overrides: {},
+    initialSnapshot: null,
+    isModified: false
+  });
+  const {
+    identifier: manifestIdentifier,
+    name: name2,
+    version,
+    description,
+    items,
+    overrides,
+    isModified
+  } = state;
   const [selectedLookup, setSelectedLookup] = reactExports.useState("");
-  const [lookupFilterQuery, setLookupFilterQuery] = reactExports.useState("");
   const [editingOverrideKey, setEditingOverrideKey] = reactExports.useState(null);
   const [overrideQueryId, setOverrideQueryId] = reactExports.useState("");
   const [saveStatus, setSaveStatus] = reactExports.useState("");
@@ -27096,15 +30569,13 @@ function ManifestEditorTab({
   const [chunks, setChunks] = reactExports.useState([]);
   const [profile, setProfile] = reactExports.useState(null);
   const [isHookActive, setIsHookActive] = reactExports.useState(false);
+  const { atomOptions } = useWorkspaceCandidates(packages);
   const saveManifestMutation = useSaveManifestMutation();
   const isSaving = saveManifestMutation.isPending;
   const tabId = manifestIdentifier ? `manifest:${manifestIdentifier}` : "manifest:draft";
-  const markDirty = () => {
-    if (!isModified) {
-      setIsModified(true);
-      setTabDirty(tabId, true);
-    }
-  };
+  reactExports.useEffect(() => {
+    setTabDirty(tabId, isModified);
+  }, [tabId, isModified, setTabDirty]);
   const availableExports = reactExports.useMemo(() => {
     const list2 = [];
     for (const pkg of packages) {
@@ -27120,6 +30591,16 @@ function ManifestEditorTab({
     }
     return list2;
   }, [packages]);
+  const exportLookupOptions = reactExports.useMemo(() => {
+    return availableExports.map((exp) => ({
+      value: exp.key,
+      label: exp.key,
+      badge: exp.pillar.toUpperCase(),
+      badgeVariant: exp.pillar.toLowerCase(),
+      group: `@${exp.pkg}`,
+      description: exp.desc || void 0
+    }));
+  }, [availableExports]);
   reactExports.useEffect(() => {
     if (!manifestName || isDraft) return;
     fetchManifestDetail(manifestName).then((data) => {
@@ -27128,28 +30609,25 @@ function ManifestEditorTab({
       const loadedDesc = data.description || "";
       const loadedOverrides = data.overrides || {};
       const rawImports = data.imports || [];
-      const mappedItems = rawImports.filter((imp) => Boolean(imp.lookup)).map((imp) => ({
+      const mappedItems = rawImports.filter((imp) => Boolean(imp == null ? void 0 : imp.lookup)).map((imp) => ({
         id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
         lookup: imp.lookup
       }));
-      setName(loadedName);
-      setVersion(loadedVersion);
-      setDescription(loadedDesc);
-      setOverrides(loadedOverrides);
-      setItems(mappedItems);
-      setIsModified(false);
-      setTabDirty(tabId, false);
-      setInitialSnapshot({
-        name: loadedName,
-        version: loadedVersion,
-        description: loadedDesc,
-        items: mappedItems,
-        overrides: loadedOverrides
+      dispatch({
+        type: "LOAD_SUCCESS",
+        payload: {
+          identifier: manifestName,
+          name: loadedName,
+          version: loadedVersion,
+          description: loadedDesc,
+          items: mappedItems,
+          overrides: loadedOverrides
+        }
       });
     }).catch((err) => {
       console.error(err);
     });
-  }, [manifestName, isDraft, tabId, setTabDirty]);
+  }, [manifestName, isDraft]);
   const compileCurrent = reactExports.useCallback(
     (hookFlag = isHookActive) => {
       const targetQueryKey = manifestIdentifier || name2;
@@ -27187,7 +30665,6 @@ function ManifestEditorTab({
   }, [compileCurrent]);
   const handleAddLookup = () => {
     if (!selectedLookup) return;
-    if (items.some((i) => i.lookup === selectedLookup)) return;
     const found = availableExports.find((e) => e.key === selectedLookup);
     const newItem = {
       id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
@@ -27195,13 +30672,11 @@ function ManifestEditorTab({
       pillar: found == null ? void 0 : found.pillar,
       description: found == null ? void 0 : found.desc
     };
-    setItems([...items, newItem]);
+    dispatch({ type: "ADD_IMPORT", item: newItem });
     setSelectedLookup("");
-    markDirty();
   };
   const handleRemoveLookup = (id) => {
-    setItems(items.filter((i) => i.id !== id));
-    markDirty();
+    dispatch({ type: "REMOVE_IMPORT", id });
   };
   const handleSaveManifest = reactExports.useCallback(async () => {
     const targetIdentifier = manifestIdentifier.trim() || name2.trim();
@@ -27218,16 +30693,7 @@ function ManifestEditorTab({
         overrides: Object.keys(overrides).length > 0 ? overrides : void 0
       });
       setSaveStatus("已保存");
-      setIsModified(false);
-      setTabDirty(tabId, false);
-      setManifestIdentifier(targetIdentifier);
-      setInitialSnapshot({
-        name: name2.trim(),
-        version: version.trim(),
-        description: description.trim(),
-        items: [...items],
-        overrides: { ...overrides }
-      });
+      dispatch({ type: "COMMIT_SAVE", newIdentifier: targetIdentifier });
       onSaved == null ? void 0 : onSaved();
       if (isDraft) {
         replaceTab(tabId, {
@@ -27252,7 +30718,6 @@ function ManifestEditorTab({
     workspacePath,
     overrides,
     tabId,
-    setTabDirty,
     onSaved,
     isDraft,
     replaceTab,
@@ -27271,21 +30736,7 @@ function ManifestEditorTab({
   const handleResetManifest = () => {
     if (!isModified) return;
     if (!window.confirm("确定要放弃所有未保存的修改并恢复吗？")) return;
-    if (initialSnapshot) {
-      setName(initialSnapshot.name);
-      setVersion(initialSnapshot.version);
-      setDescription(initialSnapshot.description);
-      setItems([...initialSnapshot.items]);
-      setOverrides({ ...initialSnapshot.overrides });
-    } else {
-      setName(manifestName ? manifestName.split("/").pop() || manifestName : "new_agent");
-      setVersion("1.0.0");
-      setDescription("");
-      setItems([]);
-      setOverrides({});
-    }
-    setIsModified(false);
-    setTabDirty(tabId, false);
+    dispatch({ type: "RESET" });
   };
   const handleOpenAtom = reactExports.useCallback(
     (atomId) => {
@@ -27326,8 +30777,7 @@ function ManifestEditorTab({
                 type: "text",
                 value: manifestIdentifier,
                 onChange: (e) => {
-                  setManifestIdentifier(e.target.value);
-                  markDirty();
+                  dispatch({ type: "SET_FIELD", field: "identifier", value: e.target.value });
                 },
                 placeholder: "例如: smart-contract-auditor"
               }
@@ -27342,8 +30792,7 @@ function ManifestEditorTab({
                 type: "text",
                 value: name2,
                 onChange: (e) => {
-                  setName(e.target.value);
-                  markDirty();
+                  dispatch({ type: "SET_FIELD", field: "name", value: e.target.value });
                 },
                 placeholder: "智能体装配名称"
               }
@@ -27358,8 +30807,7 @@ function ManifestEditorTab({
                 type: "text",
                 value: version,
                 onChange: (e) => {
-                  setVersion(e.target.value);
-                  markDirty();
+                  dispatch({ type: "SET_FIELD", field: "version", value: e.target.value });
                 }
               }
             )
@@ -27373,56 +30821,39 @@ function ManifestEditorTab({
                 type: "text",
                 value: description,
                 onChange: (e) => {
-                  setDescription(e.target.value);
-                  markDirty();
+                  dispatch({ type: "SET_FIELD", field: "description", value: e.target.value });
                 }
               }
             )
           ] })
         ] }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-2", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative flex-1", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Filter, { className: "h-3.5 w-3.5 text-slate-500 absolute left-2.5 top-2" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              Input,
-              {
-                type: "text",
-                value: lookupFilterQuery,
-                onChange: (e) => setLookupFilterQuery(e.target.value),
-                placeholder: "过滤可用公开接口 (按包名或键名搜索)...",
-                className: "pl-8 pr-2.5"
-              }
-            )
-          ] }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              Select,
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-xs font-mono text-slate-300", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 font-semibold text-indigo-400", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Filter, { className: "h-3.5 w-3.5" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "注入公开查找接口 (Imports)" })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-500", children: "输入包名或键名即可实时模糊过滤与预览" })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2 items-center", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Autocomplete,
               {
                 value: selectedLookup,
-                onChange: (e) => setSelectedLookup(e.target.value),
-                className: "flex-1",
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "", children: "-- 选择要注入的公开查找接口 --" }),
-                  availableExports.filter(
-                    (exp) => !lookupFilterQuery.trim() || exp.key.toLowerCase().includes(lookupFilterQuery.trim().toLowerCase()) || exp.pkg.toLowerCase().includes(lookupFilterQuery.trim().toLowerCase())
-                  ).map((exp) => /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: exp.key, children: [
-                    "[",
-                    exp.pkg,
-                    "] ",
-                    exp.key,
-                    " (",
-                    exp.pillar.toUpperCase(),
-                    ")"
-                  ] }, exp.key))
-                ]
+                onChange: setSelectedLookup,
+                options: exportLookupOptions,
+                placeholder: "搜索或输入要注入的公开查找接口 (如 pkg::d1l-xxx)...",
+                onSelectOption: (opt) => {
+                  setSelectedLookup(opt.value);
+                }
               }
-            ),
+            ) }),
             /* @__PURE__ */ jsxRuntimeExports.jsxs(
               Button,
               {
                 size: "sm",
                 onClick: handleAddLookup,
-                disabled: !selectedLookup,
+                disabled: !selectedLookup.trim(),
                 className: "h-7 text-xs flex items-center gap-1 shrink-0",
                 children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "h-3.5 w-3.5" }),
@@ -27528,10 +30959,7 @@ function ManifestEditorTab({
                       {
                         type: "button",
                         onClick: () => {
-                          const nextOverrides = { ...overrides };
-                          delete nextOverrides[item.lookup];
-                          setOverrides(nextOverrides);
-                          markDirty();
+                          dispatch({ type: "REMOVE_OVERRIDE", lookup: item.lookup });
                         },
                         className: "text-[10px] text-amber-400 hover:underline flex items-center gap-1",
                         children: [
@@ -27541,35 +30969,32 @@ function ManifestEditorTab({
                       }
                     )
                   ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      Input,
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex gap-2 items-center", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      Autocomplete,
                       {
-                        type: "text",
                         value: overrideQueryId,
-                        onChange: (e) => setOverrideQueryId(e.target.value),
-                        placeholder: "目标特定原子 ID，如 d1-custom",
-                        className: "flex-1"
+                        onChange: setOverrideQueryId,
+                        options: atomOptions,
+                        placeholder: "搜索选择目标特定原子 ID (如 d1-xxx)"
                       }
-                    ),
+                    ) }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx(
                       Button,
                       {
                         size: "sm",
                         onClick: () => {
                           if (overrideQueryId.trim()) {
-                            setOverrides({
-                              ...overrides,
-                              [item.lookup]: {
-                                selectors: [{ query: { id: overrideQueryId.trim() } }]
-                              }
+                            dispatch({
+                              type: "SET_OVERRIDE",
+                              lookup: item.lookup,
+                              queryId: overrideQueryId.trim()
                             });
                             setEditingOverrideKey(null);
-                            markDirty();
                           }
                         },
                         disabled: !overrideQueryId.trim(),
-                        className: "h-7 text-xs",
+                        className: "h-7 text-xs shrink-0",
                         children: "应用"
                       }
                     )
@@ -27915,8 +31340,6 @@ function SettingsTab() {
   const [activeWsId, setActiveWsId] = reactExports.useState("");
   const [wsName, setWsName] = reactExports.useState("");
   const [wsRoot, setWsRoot] = reactExports.useState("");
-  const [libPaths, setLibPaths] = reactExports.useState("");
-  const [manPaths, setManPaths] = reactExports.useState("");
   const [hookCommand, setHookCommand] = reactExports.useState("");
   const [saving, setSaving] = reactExports.useState(false);
   reactExports.useEffect(() => {
@@ -27928,15 +31351,11 @@ function SettingsTab() {
       setActiveWsId(current.id);
       setWsName(current.name);
       setWsRoot(current.root || "");
-      setLibPaths(current.library_paths.join("\n"));
-      setManPaths(current.manifest_paths.join("\n"));
       setHookCommand(current.post_process_hook || "");
     }
   }, [wsStore.workspaces, wsStore.activeWorkspaceId]);
   const handleSaveActiveWorkspace = async () => {
     setSaving(true);
-    const newLibPaths = libPaths.split("\n").map((p2) => p2.trim()).filter(Boolean);
-    const newManPaths = manPaths.split("\n").map((p2) => p2.trim()).filter(Boolean);
     try {
       const res = await fetch("/api/system/config", {
         method: "PUT",
@@ -27944,8 +31363,6 @@ function SettingsTab() {
         body: JSON.stringify({
           name: wsName.trim(),
           root: wsRoot.trim() || void 0,
-          library_paths: newLibPaths,
-          manifest_paths: newManPaths,
           post_process_hook: hookCommand.trim() || void 0
         })
       });
@@ -28050,7 +31467,7 @@ function SettingsTab() {
       /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: "space-y-4", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("h3", { className: "text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 font-mono", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(SlidersVertical, { className: "h-4 w-4" }),
-          " 当前工作区详细路径 (",
+          " 当前工作区基础设置 (",
           activeWsId,
           ")"
         ] }),
@@ -28081,51 +31498,18 @@ function SettingsTab() {
               )
             ] })
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "label",
-              {
-                htmlFor: "settings-lib-paths",
-                className: "font-medium block mb-1 flex items-center gap-2",
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Database, { className: "h-4 w-4 text-indigo-400" }),
-                  " 知识库目录 (每行一个)"
-                ]
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "textarea",
-              {
-                id: "settings-lib-paths",
-                value: libPaths,
-                onChange: (e) => setLibPaths(e.target.value),
-                rows: 2,
-                className: "w-full font-mono text-xs bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 focus:outline-none focus:border-indigo-500"
-              }
-            )
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "label",
-              {
-                htmlFor: "settings-man-paths",
-                className: "font-medium block mb-1 flex items-center gap-2",
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Database, { className: "h-4 w-4 text-emerald-400" }),
-                  " 清单蓝图目录 (每行一个)"
-                ]
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "textarea",
-              {
-                id: "settings-man-paths",
-                value: manPaths,
-                onChange: (e) => setManPaths(e.target.value),
-                rows: 2,
-                className: "w-full font-mono text-xs bg-slate-950 border border-slate-800 rounded-lg p-3 text-slate-200 focus:outline-none focus:border-emerald-500"
-              }
-            )
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "rounded-lg border border-slate-800/80 bg-slate-950/60 p-3 space-y-2 font-mono text-xs", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "text-[11px] text-slate-400 font-semibold mb-1", children: "已固化的资源约定路径（由根目录自动确定）：" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 text-slate-300", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Database, { className: "h-3.5 w-3.5 text-indigo-400 shrink-0" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-500", children: "知识库目录:" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-200", children: wsRoot ? `${wsRoot}/library` : "(未设置根目录)" })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 text-slate-300", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Database, { className: "h-3.5 w-3.5 text-emerald-400 shrink-0" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-500", children: "清单蓝图目录:" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-200", children: wsRoot ? `${wsRoot}/manifests` : "(未设置根目录)" })
+            ] })
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "settings-hook-cmd", className: "font-medium block mb-1", children: "后处理管道钩子 (Post-Process Hook)" }),
@@ -28279,9 +31663,6 @@ function CreatePackageModal({
   onClose,
   newPkgName,
   setNewPkgName,
-  newPkgWs,
-  setNewPkgWs,
-  libraryPaths,
   onSubmit
 }) {
   const handleSubmit = (e) => {
@@ -28301,18 +31682,6 @@ function CreatePackageModal({
           value: newPkgName,
           onChange: (e) => setNewPkgName(e.target.value),
           placeholder: "例如: core_agent"
-        }
-      )
-    ] }),
-    libraryPaths && libraryPaths.length > 1 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("label", { htmlFor: "modal-pkg-ws", className: "block text-xs font-mono text-slate-400 mb-1", children: "选择工作区 (Workspace)" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        Select,
-        {
-          id: "modal-pkg-ws",
-          value: newPkgWs,
-          onChange: (e) => setNewPkgWs(e.target.value),
-          children: libraryPaths.map((p2) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: p2, children: p2 }, p2))
         }
       )
     ] }),
@@ -28445,15 +31814,18 @@ function EditPackageModal({
     ] })
   ] }) });
 }
-function buildTree(items) {
-  const root2 = {
-    children: /* @__PURE__ */ new Map()
-  };
-  for (const item of items) {
-    const isExplicitDir = typeof item === "object" && item.type === "directory";
-    const p2 = typeof item === "string" ? item : item.name;
-    const parts = p2.split("/").filter(Boolean);
-    let curr = root2;
+class PathTrie {
+  constructor() {
+    __publicField(this, "root", {
+      name: "",
+      path: "",
+      isFolder: true,
+      children: /* @__PURE__ */ new Map()
+    });
+  }
+  insert(pathStr, isExplicitDir = false, data) {
+    const parts = pathStr.split("/").filter(Boolean);
+    let curr = this.root;
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       const isLeaf = i === parts.length - 1;
@@ -28463,8 +31835,9 @@ function buildTree(items) {
       if (!nextNode) {
         nextNode = {
           name: part,
-          path: isLeaf && !isExplicitDir ? p2 : subPath,
+          path: isLeaf && !isExplicitDir ? pathStr : subPath,
           isFolder,
+          data: isLeaf ? data : void 0,
           children: /* @__PURE__ */ new Map()
         };
         curr.children.set(part, nextNode);
@@ -28474,23 +31847,33 @@ function buildTree(items) {
       curr = nextNode;
     }
   }
-  function toSortedNodes(node2) {
-    const list2 = [];
-    for (const child of node2.children.values()) {
-      list2.push({
-        name: child.name,
-        path: child.path,
-        isFolder: child.isFolder,
-        children: toSortedNodes(child)
+  toHierarchy() {
+    const formatNode = (node2) => {
+      const list2 = [];
+      for (const child of node2.children.values()) {
+        list2.push({
+          name: child.name,
+          path: child.path,
+          isFolder: child.isFolder,
+          data: child.data,
+          children: formatNode(child)
+        });
+      }
+      return list2.sort((a, b) => {
+        if (a.isFolder && !b.isFolder) return -1;
+        if (!a.isFolder && b.isFolder) return 1;
+        return a.name.localeCompare(b.name);
       });
-    }
-    return list2.sort((a, b) => {
-      if (a.isFolder && !b.isFolder) return -1;
-      if (!a.isFolder && b.isFolder) return 1;
-      return a.name.localeCompare(b.name);
-    });
+    };
+    return formatNode(this.root);
   }
-  return toSortedNodes(root2);
+}
+function buildTree(items) {
+  const trie = new PathTrie();
+  for (const item of items) {
+    trie.insert(item.name, item.type === "directory", item);
+  }
+  return trie.toHierarchy();
 }
 function ManifestTreeItem({
   node: node2,
@@ -29042,16 +32425,11 @@ function App() {
   const queryClient2 = useQueryClient();
   const [status, setStatus] = reactExports.useState("检测中...");
   const [explorerTab, setExplorerTab] = reactExports.useState("manifests");
-  const [isCreatePkgOpen, setIsCreatePkgOpen] = reactExports.useState(false);
+  const [activeModal, setActiveModal] = reactExports.useState(null);
   const [newPkgName, setNewPkgName] = reactExports.useState("");
-  const [newPkgWs, setNewPkgWs] = reactExports.useState("");
-  const [editingPkg, setEditingPkg] = reactExports.useState(null);
-  const [isEditPkgOpen, setIsEditPkgOpen] = reactExports.useState(false);
-  const [isCreateFolderOpen, setIsCreateFolderOpen] = reactExports.useState(false);
-  const [targetParentFolder, setTargetParentFolder] = reactExports.useState("");
-  const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = reactExports.useState(false);
+  const [newPkgWs, _setNewPkgWs] = reactExports.useState("");
   const [isWsDropdownOpen, setIsWsDropdownOpen] = reactExports.useState(false);
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = reactExports.useState(false);
+  const closeModal = reactExports.useCallback(() => setActiveModal(null), []);
   const { data: assetsData } = useQuery({
     queryKey: ["assets", wsStore.activeWorkspaceId],
     queryFn: async () => {
@@ -29103,7 +32481,9 @@ function App() {
         window.dispatchEvent(new CustomEvent("aca:save-active-tab"));
       } else if (isMod && e.key.toLowerCase() === "p") {
         e.preventDefault();
-        setIsCommandPaletteOpen((prev) => !prev);
+        setActiveModal(
+          (curr) => (curr == null ? void 0 : curr.type) === "COMMAND_PALETTE" ? null : { type: "COMMAND_PALETTE" }
+        );
       } else if (isMod && e.key.toLowerCase() === "t") {
         e.preventDefault();
         useIdeStore.getState().openTab(
@@ -29262,8 +32642,7 @@ function App() {
     );
   };
   const handleOpenCreateFolder = (parent = "") => {
-    setTargetParentFolder(parent);
-    setIsCreateFolderOpen(true);
+    setActiveModal({ type: "CREATE_FOLDER", parentPath: parent });
   };
   const handleSubmitCreateFolder = async (folderPath) => {
     try {
@@ -29283,10 +32662,9 @@ function App() {
       if (!old) return old;
       return {
         ...old,
-        manifests: old.manifests.filter((m2) => {
-          const name2 = typeof m2 === "string" ? m2 : m2.name;
-          return name2 !== folderPath && !name2.startsWith(`${folderPath}/`);
-        })
+        manifests: old.manifests.filter(
+          (m2) => m2.name !== folderPath && !m2.name.startsWith(`${folderPath}/`)
+        )
       };
     });
     deleteFsItem({ path: folderPath, scope: "manifests" }).then(() => {
@@ -29349,9 +32727,7 @@ function App() {
       if (!old) return old;
       return {
         ...old,
-        manifests: old.manifests.filter(
-          (m2) => typeof m2 === "string" ? m2 !== mName : m2.name !== mName
-        )
+        manifests: old.manifests.filter((m2) => m2.name !== mName)
       };
     });
     ideStore.closeTab(`manifest:${mName}`);
@@ -29382,15 +32758,12 @@ function App() {
     [ideStore, invalidateAll]
   );
   const handleCreatePackage = reactExports.useCallback(() => {
-    var _a2;
     setNewPkgName("");
-    const activeWs = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
-    setNewPkgWs(((_a2 = activeWs == null ? void 0 : activeWs.library_paths) == null ? void 0 : _a2[0]) || "");
-    setIsCreatePkgOpen(true);
-  }, [wsStore.workspaces, wsStore.activeWorkspaceId]);
+    setActiveModal({ type: "CREATE_PACKAGE" });
+  }, []);
   const submitCreatePackage = reactExports.useCallback(() => {
     if (!newPkgName.trim()) return;
-    setIsCreatePkgOpen(false);
+    closeModal();
     fetch("/api/packages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -29407,7 +32780,7 @@ function App() {
         toast.error(`创建组件包失败: ${data.detail || res.statusText}`);
       }
     }).catch(() => toast.error("创建组件包网络异常"));
-  }, [newPkgName, newPkgWs, invalidateAll]);
+  }, [newPkgName, newPkgWs, invalidateAll, closeModal]);
   const handleDeletePackage = reactExports.useCallback(
     (pkgName, e) => {
       e.stopPropagation();
@@ -29665,8 +33038,7 @@ function App() {
                     onOpenLookup: (lKey, e) => handleOpenLookupTab(lKey, e),
                     onCreateKernel: handleCreateKernelDraft,
                     onEditPackage: (pkg) => {
-                      setEditingPkg(pkg);
-                      setIsEditPkgOpen(true);
+                      setActiveModal({ type: "EDIT_PACKAGE", pkg });
                     },
                     onDeletePackage: handleDeletePackage,
                     onDeleteLookup: handleDeleteLookup,
@@ -29768,7 +33140,7 @@ function App() {
               manifestsCount: manifests.length,
               onSaved: handleTabSaved,
               onDeleted: handleTabDeleted,
-              onOpenCommandPalette: () => setIsCommandPaletteOpen(true),
+              onOpenCommandPalette: () => setActiveModal({ type: "COMMAND_PALETTE" }),
               onCreateManifest: handleCreateNewManifest,
               onCreateAtom: handleCreateNewAtomDraft
             },
@@ -29891,7 +33263,7 @@ function App() {
                   type: "button",
                   onClick: () => {
                     setIsWsDropdownOpen(false);
-                    setIsCreateWorkspaceOpen(true);
+                    setActiveModal({ type: "CREATE_WORKSPACE" });
                   },
                   className: "w-full flex items-center gap-1.5 px-2.5 py-1.5 text-indigo-300 hover:bg-indigo-950/40 rounded-lg text-left cursor-pointer transition-colors",
                   children: [
@@ -29939,7 +33311,7 @@ function App() {
           "button",
           {
             type: "button",
-            onClick: () => setIsCommandPaletteOpen(true),
+            onClick: () => setActiveModal({ type: "COMMAND_PALETTE" }),
             className: "flex items-center gap-1 px-1.5 py-0.5 rounded text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer",
             title: "打开命令面板 (Ctrl+P)",
             children: [
@@ -29950,48 +33322,43 @@ function App() {
         )
       ] })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
+    (activeModal == null ? void 0 : activeModal.type) === "COMMAND_PALETTE" && /* @__PURE__ */ jsxRuntimeExports.jsx(
       CommandPalette,
       {
-        isOpen: isCommandPaletteOpen,
-        onClose: () => setIsCommandPaletteOpen(false),
+        isOpen: true,
+        onClose: closeModal,
         manifests,
         packages,
         kernel
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
+    (activeModal == null ? void 0 : activeModal.type) === "CREATE_PACKAGE" && /* @__PURE__ */ jsxRuntimeExports.jsx(
       CreatePackageModal,
       {
-        isOpen: isCreatePkgOpen,
-        onClose: () => setIsCreatePkgOpen(false),
+        isOpen: true,
+        onClose: closeModal,
         newPkgName,
         setNewPkgName,
-        newPkgWs,
-        setNewPkgWs,
-        libraryPaths: currentWsObj == null ? void 0 : currentWsObj.library_paths,
         onSubmit: submitCreatePackage
       }
     ),
-    editingPkg && /* @__PURE__ */ jsxRuntimeExports.jsx(
+    (activeModal == null ? void 0 : activeModal.type) === "EDIT_PACKAGE" && /* @__PURE__ */ jsxRuntimeExports.jsx(
       EditPackageModal,
       {
-        isOpen: isEditPkgOpen,
-        onClose: () => {
-          setIsEditPkgOpen(false);
-          setEditingPkg(null);
-        },
-        packageName: editingPkg.name,
-        initialVersion: editingPkg.version,
-        initialDescription: editingPkg.description,
+        isOpen: true,
+        onClose: closeModal,
+        packageName: activeModal.pkg.name,
+        initialVersion: activeModal.pkg.version,
+        initialDescription: activeModal.pkg.description,
         onSubmit: ({ version, description }) => {
-          fetch(`/api/packages/${encodeURIComponent(editingPkg.name)}`, {
+          const pkgName = activeModal.pkg.name;
+          fetch(`/api/packages/${encodeURIComponent(pkgName)}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ version, description })
           }).then(async (res) => {
             if (res.ok) {
-              toast.success(`组件包 "${editingPkg.name}" 元数据已更新`);
+              toast.success(`组件包 "${pkgName}" 元数据已更新`);
               invalidateAll();
             } else {
               const data = await res.json();
@@ -30001,20 +33368,20 @@ function App() {
         }
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
+    (activeModal == null ? void 0 : activeModal.type) === "CREATE_FOLDER" && /* @__PURE__ */ jsxRuntimeExports.jsx(
       CreateFolderModal,
       {
-        isOpen: isCreateFolderOpen,
-        onClose: () => setIsCreateFolderOpen(false),
-        parentPath: targetParentFolder,
+        isOpen: true,
+        onClose: closeModal,
+        parentPath: activeModal.parentPath,
         onSubmit: handleSubmitCreateFolder
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
+    (activeModal == null ? void 0 : activeModal.type) === "CREATE_WORKSPACE" && /* @__PURE__ */ jsxRuntimeExports.jsx(
       CreateWorkspaceModal,
       {
-        isOpen: isCreateWorkspaceOpen,
-        onClose: () => setIsCreateWorkspaceOpen(false),
+        isOpen: true,
+        onClose: closeModal,
         onSubmit: async (params) => {
           await wsStore.createWorkspace(params);
           await handleSelectWorkspace(params.id);

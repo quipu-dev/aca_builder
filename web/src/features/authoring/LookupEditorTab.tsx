@@ -10,6 +10,7 @@ import {
   type PromptChunk,
   PromptViewer,
 } from '@/components/editor/PromptViewer';
+import { Autocomplete, type AutocompleteOption } from '@/components/ui/autocomplete';
 import { Badge, getPillarVariant } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,7 @@ import { SplitPane } from '@/components/ui/split-pane';
 import { toast } from '@/components/ui/toast';
 import type { PackageItem } from '@/features/explorer/PackageExplorer';
 import { TopologyGraph } from '@/features/graph/TopologyGraph';
+import { useWorkspaceCandidates } from '@/hooks/use-workspace-candidates';
 import { useIdeStore } from '@/stores/ide-store';
 import { generateIdSuffix } from '@/utils/ulid';
 import {
@@ -38,7 +40,7 @@ import {
   Tag,
   Trash2,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export interface SelectorRule {
   query?: {
@@ -118,16 +120,31 @@ export function LookupEditorTab({
   const deleteLookupMutation = useDeleteLookupMutation();
   const saving = saveLookupMutation.isPending;
 
-  const candidateLookupRefs = packages.flatMap((pkg) => {
-    const list: string[] = [];
-    for (const key of Object.keys(pkg.exports || {})) {
-      list.push(key);
-    }
-    for (const key of Object.keys(pkg.internal_lookups || {})) {
-      list.push(key);
-    }
-    return list;
-  });
+  const { lookupOptions, domainOptions } = useWorkspaceCandidates(packages);
+
+  const currentPkgObj = packages.find((p) => p.name === pkgName);
+
+  // 严格隔离作用域：仅补全当前包 (@pkgName) 内匹配当前 Pillar 的原子
+  const currentPkgAtomOptions = useMemo<AutocompleteOption[]>(() => {
+    if (!currentPkgObj || !currentPkgObj.atoms) return [];
+
+    const pillarMatched = currentPkgObj.atoms.filter(
+      (a) => (a.type || '').toLowerCase() === pillar.toLowerCase(),
+    );
+
+    const targetAtoms = pillarMatched.length > 0 ? pillarMatched : currentPkgObj.atoms;
+
+    return targetAtoms.map((a) => {
+      const atype = (a.type || 'd1').toLowerCase() as 'd1' | 'd2' | 'd3' | 'kernel';
+      return {
+        value: a.id,
+        label: a.id,
+        badge: typeof a.priority === 'number' ? `${atype}-P${a.priority}` : atype.toUpperCase(),
+        badgeVariant: atype,
+        group: `@${currentPkgObj.name}`,
+      };
+    });
+  }, [currentPkgObj, pillar]);
 
   const tabId = `lookup:${lookupKey}`;
 
@@ -242,9 +259,6 @@ export function LookupEditorTab({
     }, 200);
     return () => clearTimeout(timer);
   }, [runLiveDebug]);
-
-  const currentPkgObj = packages.find((p) => p.name === pkgName);
-  const currentPillarAtoms = (currentPkgObj?.atoms || []).filter((a) => a.type === pillar);
 
   const handleAddSelector = () => {
     if (selectorMode === 'id' && queryIdInput.trim()) {
@@ -606,57 +620,38 @@ export function LookupEditorTab({
                   />
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                   {selectorMode === 'id' && (
-                    <div className="flex-1 flex gap-2">
-                      <Select
+                    <div className="flex-1">
+                      <Autocomplete
                         value={queryIdInput}
-                        onChange={(e) => setQueryIdInput(e.target.value)}
-                        className="flex-1"
-                      >
-                        <option value="">-- 点选当前包内的 {pillar.toUpperCase()} 原子 --</option>
-                        {currentPillarAtoms.map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.id}
-                          </option>
-                        ))}
-                      </Select>
-                      <Input
-                        type="text"
-                        value={queryIdInput}
-                        onChange={(e) => setQueryIdInput(e.target.value)}
-                        placeholder="或直接手填 ID"
-                        className="w-40"
+                        onChange={setQueryIdInput}
+                        options={currentPkgAtomOptions}
+                        placeholder={`选择或搜索当前包 (@${pkgName || '本包'}) 内的 ${pillar.toUpperCase()} 原子 ID`}
                       />
                     </div>
                   )}
 
                   {selectorMode === 'domain' && (
-                    <Input
-                      type="text"
-                      value={domainInput}
-                      onChange={(e) => setDomainInput(e.target.value)}
-                      placeholder="输入领域标签，用逗号分隔，支持 - 排除，如: reasoning, -experimental"
-                      className="flex-1"
-                    />
+                    <div className="flex-1">
+                      <Autocomplete
+                        value={domainInput}
+                        onChange={setDomainInput}
+                        options={domainOptions}
+                        placeholder="输入领域标签，支持 - 排除 (如 reasoning 或 -deprecated)"
+                      />
+                    </div>
                   )}
 
                   {selectorMode === 'ref' && (
-                    <>
-                      <Input
-                        type="text"
-                        list="lookup-ref-candidates"
+                    <div className="flex-1">
+                      <Autocomplete
                         value={refInput}
-                        onChange={(e) => setRefInput(e.target.value)}
-                        placeholder="输入或选择引用的另一个 lookup，如 pkg::d1l-name"
-                        className="flex-1"
+                        onChange={setRefInput}
+                        options={lookupOptions}
+                        placeholder="搜索并引用已有的 Lookup 接口 (pkg::d1l-xxx 或短名)"
                       />
-                      <datalist id="lookup-ref-candidates">
-                        {candidateLookupRefs.map((refKey) => (
-                          <option key={refKey} value={refKey} />
-                        ))}
-                      </datalist>
-                    </>
+                    </div>
                   )}
 
                   <Button
