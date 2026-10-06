@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 import { toast } from '@/components/ui/toast';
+import type { PackageItem } from '@/features/explorer/PackageExplorer';
 import { useIdeStore } from '@/stores/ide-store';
 import { generateIdSuffix } from '@/utils/ulid';
 import { markdown } from '@codemirror/lang-markdown';
@@ -40,12 +41,13 @@ export function AtomEditorTab({
   onDeleted,
 }: {
   atomId: string;
-  packages?: Array<{ name: string }>;
+  packages?: PackageItem[];
   onSaved?: () => void;
   onDeleted?: () => void;
 }) {
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const replaceTab = useIdeStore((state) => state.replaceTab);
+  const openTab = useIdeStore((state) => state.openTab);
 
   const tabId = `atom:${atomId}`;
   const isKernel = atomId === 'kernel' || atomId.startsWith('draft:kernel');
@@ -383,6 +385,38 @@ export function AtomEditorTab({
     markDirty();
   };
 
+  // 智能解析非限定 Lookup 键的目标完整限定名称
+  const resolveLookupRef = (ref: string): string => {
+    if (ref.includes('::')) return ref;
+
+    // 1. 优先在当前原子所属包中匹配
+    const currentPkgObj = packages.find((p) => p.name === pkgName);
+    if (currentPkgObj) {
+      if (currentPkgObj.exports?.[ref] || currentPkgObj.exports?.[`${pkgName}::${ref}`]) {
+        return `${pkgName}::${ref}`;
+      }
+      if (
+        currentPkgObj.internal_lookups?.[ref] ||
+        currentPkgObj.internal_lookups?.[`${pkgName}::internal::${ref}`]
+      ) {
+        return `${pkgName}::internal::${ref}`;
+      }
+    }
+
+    // 2. 当前包未找到时，遍历全库所有包
+    for (const pkg of packages) {
+      if (pkg.exports?.[ref] || pkg.exports?.[`${pkg.name}::${ref}`]) {
+        return `${pkg.name}::${ref}`;
+      }
+      if (pkg.internal_lookups?.[ref] || pkg.internal_lookups?.[`${pkg.name}::internal::${ref}`]) {
+        return `${pkg.name}::internal::${ref}`;
+      }
+    }
+
+    // 3. 兜底回退为当前包局部作用域
+    return pkgName && pkgName !== '全局' ? `${pkgName}::${ref}` : ref;
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center text-xs text-slate-500 font-mono gap-2">
@@ -656,11 +690,28 @@ export function AtomEditorTab({
                     key={ref}
                     className="inline-flex items-center gap-1 bg-emerald-950/60 text-emerald-300 px-2 py-0.5 rounded text-[11px] border border-emerald-800/60"
                   >
-                    <span>{ref}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetKey = resolveLookupRef(ref);
+                        openTab({
+                          id: `lookup:${targetKey}`,
+                          type: 'lookup',
+                          title: targetKey.split('::').pop() || targetKey,
+                          closable: true,
+                          lookupKey: targetKey,
+                        });
+                      }}
+                      className="hover:underline hover:text-emerald-200 cursor-pointer text-left truncate max-w-[200px]"
+                      title={`点击打开 Lookup 接口: ${ref}`}
+                    >
+                      {ref}
+                    </button>
                     <button
                       type="button"
                       onClick={() => removeUsesRef(ref)}
-                      className="hover:text-rose-400 ml-1"
+                      className="hover:text-rose-400 ml-1 cursor-pointer"
+                      title="移除该依赖引用"
                     >
                       ×
                     </button>

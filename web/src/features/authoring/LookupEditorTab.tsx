@@ -10,7 +10,7 @@ import {
   type PromptChunk,
   PromptViewer,
 } from '@/components/editor/PromptViewer';
-import { Badge } from '@/components/ui/badge';
+import { Badge, getPillarVariant } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SegmentedControl } from '@/components/ui/segmented-control';
@@ -74,10 +74,17 @@ export function LookupEditorTab({
       : '';
   const initialPublic = isDraft ? !draftParts[2]?.startsWith('private') : !isInternalKey;
 
+  const cleanRawName = lookupKey.split('::').pop() || lookupKey;
+
+  const inferPillarFromKey = useCallback((key: string): 'd1' | 'd2' | 'd3' => {
+    const m = key.match(/^d([1-3])l-/i);
+    if (m) return `d${m[1]}`.toLowerCase() as 'd1' | 'd2' | 'd3';
+    return 'd1';
+  }, []);
+
   const [pkgName, setPkgName] = useState(initialPkg || packages[0]?.name || '');
   const [isPublic, setIsPublic] = useState(initialPublic);
-  const [pillar, setPillar] = useState<'d1' | 'd2' | 'd3'>('d1');
-  const cleanRawName = lookupKey.split('::').pop() || lookupKey;
+  const [pillar, setPillar] = useState<'d1' | 'd2' | 'd3'>(() => inferPillarFromKey(cleanRawName));
   const [rawKeyName, setRawKeyName] = useState(
     !isDraft ? cleanRawName.replace(/^d[1-3]l-/, '') : '',
   );
@@ -141,23 +148,7 @@ export function LookupEditorTab({
     for (const pkg of packages) {
       if (targetPkg && pkg.name !== targetPkg) continue;
 
-      if (lookupKey.includes('::internal::') || !isPublic) {
-        const internalDef =
-          pkg.internal_lookups?.[lookupKey] ||
-          pkg.internal_lookups?.[`${pkg.name}::internal::${rawKey}`] ||
-          pkg.internal_lookups?.[rawKey];
-        if (internalDef) {
-          setPkgName(pkg.name);
-          setPillar((internalDef.pillar as 'd1' | 'd2' | 'd3') || 'd1');
-          setIsPublic(false);
-          setDescription(internalDef.description || '');
-          setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
-          setSelectors((internalDef.selectors as SelectorRule[]) || []);
-          setInitialKey(lookupKey);
-          return;
-        }
-      }
-
+      // 1. 尝试匹配公开导出 (exports)
       const exportDef =
         pkg.exports?.[lookupKey] ||
         pkg.exports?.[`${pkg.name}::${rawKey}`] ||
@@ -165,16 +156,33 @@ export function LookupEditorTab({
 
       if (exportDef) {
         setPkgName(pkg.name);
-        setPillar((exportDef.pillar as 'd1' | 'd2' | 'd3') || 'd1');
+        setPillar((exportDef.pillar as 'd1' | 'd2' | 'd3') || inferPillarFromKey(rawKey));
         setIsPublic(true);
         setDescription(exportDef.description || '');
         setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
         setSelectors((exportDef.selectors as SelectorRule[]) || []);
-        setInitialKey(lookupKey);
+        setInitialKey(lookupKey.includes('::') ? lookupKey : `${pkg.name}::${rawKey}`);
+        return;
+      }
+
+      // 2. 尝试匹配内部查找 (internal_lookups)
+      const internalDef =
+        pkg.internal_lookups?.[lookupKey] ||
+        pkg.internal_lookups?.[`${pkg.name}::internal::${rawKey}`] ||
+        pkg.internal_lookups?.[rawKey];
+
+      if (internalDef) {
+        setPkgName(pkg.name);
+        setPillar((internalDef.pillar as 'd1' | 'd2' | 'd3') || inferPillarFromKey(rawKey));
+        setIsPublic(false);
+        setDescription(internalDef.description || '');
+        setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
+        setSelectors((internalDef.selectors as SelectorRule[]) || []);
+        setInitialKey(lookupKey.includes('::') ? lookupKey : `${pkg.name}::internal::${rawKey}`);
         return;
       }
     }
-  }, [lookupKey, packages, isDraft, isPublic]);
+  }, [lookupKey, packages, isDraft, inferPillarFromKey]);
 
   const runLiveDebug = useCallback(() => {
     if (selectors.length === 0) {
@@ -678,20 +686,56 @@ export function LookupEditorTab({
                           <span className="text-slate-600 font-bold">{idx + 1}.</span>
                           {sel.query?.id && (
                             <span className="flex items-center gap-1 text-indigo-300">
-                              <Box className="h-3 w-3 text-slate-400" />
-                              精确 ID: <strong>{sel.query.id}</strong>
+                              <Box className="h-3 w-3 text-slate-400 shrink-0" />
+                              精确 ID:
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (typeof sel.query?.id === 'string') {
+                                    openTab({
+                                      id: `atom:${sel.query.id}`,
+                                      type: 'atom',
+                                      title: sel.query.id,
+                                      closable: true,
+                                      atomId: sel.query.id,
+                                    });
+                                  }
+                                }}
+                                className="font-semibold underline hover:text-indigo-200 cursor-pointer"
+                                title={`点击跳转到原子: ${sel.query.id}`}
+                              >
+                                {sel.query.id}
+                              </button>
                             </span>
                           )}
                           {sel.query?.domain && (
                             <span className="flex items-center gap-1 text-emerald-300">
-                              <Tag className="h-3 w-3 text-slate-400" />
+                              <Tag className="h-3 w-3 text-slate-400 shrink-0" />
                               Domain 匹配: <strong>{JSON.stringify(sel.query.domain)}</strong>
                             </span>
                           )}
                           {sel.ref && (
                             <span className="flex items-center gap-1 text-purple-300">
-                              <Link2 className="h-3 w-3 text-slate-400" />
-                              跨接口引用: <strong>{sel.ref}</strong>
+                              <Link2 className="h-3 w-3 text-slate-400 shrink-0" />
+                              跨接口引用:
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (sel.ref) {
+                                    openTab({
+                                      id: `lookup:${sel.ref}`,
+                                      type: 'lookup',
+                                      title: sel.ref.split('::').pop() || sel.ref,
+                                      closable: true,
+                                      lookupKey: sel.ref,
+                                    });
+                                  }
+                                }}
+                                className="font-semibold underline hover:text-purple-200 cursor-pointer"
+                                title={`点击跳转到接口: ${sel.ref}`}
+                              >
+                                {sel.ref}
+                              </button>
                             </span>
                           )}
                         </div>
@@ -776,23 +820,28 @@ export function LookupEditorTab({
                           <div className="flex items-center justify-between mb-1.5">
                             <div className="flex items-center gap-2 truncate">
                               <Badge
-                                variant={
-                                  atom.type === 'd1'
-                                    ? 'd1'
-                                    : atom.type === 'd2'
-                                      ? 'd2'
-                                      : atom.type === 'd3'
-                                        ? 'd3'
-                                        : 'kernel'
-                                }
+                                variant={getPillarVariant(atom.type, 'kernel')}
                                 className="text-[10px] uppercase font-bold px-1.5 py-0"
                               >
                                 {atom.type}
                                 {typeof atom.priority === 'number' ? `-P${atom.priority}` : ''}
                               </Badge>
-                              <span className="font-semibold text-slate-200 truncate">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  openTab({
+                                    id: `atom:${atom.id}`,
+                                    type: 'atom',
+                                    title: atom.id,
+                                    closable: true,
+                                    atomId: atom.id,
+                                  });
+                                }}
+                                className="font-semibold text-slate-200 truncate hover:text-indigo-300 hover:underline cursor-pointer text-left"
+                                title={`点击打开原子: ${atom.id}`}
+                              >
                                 {atom.id}
-                              </span>
+                              </button>
                               <span className="text-[10px] text-slate-500 truncate">
                                 @{atom.package || '全局'}
                               </span>
@@ -809,10 +858,10 @@ export function LookupEditorTab({
                                   atomId: atom.id,
                                 });
                               }}
-                              className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-indigo-300 hover:bg-slate-800 px-2 py-0.5 rounded transition-colors shrink-0"
+                              className="p-1 text-slate-400 hover:text-indigo-300 hover:bg-slate-800 rounded transition-colors shrink-0 cursor-pointer"
                               title="在新 Tab 中打开编辑该原子"
                             >
-                              <ExternalLink className="h-3 w-3" /> 打开编辑
+                              <ExternalLink className="h-3.5 w-3.5" />
                             </button>
                           </div>
 
