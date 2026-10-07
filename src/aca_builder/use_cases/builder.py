@@ -61,6 +61,7 @@ class BuilderService:
             interfaces=interfaces,
             imports=manifest.get("imports", []),
             include_kernel=True,
+            invariants=manifest.get("invariants"),
         )
         return res.prompt
 

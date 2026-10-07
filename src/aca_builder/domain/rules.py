@@ -194,14 +194,22 @@ def diagnose_knowledge_base(
                 )
             )
 
-        selectors = l_def.get("selectors", [])
-        if not selectors:
+        union_selectors = l_def.get("selectors", [])
+        if not union_selectors and "union" in l_def:
+            union_selectors = l_def.get("union", [])
+
+        if not union_selectors:
             diagnostics.append(
                 make_diagnostic("ERROR", "linter.lookup.empty_selectors", key=key)
             )
             continue
 
-        for sel in selectors:
+        # 收集代数管道中所有选择器，进行显式原子存在性校验
+        all_check_selectors = list(union_selectors)
+        all_check_selectors.extend(l_def.get("exclude", []))
+        all_check_selectors.extend(l_def.get("intersect", []))
+
+        for sel in all_check_selectors:
             if isinstance(sel, dict) and "query" in sel:
                 target_id = sel["query"].get("id")
                 if target_id and target_id not in library:

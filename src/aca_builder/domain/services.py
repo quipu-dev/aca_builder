@@ -80,54 +80,87 @@ def evaluate_lookup(
     lookup_def: dict[str, Any],
     interfaces: dict[str, Any],
     visited: set[str] | None = None,
+    env: dict[str, str] | None = None,
 ) -> set[str]:
+    r"""
+    演算集合布尔表达式: Result = (Union \ Exclude) ∩ Intersect
+    全部基于 Set[AtomID] 执行纳秒级离散集合运算。
+    向后完全兼容 1.0 的 selectors 规格 (语义等价于 union)。
+    """
     if visited is None:
         visited = set()
 
-    results = set()
-    selectors = lookup_def.get("selectors", [])
+    # 1. 兼容 1.0 语法：无 union 时将 selectors 视为 union
+    if "selectors" in lookup_def and "union" not in lookup_def:
+        union_selectors = lookup_def["selectors"]
+    else:
+        union_selectors = lookup_def.get("union", [])
+
+    exclude_selectors = lookup_def.get("exclude", [])
+    intersect_selectors = lookup_def.get("intersect", [])
     pillar = lookup_def.get("pillar")
 
-    for sel in selectors:
-        if "query" in sel:
-            query = dict(sel["query"])
-            if pillar and "type" not in query:
-                query["type"] = pillar
-            matched = select_atoms_by_query(library, query)
-            if pillar:
-                matched = {
-                    aid
-                    for aid in matched
-                    if library.get(aid, {}).get("meta", {}).get("type") == pillar
-                }
-            results.update(matched)
+    def _eval_selectors(selectors: list[dict[str, Any]]) -> set[str]:
+        accum = set()
+        for sel in selectors:
+            if not isinstance(sel, dict):
+                continue
 
-        if "ref" in sel:
-            ref_key = sel["ref"]
-            if ref_key in visited:
-                raise BuildError(f"Circular reference detected: {visited} -> {ref_key}")
+            if "query" in sel:
+                query = dict(sel["query"])
+                if pillar and "type" not in query:
+                    query["type"] = pillar
+                matched = select_atoms_by_query(library, query)
+                if pillar:
+                    matched = {
+                        aid
+                        for aid in matched
+                        if library.get(aid, {}).get("meta", {}).get("type") == pillar
+                    }
+                accum.update(matched)
 
-            # Resolve Ref
-            target_lookup = resolve_lookup_by_key(
-                ref_key, lookup_def.get("package"), interfaces
-            )
-            if not target_lookup:
-                raise BuildError(f"Lookup reference '{ref_key}' not found.")
+            elif "ref" in sel:
+                ref_key = sel["ref"]
+                if ref_key in visited:
+                    raise BuildError(
+                        f"Circular reference detected: {visited} -> {ref_key}"
+                    )
 
-            new_visited = visited.copy()
-            new_visited.add(ref_key)
-            ref_results = evaluate_lookup(
-                library, target_lookup, interfaces, new_visited
-            )
-            if pillar:
-                ref_results = {
-                    aid
-                    for aid in ref_results
-                    if library.get(aid, {}).get("meta", {}).get("type") == pillar
-                }
-            results.update(ref_results)
+                target_lookup = resolve_lookup_by_key(
+                    ref_key, lookup_def.get("package"), interfaces
+                )
+                if not target_lookup:
+                    raise BuildError(f"Lookup reference '{ref_key}' not found.")
 
-    return results
+                new_visited = visited.copy()
+                new_visited.add(ref_key)
+                ref_results = evaluate_lookup(
+                    library, target_lookup, interfaces, new_visited, env
+                )
+                if pillar:
+                    ref_results = {
+                        aid
+                        for aid in ref_results
+                        if library.get(aid, {}).get("meta", {}).get("type") == pillar
+                    }
+                accum.update(ref_results)
+        return accum
+
+    # 2. 依次执行集合布尔代数管道
+    base_set = _eval_selectors(union_selectors)
+
+    # 差集过滤: Base \ (Exclude_1 ∪ Exclude_2 ...)
+    if exclude_selectors:
+        exclude_set = _eval_selectors(exclude_selectors)
+        base_set = base_set - exclude_set
+
+    # 交集过滤: 链式连续交集 Base ∩ Intersect_1 ∩ Intersect_2 ...
+    if intersect_selectors:
+        for sel in intersect_selectors:
+            intersect_set = _eval_selectors([sel])
+            base_set = base_set & intersect_set
+
+    return base_set
 
 
 def resolve_dependencies(
@@ -245,6 +278,7 @@ def compile_prompt_closure(
     imports: list[dict[str, Any]] | None = None,
     direct_lookup: tuple[str, dict[str, Any]] | None = None,
     include_kernel: bool = True,
+    invariants: dict[str, Any] | None = None,
 ) -> tuple[dict[str, set[str]], str]:
     """
     通用纯领域编译流水线：
@@ -320,6 +354,16 @@ def compile_prompt_closure(
             if library.get(k, {}).get("meta", {}).get("type") != "kernel"
         }
 
-    # 5. 序列化
+    # 5. 执行离散架构断言守卫 (Invariants Guardrails)
+    from aca_builder.domain.invariants import validate_invariants
+
+    validate_invariants(
+        final_atom_map=final_atom_map,
+        library=library,
+        invariants=invariants,
+        seed_atom_ids=set(initial_map.keys()),
+    )
+
+    # 6. 序列化
     prompt_text = serialize_prompt(final_atom_map, library)
     return final_atom_map, prompt_text

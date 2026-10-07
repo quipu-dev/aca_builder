@@ -187,6 +187,7 @@ def compile_prompt(
     imports: list[dict[str, Any]] | None = None,
     direct_lookup: tuple[str, dict[str, Any]] | None = None,
     include_kernel: bool = True,
+    invariants: dict[str, Any] | None = None,
 ) -> CompilationResult:
     """统一编译器纯函数主入口：接收知识库与接口，执行依赖求解并输出完整的 CompilationResult。"""
     final_atom_map, prompt_text = compile_prompt_closure(
@@ -195,6 +196,7 @@ def compile_prompt(
         imports=imports,
         direct_lookup=direct_lookup,
         include_kernel=include_kernel,
+        invariants=invariants,
     )
     chunks = emit_prompt_chunks(final_atom_map, library)
     profile = emit_prompt_profile(final_atom_map, library)

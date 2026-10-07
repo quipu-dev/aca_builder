@@ -25,6 +25,8 @@ class FSLibraryRepository(LibraryRepository):
             meta_str = parts[1]
             content_str = parts[2]
 
+            from aca_builder.domain.schema import validate_atom_meta_dict
+
             meta = yaml.safe_load(meta_str)
             if not isinstance(meta, dict) or "type" not in meta:
                 raise ValueError("Atom missing required metadata 'type'.")
@@ -36,7 +38,10 @@ class FSLibraryRepository(LibraryRepository):
             else:
                 atom_id = meta["id"]
 
-            atom_meta = AtomMeta(**meta)
+            validated_meta_dict = validate_atom_meta_dict(
+                meta, path_hint=str(file_path)
+            )
+            atom_meta = AtomMeta(**validated_meta_dict)
             return Atom(
                 id=atom_id,
                 meta=atom_meta,
