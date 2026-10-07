@@ -16,7 +16,7 @@ export function EmptyTab({
   onCreateAtom: () => void;
 }) {
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center p-6 text-slate-200 select-none overflow-y-auto">
+    <div className="flex h-full w-full flex-col items-center justify-center p-6 text-slate-200 overflow-y-auto">
       <div className="max-w-md w-full space-y-6 text-center">
         {/* 顶部标题 */}
         <div className="space-y-2">

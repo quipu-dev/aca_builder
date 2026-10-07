@@ -31073,7 +31073,7 @@ function ManifestEditorTab({
       ]
     }
   );
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 font-mono text-xs shrink-0", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5", children: [
@@ -31206,7 +31206,7 @@ function EmptyTab({
   onCreateManifest,
   onCreateAtom
 }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex h-full w-full flex-col items-center justify-center p-6 text-slate-200 select-none overflow-y-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-md w-full space-y-6 text-center", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex h-full w-full flex-col items-center justify-center p-6 text-slate-200 overflow-y-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-md w-full space-y-6 text-center", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "inline-flex p-3 rounded-2xl bg-indigo-950/60 border border-indigo-800/40 mb-2 shadow-lg shadow-indigo-950/40", children: /* @__PURE__ */ jsxRuntimeExports.jsx(AcaLogo, { className: "h-8 w-8" }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-xl font-bold font-sans tracking-wide text-slate-100", children: "ACA Studio 工作台" }),

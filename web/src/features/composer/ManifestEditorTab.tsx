@@ -740,7 +740,7 @@ export function ManifestEditorTab({
   );
 
   return (
-    <div className="flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden select-none">
+    <div className="flex h-full flex-col bg-slate-950 text-slate-100 overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/60 font-mono text-xs shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
