@@ -7,6 +7,12 @@
       "ignore": ["*.test.ts", "*.test.tsx", "package-lock.json"],
       "ignore_dir": ["static", "archive"]
     },
+    "backend": {
+      "format": "xml",
+      "extension": ["py", "toml"],
+      "paths": ["src", "tests"],
+      "ignore_dir": ["static", "archive"]
+    },
     "web": {
       "format": "xml",
       "extension": ["py", "toml", "js", "ts", "tsx", "json", "css", "html"],
