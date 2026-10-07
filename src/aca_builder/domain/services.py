@@ -90,11 +90,8 @@ def evaluate_lookup(
     if visited is None:
         visited = set()
 
-    # 1. 兼容 1.0 语法：无 union 时将 selectors 视为 union
-    if "selectors" in lookup_def and "union" not in lookup_def:
-        union_selectors = lookup_def["selectors"]
-    else:
-        union_selectors = lookup_def.get("union", [])
+    # 1. 兼容 1.0 语法：union 优先，若 union 为空则回退至 selectors
+    union_selectors = lookup_def.get("union") or lookup_def.get("selectors") or []
 
     exclude_selectors = lookup_def.get("exclude", [])
     intersect_selectors = lookup_def.get("intersect", [])

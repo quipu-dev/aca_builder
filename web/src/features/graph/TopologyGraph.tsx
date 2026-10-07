@@ -64,7 +64,10 @@ function getDagreLayoutedElements(nodes: Node[], edges: Edge[], direction = 'LR'
 
 export interface LookupAdhocParam {
   key: string;
-  selectors: Array<Record<string, unknown>>;
+  selectors?: Array<Record<string, unknown>>;
+  union?: Array<Record<string, unknown>>;
+  exclude?: Array<Record<string, unknown>>;
+  intersect?: Array<Record<string, unknown>>;
   package?: string;
   pillar?: string;
 }

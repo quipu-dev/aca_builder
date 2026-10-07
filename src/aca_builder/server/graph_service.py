@@ -46,7 +46,11 @@ def build_topology_graph(
                 edge_obj["label"] = label or "with (注入)"
                 edge_obj["data"] = {"injected": True}
             elif is_causal:
-                edge_obj["style"] = {"stroke": "#64748b", "strokeDasharray": "4 4", "strokeWidth": 1.5}
+                edge_obj["style"] = {
+                    "stroke": "#64748b",
+                    "strokeDasharray": "4 4",
+                    "strokeWidth": 1.5,
+                }
                 edge_obj["label"] = label or "after (前置)"
                 edge_obj["data"] = {"causal": True}
             edges.append(edge_obj)
@@ -167,9 +171,7 @@ def build_topology_graph(
             after_refs = []
 
         tags = (
-            meta.get("tags", [])
-            if hasattr(meta, "get")
-            else getattr(meta, "tags", [])
+            meta.get("tags", []) if hasattr(meta, "get") else getattr(meta, "tags", [])
         )
         if not isinstance(tags, list):
             tags = [tags]
@@ -293,7 +295,7 @@ def build_topology_graph(
                 process_atom(atom_id, manifest_node_id)
 
     # 建立闭包内原子之间的 after 因果前置偏序边 (pred -> curr)
-    for node in list(nodes):
+    for node in nodes:
         if node.get("type") == "atomNode":
             curr_id = node.get("data", {}).get("id")
             after_list = node.get("data", {}).get("after", [])

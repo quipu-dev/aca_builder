@@ -29821,7 +29821,8 @@ function LookupEditorTab({
         setIsPublic(true);
         setDescription(exportDef.description || "");
         setRawKeyName(rawKey.replace(/^d[1-3]l-/, "") || "");
-        const u2 = exportDef.union || exportDef.selectors || [];
+        const rawU = exportDef.union && exportDef.union.length > 0 ? exportDef.union : exportDef.selectors;
+        const u2 = rawU || [];
         const e = exportDef.exclude || [];
         const i = exportDef.intersect || [];
         setUnionSelectors(u2);
@@ -29837,7 +29838,8 @@ function LookupEditorTab({
         setIsPublic(false);
         setDescription(internalDef.description || "");
         setRawKeyName(rawKey.replace(/^d[1-3]l-/, "") || "");
-        const u2 = internalDef.union || internalDef.selectors || [];
+        const rawU = internalDef.union && internalDef.union.length > 0 ? internalDef.union : internalDef.selectors;
+        const u2 = rawU || [];
         const e = internalDef.exclude || [];
         const i = internalDef.intersect || [];
         setUnionSelectors(u2);
@@ -29863,6 +29865,7 @@ function LookupEditorTab({
     if (rightView === "prompt") {
       compileLookupAdhoc({
         key: targetKey,
+        selectors: unionSelectors,
         union: unionSelectors,
         exclude: excludeSelectors,
         intersect: intersectSelectors,
@@ -30576,6 +30579,9 @@ function LookupEditorTab({
                     lookupAdhoc: {
                       key: fullLookupKey,
                       selectors: unionSelectors,
+                      union: unionSelectors,
+                      exclude: excludeSelectors,
+                      intersect: intersectSelectors,
                       package: pkgName,
                       pillar
                     },

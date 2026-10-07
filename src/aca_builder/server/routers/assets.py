@@ -157,14 +157,16 @@ def get_assets_overview(x_aca_workspace: str | None = Header(None)) -> dict[str,
                 "internal_lookups": {},
                 "atoms": [],
             }
+        raw_union = l_def.get("union") or l_def.get("selectors") or []
+        raw_selectors = l_def.get("selectors") or l_def.get("union") or []
         packages_map[pkg]["exports"][key] = {
             "key": key,
             "pillar": l_def.get("pillar"),
             "description": l_def.get("description", ""),
             "visibility": "public",
             "contract": l_def.get("contract"),
-            "selectors": l_def.get("selectors", []),
-            "union": l_def.get("union", []),
+            "selectors": raw_selectors,
+            "union": raw_union,
             "exclude": l_def.get("exclude", []),
             "intersect": l_def.get("intersect", []),
         }
@@ -181,14 +183,16 @@ def get_assets_overview(x_aca_workspace: str | None = Header(None)) -> dict[str,
             }
         for key, l_def in pkg_lookups.items():
             full_internal_key = f"{pkg}::internal::{key}"
+            raw_union = l_def.get("union") or l_def.get("selectors") or []
+            raw_selectors = l_def.get("selectors") or l_def.get("union") or []
             packages_map[pkg]["internal_lookups"][full_internal_key] = {
                 "key": full_internal_key,
                 "pillar": l_def.get("pillar"),
                 "description": l_def.get("description", ""),
                 "visibility": "private",
                 "contract": l_def.get("contract"),
-                "selectors": l_def.get("selectors", []),
-                "union": l_def.get("union", []),
+                "selectors": raw_selectors,
+                "union": raw_union,
                 "exclude": l_def.get("exclude", []),
                 "intersect": l_def.get("intersect", []),
             }

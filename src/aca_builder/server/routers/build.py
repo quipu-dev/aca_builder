@@ -26,7 +26,10 @@ class AdhocCompileRequest(BaseModel):
 
 class AdhocLookupCompileRequest(BaseModel):
     key: str = "adhoc-lookup"
-    selectors: list[dict[str, Any]]
+    selectors: list[dict[str, Any]] = []
+    union: list[dict[str, Any]] = []
+    exclude: list[dict[str, Any]] = []
+    intersect: list[dict[str, Any]] = []
     package: str | None = None
     pillar: str = "d1"
     apply_hook: bool = False
@@ -103,6 +106,9 @@ def compile_lookup_adhoc(
 
     lookup_def = {
         "selectors": req.selectors,
+        "union": req.union,
+        "exclude": req.exclude,
+        "intersect": req.intersect,
         "package": req.package,
         "pillar": req.pillar,
     }

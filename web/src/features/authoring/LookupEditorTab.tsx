@@ -183,8 +183,9 @@ export function LookupEditorTab({
         setIsPublic(true);
         setDescription(exportDef.description || '');
         setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
-        const u =
-          (exportDef.union as SelectorRule[]) || (exportDef.selectors as SelectorRule[]) || [];
+        const rawU =
+          exportDef.union && exportDef.union.length > 0 ? exportDef.union : exportDef.selectors;
+        const u = (rawU as SelectorRule[]) || [];
         const e = (exportDef.exclude as SelectorRule[]) || [];
         const i = (exportDef.intersect as SelectorRule[]) || [];
         setUnionSelectors(u);
@@ -206,8 +207,11 @@ export function LookupEditorTab({
         setIsPublic(false);
         setDescription(internalDef.description || '');
         setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
-        const u =
-          (internalDef.union as SelectorRule[]) || (internalDef.selectors as SelectorRule[]) || [];
+        const rawU =
+          internalDef.union && internalDef.union.length > 0
+            ? internalDef.union
+            : internalDef.selectors;
+        const u = (rawU as SelectorRule[]) || [];
         const e = (internalDef.exclude as SelectorRule[]) || [];
         const i = (internalDef.intersect as SelectorRule[]) || [];
         setUnionSelectors(u);
@@ -241,6 +245,7 @@ export function LookupEditorTab({
     if (rightView === 'prompt') {
       compileLookupAdhoc({
         key: targetKey,
+        selectors: unionSelectors as Array<Record<string, unknown>>,
         union: unionSelectors as Array<Record<string, unknown>>,
         exclude: excludeSelectors as Array<Record<string, unknown>>,
         intersect: intersectSelectors as Array<Record<string, unknown>>,
@@ -1024,6 +1029,9 @@ export function LookupEditorTab({
                       lookupAdhoc={{
                         key: fullLookupKey,
                         selectors: unionSelectors as Array<Record<string, unknown>>,
+                        union: unionSelectors as Array<Record<string, unknown>>,
+                        exclude: excludeSelectors as Array<Record<string, unknown>>,
+                        intersect: intersectSelectors as Array<Record<string, unknown>>,
                         package: pkgName,
                         pillar,
                       }}
