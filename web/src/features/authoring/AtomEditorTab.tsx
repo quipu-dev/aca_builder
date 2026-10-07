@@ -85,9 +85,11 @@ export function AtomEditorTab({
   const [description, setDescription] = useState<string>('');
   const [priority, setPriority] = useState<number>(1);
   const [domainList, setDomainList] = useState<string[]>([]);
+  const [tagsList, setTagsList] = useState<string[]>([]);
   const [usesList, setUsesList] = useState<string[]>([]);
+  const [afterList, setAfterList] = useState<string[]>([]);
 
-  const { domainOptions, lookupOptions } = useWorkspaceCandidates(packages);
+  const { domainOptions, lookupOptions, atomOptions } = useWorkspaceCandidates(packages);
 
   // Markdown 正文
   const [content, setContent] = useState<string>(
@@ -133,7 +135,9 @@ export function AtomEditorTab({
         setDescription(String(meta.description || ''));
         setPriority(meta.priority !== undefined ? Number(meta.priority) : 1);
         setDomainList(Array.isArray(meta.domain) ? (meta.domain as string[]) : []);
+        setTagsList(Array.isArray(meta.tags) ? (meta.tags as string[]) : []);
         setUsesList(Array.isArray(meta.uses) ? (meta.uses as string[]) : []);
+        setAfterList(Array.isArray(meta.after) ? (meta.after as string[]) : []);
         setContent(data.content || '');
         setIsModified(false);
         setTabDirty(tabId, false);
@@ -220,7 +224,9 @@ export function AtomEditorTab({
           priority: atomType === 'd3' ? priority : undefined,
           description: description.trim() || undefined,
           domain: domainList,
+          tags: tagsList,
           uses: atomType === 'd2' ? usesList : [],
+          after: afterList,
           content: content,
         });
 
@@ -245,6 +251,7 @@ export function AtomEditorTab({
       id: currentId,
       type: atomType,
       domain: domainList,
+      tags: tagsList,
       status: 'stable',
     };
 
@@ -256,6 +263,9 @@ export function AtomEditorTab({
     }
     if (atomType === 'd2') {
       newMeta.uses = usesList;
+    }
+    if (afterList.length > 0) {
+      newMeta.after = afterList;
     }
 
     try {
@@ -287,7 +297,9 @@ export function AtomEditorTab({
     pkgName,
     description,
     domainList,
+    tagsList,
     usesList,
+    afterList,
     priority,
     currentId,
     setTabDirty,
@@ -643,8 +655,53 @@ export function AtomEditorTab({
                   markDirty();
                 }}
                 options={domainOptions}
-                placeholder="输入标签 (回车添加，支持下拉联想推荐已用标签)"
+                placeholder="输入领域分类 domain (回车添加)"
                 badgeVariant="default"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 pt-1 border-t border-slate-800/40">
+            <span className="text-slate-400 flex items-center gap-1 shrink-0 mt-1">
+              <Tag className="h-3.5 w-3.5 text-amber-400" /> 架构标签 (Tags):
+            </span>
+            <div className="flex-1">
+              <TagAutocomplete
+                values={tagsList}
+                onChange={(newTags) => {
+                  setTagsList(newTags);
+                  markDirty();
+                }}
+                options={domainOptions}
+                placeholder="输入离散架构断言标签 (用于 invariants 互斥与禁忌拦截)"
+                badgeVariant="d1"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 pt-1 border-t border-slate-800/40">
+            <span className="text-slate-400 flex items-center gap-1 shrink-0 mt-1">
+              <Layers className="h-3.5 w-3.5 text-cyan-400" /> 因果偏序 (After):
+            </span>
+            <div className="flex-1">
+              <TagAutocomplete
+                values={afterList}
+                onChange={(newAfter) => {
+                  setAfterList(newAfter);
+                  markDirty();
+                }}
+                options={atomOptions}
+                placeholder="声明前置因果原子 (必须在此原子之前输出/执行)"
+                badgeVariant="d3"
+                onTagClick={(aid) => {
+                  openTab({
+                    id: `atom:${aid}`,
+                    type: 'atom',
+                    title: aid,
+                    closable: true,
+                    atomId: aid,
+                  });
+                }}
               />
             </div>
           </div>

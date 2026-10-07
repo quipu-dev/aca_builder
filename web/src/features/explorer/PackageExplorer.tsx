@@ -18,6 +18,9 @@ export interface LookupExportItem {
   description?: string;
   visibility?: string;
   selectors?: unknown[];
+  union?: unknown[];
+  exclude?: unknown[];
+  intersect?: unknown[];
 }
 
 export interface KernelInfo {

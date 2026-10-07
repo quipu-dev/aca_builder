@@ -748,6 +748,9 @@ video {
 .w-4 {
   width: 1rem;
 }
+.w-40 {
+  width: 10rem;
+}
 .w-5 {
   width: 1.25rem;
 }
@@ -795,6 +798,9 @@ video {
 }
 .max-w-\[70px\] {
   max-width: 70px;
+}
+.max-w-\[80px\] {
+  max-width: 80px;
 }
 .max-w-md {
   max-width: 28rem;
@@ -2150,6 +2156,11 @@ body {
 
 .hover\:bg-slate-800\/80:hover {
   background-color: rgb(30 41 59 / 0.8);
+}
+
+.hover\:text-amber-300:hover {
+  --tw-text-opacity: 1;
+  color: rgb(252 211 77 / var(--tw-text-opacity, 1));
 }
 
 .hover\:text-emerald-300:hover {

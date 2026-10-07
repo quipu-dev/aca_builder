@@ -25,7 +25,9 @@ class CreateAtomRequest(BaseModel):
     priority: int | None = None
     description: str | None = None
     domain: list[str] = []
+    tags: list[str] = []
     uses: list[str] = []
+    after: list[str] = []
     content: str
 
 
@@ -87,8 +89,12 @@ def create_atom(
         meta["description"] = req.description.strip()
     if req.domain:
         meta["domain"] = req.domain
+    if req.tags:
+        meta["tags"] = req.tags
     if req.type == "d2" and req.uses:
         meta["uses"] = req.uses
+    if req.after:
+        meta["after"] = req.after
 
     meta["status"] = "stable"
     meta_yaml = yaml.safe_dump(meta, sort_keys=False, allow_unicode=True).strip()

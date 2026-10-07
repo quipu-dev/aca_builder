@@ -87,6 +87,8 @@ export interface AtomNodeData {
   content?: string;
   description?: string;
   source_file?: string;
+  after?: string[];
+  tags?: string[];
   onEdit?: (atomId: string) => void;
 }
 
@@ -118,6 +120,24 @@ export function AtomNode({ data }: { data: AtomNodeData }) {
           {data.id}
         </button>
       </div>
+
+      {data.after && data.after.length > 0 && (
+        <div className="flex items-center gap-1 mt-1 text-[9px] text-slate-400 font-mono truncate">
+          <span className="text-slate-500">after:</span>
+          {data.after.slice(0, 2).map((a) => (
+            <span
+              key={a}
+              className="bg-slate-800 px-1 py-0.2 rounded truncate max-w-[80px]"
+              title={a}
+            >
+              {a}
+            </span>
+          ))}
+          {data.after.length > 2 && (
+            <span className="text-slate-500">+{data.after.length - 2}</span>
+          )}
+        </div>
+      )}
 
       {data.description && (
         <div

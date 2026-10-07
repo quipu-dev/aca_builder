@@ -3,7 +3,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from './client';
 
 export interface EvaluateLookupPayload {
-  selectors: Array<Record<string, unknown>>;
+  selectors?: Array<Record<string, unknown>>;
+  union?: Array<Record<string, unknown>>;
+  exclude?: Array<Record<string, unknown>>;
+  intersect?: Array<Record<string, unknown>>;
   package?: string | null;
   pillar?: string;
 }
@@ -26,7 +29,10 @@ export interface EvaluateLookupResponse {
 
 export interface AdhocLookupCompilePayload {
   key: string;
-  selectors: Array<Record<string, unknown>>;
+  selectors?: Array<Record<string, unknown>>;
+  union?: Array<Record<string, unknown>>;
+  exclude?: Array<Record<string, unknown>>;
+  intersect?: Array<Record<string, unknown>>;
   package?: string | null;
   pillar: string;
   apply_hook?: boolean;
@@ -52,7 +58,10 @@ export interface SaveLookupPayload {
   pillar: string;
   is_public: boolean;
   description: string;
-  selectors: Array<Record<string, unknown>>;
+  selectors?: Array<Record<string, unknown>>;
+  union?: Array<Record<string, unknown>>;
+  exclude?: Array<Record<string, unknown>>;
+  intersect?: Array<Record<string, unknown>>;
   old_key?: string;
 }
 

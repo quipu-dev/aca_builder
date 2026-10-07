@@ -17,7 +17,9 @@ export interface CreateAtomPayload {
   priority?: number;
   description?: string;
   domain?: string[];
+  tags?: string[];
   uses?: string[];
+  after?: string[];
   content: string;
 }
 

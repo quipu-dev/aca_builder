@@ -127,8 +127,10 @@ def get_assets_overview(x_aca_workspace: str | None = Header(None)) -> dict[str,
             "type": meta.get("type"),
             "priority": meta.get("priority"),
             "domain": meta.get("domain", []),
+            "tags": meta.get("tags", []),
             "source_file": atom.get("source_file"),
             "uses": meta.get("uses", []),
+            "after": meta.get("after", []),
         }
 
         if pkg not in packages_map:
@@ -162,6 +164,9 @@ def get_assets_overview(x_aca_workspace: str | None = Header(None)) -> dict[str,
             "visibility": "public",
             "contract": l_def.get("contract"),
             "selectors": l_def.get("selectors", []),
+            "union": l_def.get("union", []),
+            "exclude": l_def.get("exclude", []),
+            "intersect": l_def.get("intersect", []),
         }
 
     for pkg, pkg_lookups in interfaces.get("internals", {}).items():
@@ -183,6 +188,9 @@ def get_assets_overview(x_aca_workspace: str | None = Header(None)) -> dict[str,
                 "visibility": "private",
                 "contract": l_def.get("contract"),
                 "selectors": l_def.get("selectors", []),
+                "union": l_def.get("union", []),
+                "exclude": l_def.get("exclude", []),
+                "intersect": l_def.get("intersect", []),
             }
 
     kernel_info = None

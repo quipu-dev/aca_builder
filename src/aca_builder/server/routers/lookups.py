@@ -20,7 +20,10 @@ router = APIRouter()
 
 
 class EvaluateLookupRequest(BaseModel):
-    selectors: list[dict[str, Any]]
+    selectors: list[dict[str, Any]] = []
+    union: list[dict[str, Any]] = []
+    exclude: list[dict[str, Any]] = []
+    intersect: list[dict[str, Any]] = []
     package: str | None = None
     pillar: str = "d1"
 
@@ -33,6 +36,9 @@ class CreateLookupRequest(BaseModel):
     description: str = ""
     contract: dict[str, Any] | None = None
     selectors: list[dict[str, Any]] = []
+    union: list[dict[str, Any]] = []
+    exclude: list[dict[str, Any]] = []
+    intersect: list[dict[str, Any]] = []
     old_key: str | None = None
 
 
@@ -131,6 +137,9 @@ def evaluate_lookup_adhoc(
 
     lookup_def = {
         "selectors": req.selectors,
+        "union": req.union,
+        "exclude": req.exclude,
+        "intersect": req.intersect,
         "package": req.package,
         "pillar": req.pillar,
     }
@@ -191,11 +200,21 @@ def create_or_update_lookup(
             status_code=404, detail=f"未找到组件包 '{req.package}' 的存放目录"
         )
 
-    lookup_data = {
+    lookup_data: dict[str, Any] = {
         "pillar": req.pillar,
         "description": req.description,
-        "selectors": req.selectors,
     }
+    # 集合代数优先，向后兼容 selectors
+    if req.union:
+        lookup_data["union"] = req.union
+    elif req.selectors:
+        lookup_data["selectors"] = req.selectors
+
+    if req.exclude:
+        lookup_data["exclude"] = req.exclude
+    if req.intersect:
+        lookup_data["intersect"] = req.intersect
+
     if req.contract:
         lookup_data["contract"] = req.contract
 

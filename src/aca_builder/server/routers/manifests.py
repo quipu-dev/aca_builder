@@ -19,6 +19,7 @@ class SaveManifestRequest(BaseModel):
     version: str = "1.0.0"
     description: str = ""
     imports: list[dict[str, Any]]
+    invariants: dict[str, Any] | None = None
     identifier: str | None = None
     workspace_path: str | None = None
 
@@ -44,12 +45,14 @@ def save_manifest(
     target_file = target_dir / f"{file_rel_path}.yaml"
     target_file.parent.mkdir(parents=True, exist_ok=True)
 
-    manifest_content = {
+    manifest_content: dict[str, Any] = {
         "name": req.name,
         "version": req.version,
         "description": req.description,
         "imports": req.imports,
     }
+    if req.invariants:
+        manifest_content["invariants"] = req.invariants
 
     try:
         atomic_write_text(

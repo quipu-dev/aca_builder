@@ -2,6 +2,12 @@ import type { BuildResponse } from '@/api/lookups';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from './client';
 
+export interface ManifestInvariants {
+  max_graph_depth?: number;
+  exclusive_tags?: string[][];
+  forbidden_tags?: string[];
+}
+
 export interface ManifestDetailResponse {
   name: string;
   version?: string;
@@ -11,6 +17,7 @@ export interface ManifestDetailResponse {
     query?: Record<string, unknown>;
     with?: Record<string, string>;
   }>;
+  invariants?: ManifestInvariants;
 }
 
 export interface SaveManifestPayload {
@@ -21,6 +28,7 @@ export interface SaveManifestPayload {
     lookup: string;
     with?: Record<string, string>;
   }>;
+  invariants?: ManifestInvariants;
   identifier?: string;
   workspace_path?: string;
 }

@@ -93,7 +93,13 @@ export function LookupEditorTab({
   const [description, setDescription] = useState('');
   const [initialKey, setInitialKey] = useState(isDraft ? '' : lookupKey);
 
-  const [selectors, setSelectors] = useState<SelectorRule[]>([]);
+  // 2.0 集合代数三段式管道
+  const [algebraPipeline, setAlgebraPipeline] = useState<'union' | 'exclude' | 'intersect'>(
+    'union',
+  );
+  const [unionSelectors, setUnionSelectors] = useState<SelectorRule[]>([]);
+  const [excludeSelectors, setExcludeSelectors] = useState<SelectorRule[]>([]);
+  const [intersectSelectors, setIntersectSelectors] = useState<SelectorRule[]>([]);
   const [isModified, setIsModified] = useState(false);
 
   const preferences = useIdeStore((state) => state.preferences);
@@ -148,12 +154,12 @@ export function LookupEditorTab({
 
   const tabId = `lookup:${lookupKey}`;
 
-  const markDirty = () => {
+  const markDirty = useCallback(() => {
     if (!isModified) {
       setIsModified(true);
       setTabDirty(tabId, true);
     }
-  };
+  }, [isModified, tabId, setTabDirty]);
 
   useEffect(() => {
     if (isDraft) return;
@@ -177,7 +183,13 @@ export function LookupEditorTab({
         setIsPublic(true);
         setDescription(exportDef.description || '');
         setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
-        setSelectors((exportDef.selectors as SelectorRule[]) || []);
+        const u =
+          (exportDef.union as SelectorRule[]) || (exportDef.selectors as SelectorRule[]) || [];
+        const e = (exportDef.exclude as SelectorRule[]) || [];
+        const i = (exportDef.intersect as SelectorRule[]) || [];
+        setUnionSelectors(u);
+        setExcludeSelectors(e);
+        setIntersectSelectors(i);
         setInitialKey(lookupKey.includes('::') ? lookupKey : `${pkg.name}::${rawKey}`);
         return;
       }
@@ -194,7 +206,13 @@ export function LookupEditorTab({
         setIsPublic(false);
         setDescription(internalDef.description || '');
         setRawKeyName(rawKey.replace(/^d[1-3]l-/, '') || '');
-        setSelectors((internalDef.selectors as SelectorRule[]) || []);
+        const u =
+          (internalDef.union as SelectorRule[]) || (internalDef.selectors as SelectorRule[]) || [];
+        const e = (internalDef.exclude as SelectorRule[]) || [];
+        const i = (internalDef.intersect as SelectorRule[]) || [];
+        setUnionSelectors(u);
+        setExcludeSelectors(e);
+        setIntersectSelectors(i);
         setInitialKey(lookupKey.includes('::') ? lookupKey : `${pkg.name}::internal::${rawKey}`);
         return;
       }
@@ -202,7 +220,11 @@ export function LookupEditorTab({
   }, [lookupKey, packages, isDraft, inferPillarFromKey]);
 
   const runLiveDebug = useCallback(() => {
-    if (selectors.length === 0) {
+    if (
+      unionSelectors.length === 0 &&
+      excludeSelectors.length === 0 &&
+      intersectSelectors.length === 0
+    ) {
       setMatchedAtoms([]);
       setSlicePrompt('');
       setSliceChunks([]);
@@ -219,7 +241,9 @@ export function LookupEditorTab({
     if (rightView === 'prompt') {
       compileLookupAdhoc({
         key: targetKey,
-        selectors: selectors as Array<Record<string, unknown>>,
+        union: unionSelectors as Array<Record<string, unknown>>,
+        exclude: excludeSelectors as Array<Record<string, unknown>>,
+        intersect: intersectSelectors as Array<Record<string, unknown>>,
         package: pkgName,
         pillar,
       })
@@ -234,7 +258,9 @@ export function LookupEditorTab({
         .finally(() => setEvaluating(false));
     } else {
       evaluateLookupAdhoc({
-        selectors: selectors as Array<Record<string, unknown>>,
+        union: unionSelectors as Array<Record<string, unknown>>,
+        exclude: excludeSelectors as Array<Record<string, unknown>>,
+        intersect: intersectSelectors as Array<Record<string, unknown>>,
         package: pkgName,
         pillar,
       })
@@ -251,7 +277,15 @@ export function LookupEditorTab({
         })
         .finally(() => setEvaluating(false));
     }
-  }, [selectors, pkgName, pillar, rawKeyName, rightView]);
+  }, [
+    unionSelectors,
+    excludeSelectors,
+    intersectSelectors,
+    pkgName,
+    pillar,
+    rawKeyName,
+    rightView,
+  ]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -260,28 +294,50 @@ export function LookupEditorTab({
     return () => clearTimeout(timer);
   }, [runLiveDebug]);
 
-  const handleAddSelector = () => {
-    if (selectorMode === 'id' && queryIdInput.trim()) {
-      setSelectors([...selectors, { query: { id: queryIdInput.trim() } }]);
-      setQueryIdInput('');
+  const setActivePipelineList = useCallback(
+    (updater: (prev: SelectorRule[]) => SelectorRule[]) => {
+      if (algebraPipeline === 'union') {
+        setUnionSelectors(updater);
+      } else if (algebraPipeline === 'exclude') {
+        setExcludeSelectors(updater);
+      } else {
+        setIntersectSelectors(updater);
+      }
       markDirty();
+    },
+    [algebraPipeline, markDirty],
+  );
+
+  const handleAddSelector = () => {
+    let newRule: SelectorRule | null = null;
+    if (selectorMode === 'id' && queryIdInput.trim()) {
+      newRule = { query: { id: queryIdInput.trim() } };
+      setQueryIdInput('');
     } else if (selectorMode === 'domain' && domainInput.trim()) {
       const domains = domainInput
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean);
-      setSelectors([...selectors, { query: { domain: domains } }]);
+      newRule = { query: { domain: domains } };
       setDomainInput('');
-      markDirty();
     } else if (selectorMode === 'ref' && refInput.trim()) {
-      setSelectors([...selectors, { ref: refInput.trim() }]);
+      newRule = { ref: refInput.trim() };
       setRefInput('');
-      markDirty();
+    }
+
+    if (newRule) {
+      setActivePipelineList((prev) => [...prev, newRule as SelectorRule]);
     }
   };
 
-  const handleRemoveSelector = (index: number) => {
-    setSelectors(selectors.filter((_, i) => i !== index));
+  const handleRemoveSelector = (pipe: 'union' | 'exclude' | 'intersect', index: number) => {
+    if (pipe === 'union') {
+      setUnionSelectors((prev) => prev.filter((_, i) => i !== index));
+    } else if (pipe === 'exclude') {
+      setExcludeSelectors((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      setIntersectSelectors((prev) => prev.filter((_, i) => i !== index));
+    }
     markDirty();
   };
 
@@ -292,7 +348,7 @@ export function LookupEditorTab({
       .replace(/^d[1-3]l-/, '')
       .replace(/[^a-z0-9_-]/g, '-');
 
-    if (!cleanSuffix || selectors.length === 0) return;
+    if (!cleanSuffix || unionSelectors.length === 0) return;
 
     setSaveStatus('正在写入...');
     try {
@@ -306,7 +362,9 @@ export function LookupEditorTab({
         pillar,
         is_public: isPublic,
         description: description.trim(),
-        selectors: selectors as Array<Record<string, unknown>>,
+        union: unionSelectors as Array<Record<string, unknown>>,
+        exclude: excludeSelectors as Array<Record<string, unknown>>,
+        intersect: intersectSelectors as Array<Record<string, unknown>>,
         old_key: initialKey || undefined,
       });
 
@@ -333,7 +391,9 @@ export function LookupEditorTab({
     }
   }, [
     rawKeyName,
-    selectors,
+    unionSelectors,
+    excludeSelectors,
+    intersectSelectors,
     pkgName,
     pillar,
     isPublic,
@@ -357,7 +417,7 @@ export function LookupEditorTab({
       .replace(/^d[1-3]l-/, '')
       .replace(/[^a-z0-9_-]/g, '-');
 
-    if (!isDraft && cleanSuffix && selectors.length > 0) {
+    if (!isDraft && cleanSuffix && unionSelectors.length > 0) {
       try {
         setSaveStatus('正在更新可见性...');
         await saveLookupMutation.mutateAsync({
@@ -366,7 +426,9 @@ export function LookupEditorTab({
           pillar,
           is_public: nextPublic,
           description: description.trim(),
-          selectors: selectors as Array<Record<string, unknown>>,
+          union: unionSelectors as Array<Record<string, unknown>>,
+          exclude: excludeSelectors as Array<Record<string, unknown>>,
+          intersect: intersectSelectors as Array<Record<string, unknown>>,
         });
 
         const oldTabId = tabId;
@@ -409,13 +471,13 @@ export function LookupEditorTab({
   useEffect(() => {
     const handleGlobalSave = () => {
       const activeTabId = useIdeStore.getState().activeTabId;
-      if (activeTabId === tabId && !saving && selectors.length > 0) {
+      if (activeTabId === tabId && !saving && unionSelectors.length > 0) {
         handleSave();
       }
     };
     window.addEventListener('aca:save-active-tab', handleGlobalSave);
     return () => window.removeEventListener('aca:save-active-tab', handleGlobalSave);
-  }, [tabId, saving, selectors.length, handleSave]);
+  }, [tabId, saving, unionSelectors.length, handleSave]);
 
   const handleDelete = async (e?: React.MouseEvent) => {
     if (isDraft) return;
@@ -476,7 +538,7 @@ export function LookupEditorTab({
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={saving || selectors.length === 0}
+            disabled={saving || unionSelectors.length === 0}
             className="h-7 text-xs flex items-center gap-1.5 px-3 bg-indigo-600 hover:bg-indigo-500"
           >
             {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
@@ -603,18 +665,60 @@ export function LookupEditorTab({
               </div>
 
               <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-3 text-xs">
-                <div className="flex items-center justify-between">
+                {/* 集合代数三段式流水线开关 */}
+                <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
                   <div className="flex items-center gap-1.5 text-slate-300 font-semibold">
                     <Filter className="h-4 w-4 text-indigo-400" />
-                    <span>选择器构建器 (Selectors Builder)</span>
+                    <span>集合代数管道</span>
+                    <span className="text-[10px] text-slate-500 font-mono font-normal">
+                      (Union \ Exclude) ∩ Intersect
+                    </span>
+                  </div>
+                  <SegmentedControl
+                    size="sm"
+                    value={algebraPipeline}
+                    onChange={setAlgebraPipeline}
+                    options={[
+                      {
+                        value: 'union',
+                        label: `并集 Union (${unionSelectors.length})`,
+                        title: '基础并集候选池 (Base Candidates)',
+                      },
+                      {
+                        value: 'exclude',
+                        label: `差集 Exclude (${excludeSelectors.length})`,
+                        title: '黑名单剔除池 (Blacklist/Filter out)',
+                      },
+                      {
+                        value: 'intersect',
+                        label: `交集 Intersect (${intersectSelectors.length})`,
+                        title: '严格约束交集 (Must Also Satisfy)',
+                      },
+                    ]}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="text-[11px] font-mono text-slate-400 flex items-center gap-1.5">
+                    <span>规则类别:</span>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] uppercase font-bold px-1.5 py-0"
+                    >
+                      {algebraPipeline === 'union'
+                        ? '1. 候选集合并'
+                        : algebraPipeline === 'exclude'
+                          ? '2. 负向集合剔除'
+                          : '3. 约束连续求交'}
+                    </Badge>
                   </div>
                   <SegmentedControl
                     size="sm"
                     value={selectorMode}
                     onChange={setSelectorMode}
                     options={[
-                      { value: 'id', label: '按原子 ID 选取' },
-                      { value: 'domain', label: '按 Domain 领域查询' },
+                      { value: 'id', label: '按原子 ID' },
+                      { value: 'domain', label: '按 Domain' },
                       { value: 'ref', label: '跨 Lookup 引用' },
                     ]}
                   />
@@ -663,88 +767,120 @@ export function LookupEditorTab({
                   </Button>
                 </div>
 
-                <div className="space-y-1.5 pt-2 border-t border-slate-800/60">
-                  <div className="text-[11px] text-slate-400">
-                    已配置规则 ({selectors.length} 项):
-                  </div>
-                  {selectors.length === 0 ? (
-                    <div className="text-slate-600 text-center py-6">
-                      尚未配置任何规则，请在上方添加选择器。
-                    </div>
-                  ) : (
-                    selectors.map((sel, idx) => (
-                      <div
-                        key={`${JSON.stringify(sel)}-${idx}`}
-                        className="flex items-center justify-between p-2 rounded border border-slate-800 bg-slate-950/80 text-xs"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-slate-600 font-bold">{idx + 1}.</span>
-                          {sel.query?.id && (
-                            <span className="flex items-center gap-1 text-indigo-300">
-                              <Box className="h-3 w-3 text-slate-400 shrink-0" />
-                              精确 ID:
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (typeof sel.query?.id === 'string') {
-                                    openTab({
-                                      id: `atom:${sel.query.id}`,
-                                      type: 'atom',
-                                      title: sel.query.id,
-                                      closable: true,
-                                      atomId: sel.query.id,
-                                    });
-                                  }
-                                }}
-                                className="font-semibold underline hover:text-indigo-200 cursor-pointer"
-                                title={`点击跳转到原子: ${sel.query.id}`}
-                              >
-                                {sel.query.id}
-                              </button>
-                            </span>
-                          )}
-                          {sel.query?.domain && (
-                            <span className="flex items-center gap-1 text-emerald-300">
-                              <Tag className="h-3 w-3 text-slate-400 shrink-0" />
-                              Domain 匹配: <strong>{JSON.stringify(sel.query.domain)}</strong>
-                            </span>
-                          )}
-                          {sel.ref && (
-                            <span className="flex items-center gap-1 text-purple-300">
-                              <Link2 className="h-3 w-3 text-slate-400 shrink-0" />
-                              跨接口引用:
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (sel.ref) {
-                                    openTab({
-                                      id: `lookup:${sel.ref}`,
-                                      type: 'lookup',
-                                      title: sel.ref.split('::').pop() || sel.ref,
-                                      closable: true,
-                                      lookupKey: sel.ref,
-                                    });
-                                  }
-                                }}
-                                className="font-semibold underline hover:text-purple-200 cursor-pointer"
-                                title={`点击跳转到接口: ${sel.ref}`}
-                              >
-                                {sel.ref}
-                              </button>
-                            </span>
-                          )}
+                <div className="space-y-3 pt-2 border-t border-slate-800/60">
+                  {/* 分组流水线规则列表 */}
+                  {(['union', 'exclude', 'intersect'] as const).map((pipe) => {
+                    const list =
+                      pipe === 'union'
+                        ? unionSelectors
+                        : pipe === 'exclude'
+                          ? excludeSelectors
+                          : intersectSelectors;
+                    const pipeLabel =
+                      pipe === 'union'
+                        ? '并集 Union'
+                        : pipe === 'exclude'
+                          ? '剔除 Exclude'
+                          : '交集 Intersect';
+                    const pipeBadge =
+                      pipe === 'union' ? 'd1' : pipe === 'exclude' ? 'destructive' : 'd2';
+
+                    return (
+                      <div key={pipe} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                          <span className="flex items-center gap-1.5">
+                            <Badge
+                              variant={pipeBadge}
+                              className="text-[9px] uppercase px-1.5 py-0 font-bold"
+                            >
+                              {pipeLabel}
+                            </Badge>
+                            <span>({list.length} 项)</span>
+                          </span>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveSelector(idx)}
-                          className="text-slate-500 hover:text-rose-400 p-1 rounded"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        {list.length === 0 ? (
+                          <div className="text-[10px] text-slate-600 font-mono py-1 px-2 rounded bg-slate-950/40 border border-slate-800/40">
+                            （无规则）
+                          </div>
+                        ) : (
+                          list.map((sel, idx) => (
+                            <div
+                              key={`${pipe}-${JSON.stringify(sel)}-${idx}`}
+                              className="flex items-center justify-between p-2 rounded border border-slate-800 bg-slate-950/80 text-xs font-mono"
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <span className="text-slate-600 font-bold">{idx + 1}.</span>
+                                {sel.query?.id && (
+                                  <span className="flex items-center gap-1 text-indigo-300 truncate">
+                                    <Box className="h-3 w-3 text-slate-400 shrink-0" />
+                                    精确 ID:
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (typeof sel.query?.id === 'string') {
+                                          openTab({
+                                            id: `atom:${sel.query.id}`,
+                                            type: 'atom',
+                                            title: sel.query.id,
+                                            closable: true,
+                                            atomId: sel.query.id,
+                                          });
+                                        }
+                                      }}
+                                      className="font-semibold underline hover:text-indigo-200 cursor-pointer truncate"
+                                      title={`点击跳转到原子: ${sel.query.id}`}
+                                    >
+                                      {sel.query.id}
+                                    </button>
+                                  </span>
+                                )}
+                                {sel.query?.domain && (
+                                  <span className="flex items-center gap-1 text-emerald-300 truncate">
+                                    <Tag className="h-3 w-3 text-slate-400 shrink-0" />
+                                    Domain: <strong>{JSON.stringify(sel.query.domain)}</strong>
+                                  </span>
+                                )}
+                                {sel.ref && (
+                                  <span className="flex items-center gap-1 text-purple-300 truncate">
+                                    <Link2 className="h-3 w-3 text-slate-400 shrink-0" />
+                                    跨接口引用:
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (sel.ref) {
+                                          openTab({
+                                            id: `lookup:${sel.ref}`,
+                                            type: 'lookup',
+                                            title: sel.ref.split('::').pop() || sel.ref,
+                                            closable: true,
+                                            lookupKey: sel.ref,
+                                          });
+                                        }
+                                      }}
+                                      className="font-semibold underline hover:text-purple-200 cursor-pointer truncate"
+                                      title={`点击跳转到接口: ${sel.ref}`}
+                                    >
+                                      {sel.ref}
+                                    </button>
+                                  </span>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveSelector(pipe, idx)}
+                                className="text-slate-500 hover:text-rose-400 p-1 rounded cursor-pointer shrink-0"
+                                title="删除该规则"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ))
+                        )}
                       </div>
-                    ))
-                  )}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -887,7 +1023,7 @@ export function LookupEditorTab({
                     <TopologyGraph
                       lookupAdhoc={{
                         key: fullLookupKey,
-                        selectors: selectors as Array<Record<string, unknown>>,
+                        selectors: unionSelectors as Array<Record<string, unknown>>,
                         package: pkgName,
                         pillar,
                       }}

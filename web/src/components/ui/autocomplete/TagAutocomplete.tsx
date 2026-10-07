@@ -24,7 +24,7 @@ export interface TagAutocompleteProps<T = unknown> {
   allowCustom?: boolean;
   className?: string;
   disabled?: boolean;
-  badgeVariant?: 'default' | 'd1' | 'd2' | 'd3';
+  badgeVariant?: 'default' | 'd1' | 'd2' | 'd3' | 'destructive';
   onTagClick?: (tag: string) => void;
 }
 
@@ -159,13 +159,15 @@ export function TagAutocomplete<T = unknown>({
           key={tag}
           className={cn(
             'inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] border font-medium transition-colors',
-            badgeVariant === 'd2'
-              ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60'
-              : badgeVariant === 'd3'
-                ? 'bg-purple-950/60 text-purple-300 border-purple-800/60'
-                : badgeVariant === 'd1'
-                  ? 'bg-cyan-950/60 text-cyan-300 border-cyan-800/60'
-                  : 'bg-slate-850 bg-slate-800/80 text-slate-300 border-slate-700',
+            badgeVariant === 'destructive'
+              ? 'bg-rose-950/60 text-rose-300 border-rose-800/60'
+              : badgeVariant === 'd2'
+                ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60'
+                : badgeVariant === 'd3'
+                  ? 'bg-purple-950/60 text-purple-300 border-purple-800/60'
+                  : badgeVariant === 'd1'
+                    ? 'bg-cyan-950/60 text-cyan-300 border-cyan-800/60'
+                    : 'bg-slate-850 bg-slate-800/80 text-slate-300 border-slate-700',
           )}
         >
           {onTagClick ? (

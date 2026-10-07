@@ -31,19 +31,24 @@ def build_topology_graph(
         target: str,
         label: str = "",
         is_injected: bool = False,
+        is_causal: bool = False,
     ):
         if (source, target) not in visited_edges:
-            edge_obj = {
+            edge_obj: dict[str, Any] = {
                 "id": f"e_{source}->{target}",
                 "source": source,
                 "target": target,
                 "label": label,
-                "animated": True,
+                "animated": not is_causal,
             }
             if is_injected:
                 edge_obj["style"] = {"stroke": "#a855f7", "strokeWidth": 2}
                 edge_obj["label"] = label or "with (注入)"
                 edge_obj["data"] = {"injected": True}
+            elif is_causal:
+                edge_obj["style"] = {"stroke": "#64748b", "strokeDasharray": "4 4", "strokeWidth": 1.5}
+                edge_obj["label"] = label or "after (前置)"
+                edge_obj["data"] = {"causal": True}
             edges.append(edge_obj)
             visited_edges.add((source, target))
 
@@ -153,6 +158,22 @@ def build_topology_graph(
                     description = stripped[2:].strip()
                     break
 
+        after_refs = (
+            meta.get("after", [])
+            if hasattr(meta, "get")
+            else getattr(meta, "after", [])
+        )
+        if not isinstance(after_refs, list):
+            after_refs = []
+
+        tags = (
+            meta.get("tags", [])
+            if hasattr(meta, "get")
+            else getattr(meta, "tags", [])
+        )
+        if not isinstance(tags, list):
+            tags = [tags]
+
         nodes.append(
             {
                 "id": atom_node_id,
@@ -165,6 +186,8 @@ def build_topology_graph(
                     "content": content,
                     "description": description,
                     "source_file": atom.get("source_file"),
+                    "after": after_refs,
+                    "tags": tags,
                 },
             }
         )
@@ -268,6 +291,17 @@ def build_topology_graph(
         for atom_id, atom in library.items():
             if atom.get("meta", {}).get("type") == "kernel":
                 process_atom(atom_id, manifest_node_id)
+
+    # 建立闭包内原子之间的 after 因果前置偏序边 (pred -> curr)
+    for node in list(nodes):
+        if node.get("type") == "atomNode":
+            curr_id = node.get("data", {}).get("id")
+            after_list = node.get("data", {}).get("after", [])
+            curr_node_id = f"atom::{curr_id}"
+            for pred_id in after_list:
+                pred_node_id = f"atom::{pred_id}"
+                if pred_node_id in visited_nodes:
+                    add_edge(pred_node_id, curr_node_id, label="after", is_causal=True)
 
     elapsed_ms = (time.perf_counter() - t_start) * 1000
     print(

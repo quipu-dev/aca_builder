@@ -4,12 +4,14 @@ import {
   fetchManifestDetail,
   useSaveManifestMutation,
 } from '@/api/manifests';
+import type { ManifestInvariants } from '@/api/manifests';
 import {
   type ProfileSummary,
   type PromptChunk,
   PromptViewer,
 } from '@/components/editor/PromptViewer';
 import { Autocomplete, type AutocompleteOption } from '@/components/ui/autocomplete';
+import { TagAutocomplete } from '@/components/ui/autocomplete';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +33,7 @@ import {
   RotateCcw,
   Save,
   Share2,
+  ShieldAlert,
   Trash2,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
@@ -53,11 +56,13 @@ interface ManifestDraftState {
   name: string;
   version: string;
   description: string;
+  invariants: ManifestInvariants;
   items: ImportItem[];
   initialSnapshot: {
     name: string;
     version: string;
     description: string;
+    invariants: ManifestInvariants;
     items: ImportItem[];
   } | null;
   isModified: boolean;
@@ -71,10 +76,12 @@ type ManifestAction =
         name: string;
         version: string;
         description: string;
+        invariants?: ManifestInvariants;
         items: ImportItem[];
       };
     }
   | { type: 'SET_FIELD'; field: 'identifier' | 'name' | 'version' | 'description'; value: string }
+  | { type: 'SET_INVARIANTS'; payload: Partial<ManifestInvariants> }
   | { type: 'ADD_IMPORT'; item: ImportItem }
   | { type: 'REMOVE_IMPORT'; id: string }
   | { type: 'SET_IMPORT_WITH'; itemId: string; slotKey: string; targetValue: string }
@@ -85,16 +92,29 @@ type ManifestAction =
 function manifestReducer(state: ManifestDraftState, action: ManifestAction): ManifestDraftState {
   switch (action.type) {
     case 'LOAD_SUCCESS': {
+      const invariants = action.payload.invariants || {};
       const snapshot = {
         name: action.payload.name,
         version: action.payload.version,
         description: action.payload.description,
+        invariants: { ...invariants },
         items: action.payload.items,
       };
       return {
         ...action.payload,
+        invariants: { ...invariants },
         initialSnapshot: snapshot,
         isModified: false,
+      };
+    }
+    case 'SET_INVARIANTS': {
+      return {
+        ...state,
+        invariants: {
+          ...state.invariants,
+          ...action.payload,
+        },
+        isModified: true,
       };
     }
     case 'SET_FIELD': {
@@ -157,6 +177,7 @@ function manifestReducer(state: ManifestDraftState, action: ManifestAction): Man
         name: state.initialSnapshot.name,
         version: state.initialSnapshot.version,
         description: state.initialSnapshot.description,
+        invariants: { ...state.initialSnapshot.invariants },
         items: [...state.initialSnapshot.items],
         isModified: false,
       };
@@ -166,6 +187,7 @@ function manifestReducer(state: ManifestDraftState, action: ManifestAction): Man
         name: state.name,
         version: state.version,
         description: state.description,
+        invariants: { ...state.invariants },
         items: [...state.items],
       };
       return {
@@ -209,12 +231,22 @@ export function ManifestEditorTab({
     name: !isDraft && manifestName ? manifestName.split('/').pop() || manifestName : '',
     version: '1.0.0',
     description: '',
+    invariants: {},
     items: [],
     initialSnapshot: null,
     isModified: false,
   });
 
-  const { identifier: manifestIdentifier, name, version, description, items, isModified } = state;
+  const {
+    identifier: manifestIdentifier,
+    name,
+    version,
+    description,
+    invariants,
+    items,
+    isModified,
+  } = state;
+  const [showInvariantsPanel, setShowInvariantsPanel] = useState(false);
 
   const [selectedLookup, setSelectedLookup] = useState<string>('');
   const [editingWithItemId, setEditingWithItemId] = useState<string | null>(null);
@@ -228,7 +260,7 @@ export function ManifestEditorTab({
   const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [isHookActive, setIsHookActive] = useState(false);
 
-  const { atomOptions } = useWorkspaceCandidates(packages);
+  const { atomOptions, domainOptions } = useWorkspaceCandidates(packages);
 
   const saveManifestMutation = useSaveManifestMutation();
   const isSaving = saveManifestMutation.isPending;
@@ -290,6 +322,7 @@ export function ManifestEditorTab({
             name: loadedName,
             version: loadedVersion,
             description: loadedDesc,
+            invariants: data.invariants,
             items: mappedItems,
           },
         });
@@ -373,6 +406,7 @@ export function ManifestEditorTab({
           lookup: i.lookup,
           with: i.with && Object.keys(i.with).length > 0 ? i.with : undefined,
         })),
+        invariants: Object.keys(invariants).length > 0 ? invariants : undefined,
         identifier: targetIdentifier,
         workspace_path: workspacePath,
       });
@@ -399,6 +433,7 @@ export function ManifestEditorTab({
     manifestIdentifier,
     name,
     items,
+    invariants,
     version,
     description,
     workspacePath,
@@ -515,6 +550,63 @@ export function ManifestEditorTab({
             />
           </div>
         </div>
+
+        {/* Invariants 架构断言守卫折叠开关 */}
+        <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setShowInvariantsPanel((prev) => !prev)}
+            className="flex items-center gap-1.5 text-[11px] text-amber-400 hover:text-amber-300 cursor-pointer font-semibold"
+          >
+            <ShieldAlert className="h-3.5 w-3.5" />
+            <span>离散架构断言守卫 (Invariants Guardrails)</span>
+            <Badge variant="outline" className="text-[9px] px-1 py-0 ml-1">
+              {showInvariantsPanel ? '收起' : '展开配置'}
+            </Badge>
+          </button>
+          <span className="text-[10px] text-slate-500">
+            {invariants.forbidden_tags?.length || 0} 禁忌标签 · 深度限制:{' '}
+            {invariants.max_graph_depth ?? '无'}
+          </span>
+        </div>
+
+        {showInvariantsPanel && (
+          <div className="rounded border border-amber-900/50 bg-amber-950/20 p-3 space-y-2.5 mt-2 text-xs">
+            <div className="flex items-center gap-3">
+              <label htmlFor="inv-max-depth" className="text-slate-400 shrink-0">
+                最大依赖拓扑深度:
+              </label>
+              <Input
+                id="inv-max-depth"
+                type="number"
+                min="1"
+                max="20"
+                value={invariants.max_graph_depth ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value.trim() ? Number(e.target.value) : undefined;
+                  dispatch({ type: 'SET_INVARIANTS', payload: { max_graph_depth: val } });
+                }}
+                placeholder="如: 4 (留空表示不限制)"
+                className="w-40 h-7"
+              />
+            </div>
+
+            <div>
+              <span className="text-slate-400 block mb-1">
+                禁忌标签 (Forbidden Tags - 生产环境严禁包含):
+              </span>
+              <TagAutocomplete
+                values={invariants.forbidden_tags || []}
+                onChange={(tags) => {
+                  dispatch({ type: 'SET_INVARIANTS', payload: { forbidden_tags: tags } });
+                }}
+                options={domainOptions}
+                placeholder="输入禁止在编译闭包中出现的标签 (如 deprecated)"
+                badgeVariant="destructive"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3 space-y-2">
