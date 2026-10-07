@@ -1,5 +1,6 @@
+import { AcaLogo } from '@/components/AcaLogo';
 import { Button } from '@/components/ui/button';
-import { Box, Cpu, FilePlus2, Layers, MousePointerClick, Plus, Search } from 'lucide-react';
+import { Box, FilePlus2, Layers, MousePointerClick, Plus, Search } from 'lucide-react';
 
 export function EmptyTab({
   manifestsCount,
@@ -19,8 +20,8 @@ export function EmptyTab({
       <div className="max-w-md w-full space-y-6 text-center">
         {/* 顶部标题 */}
         <div className="space-y-2">
-          <div className="inline-flex p-3 rounded-2xl bg-indigo-950/60 border border-indigo-800/40 text-indigo-400 mb-2 shadow-lg shadow-indigo-950/40">
-            <Cpu className="h-8 w-8" />
+          <div className="inline-flex p-3 rounded-2xl bg-indigo-950/60 border border-indigo-800/40 mb-2 shadow-lg shadow-indigo-950/40">
+            <AcaLogo className="h-8 w-8" />
           </div>
           <h1 className="text-xl font-bold font-sans tracking-wide text-slate-100">
             ACA Studio 工作台

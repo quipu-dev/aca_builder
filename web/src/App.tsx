@@ -1,4 +1,5 @@
 import { createFolderFs, deleteFsItem, moveFsItem } from '@/api/fs';
+import { AcaLogo } from '@/components/AcaLogo';
 import { CommandPalette } from '@/components/CommandPalette';
 import { TabPane } from '@/components/layout/TabPane';
 import { CreateFolderModal } from '@/components/modals/CreateFolderModal';
@@ -27,7 +28,6 @@ import {
   ArrowRight,
   Check,
   ChevronDown,
-  Cpu,
   ExternalLink,
   FilePlus2,
   FolderTree,
@@ -984,7 +984,7 @@ export function App() {
               className="flex items-center gap-1.5 text-slate-300 hover:text-white px-1.5 py-0.5 -mx-1.5 rounded hover:bg-slate-800/60 transition-colors cursor-pointer"
               title="切换工作区"
             >
-              <Cpu className="h-3.5 w-3.5 text-indigo-400" />
+              <AcaLogo className="h-3.5 w-3.5" />
               <span className="font-semibold text-slate-200">
                 {currentWsObj ? currentWsObj.name : 'ACA Studio'}
               </span>

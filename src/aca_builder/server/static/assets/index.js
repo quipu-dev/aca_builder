@@ -5908,6 +5908,18 @@ const twMerge = /* @__PURE__ */ createTailwindMerge(getDefaultConfig);
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
+function AcaLogo({ className, alt = "ACA Logo", ...props2 }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "img",
+    {
+      ...props2,
+      src: "/favicon.svg",
+      alt,
+      draggable: false,
+      className: cn("inline-block shrink-0 select-none pointer-events-none", className)
+    }
+  );
+}
 function getPillarVariant(type, fallback = "default") {
   switch (type == null ? void 0 : type.toLowerCase()) {
     case "d1":
@@ -31196,7 +31208,7 @@ function EmptyTab({
 }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex h-full w-full flex-col items-center justify-center p-6 text-slate-200 select-none overflow-y-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-md w-full space-y-6 text-center", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "inline-flex p-3 rounded-2xl bg-indigo-950/60 border border-indigo-800/40 text-indigo-400 mb-2 shadow-lg shadow-indigo-950/40", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Cpu, { className: "h-8 w-8" }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "inline-flex p-3 rounded-2xl bg-indigo-950/60 border border-indigo-800/40 mb-2 shadow-lg shadow-indigo-950/40", children: /* @__PURE__ */ jsxRuntimeExports.jsx(AcaLogo, { className: "h-8 w-8" }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-xl font-bold font-sans tracking-wide text-slate-100", children: "ACA Studio 工作台" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-400 font-mono leading-relaxed", children: "公理化组件架构（ACA）可视化装配与开发控制台" })
     ] }),
@@ -33271,7 +33283,7 @@ function App() {
               className: "flex items-center gap-1.5 text-slate-300 hover:text-white px-1.5 py-0.5 -mx-1.5 rounded hover:bg-slate-800/60 transition-colors cursor-pointer",
               title: "切换工作区",
               children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(Cpu, { className: "h-3.5 w-3.5 text-indigo-400" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(AcaLogo, { className: "h-3.5 w-3.5" }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200", children: currentWsObj ? currentWsObj.name : "ACA Studio" }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx(ChevronDown, { className: "h-3 w-3 text-slate-400" })
               ]
