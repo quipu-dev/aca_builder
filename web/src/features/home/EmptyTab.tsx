@@ -23,9 +23,7 @@ export function EmptyTab({
           <div className="inline-flex p-3 rounded-2xl bg-indigo-950/60 border border-indigo-800/40 mb-2 shadow-lg shadow-indigo-950/40">
             <AcaLogo className="h-8 w-8" />
           </div>
-          <h1 className="text-xl font-bold font-sans tracking-wide text-slate-100">
-            ACA Studio 工作台
-          </h1>
+          <h1 className="text-xl font-bold font-sans tracking-wide text-slate-100">新标签页</h1>
           <p className="text-xs text-slate-400 font-mono leading-relaxed">
             公理化组件架构（ACA）可视化装配与开发控制台
           </p>

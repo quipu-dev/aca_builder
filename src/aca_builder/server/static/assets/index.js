@@ -5957,47 +5957,45 @@ function Badge({ className, variant = "default", ...props2 }) {
     }
   );
 }
-const INITIAL_EMPTY_TAB = {
-  id: "empty:home",
-  type: "empty",
-  title: "开始",
-  closable: false
+const createUniqueTabId = (prefix = "tab") => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+const createDefaultEmptyTab = () => {
+  const initialLoc = {
+    type: "empty",
+    title: "新标签页"
+  };
+  const newTabId = createUniqueTabId();
+  return {
+    id: newTabId,
+    closable: true,
+    ...initialLoc,
+    history: [initialLoc],
+    historyIndex: 0
+  };
 };
-const createDefaultWorkspaceState = () => ({
-  tabs: [INITIAL_EMPTY_TAB],
-  activeTabId: INITIAL_EMPTY_TAB.id,
-  navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
-  historyIndex: 0,
-  explorerExpanded: {}
-});
+const createDefaultWorkspaceState = () => {
+  const emptyTab = createDefaultEmptyTab();
+  return {
+    tabs: [emptyTab],
+    activeTabId: emptyTab.id,
+    explorerExpanded: {}
+  };
+};
 const useIdeStore = create$1()(
   persist(
     (set, get) => ({
       currentWorkspace: "default",
-      tabs: [INITIAL_EMPTY_TAB],
-      activeTabId: INITIAL_EMPTY_TAB.id,
-      navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
-      historyIndex: 0,
+      tabs: [createDefaultEmptyTab()],
+      activeTabId: "empty:home",
       explorerExpanded: {},
       workspaceStates: {},
       setCurrentWorkspace: (wsId) => {
-        const {
-          currentWorkspace,
-          tabs,
-          activeTabId,
-          navigationHistory,
-          historyIndex,
-          explorerExpanded,
-          workspaceStates
-        } = get();
+        const { currentWorkspace, tabs, activeTabId, explorerExpanded, workspaceStates } = get();
         if (currentWorkspace === wsId) return;
         const updatedWorkspaces = {
           ...workspaceStates,
           [currentWorkspace]: {
             tabs,
             activeTabId,
-            navigationHistory,
-            historyIndex,
             explorerExpanded
           }
         };
@@ -6006,8 +6004,6 @@ const useIdeStore = create$1()(
           currentWorkspace: wsId,
           tabs: targetState.tabs,
           activeTabId: targetState.activeTabId,
-          navigationHistory: targetState.navigationHistory,
-          historyIndex: targetState.historyIndex,
           explorerExpanded: targetState.explorerExpanded,
           workspaceStates: updatedWorkspaces
         });
@@ -6038,83 +6034,148 @@ const useIdeStore = create$1()(
       pinTab: (tabId) => set((state) => ({
         tabs: state.tabs.map((t) => t.id === tabId ? { ...t, isPreview: false } : t)
       })),
-      replaceTab: (oldTabId, newTab) => {
-        const { tabs, navigationHistory } = get();
-        const tabIndex = tabs.findIndex((t) => t.id === oldTabId);
-        const updatedTabs = [...tabs];
-        if (tabIndex !== -1) {
-          updatedTabs[tabIndex] = newTab;
-        } else {
-          updatedTabs.push(newTab);
-        }
-        const updatedHistory = navigationHistory.map(
-          (entry) => entry.tab.id === oldTabId ? { tab: newTab } : entry
-        );
-        set({
-          tabs: updatedTabs,
-          activeTabId: newTab.id,
-          navigationHistory: updatedHistory
+      replaceTab: (tabId, location) => {
+        set((state) => {
+          const updatedTabs = state.tabs.map((t) => {
+            if (t.id !== tabId) return t;
+            const updatedHistory = [...t.history];
+            updatedHistory[t.historyIndex] = { ...location };
+            return {
+              ...t,
+              ...location,
+              history: updatedHistory
+            };
+          });
+          return { tabs: updatedTabs };
         });
       },
-      openTab: (tab2, options) => {
-        const { tabs, navigationHistory, historyIndex } = get();
-        const newTab = !!(options == null ? void 0 : options.newTab);
-        const fromHistory = !!(options == null ? void 0 : options.fromHistory);
-        const isPreview = (options == null ? void 0 : options.isPreview) !== void 0 ? options.isPreview : tab2.isPreview ?? false;
-        const tabToOpen = { ...tab2, isPreview };
-        if (!fromHistory) {
-          const currentEntry = navigationHistory[historyIndex];
-          if (!currentEntry || currentEntry.tab.id !== tabToOpen.id) {
-            const truncated = navigationHistory.slice(0, historyIndex + 1);
-            const updatedHistory = [...truncated, { tab: tabToOpen }];
-            set({
-              navigationHistory: updatedHistory,
-              historyIndex: updatedHistory.length - 1
-            });
-          }
-        }
-        const existingIndex = tabs.findIndex((t) => t.id === tabToOpen.id);
-        if (existingIndex !== -1) {
-          if (!isPreview && tabs[existingIndex].isPreview) {
-            const updated = [...tabs];
-            updated[existingIndex] = { ...updated[existingIndex], isPreview: false };
-            set({ tabs: updated, activeTabId: tabToOpen.id });
-          } else {
-            set({ activeTabId: tabToOpen.id });
-          }
-          return;
-        }
-        const previewIndex = tabs.findIndex((t) => t.isPreview && !t.isDirty);
-        if (!newTab && isPreview && previewIndex !== -1) {
-          const updatedTabs = [...tabs];
-          updatedTabs[previewIndex] = tabToOpen;
+      openTab: (location, options) => {
+        const { tabs, activeTabId } = get();
+        const wantsNewTab = Boolean(options == null ? void 0 : options.newTab);
+        const isPreview = (options == null ? void 0 : options.isPreview) ?? false;
+        const locSnapshot = {
+          type: location.type,
+          title: location.title,
+          atomId: location.atomId,
+          manifestName: location.manifestName,
+          lookupKey: location.lookupKey,
+          workspacePath: location.workspacePath
+        };
+        if (wantsNewTab) {
+          const newTabId = createUniqueTabId();
+          const newTab = {
+            id: newTabId,
+            closable: location.closable ?? true,
+            ...locSnapshot,
+            isDirty: false,
+            isPreview,
+            history: [locSnapshot],
+            historyIndex: 0
+          };
           set({
-            tabs: updatedTabs,
-            activeTabId: tabToOpen.id
+            tabs: [...tabs, newTab],
+            activeTabId: newTabId
           });
           return;
         }
-        const cleanTabs = tabs.length === 1 && tabs[0].type === "empty" && !tabs[0].isDirty ? [] : tabs;
+        if (tabs.length === 1 && tabs[0].type === "empty" && !tabs[0].isDirty && locSnapshot.type !== "empty") {
+          const currentTabId = tabs[0].id;
+          const updatedTab = {
+            ...tabs[0],
+            ...locSnapshot,
+            isDirty: false,
+            isPreview,
+            history: [locSnapshot],
+            historyIndex: 0
+          };
+          set({
+            tabs: [updatedTab],
+            activeTabId: currentTabId
+          });
+          return;
+        }
+        const currentActive = tabs.find((t) => t.id === activeTabId);
+        if (!currentActive) {
+          const newTabId = createUniqueTabId();
+          const fallbackTab = {
+            id: newTabId,
+            closable: location.closable ?? true,
+            ...locSnapshot,
+            isDirty: false,
+            isPreview,
+            history: [locSnapshot],
+            historyIndex: 0
+          };
+          set({
+            tabs: [...tabs, fallbackTab],
+            activeTabId: newTabId
+          });
+          return;
+        }
+        const isSameResource = currentActive.type === locSnapshot.type && currentActive.atomId === locSnapshot.atomId && currentActive.manifestName === locSnapshot.manifestName && currentActive.lookupKey === locSnapshot.lookupKey;
+        if (isSameResource) {
+          if (!isPreview && currentActive.isPreview) {
+            set({
+              tabs: tabs.map((t) => t.id === currentActive.id ? { ...t, isPreview: false } : t)
+            });
+          }
+          return;
+        }
+        const truncatedHistory = currentActive.history.slice(0, currentActive.historyIndex + 1);
+        const nextHistory = [...truncatedHistory, locSnapshot];
+        const nextIndex = nextHistory.length - 1;
+        const updatedTabs = tabs.map((t) => {
+          if (t.id !== currentActive.id) return t;
+          return {
+            ...t,
+            closable: true,
+            ...locSnapshot,
+            isDirty: false,
+            isPreview,
+            history: nextHistory,
+            historyIndex: nextIndex
+          };
+        });
         set({
-          tabs: [...cleanTabs, tabToOpen],
-          activeTabId: tabToOpen.id
+          tabs: updatedTabs,
+          activeTabId: currentActive.id
         });
       },
       goBack: () => {
-        const { historyIndex, navigationHistory } = get();
-        if (historyIndex <= 0) return;
-        const nextIndex = historyIndex - 1;
-        const targetTab = navigationHistory[nextIndex].tab;
-        set({ historyIndex: nextIndex });
-        get().openTab(targetTab, { fromHistory: true });
+        set((state) => {
+          const activeTab = state.tabs.find((t) => t.id === state.activeTabId);
+          if (!activeTab || activeTab.historyIndex <= 0) return state;
+          const prevIndex = activeTab.historyIndex - 1;
+          const prevLoc = activeTab.history[prevIndex];
+          const updatedTabs = state.tabs.map((t) => {
+            if (t.id !== activeTab.id) return t;
+            return {
+              ...t,
+              ...prevLoc,
+              isDirty: false,
+              historyIndex: prevIndex
+            };
+          });
+          return { tabs: updatedTabs };
+        });
       },
       goForward: () => {
-        const { historyIndex, navigationHistory } = get();
-        if (historyIndex >= navigationHistory.length - 1) return;
-        const nextIndex = historyIndex + 1;
-        const targetTab = navigationHistory[nextIndex].tab;
-        set({ historyIndex: nextIndex });
-        get().openTab(targetTab, { fromHistory: true });
+        set((state) => {
+          const activeTab = state.tabs.find((t) => t.id === state.activeTabId);
+          if (!activeTab || activeTab.historyIndex >= activeTab.history.length - 1) return state;
+          const nextIndex = activeTab.historyIndex + 1;
+          const nextLoc = activeTab.history[nextIndex];
+          const updatedTabs = state.tabs.map((t) => {
+            if (t.id !== activeTab.id) return t;
+            return {
+              ...t,
+              ...nextLoc,
+              isDirty: false,
+              historyIndex: nextIndex
+            };
+          });
+          return { tabs: updatedTabs };
+        });
       },
       closeTab: (tabId) => {
         var _a2;
@@ -6124,12 +6185,7 @@ const useIdeStore = create$1()(
         const remaining = tabs.filter((t) => t.id !== tabId);
         let nextActiveId = activeTabId;
         if (remaining.length === 0) {
-          const emptyTab = {
-            id: "empty:home",
-            type: "empty",
-            title: "开始",
-            closable: false
-          };
+          const emptyTab = createDefaultEmptyTab();
           set({
             tabs: [emptyTab],
             activeTabId: emptyTab.id
@@ -6158,7 +6214,7 @@ const useIdeStore = create$1()(
       }))
     }),
     {
-      name: "aca-studio-ide-vault-v2",
+      name: "aca-studio-ide-vault-v3",
       partialize: (state) => ({
         currentWorkspace: state.currentWorkspace,
         tabs: state.tabs,
@@ -9693,26 +9749,20 @@ function CommandPalette({
   const handleSelect = (item) => {
     if (item.type === "atom" && item.atomId) {
       openTab({
-        id: `atom:${item.atomId}`,
         type: "atom",
         title: item.atomId,
-        closable: true,
         atomId: item.atomId
       });
     } else if (item.type === "manifest" && item.manifestName) {
       openTab({
-        id: `manifest:${item.manifestName}`,
         type: "manifest",
         title: item.manifestName,
-        closable: true,
         manifestName: item.manifestName
       });
     } else if (item.type === "lookup" && item.lookupKey) {
       openTab({
-        id: `lookup:${item.lookupKey}`,
         type: "lookup",
         title: item.lookupKey.split("::").pop() || item.lookupKey,
-        closable: true,
         lookupKey: item.lookupKey
       });
     }
@@ -13366,6 +13416,7 @@ function generateIdSuffix() {
   return ulid().toLowerCase();
 }
 function AtomEditorTab({
+  tabId,
   atomId,
   packages = [],
   onSaved,
@@ -13375,7 +13426,6 @@ function AtomEditorTab({
   const setTabDirty = useIdeStore((state) => state.setTabDirty);
   const replaceTab = useIdeStore((state) => state.replaceTab);
   const openTab = useIdeStore((state) => state.openTab);
-  const tabId = `atom:${atomId}`;
   const isKernel = atomId === "kernel" || atomId.startsWith("draft:kernel");
   const isDraft = atomId.startsWith("draft:") || atomId === "new_atom";
   const draftParts = isDraft ? atomId.split(":") : [];
@@ -13476,10 +13526,8 @@ function AtomEditorTab({
           setTabDirty(tabId, false);
           onSaved == null ? void 0 : onSaved();
           replaceTab(tabId, {
-            id: "atom:kernel",
             type: "atom",
             title: "kernel",
-            closable: true,
             atomId: "kernel"
           });
         } catch (err) {
@@ -13514,10 +13562,8 @@ function AtomEditorTab({
         setTabDirty(tabId, false);
         onSaved == null ? void 0 : onSaved();
         replaceTab(tabId, {
-          id: `atom:${generatedId}`,
           type: "atom",
           title: generatedId,
-          closable: true,
           atomId: generatedId
         });
       } catch (err) {
@@ -13599,10 +13645,8 @@ function AtomEditorTab({
       setIsRenameModalOpen(false);
       onSaved == null ? void 0 : onSaved();
       replaceTab(tabId, {
-        id: `atom:${clean}`,
         type: "atom",
         title: clean,
-        closable: true,
         atomId: clean
       });
     } catch (err) {
@@ -13965,10 +14009,8 @@ function AtomEditorTab({
                 badgeVariant: "d3",
                 onTagClick: (aid) => {
                   openTab({
-                    id: `atom:${aid}`,
                     type: "atom",
                     title: aid,
-                    closable: true,
                     atomId: aid
                   });
                 }
@@ -13994,10 +14036,8 @@ function AtomEditorTab({
                 onTagClick: (ref) => {
                   const targetKey = resolveLookupRef(ref);
                   openTab({
-                    id: `lookup:${targetKey}`,
                     type: "lookup",
                     title: targetKey.split("::").pop() || targetKey,
-                    closable: true,
                     lookupKey: targetKey
                   });
                 }
@@ -29726,6 +29766,7 @@ const TopologyGraph = React$1.memo(function TopologyGraph2({
   ] });
 });
 function LookupEditorTab({
+  tabId,
   lookupKey,
   packages,
   onSaved,
@@ -29799,7 +29840,6 @@ function LookupEditorTab({
       };
     });
   }, [currentPkgObj, pillar]);
-  const tabId = `lookup:${lookupKey}`;
   const markDirty = reactExports.useCallback(() => {
     if (!isModified) {
       setIsModified(true);
@@ -29972,13 +30012,10 @@ function LookupEditorTab({
       setIsModified(false);
       setTabDirty(tabId, false);
       setInitialKey(fullTargetKey);
-      const newTabId = `lookup:${fullTargetKey}`;
       if (isDraft) {
         replaceTab(tabId, {
-          id: newTabId,
           type: "lookup",
           title: `${pillar}l-${cleanSuffix}`,
-          closable: true,
           lookupKey: fullTargetKey
         });
       }
@@ -30021,20 +30058,14 @@ function LookupEditorTab({
           exclude: excludeSelectors,
           intersect: intersectSelectors
         });
-        const oldTabId = tabId;
         const fullTargetKey = nextPublic ? `${pkgName}::${pillar}l-${cleanSuffix}` : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
-        const newTabId = `lookup:${fullTargetKey}`;
-        if (oldTabId !== newTabId) {
-          replaceTab(oldTabId, {
-            id: newTabId,
-            type: "lookup",
-            title: `${pillar}l-${cleanSuffix}`,
-            closable: true,
-            lookupKey: fullTargetKey
-          });
-        }
+        replaceTab(tabId, {
+          type: "lookup",
+          title: `${pillar}l-${cleanSuffix}`,
+          lookupKey: fullTargetKey
+        });
         setIsModified(false);
-        setTabDirty(newTabId, false);
+        setTabDirty(tabId, false);
         setSaveStatus("已更新可见性");
         onSaved == null ? void 0 : onSaved();
         toast.success(nextPublic ? "已迁移为公开导出接口" : "已迁移为内部私有查找");
@@ -30388,10 +30419,8 @@ function LookupEditorTab({
                                       var _a4;
                                       if (typeof ((_a4 = sel.query) == null ? void 0 : _a4.id) === "string") {
                                         openTab({
-                                          id: `atom:${sel.query.id}`,
                                           type: "atom",
                                           title: sel.query.id,
-                                          closable: true,
                                           atomId: sel.query.id
                                         });
                                       }
@@ -30417,10 +30446,8 @@ function LookupEditorTab({
                                     onClick: () => {
                                       if (sel.ref) {
                                         openTab({
-                                          id: `lookup:${sel.ref}`,
                                           type: "lookup",
                                           title: sel.ref.split("::").pop() || sel.ref,
-                                          closable: true,
                                           lookupKey: sel.ref
                                         });
                                       }
@@ -30587,19 +30614,15 @@ function LookupEditorTab({
                     },
                     onSelectAtom: (atomId) => {
                       openTab({
-                        id: `atom:${atomId}`,
                         type: "atom",
                         title: atomId,
-                        closable: true,
                         atomId
                       });
                     },
                     onSelectLookup: (lKey) => {
                       openTab({
-                        id: `lookup:${lKey}`,
                         type: "lookup",
                         title: lKey.split("::").pop() || lKey,
-                        closable: true,
                         lookupKey: lKey
                       });
                     }
@@ -30781,6 +30804,7 @@ function manifestReducer(state, action) {
   }
 }
 function ManifestEditorTab({
+  tabId,
   manifestName,
   workspacePath,
   packages,
@@ -30828,7 +30852,6 @@ function ManifestEditorTab({
   const { atomOptions, domainOptions } = useWorkspaceCandidates(packages);
   const saveManifestMutation = useSaveManifestMutation();
   const isSaving = saveManifestMutation.isPending;
-  const tabId = manifestIdentifier ? `manifest:${manifestIdentifier}` : "manifest:draft";
   reactExports.useEffect(() => {
     setTabDirty(tabId, isModified);
   }, [tabId, isModified, setTabDirty]);
@@ -30958,10 +30981,8 @@ function ManifestEditorTab({
       onSaved == null ? void 0 : onSaved();
       if (isDraft) {
         replaceTab(tabId, {
-          id: `manifest:${targetIdentifier}`,
           type: "manifest",
           title: name2.trim(),
-          closable: true,
           manifestName: targetIdentifier,
           workspacePath
         });
@@ -31002,10 +31023,8 @@ function ManifestEditorTab({
   const handleOpenAtom = reactExports.useCallback(
     (atomId) => {
       openTab({
-        id: `atom:${atomId}`,
         type: "atom",
         title: atomId,
-        closable: true,
         atomId
       });
     },
@@ -31014,10 +31033,8 @@ function ManifestEditorTab({
   const handleOpenLookup = reactExports.useCallback(
     (lKey) => {
       openTab({
-        id: `lookup:${lKey}`,
         type: "lookup",
         title: lKey.split("::").pop() || lKey,
-        closable: true,
         lookupKey: lKey
       });
     },
@@ -31505,7 +31522,7 @@ function EmptyTab({
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex h-full w-full flex-col items-center justify-center p-6 text-slate-200 overflow-y-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-md w-full space-y-6 text-center", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "inline-flex p-3 rounded-2xl bg-indigo-950/60 border border-indigo-800/40 mb-2 shadow-lg shadow-indigo-950/40", children: /* @__PURE__ */ jsxRuntimeExports.jsx(AcaLogo, { className: "h-8 w-8" }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-xl font-bold font-sans tracking-wide text-slate-100", children: "ACA Studio 工作台" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-xl font-bold font-sans tracking-wide text-slate-100", children: "新标签页" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-400 font-mono leading-relaxed", children: "公理化组件架构（ACA）可视化装配与开发控制台" })
     ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-3 pt-2 text-left font-mono", children: [
@@ -31941,32 +31958,35 @@ const TabPane = reactExports.memo(
       tab2.type === "atom" && tab2.atomId && /* @__PURE__ */ jsxRuntimeExports.jsx(
         AtomEditorTab,
         {
+          tabId: tab2.id,
           atomId: tab2.atomId,
           packages,
           onSaved,
           onDeleted: () => onDeleted(tab2.id)
         },
-        tab2.atomId
+        `${tab2.id}_${tab2.atomId}`
       ),
       tab2.type === "manifest" && /* @__PURE__ */ jsxRuntimeExports.jsx(
         ManifestEditorTab,
         {
+          tabId: tab2.id,
           manifestName: tab2.manifestName || "",
           workspacePath: tab2.workspacePath,
           packages,
           onSaved
         },
-        tab2.id
+        `${tab2.id}_${tab2.manifestName || "draft"}`
       ),
       tab2.type === "lookup" && tab2.lookupKey && /* @__PURE__ */ jsxRuntimeExports.jsx(
         LookupEditorTab,
         {
+          tabId: tab2.id,
           lookupKey: tab2.lookupKey,
           packages,
           onSaved,
           onDeleted: () => onDeleted(tab2.id)
         },
-        tab2.id
+        `${tab2.id}_${tab2.lookupKey}`
       ),
       tab2.type === "settings" && /* @__PURE__ */ jsxRuntimeExports.jsx(SettingsTab, {})
     ] });
@@ -32849,10 +32869,8 @@ function App() {
         e.preventDefault();
         useIdeStore.getState().openTab(
           {
-            id: `empty_${Date.now()}`,
             type: "empty",
-            title: "新标签页",
-            closable: true
+            title: "新标签页"
           },
           { newTab: true }
         );
@@ -32885,15 +32903,12 @@ function App() {
   };
   const handleOpenManifestTab = (mName, e, opts) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
-    const isPreview = !newTab;
+    const isPreview = false;
     ideStore.openTab(
       {
-        id: `manifest:${mName}`,
         type: "manifest",
         title: mName,
-        closable: true,
-        manifestName: mName,
-        isPreview
+        manifestName: mName
       },
       { newTab, isPreview }
     );
@@ -32907,15 +32922,12 @@ function App() {
       const targetPkg = parts[1] || "";
       tabTitle = targetPkg === "kernel" ? "初始化 Kernel" : `新建原子 (${targetPkg || "草稿"})`;
     }
-    const isPreview = isDraft ? false : !newTab;
+    const isPreview = isDraft ? false : false;
     ideStore.openTab(
       {
-        id: `atom:${atomId}`,
         type: "atom",
         title: tabTitle,
-        closable: true,
-        atomId,
-        isPreview
+        atomId
       },
       { newTab: isDraft ? true : newTab, isPreview }
     );
@@ -32923,15 +32935,12 @@ function App() {
   const handleOpenLookupTab = (lookupKey, e, opts) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
     const isDraft = lookupKey.startsWith("draft:");
-    const isPreview = isDraft ? false : !newTab;
+    const isPreview = isDraft ? false : false;
     ideStore.openTab(
       {
-        id: `lookup:${lookupKey}`,
         type: "lookup",
         title: lookupKey.split("::").pop() || lookupKey,
-        closable: true,
-        lookupKey,
-        isPreview
+        lookupKey
       },
       { newTab: isDraft ? true : newTab, isPreview }
     );
@@ -32967,10 +32976,8 @@ function App() {
     const draftId = `draft:${defaultPkg}:${Date.now()}`;
     ideStore.openTab(
       {
-        id: `atom:${draftId}`,
         type: "atom",
         title: `新建原子 (${defaultPkg || "草稿"})`,
-        closable: true,
         atomId: draftId
       },
       { newTab: true }
@@ -32980,10 +32987,8 @@ function App() {
     const draftId = `draft:kernel:${Date.now()}`;
     ideStore.openTab(
       {
-        id: `atom:${draftId}`,
         type: "atom",
         title: "初始化 Kernel 协议",
-        closable: true,
         atomId: draftId
       },
       { newTab: true }
@@ -32993,10 +32998,8 @@ function App() {
     const draftId = prefixPath ? `${prefixPath}/draft_${Date.now()}` : `draft_${Date.now()}`;
     ideStore.openTab(
       {
-        id: `manifest:${draftId}`,
         type: "manifest",
         title: prefixPath ? `${prefixPath}/新建清单` : "新建清单",
-        closable: true,
         manifestName: draftId
       },
       { newTab: true }
@@ -33052,13 +33055,12 @@ function App() {
     }).then(() => {
       toast.success(`已移动至 ${cleanDestFolder ? `${cleanDestFolder}/` : "根目录"}`);
       invalidateAll();
-      const oldTabId = `manifest:${srcPath}`;
-      const activeTabs = ideStore.tabs;
-      const targetTab = activeTabs.find((t) => t.id === oldTabId);
-      if (targetTab) {
-        ideStore.replaceTab(oldTabId, {
-          ...targetTab,
-          id: `manifest:${newPath}`,
+      const matchedTabs = ideStore.tabs.filter(
+        (t) => t.type === "manifest" && t.manifestName === srcPath
+      );
+      for (const targetTab of matchedTabs) {
+        ideStore.replaceTab(targetTab.id, {
+          type: "manifest",
           title: itemName,
           manifestName: newPath
         });
@@ -33068,13 +33070,10 @@ function App() {
     });
   };
   const handleCreateEmptyTab = () => {
-    const newTabId = `empty_${Date.now()}`;
     ideStore.openTab(
       {
-        id: newTabId,
         type: "empty",
-        title: "新标签页",
-        closable: true
+        title: "新标签页"
       },
       { newTab: true }
     );
@@ -33091,7 +33090,11 @@ function App() {
         manifests: old.manifests.filter((m2) => m2.name !== mName)
       };
     });
-    ideStore.closeTab(`manifest:${mName}`);
+    for (const t of ideStore.tabs) {
+      if (t.type === "manifest" && t.manifestName === mName) {
+        ideStore.closeTab(t.id);
+      }
+    }
     fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
       method: "DELETE"
     }).then(async (res) => {
@@ -33192,7 +33195,11 @@ function App() {
           })
         };
       });
-      ideStore.closeTab(`lookup:${lookupKey}`);
+      for (const t of ideStore.tabs) {
+        if (t.type === "lookup" && t.lookupKey === lookupKey) {
+          ideStore.closeTab(t.id);
+        }
+      }
       fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
         method: "DELETE"
       }).then(async (res) => {
@@ -33230,7 +33237,11 @@ function App() {
           }))
         };
       });
-      ideStore.closeTab(`atom:${atomId}`);
+      for (const t of ideStore.tabs) {
+        if (t.type === "atom" && t.atomId === atomId) {
+          ideStore.closeTab(t.id);
+        }
+      }
       fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
         method: "DELETE"
       }).then(async (res) => {
@@ -33250,8 +33261,8 @@ function App() {
     [ideStore, wsStore.activeWorkspaceId, queryClient2]
   );
   const activeTab = ideStore.tabs.find((t) => t.id === ideStore.activeTabId);
-  const canGoBack = ideStore.historyIndex > 0;
-  const canGoForward = ideStore.historyIndex < ideStore.navigationHistory.length - 1;
+  const canGoBack = activeTab ? activeTab.historyIndex > 0 : false;
+  const canGoForward = activeTab ? activeTab.historyIndex < activeTab.history.length - 1 : false;
   const currentWsObj = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex h-screen flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-1 overflow-hidden", children: [
@@ -33279,10 +33290,8 @@ function App() {
             type: "button",
             onClick: () => {
               ideStore.openTab({
-                id: "system:settings",
                 type: "settings",
-                title: "设置",
-                closable: true
+                title: "设置"
               });
             },
             className: `mt-auto p-2 rounded-lg transition-colors cursor-pointer ${ideStore.activeTabId === "system:settings" ? "text-indigo-400 bg-indigo-950/60 ring-1 ring-indigo-500/40" : "text-slate-400 hover:text-white"}`,
@@ -33456,22 +33465,25 @@ function App() {
                       handleSafeCloseTab(tab2, e);
                     }
                   },
-                  className: `group flex items-center gap-2 px-3.5 py-2 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 ${isActive ? "bg-slate-950 text-indigo-300 border-t-2 border-t-indigo-500 font-semibold" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent"}`,
+                  className: `group flex items-center justify-between w-40 h-full px-2.5 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 ${isActive ? "bg-slate-950 text-indigo-300 border-t-2 border-t-indigo-500 font-semibold" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent"}`,
                   children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "span",
-                      {
-                        className: `truncate max-w-[140px] ${tab2.isPreview ? "italic text-slate-300/80" : ""}`,
-                        children: tab2.title
-                      }
-                    ),
-                    tab2.isDirty && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 truncate flex-1 min-w-0 mr-1", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "span",
+                        {
+                          className: `truncate ${tab2.isPreview ? "italic text-slate-300/80" : ""}`,
+                          title: tab2.title,
+                          children: tab2.title
+                        }
+                      ),
+                      tab2.isDirty && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" })
+                    ] }),
                     tab2.closable && /* @__PURE__ */ jsxRuntimeExports.jsx(
                       "button",
                       {
                         type: "button",
                         onClick: (e) => handleSafeCloseTab(tab2, e),
-                        className: "opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded cursor-pointer transition-opacity",
+                        className: "opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded cursor-pointer transition-opacity shrink-0",
                         title: "关闭标签页",
                         children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "h-3 w-3" })
                       }

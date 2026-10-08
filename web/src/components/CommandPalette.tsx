@@ -110,26 +110,20 @@ export function CommandPalette({
   const handleSelect = (item: CommandItem) => {
     if (item.type === 'atom' && item.atomId) {
       openTab({
-        id: `atom:${item.atomId}`,
         type: 'atom',
         title: item.atomId,
-        closable: true,
         atomId: item.atomId,
       });
     } else if (item.type === 'manifest' && item.manifestName) {
       openTab({
-        id: `manifest:${item.manifestName}`,
         type: 'manifest',
         title: item.manifestName,
-        closable: true,
         manifestName: item.manifestName,
       });
     } else if (item.type === 'lookup' && item.lookupKey) {
       openTab({
-        id: `lookup:${item.lookupKey}`,
         type: 'lookup',
         title: item.lookupKey.split('::').pop() || item.lookupKey,
-        closable: true,
         lookupKey: item.lookupKey,
       });
     }

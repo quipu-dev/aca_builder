@@ -607,6 +607,9 @@ video {
 .ml-auto {
   margin-left: auto;
 }
+.mr-1 {
+  margin-right: 0.25rem;
+}
 .mr-1\.5 {
   margin-right: 0.375rem;
 }
@@ -783,9 +786,6 @@ video {
 }
 .max-w-4xl {
   max-width: 56rem;
-}
-.max-w-\[140px\] {
-  max-width: 140px;
 }
 .max-w-\[150px\] {
   max-width: 150px;

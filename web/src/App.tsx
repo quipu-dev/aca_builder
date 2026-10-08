@@ -154,10 +154,8 @@ export function App() {
         e.preventDefault();
         useIdeStore.getState().openTab(
           {
-            id: `empty_${Date.now()}`,
             type: 'empty',
             title: '新标签页',
-            closable: true,
           },
           { newTab: true },
         );
@@ -198,15 +196,12 @@ export function App() {
     opts?: { isPreview?: boolean },
   ) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
-    const isPreview = opts?.isPreview ?? !newTab;
+    const isPreview = opts?.isPreview ?? false;
     ideStore.openTab(
       {
-        id: `manifest:${mName}`,
         type: 'manifest',
         title: mName,
-        closable: true,
         manifestName: mName,
-        isPreview,
       },
       { newTab, isPreview },
     );
@@ -225,15 +220,12 @@ export function App() {
       const targetPkg = parts[1] || '';
       tabTitle = targetPkg === 'kernel' ? '初始化 Kernel' : `新建原子 (${targetPkg || '草稿'})`;
     }
-    const isPreview = isDraft ? false : (opts?.isPreview ?? !newTab);
+    const isPreview = isDraft ? false : (opts?.isPreview ?? false);
     ideStore.openTab(
       {
-        id: `atom:${atomId}`,
         type: 'atom',
         title: tabTitle,
-        closable: true,
         atomId,
-        isPreview,
       },
       { newTab: isDraft ? true : newTab, isPreview },
     );
@@ -246,15 +238,12 @@ export function App() {
   ) => {
     const newTab = e ? e.ctrlKey || e.metaKey : false;
     const isDraft = lookupKey.startsWith('draft:');
-    const isPreview = isDraft ? false : (opts?.isPreview ?? !newTab);
+    const isPreview = isDraft ? false : (opts?.isPreview ?? false);
     ideStore.openTab(
       {
-        id: `lookup:${lookupKey}`,
         type: 'lookup',
         title: lookupKey.split('::').pop() || lookupKey,
-        closable: true,
         lookupKey,
-        isPreview,
       },
       { newTab: isDraft ? true : newTab, isPreview },
     );
@@ -292,10 +281,8 @@ export function App() {
     const draftId = `draft:${defaultPkg}:${Date.now()}`;
     ideStore.openTab(
       {
-        id: `atom:${draftId}`,
         type: 'atom',
         title: `新建原子 (${defaultPkg || '草稿'})`,
-        closable: true,
         atomId: draftId,
       },
       { newTab: true },
@@ -306,10 +293,8 @@ export function App() {
     const draftId = `draft:kernel:${Date.now()}`;
     ideStore.openTab(
       {
-        id: `atom:${draftId}`,
         type: 'atom',
         title: '初始化 Kernel 协议',
-        closable: true,
         atomId: draftId,
       },
       { newTab: true },
@@ -320,10 +305,8 @@ export function App() {
     const draftId = prefixPath ? `${prefixPath}/draft_${Date.now()}` : `draft_${Date.now()}`;
     ideStore.openTab(
       {
-        id: `manifest:${draftId}`,
         type: 'manifest',
         title: prefixPath ? `${prefixPath}/新建清单` : '新建清单',
-        closable: true,
         manifestName: draftId,
       },
       { newTab: true },
@@ -395,14 +378,13 @@ export function App() {
         toast.success(`已移动至 ${cleanDestFolder ? `${cleanDestFolder}/` : '根目录'}`);
         invalidateAll();
 
-        // 同步迁移已打开的对应 Tab
-        const oldTabId = `manifest:${srcPath}`;
-        const activeTabs = ideStore.tabs;
-        const targetTab = activeTabs.find((t) => t.id === oldTabId);
-        if (targetTab) {
-          ideStore.replaceTab(oldTabId, {
-            ...targetTab,
-            id: `manifest:${newPath}`,
+        // 同步迁移所有打开了该清单的对应 Tab
+        const matchedTabs = ideStore.tabs.filter(
+          (t) => t.type === 'manifest' && t.manifestName === srcPath,
+        );
+        for (const targetTab of matchedTabs) {
+          ideStore.replaceTab(targetTab.id, {
+            type: 'manifest',
             title: itemName,
             manifestName: newPath,
           });
@@ -414,13 +396,10 @@ export function App() {
   };
 
   const handleCreateEmptyTab = () => {
-    const newTabId = `empty_${Date.now()}`;
     ideStore.openTab(
       {
-        id: newTabId,
         type: 'empty',
         title: '新标签页',
-        closable: true,
       },
       { newTab: true },
     );
@@ -440,7 +419,12 @@ export function App() {
         manifests: old.manifests.filter((m) => m.name !== mName),
       };
     });
-    ideStore.closeTab(`manifest:${mName}`);
+    // 联动关闭所有打开了此清单的标签页
+    for (const t of ideStore.tabs) {
+      if (t.type === 'manifest' && t.manifestName === mName) {
+        ideStore.closeTab(t.id);
+      }
+    }
 
     // 2. 直接发起异步删除网络请求
     fetch(`/api/manifests/${encodeURIComponent(mName)}`, {
@@ -561,7 +545,12 @@ export function App() {
           }),
         };
       });
-      ideStore.closeTab(`lookup:${lookupKey}`);
+      // 联动关闭所有打开了此接口的标签页
+      for (const t of ideStore.tabs) {
+        if (t.type === 'lookup' && t.lookupKey === lookupKey) {
+          ideStore.closeTab(t.id);
+        }
+      }
 
       fetch(`/api/lookups/${encodeURIComponent(lookupKey)}`, {
         method: 'DELETE',
@@ -606,7 +595,12 @@ export function App() {
         };
       });
 
-      ideStore.closeTab(`atom:${atomId}`);
+      // 联动关闭所有打开了此原子的标签页
+      for (const t of ideStore.tabs) {
+        if (t.type === 'atom' && t.atomId === atomId) {
+          ideStore.closeTab(t.id);
+        }
+      }
 
       fetch(`/api/atoms/${encodeURIComponent(atomId)}`, {
         method: 'DELETE',
@@ -630,8 +624,8 @@ export function App() {
   );
 
   const activeTab = ideStore.tabs.find((t) => t.id === ideStore.activeTabId);
-  const canGoBack = ideStore.historyIndex > 0;
-  const canGoForward = ideStore.historyIndex < ideStore.navigationHistory.length - 1;
+  const canGoBack = activeTab ? activeTab.historyIndex > 0 : false;
+  const canGoForward = activeTab ? activeTab.historyIndex < activeTab.history.length - 1 : false;
   const currentWsObj = wsStore.workspaces.find((w) => w.id === wsStore.activeWorkspaceId);
 
   return (
@@ -663,10 +657,8 @@ export function App() {
             type="button"
             onClick={() => {
               ideStore.openTab({
-                id: 'system:settings',
                 type: 'settings',
                 title: '设置',
-                closable: true,
               });
             }}
             className={`mt-auto p-2 rounded-lg transition-colors cursor-pointer ${
@@ -844,25 +836,28 @@ export function App() {
                           handleSafeCloseTab(tab, e);
                         }
                       }}
-                      className={`group flex items-center gap-2 px-3.5 py-2 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 ${
+                      className={`group flex items-center justify-between w-40 h-full px-2.5 border-r border-slate-800 cursor-pointer text-xs font-mono transition-colors shrink-0 outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 ${
                         isActive
                           ? 'bg-slate-950 text-indigo-300 border-t-2 border-t-indigo-500 font-semibold'
                           : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border-t-2 border-t-transparent'
                       }`}
                     >
-                      <span
-                        className={`truncate max-w-[140px] ${tab.isPreview ? 'italic text-slate-300/80' : ''}`}
-                      >
-                        {tab.title}
-                      </span>
-                      {tab.isDirty && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                      )}
+                      <div className="flex items-center gap-1.5 truncate flex-1 min-w-0 mr-1">
+                        <span
+                          className={`truncate ${tab.isPreview ? 'italic text-slate-300/80' : ''}`}
+                          title={tab.title}
+                        >
+                          {tab.title}
+                        </span>
+                        {tab.isDirty && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                        )}
+                      </div>
                       {tab.closable && (
                         <button
                           type="button"
                           onClick={(e) => handleSafeCloseTab(tab, e)}
-                          className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded cursor-pointer transition-opacity"
+                          className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-white rounded cursor-pointer transition-opacity shrink-0"
                           title="关闭标签页"
                         >
                           <X className="h-3 w-3" />

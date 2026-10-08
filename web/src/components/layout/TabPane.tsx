@@ -44,7 +44,8 @@ export const TabPane = memo(
         )}
         {tab.type === 'atom' && tab.atomId && (
           <AtomEditorTab
-            key={tab.atomId}
+            key={`${tab.id}_${tab.atomId}`}
+            tabId={tab.id}
             atomId={tab.atomId}
             packages={packages}
             onSaved={onSaved}
@@ -53,7 +54,8 @@ export const TabPane = memo(
         )}
         {tab.type === 'manifest' && (
           <ManifestEditorTab
-            key={tab.id}
+            key={`${tab.id}_${tab.manifestName || 'draft'}`}
+            tabId={tab.id}
             manifestName={tab.manifestName || ''}
             workspacePath={tab.workspacePath}
             packages={packages}
@@ -62,7 +64,8 @@ export const TabPane = memo(
         )}
         {tab.type === 'lookup' && tab.lookupKey && (
           <LookupEditorTab
-            key={tab.id}
+            key={`${tab.id}_${tab.lookupKey}`}
+            tabId={tab.id}
             lookupKey={tab.lookupKey}
             packages={packages}
             onSaved={onSaved}

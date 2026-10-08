@@ -52,11 +52,13 @@ export interface SelectorRule {
 }
 
 export function LookupEditorTab({
+  tabId,
   lookupKey,
   packages,
   onSaved,
   onDeleted,
 }: {
+  tabId: string;
   lookupKey: string;
   packages: PackageItem[];
   onSaved?: () => void;
@@ -151,8 +153,6 @@ export function LookupEditorTab({
       };
     });
   }, [currentPkgObj, pillar]);
-
-  const tabId = `lookup:${lookupKey}`;
 
   const markDirty = useCallback(() => {
     if (!isModified) {
@@ -377,14 +377,11 @@ export function LookupEditorTab({
       setIsModified(false);
       setTabDirty(tabId, false);
       setInitialKey(fullTargetKey);
-      const newTabId = `lookup:${fullTargetKey}`;
 
       if (isDraft) {
         replaceTab(tabId, {
-          id: newTabId,
           type: 'lookup',
           title: `${pillar}l-${cleanSuffix}`,
-          closable: true,
           lookupKey: fullTargetKey,
         });
       }
@@ -436,24 +433,18 @@ export function LookupEditorTab({
           intersect: intersectSelectors as Array<Record<string, unknown>>,
         });
 
-        const oldTabId = tabId;
         const fullTargetKey = nextPublic
           ? `${pkgName}::${pillar}l-${cleanSuffix}`
           : `${pkgName}::internal::${pillar}l-${cleanSuffix}`;
-        const newTabId = `lookup:${fullTargetKey}`;
 
-        if (oldTabId !== newTabId) {
-          replaceTab(oldTabId, {
-            id: newTabId,
-            type: 'lookup',
-            title: `${pillar}l-${cleanSuffix}`,
-            closable: true,
-            lookupKey: fullTargetKey,
-          });
-        }
+        replaceTab(tabId, {
+          type: 'lookup',
+          title: `${pillar}l-${cleanSuffix}`,
+          lookupKey: fullTargetKey,
+        });
 
         setIsModified(false);
-        setTabDirty(newTabId, false);
+        setTabDirty(tabId, false);
         setSaveStatus('已更新可见性');
         onSaved?.();
         toast.success(nextPublic ? '已迁移为公开导出接口' : '已迁移为内部私有查找');
@@ -825,10 +816,8 @@ export function LookupEditorTab({
                                       onClick={() => {
                                         if (typeof sel.query?.id === 'string') {
                                           openTab({
-                                            id: `atom:${sel.query.id}`,
                                             type: 'atom',
                                             title: sel.query.id,
-                                            closable: true,
                                             atomId: sel.query.id,
                                           });
                                         }
@@ -855,10 +844,8 @@ export function LookupEditorTab({
                                       onClick={() => {
                                         if (sel.ref) {
                                           openTab({
-                                            id: `lookup:${sel.ref}`,
                                             type: 'lookup',
                                             title: sel.ref.split('::').pop() || sel.ref,
-                                            closable: true,
                                             lookupKey: sel.ref,
                                           });
                                         }
@@ -1037,19 +1024,15 @@ export function LookupEditorTab({
                       }}
                       onSelectAtom={(atomId) => {
                         openTab({
-                          id: `atom:${atomId}`,
                           type: 'atom',
                           title: atomId,
-                          closable: true,
                           atomId,
                         });
                       }}
                       onSelectLookup={(lKey) => {
                         openTab({
-                          id: `lookup:${lKey}`,
                           type: 'lookup',
                           title: lKey.split('::').pop() || lKey,
-                          closable: true,
                           lookupKey: lKey,
                         });
                       }}

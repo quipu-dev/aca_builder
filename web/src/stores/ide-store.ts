@@ -11,21 +11,22 @@ export type TabType =
   | 'empty'
   | 'settings';
 
-export interface IdeTab {
-  id: string;
+export interface TabLocation {
   type: TabType;
   title: string;
-  closable: boolean;
   atomId?: string;
   manifestName?: string;
   lookupKey?: string;
   workspacePath?: string;
-  isDirty?: boolean;
-  isPreview?: boolean;
 }
 
-export interface HistoryEntry {
-  tab: IdeTab;
+export interface IdeTab extends TabLocation {
+  id: string; // 唯一的标签页容器实例 ID
+  closable: boolean;
+  isDirty?: boolean;
+  isPreview?: boolean;
+  history: TabLocation[];
+  historyIndex: number;
 }
 
 interface IdePreferences {
@@ -35,13 +36,15 @@ interface IdePreferences {
 export interface WorkspaceTabState {
   tabs: IdeTab[];
   activeTabId: string;
-  navigationHistory: HistoryEntry[];
-  historyIndex: number;
   explorerExpanded: Record<string, boolean>;
 }
 
+export interface OpenTabOptions {
+  newTab?: boolean;
+  isPreview?: boolean;
+}
+
 interface IdeState {
-  // 当前工作区下的直接映射字段
   currentWorkspace: string;
   setCurrentWorkspace: (wsId: string) => void;
 
@@ -54,9 +57,6 @@ interface IdeState {
   explorerExpanded: Record<string, boolean>;
   setExplorerExpanded: (path: string, expanded: boolean) => void;
   toggleExplorerExpanded: (path: string) => void;
-
-  navigationHistory: HistoryEntry[];
-  historyIndex: number;
 
   sidebarOpen: boolean;
   activeSidebarView: 'explorer' | 'search';
@@ -75,10 +75,10 @@ interface IdeState {
   updatePreferences: (prefs: Partial<IdePreferences>) => void;
 
   openTab: (
-    tab: IdeTab,
-    options?: { newTab?: boolean; fromHistory?: boolean; isPreview?: boolean },
+    location: TabLocation & { id?: string; closable?: boolean },
+    options?: OpenTabOptions,
   ) => void;
-  replaceTab: (oldTabId: string, newTab: IdeTab) => void;
+  replaceTab: (tabId: string, location: TabLocation) => void;
   closeTab: (tabId: string) => void;
   pinTab: (tabId: string) => void;
   setActiveTab: (tabId: string) => void;
@@ -87,71 +87,65 @@ interface IdeState {
   goBack: () => void;
   goForward: () => void;
 
-  // 跨工作区多状态快照持久池
   workspaceStates: Record<string, WorkspaceTabState>;
 }
 
-const INITIAL_EMPTY_TAB: IdeTab = {
-  id: 'empty:home',
-  type: 'empty',
-  title: '开始',
-  closable: false,
+const createUniqueTabId = (prefix = 'tab') =>
+  `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+const createDefaultEmptyTab = (): IdeTab => {
+  const initialLoc: TabLocation = {
+    type: 'empty',
+    title: '新标签页',
+  };
+  const newTabId = createUniqueTabId();
+  return {
+    id: newTabId,
+    closable: true,
+    ...initialLoc,
+    history: [initialLoc],
+    historyIndex: 0,
+  };
 };
 
-const createDefaultWorkspaceState = (): WorkspaceTabState => ({
-  tabs: [INITIAL_EMPTY_TAB],
-  activeTabId: INITIAL_EMPTY_TAB.id,
-  navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
-  historyIndex: 0,
-  explorerExpanded: {},
-});
+const createDefaultWorkspaceState = (): WorkspaceTabState => {
+  const emptyTab = createDefaultEmptyTab();
+  return {
+    tabs: [emptyTab],
+    activeTabId: emptyTab.id,
+    explorerExpanded: {},
+  };
+};
 
 export const useIdeStore = create<IdeState>()(
   persist(
     (set, get) => ({
       currentWorkspace: 'default',
-      tabs: [INITIAL_EMPTY_TAB],
-      activeTabId: INITIAL_EMPTY_TAB.id,
-
-      navigationHistory: [{ tab: INITIAL_EMPTY_TAB }],
-      historyIndex: 0,
+      tabs: [createDefaultEmptyTab()],
+      activeTabId: 'empty:home',
 
       explorerExpanded: {},
       workspaceStates: {},
 
       setCurrentWorkspace: (wsId: string) => {
-        const {
-          currentWorkspace,
-          tabs,
-          activeTabId,
-          navigationHistory,
-          historyIndex,
-          explorerExpanded,
-          workspaceStates,
-        } = get();
+        const { currentWorkspace, tabs, activeTabId, explorerExpanded, workspaceStates } = get();
         if (currentWorkspace === wsId) return;
 
-        // 1. 保存当前工作区标签页状态
         const updatedWorkspaces = {
           ...workspaceStates,
           [currentWorkspace]: {
             tabs,
             activeTabId,
-            navigationHistory,
-            historyIndex,
             explorerExpanded,
           },
         };
 
-        // 2. 加载目标工作区状态（如无则新建）
         const targetState = updatedWorkspaces[wsId] || createDefaultWorkspaceState();
 
         set({
           currentWorkspace: wsId,
           tabs: targetState.tabs,
           activeTabId: targetState.activeTabId,
-          navigationHistory: targetState.navigationHistory,
-          historyIndex: targetState.historyIndex,
           explorerExpanded: targetState.explorerExpanded,
           workspaceStates: updatedWorkspaces,
         });
@@ -193,94 +187,182 @@ export const useIdeStore = create<IdeState>()(
           tabs: state.tabs.map((t) => (t.id === tabId ? { ...t, isPreview: false } : t)),
         })),
 
-      replaceTab: (oldTabId, newTab) => {
-        const { tabs, navigationHistory } = get();
-        const tabIndex = tabs.findIndex((t) => t.id === oldTabId);
-        const updatedTabs = [...tabs];
-        if (tabIndex !== -1) {
-          updatedTabs[tabIndex] = newTab;
-        } else {
-          updatedTabs.push(newTab);
-        }
-        const updatedHistory = navigationHistory.map((entry) =>
-          entry.tab.id === oldTabId ? { tab: newTab } : entry,
-        );
-        set({
-          tabs: updatedTabs,
-          activeTabId: newTab.id,
-          navigationHistory: updatedHistory,
+      replaceTab: (tabId, location) => {
+        set((state) => {
+          const updatedTabs = state.tabs.map((t) => {
+            if (t.id !== tabId) return t;
+            const updatedHistory = [...t.history];
+            updatedHistory[t.historyIndex] = { ...location };
+            return {
+              ...t,
+              ...location,
+              history: updatedHistory,
+            };
+          });
+          return { tabs: updatedTabs };
         });
       },
 
-      openTab: (tab, options) => {
-        const { tabs, navigationHistory, historyIndex } = get();
-        const newTab = !!options?.newTab;
-        const fromHistory = !!options?.fromHistory;
-        const isPreview =
-          options?.isPreview !== undefined ? options.isPreview : (tab.isPreview ?? false);
+      openTab: (location, options) => {
+        const { tabs, activeTabId } = get();
+        const wantsNewTab = Boolean(options?.newTab);
+        const isPreview = options?.isPreview ?? false;
 
-        const tabToOpen: IdeTab = { ...tab, isPreview };
+        const locSnapshot: TabLocation = {
+          type: location.type,
+          title: location.title,
+          atomId: location.atomId,
+          manifestName: location.manifestName,
+          lookupKey: location.lookupKey,
+          workspacePath: location.workspacePath,
+        };
 
-        if (!fromHistory) {
-          const currentEntry = navigationHistory[historyIndex];
-          if (!currentEntry || currentEntry.tab.id !== tabToOpen.id) {
-            const truncated = navigationHistory.slice(0, historyIndex + 1);
-            const updatedHistory = [...truncated, { tab: tabToOpen }];
-            set({
-              navigationHistory: updatedHistory,
-              historyIndex: updatedHistory.length - 1,
-            });
-          }
-        }
-
-        const existingIndex = tabs.findIndex((t) => t.id === tabToOpen.id);
-        if (existingIndex !== -1) {
-          if (!isPreview && tabs[existingIndex].isPreview) {
-            const updated = [...tabs];
-            updated[existingIndex] = { ...updated[existingIndex], isPreview: false };
-            set({ tabs: updated, activeTabId: tabToOpen.id });
-          } else {
-            set({ activeTabId: tabToOpen.id });
-          }
-          return;
-        }
-
-        const previewIndex = tabs.findIndex((t) => t.isPreview && !t.isDirty);
-        if (!newTab && isPreview && previewIndex !== -1) {
-          const updatedTabs = [...tabs];
-          updatedTabs[previewIndex] = tabToOpen;
+        // 1. 如果显式要求新建 Tab (点击 + 号、快捷键 Ctrl+T、或 Ctrl/Cmd 点击文件)
+        // 优先无条件新建并追加，绝不拦截
+        if (wantsNewTab) {
+          const newTabId = createUniqueTabId();
+          const newTab: IdeTab = {
+            id: newTabId,
+            closable: location.closable ?? true,
+            ...locSnapshot,
+            isDirty: false,
+            isPreview,
+            history: [locSnapshot],
+            historyIndex: 0,
+          };
           set({
-            tabs: updatedTabs,
-            activeTabId: tabToOpen.id,
+            tabs: [...tabs, newTab],
+            activeTabId: newTabId,
           });
           return;
         }
 
-        const cleanTabs =
-          tabs.length === 1 && tabs[0].type === 'empty' && !tabs[0].isDirty ? [] : tabs;
+        // 2. 如果非显式新建，且当前仅有一个未编辑的空白页、点击的是具体业务资源时，就地复用它
+        if (
+          tabs.length === 1 &&
+          tabs[0].type === 'empty' &&
+          !tabs[0].isDirty &&
+          locSnapshot.type !== 'empty'
+        ) {
+          const currentTabId = tabs[0].id;
+          const updatedTab: IdeTab = {
+            ...tabs[0],
+            ...locSnapshot,
+            isDirty: false,
+            isPreview,
+            history: [locSnapshot],
+            historyIndex: 0,
+          };
+          set({
+            tabs: [updatedTab],
+            activeTabId: currentTabId,
+          });
+          return;
+        }
+
+        // 3. 默认行为：在当前活动标签页 (activeTab) 内部进行就地导航与历史入栈 (Chrome 式)
+        const currentActive = tabs.find((t) => t.id === activeTabId);
+
+        if (!currentActive) {
+          const newTabId = createUniqueTabId();
+          const fallbackTab: IdeTab = {
+            id: newTabId,
+            closable: location.closable ?? true,
+            ...locSnapshot,
+            isDirty: false,
+            isPreview,
+            history: [locSnapshot],
+            historyIndex: 0,
+          };
+          set({
+            tabs: [...tabs, fallbackTab],
+            activeTabId: newTabId,
+          });
+          return;
+        }
+
+        // 检查当前 Tab 是否已经正显示此资源
+        const isSameResource =
+          currentActive.type === locSnapshot.type &&
+          currentActive.atomId === locSnapshot.atomId &&
+          currentActive.manifestName === locSnapshot.manifestName &&
+          currentActive.lookupKey === locSnapshot.lookupKey;
+
+        if (isSameResource) {
+          if (!isPreview && currentActive.isPreview) {
+            set({
+              tabs: tabs.map((t) => (t.id === currentActive.id ? { ...t, isPreview: false } : t)),
+            });
+          }
+          return;
+        }
+
+        // 截断当前 Tab 自身历史栈并推入新航点
+        const truncatedHistory = currentActive.history.slice(0, currentActive.historyIndex + 1);
+        const nextHistory = [...truncatedHistory, locSnapshot];
+        const nextIndex = nextHistory.length - 1;
+
+        const updatedTabs = tabs.map((t) => {
+          if (t.id !== currentActive.id) return t;
+          return {
+            ...t,
+            closable: true,
+            ...locSnapshot,
+            isDirty: false,
+            isPreview,
+            history: nextHistory,
+            historyIndex: nextIndex,
+          };
+        });
 
         set({
-          tabs: [...cleanTabs, tabToOpen],
-          activeTabId: tabToOpen.id,
+          tabs: updatedTabs,
+          activeTabId: currentActive.id,
         });
       },
 
       goBack: () => {
-        const { historyIndex, navigationHistory } = get();
-        if (historyIndex <= 0) return;
-        const nextIndex = historyIndex - 1;
-        const targetTab = navigationHistory[nextIndex].tab;
-        set({ historyIndex: nextIndex });
-        get().openTab(targetTab, { fromHistory: true });
+        set((state) => {
+          const activeTab = state.tabs.find((t) => t.id === state.activeTabId);
+          if (!activeTab || activeTab.historyIndex <= 0) return state;
+
+          const prevIndex = activeTab.historyIndex - 1;
+          const prevLoc = activeTab.history[prevIndex];
+
+          const updatedTabs = state.tabs.map((t) => {
+            if (t.id !== activeTab.id) return t;
+            return {
+              ...t,
+              ...prevLoc,
+              isDirty: false,
+              historyIndex: prevIndex,
+            };
+          });
+
+          return { tabs: updatedTabs };
+        });
       },
 
       goForward: () => {
-        const { historyIndex, navigationHistory } = get();
-        if (historyIndex >= navigationHistory.length - 1) return;
-        const nextIndex = historyIndex + 1;
-        const targetTab = navigationHistory[nextIndex].tab;
-        set({ historyIndex: nextIndex });
-        get().openTab(targetTab, { fromHistory: true });
+        set((state) => {
+          const activeTab = state.tabs.find((t) => t.id === state.activeTabId);
+          if (!activeTab || activeTab.historyIndex >= activeTab.history.length - 1) return state;
+
+          const nextIndex = activeTab.historyIndex + 1;
+          const nextLoc = activeTab.history[nextIndex];
+
+          const updatedTabs = state.tabs.map((t) => {
+            if (t.id !== activeTab.id) return t;
+            return {
+              ...t,
+              ...nextLoc,
+              isDirty: false,
+              historyIndex: nextIndex,
+            };
+          });
+
+          return { tabs: updatedTabs };
+        });
       },
 
       closeTab: (tabId) => {
@@ -292,12 +374,7 @@ export const useIdeStore = create<IdeState>()(
         let nextActiveId = activeTabId;
 
         if (remaining.length === 0) {
-          const emptyTab: IdeTab = {
-            id: 'empty:home',
-            type: 'empty',
-            title: '开始',
-            closable: false,
-          };
+          const emptyTab = createDefaultEmptyTab();
           set({
             tabs: [emptyTab],
             activeTabId: emptyTab.id,
@@ -333,7 +410,7 @@ export const useIdeStore = create<IdeState>()(
         })),
     }),
     {
-      name: 'aca-studio-ide-vault-v2',
+      name: 'aca-studio-ide-vault-v3',
       partialize: (state) => ({
         currentWorkspace: state.currentWorkspace,
         tabs: state.tabs,

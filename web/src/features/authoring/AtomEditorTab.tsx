@@ -37,11 +37,13 @@ import type React from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
 export function AtomEditorTab({
+  tabId,
   atomId,
   packages = [],
   onSaved,
   onDeleted,
 }: {
+  tabId: string;
   atomId: string;
   packages?: PackageItem[];
   onSaved?: () => void;
@@ -51,7 +53,6 @@ export function AtomEditorTab({
   const replaceTab = useIdeStore((state) => state.replaceTab);
   const openTab = useIdeStore((state) => state.openTab);
 
-  const tabId = `atom:${atomId}`;
   const isKernel = atomId === 'kernel' || atomId.startsWith('draft:kernel');
   const isDraft = atomId.startsWith('draft:') || atomId === 'new_atom';
   const draftParts = isDraft ? atomId.split(':') : [];
@@ -190,10 +191,8 @@ export function AtomEditorTab({
           setTabDirty(tabId, false);
           onSaved?.();
           replaceTab(tabId, {
-            id: 'atom:kernel',
             type: 'atom',
             title: 'kernel',
-            closable: true,
             atomId: 'kernel',
           });
         } catch (err: unknown) {
@@ -235,10 +234,8 @@ export function AtomEditorTab({
         setTabDirty(tabId, false);
         onSaved?.();
         replaceTab(tabId, {
-          id: `atom:${generatedId}`,
           type: 'atom',
           title: generatedId,
-          closable: true,
           atomId: generatedId,
         });
       } catch (err: unknown) {
@@ -328,10 +325,8 @@ export function AtomEditorTab({
       setIsRenameModalOpen(false);
       onSaved?.();
       replaceTab(tabId, {
-        id: `atom:${clean}`,
         type: 'atom',
         title: clean,
-        closable: true,
         atomId: clean,
       });
     } catch (err: unknown) {
@@ -695,10 +690,8 @@ export function AtomEditorTab({
                 badgeVariant="d3"
                 onTagClick={(aid) => {
                   openTab({
-                    id: `atom:${aid}`,
                     type: 'atom',
                     title: aid,
-                    closable: true,
                     atomId: aid,
                   });
                 }}
@@ -724,10 +717,8 @@ export function AtomEditorTab({
                   onTagClick={(ref) => {
                     const targetKey = resolveLookupRef(ref);
                     openTab({
-                      id: `lookup:${targetKey}`,
                       type: 'lookup',
                       title: targetKey.split('::').pop() || targetKey,
-                      closable: true,
                       lookupKey: targetKey,
                     });
                   }}

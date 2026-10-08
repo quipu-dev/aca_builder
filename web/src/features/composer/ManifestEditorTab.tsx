@@ -203,11 +203,13 @@ function manifestReducer(state: ManifestDraftState, action: ManifestAction): Man
 }
 
 export function ManifestEditorTab({
+  tabId,
   manifestName,
   workspacePath,
   packages,
   onSaved,
 }: {
+  tabId: string;
   manifestName: string;
   workspacePath?: string;
   packages: PackageItem[];
@@ -264,8 +266,6 @@ export function ManifestEditorTab({
 
   const saveManifestMutation = useSaveManifestMutation();
   const isSaving = saveManifestMutation.isPending;
-
-  const tabId = manifestIdentifier ? `manifest:${manifestIdentifier}` : 'manifest:draft';
 
   useEffect(() => {
     setTabDirty(tabId, isModified);
@@ -417,10 +417,8 @@ export function ManifestEditorTab({
 
       if (isDraft) {
         replaceTab(tabId, {
-          id: `manifest:${targetIdentifier}`,
           type: 'manifest',
           title: name.trim(),
-          closable: true,
           manifestName: targetIdentifier,
           workspacePath,
         });
@@ -464,10 +462,8 @@ export function ManifestEditorTab({
   const handleOpenAtom = useCallback(
     (atomId: string) => {
       openTab({
-        id: `atom:${atomId}`,
         type: 'atom',
         title: atomId,
-        closable: true,
         atomId,
       });
     },
@@ -477,10 +473,8 @@ export function ManifestEditorTab({
   const handleOpenLookup = useCallback(
     (lKey: string) => {
       openTab({
-        id: `lookup:${lKey}`,
         type: 'lookup',
         title: lKey.split('::').pop() || lKey,
-        closable: true,
         lookupKey: lKey,
       });
     },
