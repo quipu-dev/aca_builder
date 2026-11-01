@@ -1,24 +1,25 @@
 {
   "presets": {
     "full": {
+      "description": "全栈工程源码扫描（排除测试与静态资源）",
       "format": "xml",
-      "extension": ["py", "toml", "js", "ts", "tsx", "json", "css", "html"],
       "paths": ["."],
-      "ignore": ["*.test.ts", "*.test.tsx", "package-lock.json"],
-      "ignore_dir": ["static", "archive"]
+      "read": ["*.py", "*.toml", "*.js", "*.ts", "*.tsx", "*.json", "*.css", "*.html"],
+      "ignore": ["*.test.ts", "*.test.tsx", "package-lock.json", "static/", "archive/"]
     },
     "backend": {
+      "description": "Python 后端与测试逻辑",
       "format": "xml",
-      "extension": ["py", "toml"],
       "paths": ["src", "tests"],
-      "ignore_dir": ["static", "archive"]
+      "read": ["*.py", "*.toml"],
+      "ignore": ["static/", "archive/"]
     },
     "web": {
+      "description": "Web 前端界面与样式源码",
       "format": "xml",
-      "extension": ["py", "toml", "js", "ts", "tsx", "json", "css", "html"],
       "paths": ["web"],
-      "ignore": ["*.test.ts", "*.test.tsx", "package-lock.json"],
-      "ignore_dir": ["static", "archive"]
+      "read": ["*.py", "*.toml", "*.js", "*.ts", "*.tsx", "*.json", "*.css", "*.html"],
+      "ignore": ["*.test.ts", "*.test.tsx", "package-lock.json", "static/", "archive/"]
     }
   }
 }
